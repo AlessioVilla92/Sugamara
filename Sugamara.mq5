@@ -61,6 +61,7 @@
 #include "Trading/RiskManager.mqh"
 #include "Trading/RangeBoxManager.mqh"
 #include "Trading/HedgingManager.mqh"
+#include "Trading/ShieldManager.mqh"
 
 // UI Module
 #include "UI/Dashboard.mqh"
@@ -164,6 +165,14 @@ int OnInit() {
         }
     }
 
+    //--- STEP 10.7: Initialize Shield Intelligente (only NEUTRAL_RANGEBOX) ---
+    if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
+        if(!InitializeShield()) {
+            Print("WARNING: Failed to initialize Shield Intelligente");
+        }
+        // Calculate breakout levels after grid initialization (will recalc after grids)
+    }
+
     //--- STEP 11: Initialize Position Monitor ---
     if(!InitializePositionMonitor()) {
         Print("WARNING: Failed to initialize Position Monitor");
@@ -215,6 +224,13 @@ int OnInit() {
         return(INIT_FAILED);
     }
 
+    //--- STEP 17.5: Calculate Breakout Levels for Shield ---
+    if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
+        if(!CalculateBreakoutLevels()) {
+            Print("WARNING: Failed to calculate breakout levels");
+        }
+    }
+
     //--- STEP 18: Place Initial Orders ---
     Print("");
     Print("═══════════════════════════════════════════════════════════════════");
@@ -245,9 +261,15 @@ int OnInit() {
     Print("  System State: ACTIVE");
     Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions());
     Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions());
-    if(IsRangeBoxAvailable())
+    if(IsRangeBoxAvailable()) {
         Print("  RangeBox: R=", DoubleToString(rangeBox_Resistance, symbolDigits),
               " S=", DoubleToString(rangeBox_Support, symbolDigits));
+        Print("  Shield Mode: ", GetShieldModeName());
+        if(ShieldMode != SHIELD_DISABLED) {
+            Print("  Upper Breakout: ", DoubleToString(upperBreakoutLevel, symbolDigits));
+            Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
+        }
+    }
     Print("═══════════════════════════════════════════════════════════════════");
 
     if(EnableAlerts) {
@@ -304,6 +326,12 @@ void OnDeinit(const int reason) {
     if(IsRangeBoxAvailable())
         RemoveRangeBoxVisualization();
 
+    // Deinitialize Shield
+    if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
+        DeinitializeShield();
+        DeinitializeRangeBoxShield();
+    }
+
     // Note: We do NOT close orders on deinit - they should persist
     // Only close if explicitly requested or on critical error
 
@@ -347,6 +375,11 @@ void OnTick() {
     //--- HEDGING: Monitor hedge positions (only NEUTRAL_RANGEBOX with EnableHedging) ---
     if(IsHedgingAvailable()) {
         MonitorHedgePositions();
+    }
+
+    //--- SHIELD: Process Shield Intelligente (only NEUTRAL_RANGEBOX with Shield enabled) ---
+    if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
+        ProcessShield();
     }
 
     //--- CHECK ATR RECALCULATION (only if ATR enabled) ---

@@ -131,7 +131,7 @@ bool isBreakoutDown = false;                // Flag breakout sotto support
 bool isInsideRange = true;                  // Flag prezzo dentro range
 
 //+------------------------------------------------------------------+
-//| HEDGING VARIABLES (Solo per NEUTRAL_RANGEBOX)                    |
+//| HEDGING VARIABLES (Legacy - Solo per NEUTRAL_RANGEBOX)           |
 //+------------------------------------------------------------------+
 ENUM_HEDGE_DIRECTION currentHedgeDirection = HEDGE_NONE;  // Direzione hedge attivo
 ulong hedgeLongTicket = 0;                  // Ticket ordine hedge LONG
@@ -139,6 +139,61 @@ ulong hedgeShortTicket = 0;                 // Ticket ordine hedge SHORT
 double hedgeLotSize = 0;                    // Lot size hedge corrente
 datetime hedgeOpenTime = 0;                 // Tempo apertura hedge
 double hedgeEntryPrice = 0;                 // Prezzo entry hedge
+
+//+------------------------------------------------------------------+
+//| 🛡️ SHIELD INTELLIGENTE STRUCTURE                                 |
+//+------------------------------------------------------------------+
+struct ShieldData {
+    bool isActive;                          // Shield attivo
+    ENUM_SHIELD_TYPE type;                  // Tipo (LONG/SHORT)
+    ENUM_SHIELD_PHASE phase;                // Fase corrente (per 3 fasi)
+    ulong ticket;                           // Ticket posizione shield
+    double lot_size;                        // Lot size shield
+    double entry_price;                     // Prezzo entry
+    double current_pl;                      // P/L corrente
+    double trailing_sl;                     // Trailing SL (se attivo)
+    datetime activation_time;               // Tempo attivazione
+    int activation_count;                   // Contatore attivazioni
+};
+
+ShieldData shield;
+
+// Shield Statistics
+int totalShieldActivations = 0;
+double totalShieldPL = 0;
+datetime lastShieldClosure = 0;
+
+//+------------------------------------------------------------------+
+//| 📦 RANGEBOX DATA STRUCTURE                                       |
+//+------------------------------------------------------------------+
+struct RangeBoxData {
+    double resistance;                      // Livello Resistance
+    double support;                         // Livello Support
+    double center;                          // Centro range
+    double rangeHeight;                     // Altezza range (pips)
+    double warningZoneUp;                   // Zona warning superiore
+    double warningZoneDown;                 // Zona warning inferiore
+    bool isValid;                           // Range valido
+    datetime lastCalc;                      // Ultimo calcolo
+};
+
+RangeBoxData rangeBox;
+
+// Breakout Levels (calcolati da ultimo livello grid)
+double upperBreakoutLevel = 0;
+double lowerBreakoutLevel = 0;
+double upperReentryLevel = 0;
+double lowerReentryLevel = 0;
+
+// Breakout Detection
+int breakoutConfirmCounter = 0;
+datetime breakoutDetectionTime = 0;
+ENUM_BREAKOUT_DIRECTION lastBreakoutDirection = BREAKOUT_NONE;
+
+//+------------------------------------------------------------------+
+//| CURRENT SYSTEM STATE (Extended)                                  |
+//+------------------------------------------------------------------+
+ENUM_SYSTEM_STATE currentSystemState = STATE_INIT;
 
 //+------------------------------------------------------------------+
 //| RISK MANAGEMENT VARIABLES                                        |
@@ -215,7 +270,40 @@ void InitializeArrays() {
     ArrayInitialize(gridB_Lower_Cycles, 0);
     for(int i = 0; i < 10; i++) gridB_Lower_Status[i] = ORDER_NONE;
 
-    Print("SUCCESS: All grid arrays initialized");
+    // Initialize Shield Structure
+    ZeroMemory(shield);
+    shield.isActive = false;
+    shield.type = SHIELD_NONE;
+    shield.phase = PHASE_NORMAL;
+    shield.ticket = 0;
+    shield.lot_size = 0;
+    shield.entry_price = 0;
+    shield.current_pl = 0;
+    shield.trailing_sl = 0;
+    shield.activation_time = 0;
+    shield.activation_count = 0;
+
+    // Initialize RangeBox Structure
+    ZeroMemory(rangeBox);
+    rangeBox.resistance = 0;
+    rangeBox.support = 0;
+    rangeBox.center = 0;
+    rangeBox.rangeHeight = 0;
+    rangeBox.warningZoneUp = 0;
+    rangeBox.warningZoneDown = 0;
+    rangeBox.isValid = false;
+    rangeBox.lastCalc = 0;
+
+    // Reset breakout levels
+    upperBreakoutLevel = 0;
+    lowerBreakoutLevel = 0;
+    upperReentryLevel = 0;
+    lowerReentryLevel = 0;
+    breakoutConfirmCounter = 0;
+    breakoutDetectionTime = 0;
+    lastBreakoutDirection = BREAKOUT_NONE;
+
+    Print("SUCCESS: All grid arrays and Shield initialized");
 }
 
 //+------------------------------------------------------------------+

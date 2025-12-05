@@ -12,26 +12,8 @@
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//| Get Current ATR Value in Pips                                    |
+//| NOTE: GetATRPips() is defined in Core/ModeLogic.mqh              |
 //+------------------------------------------------------------------+
-double GetATRPips() {
-    if(atrHandle == INVALID_HANDLE) {
-        LogMessage(LOG_WARNING, "ATR handle invalid, returning default");
-        return ATR_Normal_Spacing;  // Default fallback
-    }
-
-    double atrBuffer[];
-    ArraySetAsSeries(atrBuffer, true);
-
-    if(CopyBuffer(atrHandle, 0, 0, 1, atrBuffer) <= 0) {
-        LogMessage(LOG_WARNING, "Failed to copy ATR buffer, error: " + IntegerToString(GetLastError()));
-        return ATR_Normal_Spacing;
-    }
-
-    // Convert ATR to pips
-    double atrPips = PointsToPips(atrBuffer[0]);
-    return atrPips;
-}
 
 //+------------------------------------------------------------------+
 //| Get ATR Condition Based on Value                                 |
@@ -248,7 +230,7 @@ string GetVolatilityDescription() {
 double GetOptimalSpacing() {
     switch(SpacingMode) {
         case SPACING_FIXED:
-            return FixedSpacing_Pips;
+            return Fixed_Spacing_Pips;
 
         case SPACING_ATR:
             return CalculateATRSpacing();
@@ -257,7 +239,7 @@ double GetOptimalSpacing() {
             return CalculateGeometricSpacing();
 
         default:
-            return FixedSpacing_Pips;
+            return Fixed_Spacing_Pips;
     }
 }
 

@@ -109,22 +109,8 @@ double CalculateHedgeLotSize()
 }
 
 //+------------------------------------------------------------------+
-//| Normalizza lot size secondo specifiche broker                    |
+//| NOTE: NormalizeLotSize() is defined in Core/BrokerValidation.mqh |
 //+------------------------------------------------------------------+
-double NormalizeLotSize(double lot)
-{
-   if(symbolLotStep == 0)
-      symbolLotStep = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
-
-   lot = MathRound(lot / symbolLotStep) * symbolLotStep;
-
-   if(lot < symbolMinLot)
-      lot = symbolMinLot;
-   if(lot > symbolMaxLot)
-      lot = symbolMaxLot;
-
-   return NormalizeDouble(lot, 2);
-}
 
 //+------------------------------------------------------------------+
 //| Apri posizione hedge                                             |

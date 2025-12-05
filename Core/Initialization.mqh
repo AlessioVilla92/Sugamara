@@ -29,7 +29,7 @@ void PrintSystemConfiguration() {
     Print("  Spacing Mode: ", EnumToString(SpacingMode));
 
     if(SpacingMode == SPACING_FIXED) {
-        Print("  Fixed Spacing: ", FixedSpacing_Pips, " pips");
+        Print("  Fixed Spacing: ", Fixed_Spacing_Pips, " pips");
     } else if(SpacingMode == SPACING_ATR) {
         Print("  ATR Period: ", ATR_Period);
         Print("  ATR Timeframe: ", EnumToString(ATR_Timeframe));

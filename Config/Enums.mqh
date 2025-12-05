@@ -40,7 +40,44 @@ enum ENUM_RANGEBOX_MODE {
 };
 
 //+------------------------------------------------------------------+
-//| 🛡️ HEDGE DIRECTION - Direzione hedge attivo (solo RANGEBOX)      |
+//| 🛡️ SHIELD MODE - Modalità Shield Intelligente (solo RANGEBOX)    |
+//+------------------------------------------------------------------+
+enum ENUM_SHIELD_MODE {
+    SHIELD_DISABLED = 0,        // Shield Disabilitato
+    SHIELD_SIMPLE = 1,          // Shield Simple (1 fase - attivazione diretta)
+    SHIELD_3_PHASES = 2         // Shield 3 Fasi (Warning -> Pre-Shield -> Attivo)
+};
+
+//+------------------------------------------------------------------+
+//| 🛡️ SHIELD TYPE - Tipo di Shield attivo                           |
+//+------------------------------------------------------------------+
+enum ENUM_SHIELD_TYPE {
+    SHIELD_NONE = 0,            // Nessuno shield attivo
+    SHIELD_LONG = 1,            // Shield LONG (protegge LONG in perdita)
+    SHIELD_SHORT = 2            // Shield SHORT (protegge SHORT in perdita)
+};
+
+//+------------------------------------------------------------------+
+//| 🛡️ SHIELD PHASE - Fase Shield (solo per SHIELD_3_PHASES)         |
+//+------------------------------------------------------------------+
+enum ENUM_SHIELD_PHASE {
+    PHASE_NORMAL = 0,           // Operativita normale (dentro range)
+    PHASE_WARNING = 1,          // Fase 1: Warning Zone (alert)
+    PHASE_PRE_SHIELD = 2,       // Fase 2: Pre-Shield (pending pronto)
+    PHASE_SHIELD_ACTIVE = 3     // Fase 3: Shield Attivo (protezione)
+};
+
+//+------------------------------------------------------------------+
+//| 🔄 BREAKOUT DIRECTION - Direzione breakout                       |
+//+------------------------------------------------------------------+
+enum ENUM_BREAKOUT_DIRECTION {
+    BREAKOUT_NONE = 0,          // Nessun breakout
+    BREAKOUT_UP = 1,            // Breakout verso l'alto
+    BREAKOUT_DOWN = 2           // Breakout verso il basso
+};
+
+//+------------------------------------------------------------------+
+//| 🛡️ HEDGE DIRECTION - (Legacy - per compatibilita)                |
 //+------------------------------------------------------------------+
 enum ENUM_HEDGE_DIRECTION {
     HEDGE_NONE = 0,             // Nessun hedge attivo
@@ -83,15 +120,38 @@ enum ENUM_REOPEN_TRIGGER {
 };
 
 //+------------------------------------------------------------------+
-//| ⚙️ SYSTEM STATE - Stati del sistema                              |
+//| ⚙️ SYSTEM STATE - Stati del sistema (esteso per Shield)          |
 //+------------------------------------------------------------------+
 enum ENUM_SYSTEM_STATE {
-    STATE_IDLE,                 // Sistema inattivo
-    STATE_INITIALIZING,         // Inizializzazione in corso
-    STATE_ACTIVE,               // Sistema attivo e operativo
-    STATE_PAUSED,               // Sistema in pausa
-    STATE_CLOSING,              // Chiusura posizioni in corso
-    STATE_ERROR                 // Stato di errore
+    // Stati base
+    STATE_INIT = 0,             // Inizializzazione
+    STATE_IDLE = 1,             // Inattivo
+    STATE_RUNNING = 2,          // Operativo normale
+    STATE_ACTIVE = 2,           // Alias per STATE_RUNNING
+    STATE_PAUSED = 3,           // In pausa
+    STATE_INITIALIZING = 4,     // Inizializzazione in corso
+    STATE_CLOSING = 5,          // Chiusura posizioni in corso
+
+    // Stati Range (RANGEBOX mode)
+    STATE_INSIDE_RANGE = 10,    // Dentro il range (normale)
+    STATE_WARNING_UP = 11,      // Warning zona superiore
+    STATE_WARNING_DOWN = 12,    // Warning zona inferiore
+
+    // Stati Breakout
+    STATE_BREAKOUT_UP = 20,     // Breakout sopra
+    STATE_BREAKOUT_DOWN = 21,   // Breakout sotto
+
+    // Stati Shield
+    STATE_SHIELD_PENDING = 30,  // Shield pending (pronto)
+    STATE_SHIELD_LONG = 31,     // Shield LONG attivo
+    STATE_SHIELD_SHORT = 32,    // Shield SHORT attivo
+
+    // Stati Reentry
+    STATE_REENTRY = 40,         // Rientro nel range
+
+    // Stati Emergency
+    STATE_EMERGENCY = 90,       // Emergency stop
+    STATE_ERROR = 99            // Errore
 };
 
 //+------------------------------------------------------------------+
@@ -101,7 +161,9 @@ enum ENUM_ORDER_STATUS {
     ORDER_NONE,                 // Nessun ordine
     ORDER_PENDING,              // Ordine pending piazzato
     ORDER_FILLED,               // Ordine eseguito (posizione aperta)
-    ORDER_CLOSED,               // Ordine chiuso (TP/SL hit)
+    ORDER_CLOSED,               // Ordine chiuso (generico)
+    ORDER_CLOSED_TP,            // Ordine chiuso in Take Profit
+    ORDER_CLOSED_SL,            // Ordine chiuso in Stop Loss
     ORDER_CANCELLED,            // Ordine cancellato
     ORDER_ERROR                 // Errore ordine
 };
@@ -190,6 +252,12 @@ const int DEFAULT_COOLDOWN_SEC = 120;     // Cooldown default cyclic (secondi)
 //+------------------------------------------------------------------+
 const int MAGIC_OFFSET_GRID_A = 0;        // Grid A: MagicNumber + 0
 const int MAGIC_OFFSET_GRID_B = 10000;    // Grid B: MagicNumber + 10000
-const int MAGIC_HEDGE_LONG = 9001;        // Hedge LONG
-const int MAGIC_HEDGE_SHORT = 9002;       // Hedge SHORT
+
+// Shield Magic Numbers (nuovo sistema)
+const int MAGIC_SHIELD_LONG = 9001;       // Shield LONG
+const int MAGIC_SHIELD_SHORT = 9002;      // Shield SHORT
+
+// Legacy Hedge (per compatibilita)
+const int MAGIC_HEDGE_LONG = 9001;        // Hedge LONG (alias Shield)
+const int MAGIC_HEDGE_SHORT = 9002;       // Hedge SHORT (alias Shield)
 

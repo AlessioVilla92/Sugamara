@@ -429,9 +429,177 @@ void PrintModeConfiguration()
    PrintFormat("  ATR Disponibile: %s", IsATRAvailable() ? "Sì" : "No");
    PrintFormat("  ATR Abilitato: %s", IsATREnabled() ? "Sì" : "No");
    PrintFormat("  Range Box: %s", IsRangeBoxAvailable() ? "Sì" : "No");
-   PrintFormat("  Hedging: %s", IsHedgingAvailable() ? "Sì" : "No");
+   PrintFormat("  Shield Mode: %s", GetShieldModeNameLogic());
+   PrintFormat("  Hedging (Legacy): %s", IsHedgingAvailable() ? "Sì" : "No");
    PrintFormat("  TP Mode: %s", UsesCascadeTP() ? "CASCADE" : "FISSO");
    Print("───────────────────────────────────────────────────────────────────");
    PrintFormat("  Spacing Corrente: %.1f pips", CalculateCurrentSpacing());
    Print("═══════════════════════════════════════════════════════════════════");
+}
+
+//+------------------------------------------------------------------+
+//| ═══════════════════════════════════════════════════════════════ |
+//| 🛡️ SHIELD INTELLIGENTE INTEGRATION                              |
+//| ═══════════════════════════════════════════════════════════════ |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Check if Shield is Available                                      |
+//+------------------------------------------------------------------+
+bool IsShieldAvailableLogic()
+{
+   return (NeutralMode == NEUTRAL_RANGEBOX && ShieldMode != SHIELD_DISABLED);
+}
+
+//+------------------------------------------------------------------+
+//| Get Shield Mode Name                                              |
+//+------------------------------------------------------------------+
+string GetShieldModeNameLogic()
+{
+   if(NeutralMode != NEUTRAL_RANGEBOX) {
+      return "N/A";
+   }
+
+   switch(ShieldMode) {
+      case SHIELD_DISABLED: return "DISABLED";
+      case SHIELD_SIMPLE: return "SIMPLE";
+      case SHIELD_3_PHASES: return "3 PHASES";
+      default: return "UNKNOWN";
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Initialize Mode (main entry point)                                |
+//+------------------------------------------------------------------+
+bool InitializeMode()
+{
+   Print("=== Initializing Mode: ", GetModeName(), " ===");
+
+   // Validate parameters
+   if(!ValidateModeParameters()) {
+      Print("ERROR: Mode parameter validation failed");
+      return false;
+   }
+
+   // Mode-specific initialization
+   switch(NeutralMode) {
+      case NEUTRAL_PURE:
+         currentSpacing_Pips = Fixed_Spacing_Pips;
+         Print("  PURE Mode: Fixed spacing ", Fixed_Spacing_Pips, " pips");
+         break;
+
+      case NEUTRAL_CASCADE:
+         if(IsATREnabled() && currentATR_Pips > 0) {
+            currentSpacing_Pips = CalculateCurrentSpacing();
+         } else {
+            currentSpacing_Pips = Fixed_Spacing_Pips;
+         }
+         Print("  CASCADE Mode: Spacing ", currentSpacing_Pips, " pips");
+         break;
+
+      case NEUTRAL_RANGEBOX:
+         if(IsATREnabled() && currentATR_Pips > 0) {
+            currentSpacing_Pips = CalculateCurrentSpacing();
+         } else {
+            currentSpacing_Pips = Fixed_Spacing_Pips;
+         }
+         Print("  RANGEBOX Mode: Spacing ", currentSpacing_Pips, " pips");
+
+         // Initialize RangeBox for Shield
+         if(!InitializeRangeBoxForShield()) {
+            Print("WARNING: RangeBox initialization failed");
+         }
+
+         // Initialize Shield
+         if(!InitializeShield()) {
+            Print("WARNING: Shield initialization failed");
+         }
+         break;
+   }
+
+   PrintModeConfiguration();
+   return true;
+}
+
+//+------------------------------------------------------------------+
+//| Process Mode OnTick                                               |
+//+------------------------------------------------------------------+
+void ProcessModeOnTick()
+{
+   switch(NeutralMode) {
+      case NEUTRAL_PURE:
+         // Pure mode: nothing special, spacing is fixed
+         break;
+
+      case NEUTRAL_CASCADE:
+         // Cascade mode: check for ATR recalculation
+         if(IsATREnabled()) {
+            CheckATRRecalculation();
+         }
+         break;
+
+      case NEUTRAL_RANGEBOX: {
+         // RangeBox mode: ATR check + Range monitoring + Shield processing
+         if(IsATREnabled()) {
+            CheckATRRecalculation();
+         }
+
+         // Update Range Box state
+         double rbCurrentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+         UpdateRangeBoxState(rbCurrentPrice);
+
+         // Process Shield
+         ProcessShield();
+         break;
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Check ATR Recalculation                                           |
+//+------------------------------------------------------------------+
+void CheckATRRecalculation()
+{
+   if(!IsATREnabled()) return;
+
+   datetime now = TimeCurrent();
+   if(now - lastATRRecalc < ATR_RecalcHours * 3600) return;
+
+   double newATR = GetATRPips();
+   if(newATR <= 0) return;
+
+   double changePercent = 0;
+   if(currentATR_Pips > 0) {
+      changePercent = MathAbs((newATR - currentATR_Pips) / currentATR_Pips) * 100;
+   }
+
+   if(changePercent > ATR_ChangeThreshold || currentATR_Pips == 0) {
+      double oldSpacing = currentSpacing_Pips;
+      currentATR_Pips = newATR;
+      currentSpacing_Pips = CalculateCurrentSpacing();
+      lastATRRecalc = now;
+
+      if(DetailedLogging && changePercent > 0) {
+         Print("[ModeLogic] ATR recalculated: ", DoubleToString(changePercent, 1), "% change");
+         Print("  Old Spacing: ", DoubleToString(oldSpacing, 1), " pips");
+         Print("  New Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Deinitialize Mode                                                 |
+//+------------------------------------------------------------------+
+void DeinitializeMode()
+{
+   Print("[ModeLogic] Deinitializing mode: ", GetModeName());
+
+   if(NeutralMode == NEUTRAL_RANGEBOX) {
+      // Deinitialize Shield
+      DeinitializeShield();
+      // Deinitialize RangeBox
+      DeinitializeRangeBoxShield();
+   }
+
+   Print("[ModeLogic] Mode deinitialized");
 }

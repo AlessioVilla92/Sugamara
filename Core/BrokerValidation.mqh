@@ -103,13 +103,13 @@ bool ValidateInputParameters() {
     // CHECK 3: Spacing
     // ====================================================================
     if(SpacingMode == SPACING_FIXED) {
-        if(FixedSpacing_Pips < MIN_SPACING_PIPS) {
-            Print("WARNING: FixedSpacing_Pips ", FixedSpacing_Pips,
+        if(Fixed_Spacing_Pips < MIN_SPACING_PIPS) {
+            Print("WARNING: Fixed_Spacing_Pips ", Fixed_Spacing_Pips,
                   " below recommended minimum ", MIN_SPACING_PIPS);
             warnings++;
         }
-        if(FixedSpacing_Pips > MAX_SPACING_PIPS) {
-            Print("WARNING: FixedSpacing_Pips ", FixedSpacing_Pips,
+        if(Fixed_Spacing_Pips > MAX_SPACING_PIPS) {
+            Print("WARNING: Fixed_Spacing_Pips ", Fixed_Spacing_Pips,
                   " above recommended maximum ", MAX_SPACING_PIPS);
             warnings++;
         }
@@ -165,8 +165,8 @@ bool ValidateInputParameters() {
     double brokerMinPips = PointsToPips(symbolStopsLevel * symbolPoint);
     if(brokerMinPips < 0.1) brokerMinPips = 5.0;  // Default if broker doesn't specify
 
-    if(SpacingMode == SPACING_FIXED && FixedSpacing_Pips < brokerMinPips) {
-        Print("WARNING: FixedSpacing_Pips ", FixedSpacing_Pips,
+    if(SpacingMode == SPACING_FIXED && Fixed_Spacing_Pips < brokerMinPips) {
+        Print("WARNING: Fixed_Spacing_Pips ", Fixed_Spacing_Pips,
               " below broker stop level ", DoubleToString(brokerMinPips, 1), " pips");
         Print("         Orders may be rejected");
         warnings++;

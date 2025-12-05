@@ -128,15 +128,15 @@ string GetOrderTypeString(ENUM_ORDER_TYPE orderType) {
 //+------------------------------------------------------------------+
 //| Calculate Entry Price for Grid Level                             |
 //+------------------------------------------------------------------+
-double CalculateGridLevelPrice(double entryPoint, ENUM_GRID_ZONE zone, int level, double spacingPips) {
+double CalculateGridLevelPrice(double baseEntryPoint, ENUM_GRID_ZONE zone, int level, double spacingPips) {
     double spacingPrice = PipsToPoints(spacingPips);
 
     if(zone == ZONE_UPPER) {
         // Upper zone: prices above entry point
-        return NormalizeDouble(entryPoint + (spacingPrice * (level + 1)), symbolDigits);
+        return NormalizeDouble(baseEntryPoint + (spacingPrice * (level + 1)), symbolDigits);
     } else {
         // Lower zone: prices below entry point
-        return NormalizeDouble(entryPoint - (spacingPrice * (level + 1)), symbolDigits);
+        return NormalizeDouble(baseEntryPoint - (spacingPrice * (level + 1)), symbolDigits);
     }
 }
 
@@ -213,7 +213,7 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
 //+------------------------------------------------------------------+
 //| Calculate Stop Loss for Grid Level                               |
 //+------------------------------------------------------------------+
-double CalculateGridSL(double entryPoint, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone,
+double CalculateGridSL(double baseEntryPoint, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone,
                        int level, double spacingPips, int totalLevels) {
 
     if(!UseGlobalStopLoss && !UseIndividualSL) {
@@ -221,7 +221,7 @@ double CalculateGridSL(double entryPoint, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zo
     }
 
     bool isBuy = IsGridOrderBuy(side, zone);
-    double levelPrice = CalculateGridLevelPrice(entryPoint, zone, level, spacingPips);
+    double levelPrice = CalculateGridLevelPrice(baseEntryPoint, zone, level, spacingPips);
 
     // Individual SL
     if(UseIndividualSL) {

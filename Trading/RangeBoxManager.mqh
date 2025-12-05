@@ -342,3 +342,440 @@ void LogRangeBoxReport()
    PrintFormat("  Breakout Down: %s", isBreakoutDown ? "YES" : "NO");
    Print("═══════════════════════════════════════════════════════════════════");
 }
+
+//+------------------------------------------------------------------+
+//| ═══════════════════════════════════════════════════════════════ |
+//| 🛡️ SHIELD INTELLIGENTE INTEGRATION                              |
+//| ═══════════════════════════════════════════════════════════════ |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Initialize RangeBox for Shield System                            |
+//+------------------------------------------------------------------+
+bool InitializeRangeBoxForShield()
+{
+   if(NeutralMode != NEUTRAL_RANGEBOX) {
+      Print("[RangeBox] Skip Shield init - Not in RANGEBOX mode");
+      return true;
+   }
+
+   Print("═══ Initializing Range Box for Shield ═══");
+
+   // Reset structure
+   ZeroMemory(rangeBox);
+
+   bool success = false;
+
+   switch(RangeBoxMode) {
+      case RANGEBOX_MANUAL:
+         success = CalculateManualRangeBoxShield();
+         break;
+
+      case RANGEBOX_DAILY_HL:
+         success = CalculateDailyHLRangeBoxShield();
+         break;
+
+      case RANGEBOX_ATR_BASED:
+         success = CalculateATRBasedRangeBoxShield();
+         break;
+   }
+
+   if(success) {
+      rangeBox.center = (rangeBox.resistance + rangeBox.support) / 2.0;
+      rangeBox.rangeHeight = PointsToPips(rangeBox.resistance - rangeBox.support);
+
+      // Calculate Warning Zones (for Shield 3 Phases)
+      double warningBuffer = (rangeBox.resistance - rangeBox.support) * (Warning_Zone_Percent / 100.0);
+      rangeBox.warningZoneUp = rangeBox.resistance - warningBuffer;
+      rangeBox.warningZoneDown = rangeBox.support + warningBuffer;
+
+      rangeBox.isValid = true;
+      rangeBox.lastCalc = TimeCurrent();
+
+      // Copy to legacy variables
+      rangeBox_Resistance = rangeBox.resistance;
+      rangeBox_Support = rangeBox.support;
+
+      Print("  Mode: ", EnumToString(RangeBoxMode));
+      Print("  Resistance: ", DoubleToString(rangeBox.resistance, symbolDigits));
+      Print("  Support: ", DoubleToString(rangeBox.support, symbolDigits));
+      Print("  Range Height: ", DoubleToString(rangeBox.rangeHeight, 1), " pips");
+      Print("  Warning Zone Up: ", DoubleToString(rangeBox.warningZoneUp, symbolDigits));
+      Print("  Warning Zone Down: ", DoubleToString(rangeBox.warningZoneDown, symbolDigits));
+
+      // Draw on chart
+      if(ShowRangeBox) {
+         DrawRangeBoxVisualization();
+         DrawWarningZones();
+      }
+   }
+
+   return success;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Manual Range Box for Shield                            |
+//+------------------------------------------------------------------+
+bool CalculateManualRangeBoxShield()
+{
+   if(RangeBox_Resistance <= RangeBox_Support ||
+      RangeBox_Resistance == 0 || RangeBox_Support == 0) {
+      Print("ERROR: Invalid manual Resistance/Support values");
+      return false;
+   }
+
+   rangeBox.resistance = RangeBox_Resistance;
+   rangeBox.support = RangeBox_Support;
+
+   return true;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Daily High/Low Range Box for Shield                    |
+//+------------------------------------------------------------------+
+bool CalculateDailyHLRangeBoxShield()
+{
+   double highestHigh = 0;
+   double lowestLow = DBL_MAX;
+
+   // Find High/Low in last N days
+   for(int i = 1; i <= RangeBox_PeriodBars; i++) {
+      double high = iHigh(_Symbol, PERIOD_D1, i);
+      double low = iLow(_Symbol, PERIOD_D1, i);
+
+      if(high > highestHigh) highestHigh = high;
+      if(low < lowestLow) lowestLow = low;
+   }
+
+   if(highestHigh <= lowestLow) {
+      Print("ERROR: Invalid Daily H/L data");
+      return false;
+   }
+
+   rangeBox.resistance = highestHigh;
+   rangeBox.support = lowestLow;
+
+   return true;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate ATR-Based Range Box for Shield                         |
+//+------------------------------------------------------------------+
+bool CalculateATRBasedRangeBoxShield()
+{
+   if(currentATR_Pips <= 0) {
+      Print("ERROR: Invalid ATR value for Range Box");
+      return false;
+   }
+
+   double rangeDistance = PipsToPoints(currentATR_Pips * RangeBox_ATR_Mult);
+
+   rangeBox.resistance = NormalizeDouble(entryPoint + rangeDistance, symbolDigits);
+   rangeBox.support = NormalizeDouble(entryPoint - rangeDistance, symbolDigits);
+
+   return true;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Breakout Levels from Grid Edges                        |
+//+------------------------------------------------------------------+
+bool CalculateBreakoutLevels()
+{
+   // Find highest Grid B level (upper zone sells)
+   double highestGridBLevel = 0;
+   for(int i = 0; i < GridLevelsPerSide; i++) {
+      if(gridB_Upper_EntryPrices[i] > highestGridBLevel) {
+         highestGridBLevel = gridB_Upper_EntryPrices[i];
+      }
+   }
+
+   // Find lowest Grid A level (lower zone sells)
+   double lowestGridALevel = DBL_MAX;
+   for(int i = 0; i < GridLevelsPerSide; i++) {
+      if(gridA_Lower_EntryPrices[i] > 0 && gridA_Lower_EntryPrices[i] < lowestGridALevel) {
+         lowestGridALevel = gridA_Lower_EntryPrices[i];
+      }
+   }
+
+   if(highestGridBLevel == 0 || lowestGridALevel == DBL_MAX) {
+      Print("ERROR: Cannot calculate breakout levels - grid not initialized");
+      return false;
+   }
+
+   // Breakout Levels = last grid level + buffer
+   double bufferPoints = PipsToPoints(Breakout_Buffer_Pips);
+   upperBreakoutLevel = NormalizeDouble(highestGridBLevel + bufferPoints, symbolDigits);
+   lowerBreakoutLevel = NormalizeDouble(lowestGridALevel - bufferPoints, symbolDigits);
+
+   // Reentry Levels = breakout - buffer
+   double reentryBuffer = PipsToPoints(Reentry_Buffer_Pips);
+   upperReentryLevel = NormalizeDouble(upperBreakoutLevel - reentryBuffer, symbolDigits);
+   lowerReentryLevel = NormalizeDouble(lowerBreakoutLevel + reentryBuffer, symbolDigits);
+
+   Print("═══ Breakout Levels Calculated ═══");
+   Print("  Upper Breakout: ", DoubleToString(upperBreakoutLevel, symbolDigits));
+   Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
+   Print("  Upper Reentry: ", DoubleToString(upperReentryLevel, symbolDigits));
+   Print("  Lower Reentry: ", DoubleToString(lowerReentryLevel, symbolDigits));
+
+   // Draw levels
+   DrawBreakoutLevels();
+
+   return true;
+}
+
+//+------------------------------------------------------------------+
+//| Get Price Position in Range (for Shield 3 Phases)                |
+//+------------------------------------------------------------------+
+ENUM_SYSTEM_STATE GetPricePositionInRange(double price)
+{
+   if(!rangeBox.isValid) return STATE_RUNNING;
+
+   // Check breakout
+   if(price >= upperBreakoutLevel) {
+      return STATE_BREAKOUT_UP;
+   }
+   if(price <= lowerBreakoutLevel) {
+      return STATE_BREAKOUT_DOWN;
+   }
+
+   // Check warning zones (for Shield 3 Phases)
+   if(ShieldMode == SHIELD_3_PHASES) {
+      if(price >= rangeBox.warningZoneUp) {
+         return STATE_WARNING_UP;
+      }
+      if(price <= rangeBox.warningZoneDown) {
+         return STATE_WARNING_DOWN;
+      }
+   }
+
+   // Inside normal range
+   return STATE_INSIDE_RANGE;
+}
+
+//+------------------------------------------------------------------+
+//| Check Breakout Condition with Confirmation                       |
+//+------------------------------------------------------------------+
+bool CheckBreakoutConditionShield(double price, ENUM_BREAKOUT_DIRECTION &direction)
+{
+   direction = BREAKOUT_NONE;
+
+   // Check UP
+   if(price >= upperBreakoutLevel) {
+      if(Use_Candle_Close) {
+         if(IsBreakoutConfirmedShield(BREAKOUT_UP)) {
+            direction = BREAKOUT_UP;
+            return true;
+         }
+      } else {
+         direction = BREAKOUT_UP;
+         return true;
+      }
+   }
+
+   // Check DOWN
+   if(price <= lowerBreakoutLevel) {
+      if(Use_Candle_Close) {
+         if(IsBreakoutConfirmedShield(BREAKOUT_DOWN)) {
+            direction = BREAKOUT_DOWN;
+            return true;
+         }
+      } else {
+         direction = BREAKOUT_DOWN;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Check if Breakout is Confirmed (N candles)                       |
+//+------------------------------------------------------------------+
+bool IsBreakoutConfirmedShield(ENUM_BREAKOUT_DIRECTION direction)
+{
+   int confirmedCandles = 0;
+
+   for(int i = 0; i < Breakout_Confirm_Candles; i++) {
+      double closePrice = iClose(_Symbol, PERIOD_CURRENT, i);
+
+      if(direction == BREAKOUT_UP) {
+         if(closePrice > upperBreakoutLevel) {
+            confirmedCandles++;
+         }
+      } else {
+         if(closePrice < lowerBreakoutLevel) {
+            confirmedCandles++;
+         }
+      }
+   }
+
+   return (confirmedCandles >= Breakout_Confirm_Candles);
+}
+
+//+------------------------------------------------------------------+
+//| Check Reentry Condition                                          |
+//+------------------------------------------------------------------+
+bool CheckReentryConditionShield(double price)
+{
+   if(!shield.isActive) return false;
+
+   if(shield.type == SHIELD_LONG) {
+      // Was breakout DOWN, reenter if price rises above reentry level
+      if(price > lowerReentryLevel) {
+         if(Use_Candle_Close) {
+            return IsReentryConfirmedShield(BREAKOUT_DOWN);
+         }
+         return true;
+      }
+   }
+   else if(shield.type == SHIELD_SHORT) {
+      // Was breakout UP, reenter if price falls below reentry level
+      if(price < upperReentryLevel) {
+         if(Use_Candle_Close) {
+            return IsReentryConfirmedShield(BREAKOUT_UP);
+         }
+         return true;
+      }
+   }
+
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Check if Reentry is Confirmed                                    |
+//+------------------------------------------------------------------+
+bool IsReentryConfirmedShield(ENUM_BREAKOUT_DIRECTION originalDirection)
+{
+   int confirmedCandles = 0;
+
+   for(int i = 0; i < Breakout_Confirm_Candles; i++) {
+      double closePrice = iClose(_Symbol, PERIOD_CURRENT, i);
+
+      if(originalDirection == BREAKOUT_UP) {
+         if(closePrice < upperReentryLevel) {
+            confirmedCandles++;
+         }
+      } else {
+         if(closePrice > lowerReentryLevel) {
+            confirmedCandles++;
+         }
+      }
+   }
+
+   return (confirmedCandles >= Breakout_Confirm_Candles);
+}
+
+//+------------------------------------------------------------------+
+//| Get Last Grid B Level (highest)                                  |
+//+------------------------------------------------------------------+
+double GetLastGridBLevel()
+{
+   double highest = 0;
+   for(int i = 0; i < GridLevelsPerSide; i++) {
+      if(gridB_Upper_EntryPrices[i] > highest) {
+         highest = gridB_Upper_EntryPrices[i];
+      }
+   }
+   return highest;
+}
+
+//+------------------------------------------------------------------+
+//| Get Last Grid A Level (lowest)                                   |
+//+------------------------------------------------------------------+
+double GetLastGridALevel()
+{
+   double lowest = DBL_MAX;
+   for(int i = 0; i < GridLevelsPerSide; i++) {
+      if(gridA_Lower_EntryPrices[i] > 0 && gridA_Lower_EntryPrices[i] < lowest) {
+         lowest = gridA_Lower_EntryPrices[i];
+      }
+   }
+   return (lowest == DBL_MAX) ? 0 : lowest;
+}
+
+//+------------------------------------------------------------------+
+//| Draw Warning Zones (for Shield 3 Phases)                         |
+//+------------------------------------------------------------------+
+void DrawWarningZones()
+{
+   if(ShieldMode != SHIELD_3_PHASES) return;
+
+   string prefix = "SUGAMARA_";
+
+   ObjectDelete(0, prefix + "WARNING_UP");
+   ObjectCreate(0, prefix + "WARNING_UP", OBJ_HLINE, 0, 0, rangeBox.warningZoneUp);
+   ObjectSetInteger(0, prefix + "WARNING_UP", OBJPROP_COLOR, clrOrange);
+   ObjectSetInteger(0, prefix + "WARNING_UP", OBJPROP_STYLE, STYLE_DOT);
+   ObjectSetInteger(0, prefix + "WARNING_UP", OBJPROP_WIDTH, 1);
+   ObjectSetString(0, prefix + "WARNING_UP", OBJPROP_TEXT, "Warning Up");
+
+   ObjectDelete(0, prefix + "WARNING_DOWN");
+   ObjectCreate(0, prefix + "WARNING_DOWN", OBJ_HLINE, 0, 0, rangeBox.warningZoneDown);
+   ObjectSetInteger(0, prefix + "WARNING_DOWN", OBJPROP_COLOR, clrOrange);
+   ObjectSetInteger(0, prefix + "WARNING_DOWN", OBJPROP_STYLE, STYLE_DOT);
+   ObjectSetInteger(0, prefix + "WARNING_DOWN", OBJPROP_WIDTH, 1);
+   ObjectSetString(0, prefix + "WARNING_DOWN", OBJPROP_TEXT, "Warning Down");
+}
+
+//+------------------------------------------------------------------+
+//| Draw Breakout Levels                                             |
+//+------------------------------------------------------------------+
+void DrawBreakoutLevels()
+{
+   string prefix = "SUGAMARA_";
+
+   // Upper Breakout
+   ObjectDelete(0, prefix + "UPPER_BREAKOUT");
+   ObjectCreate(0, prefix + "UPPER_BREAKOUT", OBJ_HLINE, 0, 0, upperBreakoutLevel);
+   ObjectSetInteger(0, prefix + "UPPER_BREAKOUT", OBJPROP_COLOR, clrRed);
+   ObjectSetInteger(0, prefix + "UPPER_BREAKOUT", OBJPROP_STYLE, STYLE_DASH);
+   ObjectSetInteger(0, prefix + "UPPER_BREAKOUT", OBJPROP_WIDTH, 2);
+   ObjectSetString(0, prefix + "UPPER_BREAKOUT", OBJPROP_TEXT, "Upper Breakout");
+
+   // Lower Breakout
+   ObjectDelete(0, prefix + "LOWER_BREAKOUT");
+   ObjectCreate(0, prefix + "LOWER_BREAKOUT", OBJ_HLINE, 0, 0, lowerBreakoutLevel);
+   ObjectSetInteger(0, prefix + "LOWER_BREAKOUT", OBJPROP_COLOR, clrRed);
+   ObjectSetInteger(0, prefix + "LOWER_BREAKOUT", OBJPROP_STYLE, STYLE_DASH);
+   ObjectSetInteger(0, prefix + "LOWER_BREAKOUT", OBJPROP_WIDTH, 2);
+   ObjectSetString(0, prefix + "LOWER_BREAKOUT", OBJPROP_TEXT, "Lower Breakout");
+
+   // Upper Reentry
+   ObjectDelete(0, prefix + "UPPER_REENTRY");
+   ObjectCreate(0, prefix + "UPPER_REENTRY", OBJ_HLINE, 0, 0, upperReentryLevel);
+   ObjectSetInteger(0, prefix + "UPPER_REENTRY", OBJPROP_COLOR, clrLime);
+   ObjectSetInteger(0, prefix + "UPPER_REENTRY", OBJPROP_STYLE, STYLE_DOT);
+   ObjectSetInteger(0, prefix + "UPPER_REENTRY", OBJPROP_WIDTH, 1);
+   ObjectSetString(0, prefix + "UPPER_REENTRY", OBJPROP_TEXT, "Upper Reentry");
+
+   // Lower Reentry
+   ObjectDelete(0, prefix + "LOWER_REENTRY");
+   ObjectCreate(0, prefix + "LOWER_REENTRY", OBJ_HLINE, 0, 0, lowerReentryLevel);
+   ObjectSetInteger(0, prefix + "LOWER_REENTRY", OBJPROP_COLOR, clrLime);
+   ObjectSetInteger(0, prefix + "LOWER_REENTRY", OBJPROP_STYLE, STYLE_DOT);
+   ObjectSetInteger(0, prefix + "LOWER_REENTRY", OBJPROP_WIDTH, 1);
+   ObjectSetString(0, prefix + "LOWER_REENTRY", OBJPROP_TEXT, "Lower Reentry");
+
+   ChartRedraw(0);
+}
+
+//+------------------------------------------------------------------+
+//| Remove All Shield RangeBox Objects                               |
+//+------------------------------------------------------------------+
+void DeinitializeRangeBoxShield()
+{
+   string prefix = "SUGAMARA_";
+   ObjectDelete(0, prefix + "WARNING_UP");
+   ObjectDelete(0, prefix + "WARNING_DOWN");
+   ObjectDelete(0, prefix + "UPPER_BREAKOUT");
+   ObjectDelete(0, prefix + "LOWER_BREAKOUT");
+   ObjectDelete(0, prefix + "UPPER_REENTRY");
+   ObjectDelete(0, prefix + "LOWER_REENTRY");
+
+   RemoveRangeBoxVisualization();
+
+   Print("[RangeBox] Shield visualization removed");
+}
+
+// NOTE: PointsToPips and PipsToPoints are defined in Utils/Helpers.mqh

@@ -137,21 +137,37 @@ input int       RangeBox_PeriodBars = 20;                    // 📅 Periodo cal
 input double    RangeBox_ATR_Mult = 3.0;                     // 📈 Moltiplicatore ATR per range
 
 //+------------------------------------------------------------------+
-//| 8️⃣ 🛡️ HEDGING SETTINGS (Solo RANGEBOX)                           |
+//| 8️⃣ 🛡️ SHIELD INTELLIGENTE (Solo RANGEBOX)                        |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  8️⃣  🛡️ HEDGING SETTINGS (Solo RANGEBOX Mode)             ║"
+input group "║  8️⃣  🛡️ SHIELD INTELLIGENTE (Solo RANGEBOX Mode)          ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
-input group "    ⚔️ HEDGE ACTIVATION"
-input bool      EnableHedging = true;                        // ✅ Abilita hedging su breakout
+input group "    ╔═ SELEZIONA SHIELD MODE ═══════════════════════════════🔽🔽🔽"
+input ENUM_SHIELD_MODE ShieldMode = SHIELD_3_PHASES;         // 🛡️ Modalita Shield ▼
+// SHIELD_DISABLED  = Nessuna protezione
+// SHIELD_SIMPLE    = Attivazione diretta su breakout
+// SHIELD_3_PHASES  = Warning -> Pre-Shield -> Active (CONSIGLIATO)
 
-input group "    📐 HEDGE PARAMETERS"
-input double    Hedge_Multiplier = 1.0;                      // 📈 Moltiplicatore hedge (1.0=100%)
-input double    Hedge_TP_Pips = 20.0;                        // 🎯 Take Profit hedge (pips)
-input double    Hedge_SL_Pips = 10.0;                        // 🛑 Stop Loss hedge (pips)
+input group "    📐 SHIELD BREAKOUT PARAMETERS"
+input double    Breakout_Buffer_Pips = 20.0;                 // 📏 Buffer Breakout oltre ultimo grid (pips)
+input double    Reentry_Buffer_Pips = 30.0;                  // 📏 Buffer Rientro nel range (pips)
+input int       Breakout_Confirm_Candles = 2;                // 🔢 Candele Conferma Breakout
+input bool      Use_Candle_Close = true;                     // ✅ Usa Chiusura Candela per Conferma
+
+input group "    ⚠️ SHIELD 3 FASI PARAMETERS"
+input double    Warning_Zone_Percent = 10.0;                 // 📊 Warning Zone (% dal bordo)
+input bool      Shield_Use_Trailing = false;                 // ✅ Trailing per Shield
+input double    Shield_Trailing_Start = 30.0;                // 📏 Trailing Start (pips)
+input double    Shield_Trailing_Step = 10.0;                 // 📏 Trailing Step (pips)
+
+input group "    🔧 LEGACY HEDGE (Backward Compatibility)"
+input bool      EnableHedging = true;                        // ✅ Abilita hedging (maps to Shield)
+input double    Hedge_Multiplier = 1.0;                      // 📈 Moltiplicatore (legacy, ignored)
+input double    Hedge_TP_Pips = 20.0;                        // 🎯 TP hedge (legacy, ignored)
+input double    Hedge_SL_Pips = 10.0;                        // 🛑 SL hedge (legacy, ignored)
 
 //+------------------------------------------------------------------+
 //| 9️⃣ 💰 LOT SIZING                                                 |
