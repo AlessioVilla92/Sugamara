@@ -141,60 +141,72 @@ double CalculateGridLevelPrice(double entryPoint, ENUM_GRID_ZONE zone, int level
 }
 
 //+------------------------------------------------------------------+
-//| Calculate Take Profit for Perfect Cascade                        |
-//| TP = Entry price of next level (creates chain)                   |
+//| Calculate Take Profit for Grid Level                             |
+//| RISPETTA NeutralMode:                                            |
+//| - NEUTRAL_PURE: TP fisso (Spacing × TP_Ratio_Pure)               |
+//| - NEUTRAL_CASCADE/RANGEBOX: TP cascade (Entry livello precedente)|
 //+------------------------------------------------------------------+
-double CalculateCascadeTP(double entryPoint, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone,
+double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone,
                           int level, double spacingPips, int totalLevels) {
 
     double spacingPrice = PipsToPoints(spacingPips);
     bool isBuy = IsGridOrderBuy(side, zone);
+    double orderEntryPrice = CalculateGridLevelPrice(entryPointPrice, zone, level, spacingPips);
 
-    // Final level uses fixed TP
+    //=================================================================
+    // NEUTRAL_PURE: TP FISSO (Spacing × Ratio)
+    //=================================================================
+    if(NeutralMode == NEUTRAL_PURE) {
+        double tpDistance = spacingPrice * TP_Ratio_Pure;
+        if(isBuy) {
+            return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
+        } else {
+            return NormalizeDouble(orderEntryPrice - tpDistance, symbolDigits);
+        }
+    }
+
+    //=================================================================
+    // NEUTRAL_CASCADE e NEUTRAL_RANGEBOX: TP CASCADE
+    //=================================================================
+
+    // Final level uses fixed TP (non ha livello precedente)
     if(level >= totalLevels - 1) {
         double finalTP_Price = PipsToPoints(FinalLevel_TP_Pips);
         if(isBuy) {
-            return NormalizeDouble(CalculateGridLevelPrice(entryPoint, zone, level, spacingPips) + finalTP_Price, symbolDigits);
+            return NormalizeDouble(orderEntryPrice + finalTP_Price, symbolDigits);
         } else {
-            return NormalizeDouble(CalculateGridLevelPrice(entryPoint, zone, level, spacingPips) - finalTP_Price, symbolDigits);
+            return NormalizeDouble(orderEntryPrice - finalTP_Price, symbolDigits);
         }
     }
 
-    // Perfect Cascade: TP = Entry of next level (towards entry point)
+    // CASCADE MODE: Decide tra PERFECT e RATIO
     if(CascadeMode == CASCADE_PERFECT) {
-        if(zone == ZONE_UPPER) {
-            // Upper zone orders: TP towards entry point (lower)
-            if(level == 0) {
-                return entryPoint;  // Level 1 TP = Entry Point
-            } else {
-                return CalculateGridLevelPrice(entryPoint, zone, level - 1, spacingPips);
-            }
+        // Perfect Cascade: TP = Entry del livello precedente (verso entry point)
+        if(level == 0) {
+            // Level 1: TP = Entry Point centrale
+            return entryPointPrice;
         } else {
-            // Lower zone orders: TP towards entry point (higher)
-            if(level == 0) {
-                return entryPoint;  // Level 1 TP = Entry Point
-            } else {
-                return CalculateGridLevelPrice(entryPoint, zone, level - 1, spacingPips);
-            }
+            // Livelli successivi: TP = Entry del livello precedente
+            return CalculateGridLevelPrice(entryPointPrice, zone, level - 1, spacingPips);
         }
     }
 
-    // Ratio Cascade: TP = Spacing × Ratio
+    // RATIO MODE: TP = Spacing × Ratio
     if(CascadeMode == CASCADE_RATIO) {
         double tpDistance = spacingPrice * CascadeTP_Ratio;
         if(isBuy) {
-            return NormalizeDouble(CalculateGridLevelPrice(entryPoint, zone, level, spacingPips) + tpDistance, symbolDigits);
+            return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
         } else {
-            return NormalizeDouble(CalculateGridLevelPrice(entryPoint, zone, level, spacingPips) - tpDistance, symbolDigits);
+            return NormalizeDouble(orderEntryPrice - tpDistance, symbolDigits);
         }
     }
 
-    // Cascade Off: Use fixed TP
+    // Fallback: Use fixed TP
     double fixedTP = PipsToPoints(FinalLevel_TP_Pips);
     if(isBuy) {
-        return NormalizeDouble(CalculateGridLevelPrice(entryPoint, zone, level, spacingPips) + fixedTP, symbolDigits);
+        return NormalizeDouble(orderEntryPrice + fixedTP, symbolDigits);
     } else {
-        return NormalizeDouble(CalculateGridLevelPrice(entryPoint, zone, level, spacingPips) - fixedTP, symbolDigits);
+        return NormalizeDouble(orderEntryPrice - fixedTP, symbolDigits);
     }
 }
 

@@ -3,6 +3,7 @@
 //|                        Sugamara - Pair Presets                   |
 //|                                                                  |
 //|  Optimized presets for Double Grid Neutral pairs                 |
+//|  v2.0 - Updated for ENUM_FOREX_PAIR                              |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
@@ -36,119 +37,139 @@ string activePair_BestSessions = "";        // Sessioni migliori per trading
 //| Uses global SelectedPair from InputParameters.mqh                |
 //+------------------------------------------------------------------+
 void ApplyPairPresets() {
-    // Use global SelectedPair input parameter
-    ENUM_NEUTRAL_PAIR pair = SelectedPair;
+    // Use global SelectedPair input parameter (ENUM_FOREX_PAIR)
+    ENUM_FOREX_PAIR pair = SelectedPair;
 
     switch(pair) {
 
         //==============================================================
         // EUR/USD - Most Liquid Forex Pair
         //==============================================================
-        case NEUTRAL_EURUSD:
+        case PAIR_EURUSD:
             // Characteristics
-            activePair_Spread = 0.8;                    // Spread ECN tipico
-            activePair_DailyRange = 100.0;              // 80-120 pips/day
-            activePair_ATR_Typical = 25.0;              // ATR(14) H4 tipico
-            activePair_MinBrokerDistance = 10.0;        // Stop level minimo
+            activePair_Spread = EURUSD_EstimatedSpread;       // From InputParameters
+            activePair_DailyRange = EURUSD_DailyRange;
+            activePair_ATR_Typical = EURUSD_ATR_Typical;
+            activePair_MinBrokerDistance = 10.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 20.0;       // 20 pips ottimale
-            activePair_RecommendedLevels = 5;           // 5 livelli per lato
-            activePair_RecommendedBaseLot = 0.02;       // 0.02 lot base
-            activePair_MinCapital = 3000.0;             // $3,000 minimo
+            activePair_RecommendedSpacing = EURUSD_DefaultSpacing;
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.02;
+            activePair_MinCapital = 3000.0;
 
             // Performance Targets
-            activePair_TargetROI = 12.0;                // 10-15% mensile
-            activePair_TargetWinRate = 80.0;            // 75-85%
-            activePair_MaxDrawdown = 10.0;              // 8-12%
+            activePair_TargetROI = 12.0;
+            activePair_TargetWinRate = 80.0;
+            activePair_MaxDrawdown = 10.0;
 
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT), NY (13:00-21:00 GMT)";
 
             Print("PRESET LOADED: EUR/USD - Standard Configuration");
-            Print("   Spacing: ", activePair_RecommendedSpacing, " pips");
-            Print("   Levels: ", activePair_RecommendedLevels, " per side");
-            Print("   Target ROI: ", activePair_TargetROI, "%");
+            break;
+
+        //==============================================================
+        // USD/CAD - North American Pair
+        //==============================================================
+        case PAIR_USDCAD:
+            // Characteristics
+            activePair_Spread = USDCAD_EstimatedSpread;
+            activePair_DailyRange = USDCAD_DailyRange;
+            activePair_ATR_Typical = USDCAD_ATR_Typical;
+            activePair_MinBrokerDistance = 10.0;
+
+            // Recommended Settings
+            activePair_RecommendedSpacing = USDCAD_DefaultSpacing;
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.02;
+            activePair_MinCapital = 2800.0;
+
+            // Performance Targets
+            activePair_TargetROI = 10.0;
+            activePair_TargetWinRate = 78.0;
+            activePair_MaxDrawdown = 10.0;
+
+            // Sessions
+            activePair_BestSessions = "NY (13:00-21:00 GMT), London-NY Overlap";
+
+            Print("PRESET LOADED: USD/CAD - North American Configuration");
             break;
 
         //==============================================================
         // AUD/NZD - Best for Range Trading (Highly Correlated)
         //==============================================================
-        case NEUTRAL_AUDNZD:
+        case PAIR_AUDNZD:
             // Characteristics
-            activePair_Spread = 3.0;                    // Spread piu alto
-            activePair_DailyRange = 65.0;               // 50-80 pips/day (range stretto!)
-            activePair_ATR_Typical = 18.0;              // ATR piu basso
-            activePair_MinBrokerDistance = 15.0;        // Stop level
+            activePair_Spread = 3.0;
+            activePair_DailyRange = 65.0;
+            activePair_ATR_Typical = 18.0;
+            activePair_MinBrokerDistance = 15.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 16.0;       // Spacing ridotto per range stretto
-            activePair_RecommendedLevels = 5;           // 5 livelli
-            activePair_RecommendedBaseLot = 0.015;      // Lot leggermente ridotto (spread alto)
-            activePair_MinCapital = 2500.0;             // $2,500 minimo
+            activePair_RecommendedSpacing = 16.0;
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.015;
+            activePair_MinCapital = 2500.0;
 
             // Performance Targets
-            activePair_TargetROI = 10.0;                // 8-12% (conservativo ma stabile)
-            activePair_TargetWinRate = 85.0;            // 80-90% (altissimo!)
-            activePair_MaxDrawdown = 8.0;               // 6-10% (basso)
+            activePair_TargetROI = 10.0;
+            activePair_TargetWinRate = 85.0;       // Highest win rate!
+            activePair_MaxDrawdown = 8.0;
 
             // Sessions
             activePair_BestSessions = "Asia (22:00-08:00 GMT), Sydney overlap";
 
-            Print("PRESET LOADED: AUD/NZD - High Win Rate Configuration");
-            Print("   Spacing: ", activePair_RecommendedSpacing, " pips");
-            Print("   Levels: ", activePair_RecommendedLevels, " per side");
-            Print("   Target Win Rate: ", activePair_TargetWinRate, "% (BEST)");
+            Print("PRESET LOADED: AUD/NZD - High Win Rate Configuration (BEST FOR NEUTRAL)");
             break;
 
         //==============================================================
-        // EUR/CHF - Very Low Volatility (SNB Floor Legacy)
+        // EUR/CHF - Very Low Volatility
         //==============================================================
-        case NEUTRAL_EURCHF:
+        case PAIR_EURCHF:
             // Characteristics
-            activePair_Spread = 1.5;                    // Spread medio
-            activePair_DailyRange = 50.0;               // 40-60 pips/day (molto basso)
-            activePair_ATR_Typical = 15.0;              // ATR molto basso
-            activePair_MinBrokerDistance = 10.0;        // Stop level
+            activePair_Spread = 1.5;
+            activePair_DailyRange = 50.0;
+            activePair_ATR_Typical = 15.0;
+            activePair_MinBrokerDistance = 10.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 15.0;       // Spacing stretto
-            activePair_RecommendedLevels = 5;           // 5 livelli
-            activePair_RecommendedBaseLot = 0.02;       // Lot standard
-            activePair_MinCapital = 2500.0;             // $2,500 minimo
+            activePair_RecommendedSpacing = 15.0;
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.02;
+            activePair_MinCapital = 2500.0;
 
             // Performance Targets
-            activePair_TargetROI = 8.0;                 // 6-10% (range molto stretto)
-            activePair_TargetWinRate = 85.0;            // 80-90%
-            activePair_MaxDrawdown = 6.0;               // 5-8% (molto basso)
+            activePair_TargetROI = 8.0;
+            activePair_TargetWinRate = 85.0;
+            activePair_MaxDrawdown = 6.0;
 
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT)";
 
             Print("PRESET LOADED: EUR/CHF - Ultra-Low Volatility Configuration");
-            Print("   WARNING: Very tight range - lower ROI but very stable");
             break;
 
         //==============================================================
         // AUD/CAD - Medium Volatility Commodity Pair
         //==============================================================
-        case NEUTRAL_AUDCAD:
+        case PAIR_AUDCAD:
             // Characteristics
-            activePair_Spread = 2.5;                    // Spread medio-alto
-            activePair_DailyRange = 75.0;               // 60-90 pips/day
-            activePair_ATR_Typical = 22.0;              // ATR medio
-            activePair_MinBrokerDistance = 12.0;        // Stop level
+            activePair_Spread = 2.5;
+            activePair_DailyRange = 75.0;
+            activePair_ATR_Typical = 22.0;
+            activePair_MinBrokerDistance = 12.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 18.0;       // Spacing medio
-            activePair_RecommendedLevels = 5;           // 5 livelli
-            activePair_RecommendedBaseLot = 0.02;       // Lot standard
-            activePair_MinCapital = 3000.0;             // $3,000 minimo
+            activePair_RecommendedSpacing = 18.0;
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.02;
+            activePair_MinCapital = 3000.0;
 
             // Performance Targets
-            activePair_TargetROI = 10.0;                // 8-12%
-            activePair_TargetWinRate = 78.0;            // 75-82%
-            activePair_MaxDrawdown = 10.0;              // 8-12%
+            activePair_TargetROI = 10.0;
+            activePair_TargetWinRate = 78.0;
+            activePair_MaxDrawdown = 10.0;
 
             // Sessions
             activePair_BestSessions = "Asia-London overlap, NY session";
@@ -159,23 +180,23 @@ void ApplyPairPresets() {
         //==============================================================
         // NZD/CAD - Similar to AUD/CAD
         //==============================================================
-        case NEUTRAL_NZDCAD:
+        case PAIR_NZDCAD:
             // Characteristics
-            activePair_Spread = 3.0;                    // Spread alto
-            activePair_DailyRange = 70.0;               // 50-80 pips/day
-            activePair_ATR_Typical = 20.0;              // ATR medio-basso
-            activePair_MinBrokerDistance = 15.0;        // Stop level
+            activePair_Spread = 3.0;
+            activePair_DailyRange = 70.0;
+            activePair_ATR_Typical = 20.0;
+            activePair_MinBrokerDistance = 15.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 18.0;       // Spacing medio
-            activePair_RecommendedLevels = 5;           // 5 livelli
-            activePair_RecommendedBaseLot = 0.015;      // Lot ridotto (spread alto)
-            activePair_MinCapital = 2800.0;             // $2,800 minimo
+            activePair_RecommendedSpacing = 18.0;
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.015;
+            activePair_MinCapital = 2800.0;
 
             // Performance Targets
-            activePair_TargetROI = 9.0;                 // 7-11%
-            activePair_TargetWinRate = 80.0;            // 75-85%
-            activePair_MaxDrawdown = 9.0;               // 7-11%
+            activePair_TargetROI = 9.0;
+            activePair_TargetWinRate = 80.0;
+            activePair_MaxDrawdown = 9.0;
 
             // Sessions
             activePair_BestSessions = "Asia session, early London";
@@ -186,7 +207,7 @@ void ApplyPairPresets() {
         //==============================================================
         // CUSTOM - User Manual Settings
         //==============================================================
-        case NEUTRAL_CUSTOM:
+        case PAIR_CUSTOM:
             // Use manual input parameters
             activePair_Spread = Custom_Spread;
             activePair_DailyRange = Custom_DailyRange;
@@ -194,7 +215,7 @@ void ApplyPairPresets() {
             activePair_MinBrokerDistance = 10.0;
 
             // Use input parameters directly
-            activePair_RecommendedSpacing = FixedSpacing_Pips;
+            activePair_RecommendedSpacing = Custom_DefaultSpacing;
             activePair_RecommendedLevels = GridLevelsPerSide;
             activePair_RecommendedBaseLot = BaseLot;
             activePair_MinCapital = 3000.0;
@@ -237,22 +258,25 @@ bool ValidatePairSymbolMatch() {
     string expectedSymbol = "";
 
     switch(SelectedPair) {
-        case NEUTRAL_EURUSD:
+        case PAIR_EURUSD:
             expectedSymbol = "EURUSD";
             break;
-        case NEUTRAL_AUDNZD:
+        case PAIR_USDCAD:
+            expectedSymbol = "USDCAD";
+            break;
+        case PAIR_AUDNZD:
             expectedSymbol = "AUDNZD";
             break;
-        case NEUTRAL_EURCHF:
+        case PAIR_EURCHF:
             expectedSymbol = "EURCHF";
             break;
-        case NEUTRAL_AUDCAD:
+        case PAIR_AUDCAD:
             expectedSymbol = "AUDCAD";
             break;
-        case NEUTRAL_NZDCAD:
+        case PAIR_NZDCAD:
             expectedSymbol = "NZDCAD";
             break;
-        case NEUTRAL_CUSTOM:
+        case PAIR_CUSTOM:
             // Custom pair - no validation
             return true;
     }
@@ -274,7 +298,7 @@ bool ValidatePairSymbolMatch() {
     Print("  Please either:");
     Print("  1. Attach EA to correct chart (", expectedSymbol, ")");
     Print("  2. Change SelectedPair parameter to match chart");
-    Print("  3. Use NEUTRAL_CUSTOM for manual configuration");
+    Print("  3. Use PAIR_CUSTOM for manual configuration");
     Print("═══════════════════════════════════════════════════════════════════");
 
     if(EnableAlerts) {
@@ -287,14 +311,15 @@ bool ValidatePairSymbolMatch() {
 //+------------------------------------------------------------------+
 //| Get Pair Display Name                                            |
 //+------------------------------------------------------------------+
-string GetPairDisplayName(ENUM_NEUTRAL_PAIR pair) {
+string GetPairDisplayName(ENUM_FOREX_PAIR pair) {
     switch(pair) {
-        case NEUTRAL_EURUSD: return "EUR/USD";
-        case NEUTRAL_AUDNZD: return "AUD/NZD";
-        case NEUTRAL_EURCHF: return "EUR/CHF";
-        case NEUTRAL_AUDCAD: return "AUD/CAD";
-        case NEUTRAL_NZDCAD: return "NZD/CAD";
-        case NEUTRAL_CUSTOM: return "CUSTOM";
+        case PAIR_EURUSD: return "EUR/USD";
+        case PAIR_USDCAD: return "USD/CAD";
+        case PAIR_AUDNZD: return "AUD/NZD";
+        case PAIR_EURCHF: return "EUR/CHF";
+        case PAIR_AUDCAD: return "AUD/CAD";
+        case PAIR_NZDCAD: return "NZD/CAD";
+        case PAIR_CUSTOM: return "CUSTOM";
         default: return "UNKNOWN";
     }
 }
@@ -302,15 +327,40 @@ string GetPairDisplayName(ENUM_NEUTRAL_PAIR pair) {
 //+------------------------------------------------------------------+
 //| Get Pair Risk Level                                              |
 //+------------------------------------------------------------------+
-string GetPairRiskLevel(ENUM_NEUTRAL_PAIR pair) {
+string GetPairRiskLevel(ENUM_FOREX_PAIR pair) {
     switch(pair) {
-        case NEUTRAL_EURUSD: return "MEDIUM";
-        case NEUTRAL_AUDNZD: return "LOW";      // Best for beginners
-        case NEUTRAL_EURCHF: return "LOW";
-        case NEUTRAL_AUDCAD: return "MEDIUM";
-        case NEUTRAL_NZDCAD: return "MEDIUM";
-        case NEUTRAL_CUSTOM: return "VARIABLE";
+        case PAIR_EURUSD: return "MEDIUM";
+        case PAIR_USDCAD: return "MEDIUM";
+        case PAIR_AUDNZD: return "LOW";      // Best for beginners
+        case PAIR_EURCHF: return "LOW";
+        case PAIR_AUDCAD: return "MEDIUM";
+        case PAIR_NZDCAD: return "MEDIUM";
+        case PAIR_CUSTOM: return "VARIABLE";
         default: return "UNKNOWN";
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Get Pair Recommendation for Mode                                 |
+//+------------------------------------------------------------------+
+string GetPairRecommendation(ENUM_FOREX_PAIR pair) {
+    switch(pair) {
+        case PAIR_EURUSD:
+            return "Good for all modes. High liquidity, tight spreads.";
+        case PAIR_USDCAD:
+            return "Good for CASCADE/RANGEBOX. Stable during NY session.";
+        case PAIR_AUDNZD:
+            return "BEST for NEUTRAL! Tight range, highest win rate.";
+        case PAIR_EURCHF:
+            return "Good for PURE mode. Very stable, low volatility.";
+        case PAIR_AUDCAD:
+            return "Good for CASCADE. Commodity correlation adds stability.";
+        case PAIR_NZDCAD:
+            return "Similar to AUD/CAD. Good backup pair.";
+        case PAIR_CUSTOM:
+            return "Verify all parameters manually before live trading.";
+        default:
+            return "Unknown pair";
     }
 }
 

@@ -178,7 +178,7 @@ string FormatDuration(int seconds) {
 //+------------------------------------------------------------------+
 //| Log Message with Type Prefix                                     |
 //+------------------------------------------------------------------+
-void LogMessage(ENUM_LOG_TYPE type, string message) {
+void LogMessage(ENUM_LOG_LEVEL type, string message) {
     string prefix = "";
 
     switch(type) {

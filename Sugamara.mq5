@@ -1,29 +1,33 @@
 //+==================================================================+
-//|                                              Sugamara v1.0.0.mq5 |
+//|                                              Sugamara v2.0.0.mq5 |
 //|                                                                  |
-//|   SUGAMARA - DOUBLE GRID NEUTRAL                                 |
+//|   SUGAMARA - DOUBLE GRID NEUTRAL MULTIMODE                       |
 //|                                                                  |
-//|   Market Neutral • Bidirezionale • Zero Prediction              |
-//|   Ottimizzato per EUR/USD e AUD/NZD                             |
+//|   Market Neutral • PURE / CASCADE / RANGEBOX                     |
+//|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
-//|  Copyright (C) 2025 - Sugamara Development Team                 |
-//|  Version: 1.0.0                                                 |
-//|  Release Date: December 2025                                    |
+//|  Copyright (C) 2025 - Sugamara Development Team                  |
+//|  Version: 2.0.0 MULTIMODE                                        |
+//|  Release Date: December 2025                                     |
 //+------------------------------------------------------------------+
-//|  SISTEMA DOUBLE GRID NEUTRAL CASCADE                            |
-//|  - Grid A (Long Bias): Accumula LONG in salita                  |
-//|  - Grid B (Short Bias): Accumula SHORT in salita                |
-//|  - Auto-Hedging: Protezione intrinseca tramite grid speculari   |
-//|  - Adaptive Spacing: Distanza ordini gestita da ATR             |
-//|  - Perfect Cascade: TP = Entry del livello successivo           |
+//|  SISTEMA DOUBLE GRID NEUTRAL - 3 MODALITÀ SELEZIONABILI          |
+//|                                                                   |
+//|  NEUTRAL_PURE:     Spacing fisso, TP fisso, NO ATR (learning)    |
+//|  NEUTRAL_CASCADE:  TP=Entry precedente, ATR opzionale (consigliato)|
+//|  NEUTRAL_RANGEBOX: Range Box + Hedge, ATR opzionale (produzione) |
+//|                                                                   |
+//|  - Grid A (Long Bias): Accumula LONG in salita                   |
+//|  - Grid B (Short Bias): Accumula SHORT in salita                 |
+//|  - Auto-Hedging: Protezione intrinseca tramite grid speculari    |
+//|  - ATR Opzionale: Spacing adattivo per CASCADE e RANGEBOX        |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
-#property version   "1.00"
-#property description "SUGAMARA - Double Grid Neutral"
-#property description "Market Neutral System - Auto-Hedged"
-#property description "Optimized for EUR/USD and AUD/NZD"
+#property version   "2.00"
+#property description "SUGAMARA v2.0 - Double Grid Neutral MULTIMODE"
+#property description "3 Modalità: PURE / CASCADE / RANGEBOX"
+#property description "ATR Opzionale per spacing adattivo"
 #property strict
 
 //+------------------------------------------------------------------+
@@ -39,11 +43,15 @@
 #include "Core/GlobalVariables.mqh"
 #include "Core/BrokerValidation.mqh"
 #include "Core/Initialization.mqh"
+#include "Core/ModeLogic.mqh"
 
 // Utility Modules
 #include "Utils/Helpers.mqh"
 #include "Utils/GridHelpers.mqh"
 #include "Utils/ATRCalculator.mqh"
+
+// Indicators Module
+#include "Indicators/Indicators.mqh"
 
 // Trading Modules
 #include "Trading/OrderManager.mqh"
@@ -51,6 +59,8 @@
 #include "Trading/GridBSystem.mqh"
 #include "Trading/PositionMonitor.mqh"
 #include "Trading/RiskManager.mqh"
+#include "Trading/RangeBoxManager.mqh"
+#include "Trading/HedgingManager.mqh"
 
 // UI Module
 #include "UI/Dashboard.mqh"
@@ -60,10 +70,18 @@
 //+------------------------------------------------------------------+
 int OnInit() {
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA v1.0.0 - DOUBLE GRID NEUTRAL                           ");
-    Print("  Market Neutral • Bidirezionale • Zero Prediction               ");
-    Print("  Copyright (C) 2025 - Sugamara Development Team                 ");
+    Print("  SUGAMARA v2.0.0 - DOUBLE GRID NEUTRAL MULTIMODE                 ");
+    Print("  Market Neutral • PURE / CASCADE / RANGEBOX                      ");
+    Print("  Copyright (C) 2025 - Sugamara Development Team                  ");
     Print("═══════════════════════════════════════════════════════════════════");
+
+    //--- STEP 0: Validate Mode Parameters and Print Config ---
+    if(!ValidateModeParameters()) {
+        Print("CRITICAL: Mode parameters validation FAILED");
+        systemState = STATE_ERROR;
+        return(INIT_FAILED);
+    }
+    PrintModeConfiguration();
 
     // Set system state
     systemState = STATE_INITIALIZING;
@@ -123,12 +141,28 @@ int OnInit() {
     //--- STEP 8: Initialize Entry Point ---
     InitializeEntryPoint();
 
-    //--- STEP 9: Calculate Spacing ---
-    currentSpacing_Pips = GetOptimalSpacing();
-    Print("Initial Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
+    //--- STEP 9: Calculate Spacing based on Mode ---
+    currentSpacing_Pips = CalculateCurrentSpacing();
+    Print("Initial Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips (Mode: ", GetModeName(), ")");
 
     //--- STEP 10: Calculate Range Boundaries ---
     CalculateRangeBoundaries();
+
+    //--- STEP 10.5: Initialize RangeBox (only NEUTRAL_RANGEBOX) ---
+    if(IsRangeBoxAvailable()) {
+        if(!InitializeRangeBox()) {
+            Print("CRITICAL: Failed to initialize RangeBox");
+            systemState = STATE_ERROR;
+            return(INIT_FAILED);
+        }
+    }
+
+    //--- STEP 10.6: Initialize Hedging (only NEUTRAL_RANGEBOX with EnableHedging) ---
+    if(IsHedgingAvailable()) {
+        if(!InitializeHedgingManager()) {
+            Print("WARNING: Failed to initialize Hedging Manager");
+        }
+    }
 
     //--- STEP 11: Initialize Position Monitor ---
     if(!InitializePositionMonitor()) {
@@ -143,6 +177,16 @@ int OnInit() {
     //--- STEP 13: Initialize Dashboard ---
     if(!InitializeDashboard()) {
         Print("WARNING: Failed to initialize Dashboard");
+    }
+
+    //--- STEP 13.5: Initialize Volatility Monitor ---
+    if(!InitializeVolatilityMonitor()) {
+        Print("WARNING: Failed to initialize Volatility Monitor");
+    }
+
+    //--- STEP 13.6: Initialize ADX Monitor ---
+    if(!InitializeADXMonitor()) {
+        Print("WARNING: Failed to initialize ADX Monitor");
     }
 
     //--- STEP 14: Initialize Grid A ---
@@ -196,10 +240,14 @@ int OnInit() {
 
     Print("");
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA INITIALIZATION COMPLETE");
+    Print("  SUGAMARA v2.0 INITIALIZATION COMPLETE");
+    Print("  Mode: ", GetModeName());
     Print("  System State: ACTIVE");
     Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions());
     Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions());
+    if(IsRangeBoxAvailable())
+        Print("  RangeBox: R=", DoubleToString(rangeBox_Resistance, symbolDigits),
+              " S=", DoubleToString(rangeBox_Support, symbolDigits));
     Print("═══════════════════════════════════════════════════════════════════");
 
     if(EnableAlerts) {
@@ -245,8 +293,16 @@ void OnDeinit(const int reason) {
     // Release ATR handle
     ReleaseATRHandle();
 
+    // Release Indicators
+    DeinitializeVolatilityMonitor();
+    DeinitializeADXMonitor();
+
     // Clean up UI
     CleanupUI();
+
+    // Clean up RangeBox visualization
+    if(IsRangeBoxAvailable())
+        RemoveRangeBoxVisualization();
 
     // Note: We do NOT close orders on deinit - they should persist
     // Only close if explicitly requested or on critical error
@@ -281,10 +337,22 @@ void OnTick() {
     //--- UPDATE POSITION STATUSES ---
     MonitorPositions();
 
-    //--- CHECK ATR RECALCULATION ---
-    if(UpdateATRAndCheckAdjustment()) {
-        // ATR changed significantly - may need to adjust grid
-        double newSpacing = GetOptimalSpacing();
+    //--- RANGEBOX: Update state and check breakouts (only NEUTRAL_RANGEBOX) ---
+    if(IsRangeBoxAvailable()) {
+        double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+        UpdateRangeBoxState(currentPrice);
+        RecalculateRangeBox();  // Ricalcola se ATR_BASED e tempo trascorso
+    }
+
+    //--- HEDGING: Monitor hedge positions (only NEUTRAL_RANGEBOX with EnableHedging) ---
+    if(IsHedgingAvailable()) {
+        MonitorHedgePositions();
+    }
+
+    //--- CHECK ATR RECALCULATION (only if ATR enabled) ---
+    if(IsATREnabled() && UpdateATRAndCheckAdjustment()) {
+        // ATR changed significantly - may need to adjust spacing
+        double newSpacing = CalculateCurrentSpacing();
 
         if(MathAbs(newSpacing - currentSpacing_Pips) > 2.0) {
             LogMessage(LOG_INFO, "ATR spacing change: " +
@@ -303,6 +371,10 @@ void OnTick() {
         ProcessGridBCyclicReopen();
     }
 
+    //--- UPDATE INDICATORS ---
+    UpdateVolatilityMonitor();
+    UpdateADXMonitor();
+
     //--- UPDATE EQUITY TRACKING ---
     UpdateEquityTracking();
 
@@ -317,8 +389,13 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
                         const MqlTradeRequest& request,
                         const MqlTradeResult& result) {
 
-    // Process trade events
+    // Process trade events (grid orders)
     OnTradeTransactionHandler(trans, request, result);
+
+    // Process hedge events (only NEUTRAL_RANGEBOX)
+    if(IsHedgingAvailable()) {
+        OnHedgeTradeTransaction(trans, request, result);
+    }
 }
 
 //+------------------------------------------------------------------+
@@ -352,27 +429,19 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
 //| Handle Object Click                                               |
 //+------------------------------------------------------------------+
 void HandleObjectClick(string objectName) {
-    // Can add interactive buttons to dashboard
-
-    // Example: Emergency close button
-    if(objectName == "SUGAMARA_BTN_EMERGENCY") {
-        if(EnableAlerts) {
-            int result = MessageBox("Close ALL positions?", "SUGAMARA Emergency", MB_YESNO | MB_ICONWARNING);
-            if(result == IDYES) {
-                EmergencyCloseAll();
-            }
-        }
+    // Handle button clicks from Dashboard
+    if(StringFind(objectName, "BTN_") == 0) {
+        HandleButtonClick(objectName);
+        return;
     }
 
-    // Example: Toggle pause
+    // Legacy support for old object names (if any)
+    if(objectName == "SUGAMARA_BTN_EMERGENCY") {
+        HandleButtonClick("BTN_EMERGENCY");
+    }
+
     if(objectName == "SUGAMARA_BTN_PAUSE") {
-        if(systemState == STATE_ACTIVE) {
-            systemState = STATE_PAUSED;
-            LogMessage(LOG_INFO, "System PAUSED by user");
-        } else if(systemState == STATE_PAUSED) {
-            systemState = STATE_ACTIVE;
-            LogMessage(LOG_INFO, "System RESUMED by user");
-        }
+        HandleButtonClick("BTN_PAUSE");
     }
 }
 

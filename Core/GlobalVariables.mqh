@@ -121,6 +121,26 @@ double rangeLowerBound = 0;                 // Limite inferiore range
 double totalRangePips = 0;                  // Range totale in pips
 
 //+------------------------------------------------------------------+
+//| RANGEBOX VARIABLES (Solo per NEUTRAL_RANGEBOX)                   |
+//+------------------------------------------------------------------+
+double rangeBox_Resistance = 0;             // Resistance calcolata/manuale
+double rangeBox_Support = 0;                // Support calcolata/manuale
+datetime rangeBox_LastCalc = 0;             // Ultimo calcolo Range Box
+bool isBreakoutUp = false;                  // Flag breakout sopra resistance
+bool isBreakoutDown = false;                // Flag breakout sotto support
+bool isInsideRange = true;                  // Flag prezzo dentro range
+
+//+------------------------------------------------------------------+
+//| HEDGING VARIABLES (Solo per NEUTRAL_RANGEBOX)                    |
+//+------------------------------------------------------------------+
+ENUM_HEDGE_DIRECTION currentHedgeDirection = HEDGE_NONE;  // Direzione hedge attivo
+ulong hedgeLongTicket = 0;                  // Ticket ordine hedge LONG
+ulong hedgeShortTicket = 0;                 // Ticket ordine hedge SHORT
+double hedgeLotSize = 0;                    // Lot size hedge corrente
+datetime hedgeOpenTime = 0;                 // Tempo apertura hedge
+double hedgeEntryPrice = 0;                 // Prezzo entry hedge
+
+//+------------------------------------------------------------------+
 //| RISK MANAGEMENT VARIABLES                                        |
 //+------------------------------------------------------------------+
 double startingEquity = 0;                  // Equity iniziale sessione
