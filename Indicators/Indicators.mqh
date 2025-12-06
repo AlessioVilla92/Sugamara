@@ -640,3 +640,247 @@ color GetMarketConditionColor() {
     }
 }
 
+//+------------------------------------------------------------------+
+//|                   ATR MULTI-TIMEFRAME SYSTEM v3.0                 |
+//|                   Dashboard: M5, M15, H1, H4                      |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Global Variables for ATR Multi-Timeframe                         |
+//+------------------------------------------------------------------+
+int atrHandle_MTF[4];                   // Handles per i 4 TF
+double atrValue_MTF[4];                 // Valori ATR
+double atrPips_MTF[4];                  // ATR in pips
+int atrRating_MTF[4];                   // Rating 1-9
+string atrStatus_MTF[4];                // Status text
+color atrColor_MTF[4];                  // Status color
+ENUM_TIMEFRAMES atrTF_MTF[4];           // Timeframes
+
+//+------------------------------------------------------------------+
+//| Initialize ATR Multi-Timeframe                                   |
+//+------------------------------------------------------------------+
+bool InitializeATRMultiTF() {
+    if(!Enable_ATRMultiTF) {
+        Print("[Indicators] ATR Multi-TF is DISABLED");
+        return true;
+    }
+
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  INITIALIZING ATR MULTI-TIMEFRAME v3.0");
+    Print("═══════════════════════════════════════════════════════════════════");
+
+    // Store timeframes
+    atrTF_MTF[0] = ATR_MTF_TF1;  // M5
+    atrTF_MTF[1] = ATR_MTF_TF2;  // M15
+    atrTF_MTF[2] = ATR_MTF_TF3;  // H1
+    atrTF_MTF[3] = ATR_MTF_TF4;  // H4
+
+    // Create handles for each timeframe
+    for(int i = 0; i < 4; i++) {
+        atrHandle_MTF[i] = iATR(_Symbol, atrTF_MTF[i], ATR_MTF_Period);
+
+        if(atrHandle_MTF[i] == INVALID_HANDLE) {
+            Print("[Indicators] ERROR: Failed to create ATR for TF: ", EnumToString(atrTF_MTF[i]));
+            return false;
+        }
+
+        // Initialize values
+        atrValue_MTF[i] = 0;
+        atrPips_MTF[i] = 0;
+        atrRating_MTF[i] = 0;
+        atrStatus_MTF[i] = "INIT";
+        atrColor_MTF[i] = clrGray;
+
+        Print("[Indicators] SUCCESS: ATR ", GetTimeframeName(atrTF_MTF[i]),
+              " initialized - Period: ", ATR_MTF_Period);
+    }
+
+    Print("═══════════════════════════════════════════════════════════════════");
+    return true;
+}
+
+//+------------------------------------------------------------------+
+//| Update ATR Multi-Timeframe                                       |
+//+------------------------------------------------------------------+
+void UpdateATRMultiTF() {
+    if(!Enable_ATRMultiTF) return;
+
+    // Throttle: update once per second
+    static datetime lastUpdate = 0;
+    datetime currentTime = TimeCurrent();
+
+    if(currentTime == lastUpdate) return;
+    lastUpdate = currentTime;
+
+    // Update all 4 timeframes
+    for(int i = 0; i < 4; i++) {
+        UpdateSingleATRMTF(i);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Update Single ATR MTF                                            |
+//+------------------------------------------------------------------+
+void UpdateSingleATRMTF(int index) {
+    if(atrHandle_MTF[index] == INVALID_HANDLE) return;
+
+    double buffer[];
+    ArraySetAsSeries(buffer, true);
+
+    if(CopyBuffer(atrHandle_MTF[index], 0, 0, 1, buffer) <= 0) return;
+
+    atrValue_MTF[index] = buffer[0];
+
+    // Calculate in pips
+    double pipSize = symbolPoint;
+    if(symbolDigits == 3 || symbolDigits == 5) pipSize *= 10;
+    atrPips_MTF[index] = atrValue_MTF[index] / pipSize;
+
+    // Calculate rating based on ATR pips
+    atrRating_MTF[index] = CalculateATRRatingMTF(atrPips_MTF[index]);
+
+    // Determine status and color
+    DetermineATRStatusMTF(atrRating_MTF[index], atrStatus_MTF[index], atrColor_MTF[index]);
+}
+
+//+------------------------------------------------------------------+
+//| Calculate ATR Rating for MTF (1-9 scale based on pips)           |
+//+------------------------------------------------------------------+
+int CalculateATRRatingMTF(double atrPips) {
+    // Rating basato su ATR in pips
+    // Adattato per EUR/USD e coppie simili
+    if(atrPips < 5)  return 1;   // Molto calmo
+    if(atrPips < 10) return 2;   // Calmo
+    if(atrPips < 15) return 3;   // Basso
+    if(atrPips < 20) return 4;   // Sotto media
+    if(atrPips < 30) return 5;   // Normale
+    if(atrPips < 40) return 6;   // Sopra media
+    if(atrPips < 50) return 7;   // Volatile
+    if(atrPips < 70) return 8;   // Molto volatile
+    return 9;                     // Estremo
+}
+
+//+------------------------------------------------------------------+
+//| Determine ATR Status for MTF                                     |
+//+------------------------------------------------------------------+
+void DetermineATRStatusMTF(int rating, string &status, color &statusColor) {
+    switch(rating) {
+        case 1:
+        case 2:
+            status = "CALM";
+            statusColor = C'0,180,180';      // Teal
+            break;
+        case 3:
+        case 4:
+            status = "LOW";
+            statusColor = C'100,200,255';    // Azure
+            break;
+        case 5:
+            status = "NORMAL";
+            statusColor = C'100,255,100';    // Green
+            break;
+        case 6:
+            status = "ELEVATED";
+            statusColor = C'255,255,100';    // Yellow
+            break;
+        case 7:
+            status = "HIGH";
+            statusColor = C'255,180,80';     // Orange
+            break;
+        case 8:
+        case 9:
+            status = "EXTREME";
+            statusColor = C'255,80,80';      // Red
+            break;
+        default:
+            status = "N/A";
+            statusColor = clrGray;
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Get ATR Multi-TF Data for Dashboard                              |
+//+------------------------------------------------------------------+
+void GetATRMultiTFData(int index, string &tfName, double &atrPips,
+                       int &rating, string &status, color &statusColor) {
+    if(index < 0 || index >= 4) {
+        tfName = "N/A";
+        atrPips = 0;
+        rating = 0;
+        status = "N/A";
+        statusColor = clrGray;
+        return;
+    }
+
+    tfName = GetTimeframeName(atrTF_MTF[index]);
+    atrPips = atrPips_MTF[index];
+    rating = atrRating_MTF[index];
+    status = atrStatus_MTF[index];
+    statusColor = atrColor_MTF[index];
+}
+
+//+------------------------------------------------------------------+
+//| Get ATR Average Rating (for overall assessment)                  |
+//+------------------------------------------------------------------+
+int GetATRMultiTFAverageRating() {
+    if(!Enable_ATRMultiTF) return 5; // Default neutral
+
+    int sum = 0;
+    for(int i = 0; i < 4; i++) {
+        sum += atrRating_MTF[i];
+    }
+    return sum / 4;
+}
+
+//+------------------------------------------------------------------+
+//| Get ATR Multi-TF Consensus                                       |
+//+------------------------------------------------------------------+
+string GetATRMultiTFConsensus() {
+    if(!Enable_ATRMultiTF) return "N/A";
+
+    int avgRating = GetATRMultiTFAverageRating();
+
+    if(avgRating <= 3) return "RANGING MARKET";
+    if(avgRating <= 5) return "NORMAL CONDITIONS";
+    if(avgRating <= 7) return "VOLATILE MARKET";
+    return "EXTREME VOLATILITY";
+}
+
+//+------------------------------------------------------------------+
+//| Get ATR Multi-TF Report                                          |
+//+------------------------------------------------------------------+
+string GetATRMultiTFReport() {
+    if(!Enable_ATRMultiTF) return "ATR Multi-TF Disabled";
+
+    string report = "\n═══════════════ ATR MULTI-TIMEFRAME ═══════════════\n";
+
+    for(int i = 0; i < 4; i++) {
+        report += StringFormat("  %s: %.1f pips | Rating: %d/9 | %s\n",
+                              GetTimeframeName(atrTF_MTF[i]),
+                              atrPips_MTF[i],
+                              atrRating_MTF[i],
+                              atrStatus_MTF[i]);
+    }
+
+    report += "─────────────────────────────────────────────────────\n";
+    report += StringFormat("  CONSENSUS: %s (Avg: %d/9)\n",
+                          GetATRMultiTFConsensus(),
+                          GetATRMultiTFAverageRating());
+    report += "═════════════════════════════════════════════════════";
+
+    return report;
+}
+
+//+------------------------------------------------------------------+
+//| Deinitialize ATR Multi-Timeframe                                 |
+//+------------------------------------------------------------------+
+void DeinitializeATRMultiTF() {
+    for(int i = 0; i < 4; i++) {
+        if(atrHandle_MTF[i] != INVALID_HANDLE) {
+            IndicatorRelease(atrHandle_MTF[i]);
+            atrHandle_MTF[i] = INVALID_HANDLE;
+        }
+    }
+    Print("[Indicators] ATR Multi-TF deinitialized");
+}
+

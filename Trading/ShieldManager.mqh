@@ -42,15 +42,29 @@ bool InitializeShield()
 double CalculateShieldLotSize(ENUM_SHIELD_TYPE shieldType)
 {
    double totalLots = 0;
+   int shortPositions = 0;
+   int longPositions = 0;
+
+   if(DetailedLogging) {
+      Print("[Shield] CalculateShieldLotSize() - Type: ", (shieldType == SHIELD_LONG ? "LONG" : "SHORT"));
+   }
 
    if(shieldType == SHIELD_LONG) {
       // Shield LONG protects all open SHORT positions (Grid B Upper + Grid A Lower)
       for(int i = 0; i < GridLevelsPerSide; i++) {
          if(gridB_Upper_Status[i] == ORDER_FILLED) {
             totalLots += gridB_Upper_Lots[i];
+            shortPositions++;
+            if(DetailedLogging) {
+               PrintFormat("[Shield]   Grid B Upper[%d]: %.2f lots", i, gridB_Upper_Lots[i]);
+            }
          }
          if(gridA_Lower_Status[i] == ORDER_FILLED) {
             totalLots += gridA_Lower_Lots[i];
+            shortPositions++;
+            if(DetailedLogging) {
+               PrintFormat("[Shield]   Grid A Lower[%d]: %.2f lots", i, gridA_Lower_Lots[i]);
+            }
          }
       }
    }
@@ -59,18 +73,36 @@ double CalculateShieldLotSize(ENUM_SHIELD_TYPE shieldType)
       for(int i = 0; i < GridLevelsPerSide; i++) {
          if(gridA_Upper_Status[i] == ORDER_FILLED) {
             totalLots += gridA_Upper_Lots[i];
+            longPositions++;
+            if(DetailedLogging) {
+               PrintFormat("[Shield]   Grid A Upper[%d]: %.2f lots", i, gridA_Upper_Lots[i]);
+            }
          }
          if(gridB_Lower_Status[i] == ORDER_FILLED) {
             totalLots += gridB_Lower_Lots[i];
+            longPositions++;
+            if(DetailedLogging) {
+               PrintFormat("[Shield]   Grid B Lower[%d]: %.2f lots", i, gridB_Lower_Lots[i]);
+            }
          }
       }
    }
+
+   double rawLots = totalLots;
 
    // Normalize
    totalLots = NormalizeLotSize(totalLots);
 
    // Minimum 0.01
    if(totalLots < symbolMinLot) totalLots = symbolMinLot;
+
+   if(DetailedLogging) {
+      PrintFormat("[Shield] Lot Calculation Summary:");
+      PrintFormat("[Shield]   Positions to cover: %d", (shieldType == SHIELD_LONG ? shortPositions : longPositions));
+      PrintFormat("[Shield]   Raw lot sum: %.4f", rawLots);
+      PrintFormat("[Shield]   Normalized lot: %.2f", totalLots);
+      PrintFormat("[Shield]   Min lot applied: %s", (rawLots < symbolMinLot ? "YES" : "NO"));
+   }
 
    return totalLots;
 }
@@ -84,19 +116,38 @@ double CalculateShieldLotSize(ENUM_SHIELD_TYPE shieldType)
 //+------------------------------------------------------------------+
 void ProcessShieldSimple(double currentPrice)
 {
+   if(DetailedLogging) {
+      PrintFormat("[Shield] ProcessShieldSimple() - Price: %.5f, Active: %s",
+                  currentPrice, (shield.isActive ? "YES" : "NO"));
+   }
+
    if(shield.isActive) {
       // Shield already active - manage it
+      if(DetailedLogging) {
+         PrintFormat("[Shield]   Managing active shield - Type: %s, P/L: %.2f",
+                     (shield.type == SHIELD_LONG ? "LONG" : "SHORT"), shield.current_pl);
+      }
       ManageActiveShield(currentPrice);
       return;
    }
 
    // Check breakout
    ENUM_BREAKOUT_DIRECTION direction;
-   if(CheckBreakoutConditionShield(currentPrice, direction)) {
+   bool breakoutDetected = CheckBreakoutConditionShield(currentPrice, direction);
+
+   if(DetailedLogging) {
+      PrintFormat("[Shield]   Breakout check: %s, Direction: %s",
+                  (breakoutDetected ? "DETECTED" : "None"),
+                  (direction == BREAKOUT_UP ? "UP" : (direction == BREAKOUT_DOWN ? "DOWN" : "NONE")));
+   }
+
+   if(breakoutDetected) {
       if(direction == BREAKOUT_UP) {
+         Print("[Shield] BREAKOUT UP detected - Activating Shield SHORT");
          ActivateShieldShort("SIMPLE");
       }
       else if(direction == BREAKOUT_DOWN) {
+         Print("[Shield] BREAKOUT DOWN detected - Activating Shield LONG");
          ActivateShieldLong("SIMPLE");
       }
    }
@@ -114,6 +165,19 @@ void ProcessShield3Phases(double currentPrice)
    // Get price position in range
    ENUM_SYSTEM_STATE priceState = GetPricePositionInRange(currentPrice);
 
+   if(DetailedLogging) {
+      string phaseStr = GetShieldPhaseString();
+      string stateStr = "";
+      switch(priceState) {
+         case STATE_INSIDE_RANGE: stateStr = "INSIDE_RANGE"; break;
+         case STATE_WARNING_UP: stateStr = "WARNING_UP"; break;
+         case STATE_WARNING_DOWN: stateStr = "WARNING_DOWN"; break;
+         default: stateStr = "OTHER"; break;
+      }
+      PrintFormat("[Shield] ProcessShield3Phases() - Price: %.5f, Phase: %s, State: %s",
+                  currentPrice, phaseStr, stateStr);
+   }
+
    switch(shield.phase) {
 
       //-------------------------------------------------------------
@@ -121,9 +185,11 @@ void ProcessShield3Phases(double currentPrice)
       //-------------------------------------------------------------
       case PHASE_NORMAL:
          if(priceState == STATE_WARNING_UP) {
+            Print("[Shield] Phase transition: NORMAL -> WARNING (UP)");
             EnterWarningPhase(BREAKOUT_UP);
          }
          else if(priceState == STATE_WARNING_DOWN) {
+            Print("[Shield] Phase transition: NORMAL -> WARNING (DOWN)");
             EnterWarningPhase(BREAKOUT_DOWN);
          }
          break;
@@ -134,13 +200,16 @@ void ProcessShield3Phases(double currentPrice)
       case PHASE_WARNING:
          // If back inside, reset
          if(priceState == STATE_INSIDE_RANGE) {
+            Print("[Shield] Phase transition: WARNING -> NORMAL (returned to range)");
             ExitWarningPhase();
          }
          // If past last grid level, enter Pre-Shield
          else if(priceState == STATE_WARNING_UP && currentPrice >= GetLastGridBLevel()) {
+            PrintFormat("[Shield] Phase transition: WARNING -> PRE-SHIELD (price %.5f >= lastGridB)", currentPrice);
             EnterPreShieldPhase(BREAKOUT_UP);
          }
          else if(priceState == STATE_WARNING_DOWN && currentPrice <= GetLastGridALevel()) {
+            PrintFormat("[Shield] Phase transition: WARNING -> PRE-SHIELD (price %.5f <= lastGridA)", currentPrice);
             EnterPreShieldPhase(BREAKOUT_DOWN);
          }
          break;
@@ -153,12 +222,14 @@ void ProcessShield3Phases(double currentPrice)
          if(priceState == STATE_INSIDE_RANGE ||
             priceState == STATE_WARNING_UP ||
             priceState == STATE_WARNING_DOWN) {
+            Print("[Shield] Phase transition: PRE-SHIELD -> NORMAL (cancelled)");
             CancelPreShield();
          }
          // If breakout confirmed, activate shield
          else {
             ENUM_BREAKOUT_DIRECTION direction;
             if(CheckBreakoutConditionShield(currentPrice, direction)) {
+               Print("[Shield] Phase transition: PRE-SHIELD -> SHIELD_ACTIVE (breakout confirmed)");
                if(direction == BREAKOUT_UP) {
                   ActivateShieldShort("3_PHASES");
                }
@@ -173,6 +244,9 @@ void ProcessShield3Phases(double currentPrice)
       // PHASE 3: SHIELD ACTIVE - Protection in progress
       //-------------------------------------------------------------
       case PHASE_SHIELD_ACTIVE:
+         if(DetailedLogging) {
+            PrintFormat("[Shield] SHIELD_ACTIVE - Managing shield, Current P/L: %.2f", shield.current_pl);
+         }
          ManageActiveShield(currentPrice);
          break;
    }
@@ -343,25 +417,52 @@ void ActivateShieldShort(string source)
 //+------------------------------------------------------------------+
 void ManageActiveShield(double currentPrice)
 {
-   if(!shield.isActive || shield.ticket == 0) return;
+   if(!shield.isActive || shield.ticket == 0) {
+      if(DetailedLogging) {
+         Print("[Shield] ManageActiveShield() - No active shield to manage");
+      }
+      return;
+   }
 
    // Verify position still exists
    if(!PositionSelectByTicket(shield.ticket)) {
       Print("[Shield] Position not found - may have been closed by SL/TP");
+      PrintFormat("[Shield]   Ticket: %d, Type: %s", shield.ticket, (shield.type == SHIELD_LONG ? "LONG" : "SHORT"));
+      PrintFormat("[Shield]   Last known P/L: %.2f", shield.current_pl);
       ResetShield();
       return;
    }
 
    // Update current P/L
+   double previousPL = shield.current_pl;
    shield.current_pl = PositionGetDouble(POSITION_PROFIT);
+   double currentSL = PositionGetDouble(POSITION_SL);
+   double currentTP = PositionGetDouble(POSITION_TP);
+
+   if(DetailedLogging) {
+      PrintFormat("[Shield] ManageActiveShield() - Ticket: %d, Type: %s",
+                  shield.ticket, (shield.type == SHIELD_LONG ? "LONG" : "SHORT"));
+      PrintFormat("[Shield]   Entry: %.5f, Current: %.5f", shield.entry_price, currentPrice);
+      PrintFormat("[Shield]   P/L: %.2f (prev: %.2f), SL: %.5f", shield.current_pl, previousPL, currentSL);
+      PrintFormat("[Shield]   Duration: %d sec", (int)(TimeCurrent() - shield.activation_time));
+   }
 
    // Apply trailing if enabled
    if(Shield_Use_Trailing) {
+      if(DetailedLogging) {
+         Print("[Shield]   Checking trailing stop conditions...");
+      }
       ApplyShieldTrailing(currentPrice);
    }
 
    // Check reentry condition
-   if(CheckReentryConditionShield(currentPrice)) {
+   bool reentryCondition = CheckReentryConditionShield(currentPrice);
+   if(DetailedLogging) {
+      PrintFormat("[Shield]   Reentry condition: %s", (reentryCondition ? "TRUE" : "FALSE"));
+   }
+
+   if(reentryCondition) {
+      Print("[Shield] Reentry condition met - Closing shield");
       CloseShield("REENTRY");
    }
 }
@@ -371,22 +472,44 @@ void ManageActiveShield(double currentPrice)
 //+------------------------------------------------------------------+
 void ApplyShieldTrailing(double currentPrice)
 {
-   if(!PositionSelectByTicket(shield.ticket)) return;
+   if(!PositionSelectByTicket(shield.ticket)) {
+      if(DetailedLogging) {
+         PrintFormat("[Shield] ApplyShieldTrailing() - Position %d not found", shield.ticket);
+      }
+      return;
+   }
 
    double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
    double currentSL = PositionGetDouble(POSITION_SL);
    double trailingStart = PipsToPoints(Shield_Trailing_Start);
    double trailingStep = PipsToPoints(Shield_Trailing_Step);
 
+   if(DetailedLogging) {
+      PrintFormat("[Shield] ApplyShieldTrailing() - Open: %.5f, Current: %.5f, SL: %.5f",
+                  openPrice, currentPrice, currentSL);
+      PrintFormat("[Shield]   Trailing Start: %.5f, Step: %.5f", trailingStart, trailingStep);
+   }
+
    if(shield.type == SHIELD_LONG) {
       // LONG: trailing SL upwards
       double profit = currentPrice - openPrice;
+      if(DetailedLogging) {
+         PrintFormat("[Shield]   LONG profit points: %.5f, Required: %.5f", profit, trailingStart);
+      }
+
       if(profit >= trailingStart) {
          double newSL = NormalizeDouble(currentPrice - trailingStep, symbolDigits);
+         if(DetailedLogging) {
+            PrintFormat("[Shield]   Calculated new SL: %.5f, Current SL: %.5f", newSL, currentSL);
+         }
+
          if(newSL > currentSL || currentSL == 0) {
             if(trade.PositionModify(shield.ticket, newSL, 0)) {
                shield.trailing_sl = newSL;
-               Print("[Shield] Trailing SL updated: ", newSL);
+               PrintFormat("[Shield] Trailing SL UPDATED: %.5f -> %.5f (profit: %.5f)", currentSL, newSL, profit);
+            } else {
+               PrintFormat("[Shield] Trailing SL FAILED: Error %d - %s",
+                          trade.ResultRetcode(), trade.ResultRetcodeDescription());
             }
          }
       }
@@ -394,12 +517,23 @@ void ApplyShieldTrailing(double currentPrice)
    else if(shield.type == SHIELD_SHORT) {
       // SHORT: trailing SL downwards
       double profit = openPrice - currentPrice;
+      if(DetailedLogging) {
+         PrintFormat("[Shield]   SHORT profit points: %.5f, Required: %.5f", profit, trailingStart);
+      }
+
       if(profit >= trailingStart) {
          double newSL = NormalizeDouble(currentPrice + trailingStep, symbolDigits);
+         if(DetailedLogging) {
+            PrintFormat("[Shield]   Calculated new SL: %.5f, Current SL: %.5f", newSL, currentSL);
+         }
+
          if(newSL < currentSL || currentSL == 0) {
             if(trade.PositionModify(shield.ticket, newSL, 0)) {
                shield.trailing_sl = newSL;
-               Print("[Shield] Trailing SL updated: ", newSL);
+               PrintFormat("[Shield] Trailing SL UPDATED: %.5f -> %.5f (profit: %.5f)", currentSL, newSL, profit);
+            } else {
+               PrintFormat("[Shield] Trailing SL FAILED: Error %d - %s",
+                          trade.ResultRetcode(), trade.ResultRetcodeDescription());
             }
          }
       }
@@ -445,6 +579,11 @@ void CloseShield(string reason)
 //+------------------------------------------------------------------+
 void ResetShield()
 {
+   // Save previous state for logging
+   bool wasActive = shield.isActive;
+   ENUM_SHIELD_TYPE prevType = shield.type;
+   ulong prevTicket = shield.ticket;
+
    shield.isActive = false;
    shield.type = SHIELD_NONE;
    shield.phase = PHASE_NORMAL;
@@ -458,6 +597,12 @@ void ResetShield()
    currentSystemState = STATE_INSIDE_RANGE;
 
    Print("[Shield] Reset - System returns to normal operation");
+   if(wasActive) {
+      PrintFormat("[Shield]   Previous state: Type=%s, Ticket=%d",
+                  (prevType == SHIELD_LONG ? "LONG" : "SHORT"), prevTicket);
+   }
+   PrintFormat("[Shield]   Total activations this session: %d", totalShieldActivations);
+   PrintFormat("[Shield]   Total P/L this session: %.2f", totalShieldPL);
 }
 
 //+------------------------------------------------------------------+
@@ -469,8 +614,16 @@ void ResetShield()
 //+------------------------------------------------------------------+
 void ProcessShield()
 {
-   if(ShieldMode == SHIELD_DISABLED) return;
-   if(NeutralMode != NEUTRAL_RANGEBOX) return;
+   if(ShieldMode == SHIELD_DISABLED) {
+      return;
+   }
+
+   if(NeutralMode != NEUTRAL_RANGEBOX) {
+      if(DetailedLogging) {
+         Print("[Shield] ProcessShield() skipped - Not in RANGEBOX mode");
+      }
+      return;
+   }
 
    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
@@ -483,6 +636,42 @@ void ProcessShield()
          ProcessShield3Phases(currentPrice);
          break;
    }
+}
+
+//+------------------------------------------------------------------+
+//| Log Full Shield Report                                            |
+//+------------------------------------------------------------------+
+void LogShieldReport()
+{
+   Print("═══════════════════════════════════════════════════════════════════");
+   Print("  SHIELD INTELLIGENT SYSTEM REPORT");
+   Print("═══════════════════════════════════════════════════════════════════");
+   PrintFormat("  Mode: %s", GetShieldModeName());
+   PrintFormat("  Available: %s", (IsShieldAvailable() ? "YES" : "NO"));
+   PrintFormat("  Status: %s", GetShieldStatusString());
+   PrintFormat("  Phase: %s", GetShieldPhaseString());
+   Print("───────────────────────────────────────────────────────────────────");
+
+   if(shield.isActive) {
+      Print("  ACTIVE SHIELD:");
+      PrintFormat("    Type: %s", (shield.type == SHIELD_LONG ? "LONG" : "SHORT"));
+      PrintFormat("    Ticket: %d", shield.ticket);
+      PrintFormat("    Lot Size: %.2f", shield.lot_size);
+      PrintFormat("    Entry Price: %.5f", shield.entry_price);
+      PrintFormat("    Current P/L: %.2f", shield.current_pl);
+      PrintFormat("    Trailing SL: %.5f", shield.trailing_sl);
+      PrintFormat("    Activation Time: %s", TimeToString(shield.activation_time, TIME_DATE|TIME_MINUTES));
+      PrintFormat("    Duration: %d seconds", (int)(TimeCurrent() - shield.activation_time));
+   } else {
+      Print("  No active shield");
+   }
+
+   Print("───────────────────────────────────────────────────────────────────");
+   Print("  SESSION STATISTICS:");
+   PrintFormat("    Total Activations: %d", totalShieldActivations);
+   PrintFormat("    Total P/L: %.2f", totalShieldPL);
+   PrintFormat("    Activation Count (this shield): %d", shield.activation_count);
+   Print("═══════════════════════════════════════════════════════════════════");
 }
 
 //+------------------------------------------------------------------+

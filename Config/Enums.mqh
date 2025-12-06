@@ -27,6 +27,9 @@ enum ENUM_FOREX_PAIR {
     PAIR_EURCHF,    // 🇪🇺🇨🇭 EUR/CHF (Spread: 1.5-2.5, Range: 35-60 pips)
     PAIR_AUDCAD,    // 🇦🇺🇨🇦 AUD/CAD (Spread: 2-3, Range: 50-80 pips)
     PAIR_NZDCAD,    // 🇳🇿🇨🇦 NZD/CAD (Spread: 2-3, Range: 45-75 pips)
+    PAIR_EURGBP,    // 🇪🇺🇬🇧 EUR/GBP (Spread: 1-2, Range: 40-70 pips) - EXCELLENT NEUTRAL
+    PAIR_GBPUSD,    // 🇬🇧🇺🇸 GBP/USD (Spread: 1-2, Range: 80-120 pips) - Mean Reverting
+    PAIR_USDCHF,    // 🇺🇸🇨🇭 USD/CHF (Spread: 1-2, Range: 50-70 pips) - Safe Haven
     PAIR_CUSTOM     // ⚙️ Custom (Impostazioni Manuali)
 };
 
@@ -206,36 +209,54 @@ enum ENUM_LOG_LEVEL {
 };
 
 //+------------------------------------------------------------------+
-//| 🎨 COLOR SCHEME - Colori configurabili Grid Lines                |
+//| 🎮 ENTRY MODE - Modalità di ingresso v3.0                        |
 //+------------------------------------------------------------------+
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  🎨 COLOR SCHEME - Grid Lines (User Configurable)        ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
+enum ENUM_ENTRY_MODE {
+    ENTRY_MARKET = 0,           // MARKET - Partenza immediata @ prezzo corrente
+    ENTRY_LIMIT = 1,            // LIMIT - Aspetta che prezzo torni a livello
+    ENTRY_STOP = 2              // STOP - Aspetta breakout di un livello
+};
 
-input group "    🔵 Main System Colors"
-input color COLOR_ENTRY_POINT = clrCyan;              // 🔷 Entry Point Line
-input color COLOR_RANGE_UPPER = clrDarkCyan;          // 🔺 Range Upper Bound
-input color COLOR_RANGE_LOWER = clrDarkCyan;          // 🔻 Range Lower Bound
+//+------------------------------------------------------------------+
+//| 💰 PARTIAL TP STATUS - Stato Partial Take Profit v3.0            |
+//+------------------------------------------------------------------+
+enum ENUM_PARTIAL_TP_STATUS {
+    PARTIAL_NONE = 0,           // Nessun partial TP eseguito
+    PARTIAL_LEVEL1 = 1,         // Level 1 (50%) eseguito
+    PARTIAL_LEVEL2 = 2,         // Level 2 (75%) eseguito
+    PARTIAL_COMPLETE = 3        // TP completo (100%)
+};
 
-input group "    🎨 Grid A Colors (Long Bias - Azure)"
-input color COLOR_GRID_A_UPPER = C'100,180,255';      // 🔵 Grid A Upper Zone
-input color COLOR_GRID_A_LOWER = C'60,140,205';       // 🔵 Grid A Lower Zone
-input color COLOR_GRID_A_TP = C'130,200,255';         // 🎯 Grid A Take Profit
-input color COLOR_GRID_A_1 = C'100,180,255';          // 🔵 Grid A Level 1
-input color COLOR_GRID_A_2 = C'80,160,230';           // 🔵 Grid A Level 2
-input color COLOR_GRID_A_3 = C'60,140,205';           // 🔵 Grid A Level 3
-input color COLOR_GRID_A_4 = C'40,120,180';           // 🔵 Grid A Level 4
-input color COLOR_GRID_A_5 = C'30,100,160';           // 🔵 Grid A Level 5+
+//+------------------------------------------------------------------+
+//| 📈 TRAILING TYPE - Tipo Trailing v3.0                            |
+//+------------------------------------------------------------------+
+enum ENUM_TRAILING_TYPE {
+    TRAILING_NONE = 0,          // Nessun trailing
+    TRAILING_AGGRESSIVE = 1,    // Trailing aggressivo (verso breakout)
+    TRAILING_CONSERVATIVE = 2   // Trailing conservativo (contro breakout)
+};
 
-input group "    🎨 Grid B Colors (Short Bias - Cyan)"
-input color COLOR_GRID_B_UPPER = C'100,220,255';      // 🔵 Grid B Upper Zone
-input color COLOR_GRID_B_LOWER = C'60,180,205';       // 🔵 Grid B Lower Zone
-input color COLOR_GRID_B_TP = C'130,240,255';         // 🎯 Grid B Take Profit
-input color COLOR_GRID_B_1 = C'100,220,255';          // 🔵 Grid B Level 1
-input color COLOR_GRID_B_2 = C'80,200,230';           // 🔵 Grid B Level 2
-input color COLOR_GRID_B_3 = C'60,180,205';           // 🔵 Grid B Level 3
-input color COLOR_GRID_B_4 = C'40,160,180';           // 🔵 Grid B Level 4
-input color COLOR_GRID_B_5 = C'30,140,160';           // 🔵 Grid B Level 5+
+//+------------------------------------------------------------------+
+//| 📍 MANUAL SR LINE TYPE - Tipo linea S/R manuale v3.0             |
+//+------------------------------------------------------------------+
+enum ENUM_SR_LINE_TYPE {
+    SR_RESISTANCE = 0,          // Linea Resistance
+    SR_SUPPORT = 1,             // Linea Support
+    SR_ACTIVATION = 2           // Linea Activation (per LIMIT/STOP mode)
+};
+
+//+------------------------------------------------------------------+
+//| 🎮 BUTTON STATE - Stato bottoni v3.0                             |
+//+------------------------------------------------------------------+
+enum ENUM_BUTTON_STATE {
+    BTN_STATE_IDLE = 0,         // Bottone inattivo
+    BTN_STATE_WAITING = 1,      // In attesa di attivazione (LIMIT/STOP)
+    BTN_STATE_ACTIVE = 2        // Sistema attivo
+};
+
+//+------------------------------------------------------------------+
+//| NOTE: Color inputs moved to Config/InputParameters.mqh           |
+//+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 //| CONSTANTS - Costanti di sistema                                  |

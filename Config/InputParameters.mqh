@@ -3,10 +3,128 @@
 //|                        Sugamara - Input Parameters               |
 //|                                                                  |
 //|  User-configurable parameters for Double Grid Neutral            |
-//|  v2.0 MULTIMODE - PURE / CASCADE / RANGEBOX                      |
+//|  v3.0 MULTIMODE - PURE / CASCADE / RANGEBOX                      |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
+
+//+------------------------------------------------------------------+
+//| 🆕 v3.0 FEATURES ACTIVATION                                      |
+//+------------------------------------------------------------------+
+
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🆕 SUGAMARA v3.0 - NEW FEATURES                          ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ✅ FEATURE TOGGLES"
+input bool      Enable_PartialTP = true;                    // ✅ Partial Take Profit (50%/75%/100%)
+input bool      Enable_TrailingAsymmetric = true;           // ✅ Trailing Stop Asimmetrico
+input bool      Enable_ATRMultiTF = true;                   // ✅ ATR Multi-Timeframe Dashboard
+input bool      Enable_ManualSR = true;                     // ✅ Manual S/R Drag & Drop
+input bool      Enable_AdvancedButtons = true;              // ✅ Control Buttons (Market/Limit/Stop)
+
+//+------------------------------------------------------------------+
+//| 💰 PARTIAL TAKE PROFIT SETTINGS                                  |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  💰 PARTIAL TAKE PROFIT (v3.0)                            ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📊 PARTIAL TP LEVELS"
+input double    PartialTP_Level1_Percent = 50.0;            // 📊 Level 1: % verso TP
+input double    PartialTP_Level1_Close = 50.0;              // 📉 Chiudi % posizione a Level 1
+input double    PartialTP_Level2_Percent = 75.0;            // 📊 Level 2: % verso TP
+input double    PartialTP_Level2_Close = 25.0;              // 📉 Chiudi % posizione a Level 2
+input bool      PartialTP_OnShield = true;                  // 🛡️ Applica anche a Shield
+
+//+------------------------------------------------------------------+
+//| 📈 TRAILING STOP ASIMMETRICO SETTINGS                            |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  📈 TRAILING STOP ASIMMETRICO (v3.0)                      ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    🎯 TRAILING PARAMETERS"
+input double    Trailing_Aggressive_Pips = 5.0;             // ⚡ Trailing Aggressivo (pips) - verso breakout
+input double    Trailing_Conservative_Pips = 15.0;          // 🛡️ Trailing Conservativo (pips) - contro breakout
+input double    Trailing_Activation_Pips = 10.0;            // 📏 Attivazione Trailing (pips profit)
+input double    Trailing_Step_Pips = 2.0;                   // 📐 Step Trailing (pips)
+
+//+------------------------------------------------------------------+
+//| 📊 ATR MULTI-TIMEFRAME SETTINGS                                  |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  📊 ATR MULTI-TIMEFRAME DASHBOARD (v3.0)                  ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ⏱️ TIMEFRAMES"
+input ENUM_TIMEFRAMES ATR_MTF_TF1 = PERIOD_M5;              // 📊 TF1: M5
+input ENUM_TIMEFRAMES ATR_MTF_TF2 = PERIOD_M15;             // 📊 TF2: M15
+input ENUM_TIMEFRAMES ATR_MTF_TF3 = PERIOD_H1;              // 📊 TF3: H1
+input ENUM_TIMEFRAMES ATR_MTF_TF4 = PERIOD_H4;              // 📊 TF4: H4
+input int       ATR_MTF_Period = 14;                        // 📈 ATR Period per tutti i TF
+
+//+------------------------------------------------------------------+
+//| 📍 MANUAL SUPPORT/RESISTANCE SETTINGS                            |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  📍 MANUAL S/R DRAG & DROP (v3.0)                         ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    🎨 S/R LINE SETTINGS"
+input color     ManualSR_ResistanceColor = clrRed;          // 🔺 Colore Resistance
+input color     ManualSR_SupportColor = clrLime;            // 🔻 Colore Support
+input color     ManualSR_ActivationColor = clrGold;         // ⭐ Colore Activation Level
+input int       ManualSR_LineWidth = 2;                     // 📏 Spessore Linee
+input bool      ManualSR_ShowLabels = true;                 // 📝 Mostra Etichette
+
+//+------------------------------------------------------------------+
+//| 🎮 CONTROL BUTTONS SETTINGS                                      |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🎮 CONTROL BUTTONS (v3.0)                                ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ╔═ SELEZIONA ENTRY MODE DEFAULT ════════════════════════🔽🔽🔽"
+input ENUM_ENTRY_MODE DefaultEntryMode = ENTRY_MARKET;      // 📊 Entry Mode Default ▼
+input double    LimitActivation_Price = 0.0;                // 📍 LIMIT: Prezzo Attivazione (0=manual)
+input double    StopActivation_Price = 0.0;                 // 📍 STOP: Prezzo Breakout (0=manual)
+
+//+------------------------------------------------------------------+
+//| 🎨 VISUAL THEME SETTINGS (v3.0)                                  |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🎨 VISUAL THEME (v3.0)                                   ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    🖼️ CHART COLORS"
+input color     Theme_ChartBackground = C'45,20,35';        // 🎨 Sfondo Chart (Amaranto Scuro)
+input color     Theme_CandleBull = clrDodgerBlue;           // 📈 Candele Bullish (Blu Splendente)
+input color     Theme_CandleBear = clrYellow;               // 📉 Candele Bearish (Giallo)
+
+input group "    🎨 DASHBOARD COLORS"
+input color     Theme_DashboardBG = C'20,60,80';            // 🎨 Dashboard Background (Blu Turchese)
+input color     Theme_DashboardText = clrCyan;              // 📝 Dashboard Text (Azzurro)
+input color     Theme_DashboardAccent = clrAqua;            // ⭐ Dashboard Accent
+
+input group "    📏 GRID LINE COLORS"
+input color     GridLine_BuyStop = clrDarkGreen;            // 🟢 BUY STOP: Verde Scuro
+input color     GridLine_BuyLimit = clrLime;                // 🟢 BUY LIMIT: Verde Chiaro
+input color     GridLine_SellStop = clrRed;                 // 🔴 SELL STOP: Rosso
+input color     GridLine_SellLimit = clrOrange;             // 🟠 SELL LIMIT: Arancione
+input int       GridLine_Width = 2;                         // 📏 Spessore Linee Grid
 
 //+------------------------------------------------------------------+
 //| 1️⃣ ⚙️ SYSTEM CONFIGURATION                                      |
@@ -426,4 +544,38 @@ input double    Custom_DailyRange = 100.0;                   // 📈 Range Giorn
 input double    Custom_ATR_Typical = 25.0;                   // 📊 ATR Tipico (pips)
 input double    Custom_MinLot = 0.01;                        // 💵 Lot Minimo
 input double    Custom_DefaultSpacing = 20.0;                // 📏 Spacing Default (pips)
+
+//+------------------------------------------------------------------+
+//| 2️⃣2️⃣ 🎨 LEGACY COLOR SCHEME (Grid Lines by Level)                |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  2️⃣2️⃣  🎨 LEGACY COLOR SCHEME - Grid Lines by Level       ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    🔵 Main System Colors"
+input color COLOR_ENTRY_POINT = clrCyan;              // 🔷 Entry Point Line
+input color COLOR_RANGE_UPPER = clrDarkCyan;          // 🔺 Range Upper Bound
+input color COLOR_RANGE_LOWER = clrDarkCyan;          // 🔻 Range Lower Bound
+
+input group "    🎨 Grid A Colors (Long Bias - Azure)"
+input color COLOR_GRID_A_UPPER = C'100,180,255';      // 🔵 Grid A Upper Zone
+input color COLOR_GRID_A_LOWER = C'60,140,205';       // 🔵 Grid A Lower Zone
+input color COLOR_GRID_A_TP = C'130,200,255';         // 🎯 Grid A Take Profit
+input color COLOR_GRID_A_1 = C'100,180,255';          // 🔵 Grid A Level 1
+input color COLOR_GRID_A_2 = C'80,160,230';           // 🔵 Grid A Level 2
+input color COLOR_GRID_A_3 = C'60,140,205';           // 🔵 Grid A Level 3
+input color COLOR_GRID_A_4 = C'40,120,180';           // 🔵 Grid A Level 4
+input color COLOR_GRID_A_5 = C'30,100,160';           // 🔵 Grid A Level 5+
+
+input group "    🎨 Grid B Colors (Short Bias - Cyan)"
+input color COLOR_GRID_B_UPPER = C'100,220,255';      // 🔵 Grid B Upper Zone
+input color COLOR_GRID_B_LOWER = C'60,180,205';       // 🔵 Grid B Lower Zone
+input color COLOR_GRID_B_TP = C'130,240,255';         // 🎯 Grid B Take Profit
+input color COLOR_GRID_B_1 = C'100,220,255';          // 🔵 Grid B Level 1
+input color COLOR_GRID_B_2 = C'80,200,230';           // 🔵 Grid B Level 2
+input color COLOR_GRID_B_3 = C'60,180,205';           // 🔵 Grid B Level 3
+input color COLOR_GRID_B_4 = C'40,160,180';           // 🔵 Grid B Level 4
+input color COLOR_GRID_B_5 = C'30,140,160';           // 🔵 Grid B Level 5+
 

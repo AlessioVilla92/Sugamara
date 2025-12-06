@@ -21,14 +21,22 @@
 //+------------------------------------------------------------------+
 bool InitializeHedgingManager()
 {
+   Print("═══════════════════════════════════════════════════════════════════");
+   Print("  INITIALIZING HEDGING MANAGER");
+   Print("═══════════════════════════════════════════════════════════════════");
+
    if(!IsHedgingAvailable())
    {
-      if(DetailedLogging)
-         Print("[Hedge] Skip - Hedging not available in current mode");
+      Print("[Hedge] Skip - Hedging not available in current mode");
+      PrintFormat("[Hedge]   Mode: %s, EnableHedging: %s",
+                  EnumToString(NeutralMode), (EnableHedging ? "YES" : "NO"));
       return true;  // Non è un errore
    }
 
    Print("[Hedge] Initializing Hedging Manager...");
+   PrintFormat("[Hedge]   Hedge Multiplier: %.2f", Hedge_Multiplier);
+   PrintFormat("[Hedge]   Hedge TP: %.1f pips", Hedge_TP_Pips);
+   PrintFormat("[Hedge]   Hedge SL: %.1f pips", Hedge_SL_Pips);
 
    // Reset variabili
    currentHedgeDirection = HEDGE_NONE;
@@ -38,10 +46,13 @@ bool InitializeHedgingManager()
    hedgeOpenTime = 0;
    hedgeEntryPrice = 0;
 
+   Print("[Hedge] Variables reset to default");
+
    // Verifica se ci sono hedge esistenti da ripristinare
    ScanExistingHedgePositions();
 
    Print("[Hedge] Initialized. EnableHedging=", EnableHedging ? "YES" : "NO");
+   Print("═══════════════════════════════════════════════════════════════════");
 
    return true;
 }
@@ -52,6 +63,13 @@ bool InitializeHedgingManager()
 void ScanExistingHedgePositions()
 {
    int totalPositions = PositionsTotal();
+   int hedgesFound = 0;
+
+   if(DetailedLogging) {
+      PrintFormat("[Hedge] ScanExistingHedgePositions() - Scanning %d positions", totalPositions);
+      PrintFormat("[Hedge]   Looking for Magic: %d (LONG) or %d (SHORT)",
+                  MagicNumber + MAGIC_HEDGE_LONG, MagicNumber + MAGIC_HEDGE_SHORT);
+   }
 
    for(int i = 0; i < totalPositions; i++)
    {
@@ -68,9 +86,14 @@ void ScanExistingHedgePositions()
          hedgeLotSize = PositionGetDouble(POSITION_VOLUME);
          hedgeEntryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
          hedgeOpenTime = (datetime)PositionGetInteger(POSITION_TIME);
+         hedgesFound++;
 
-         PrintFormat("[Hedge] Recovered existing LONG hedge: ticket %d, lot %.2f",
-                     hedgeLongTicket, hedgeLotSize);
+         Print("[Hedge] *** RECOVERED EXISTING LONG HEDGE ***");
+         PrintFormat("[Hedge]   Ticket: %d", hedgeLongTicket);
+         PrintFormat("[Hedge]   Lot Size: %.2f", hedgeLotSize);
+         PrintFormat("[Hedge]   Entry Price: %.5f", hedgeEntryPrice);
+         PrintFormat("[Hedge]   Open Time: %s", TimeToString(hedgeOpenTime, TIME_DATE|TIME_MINUTES));
+         PrintFormat("[Hedge]   Current P/L: %.2f", PositionGetDouble(POSITION_PROFIT));
       }
       else if(posMagic == MagicNumber + MAGIC_HEDGE_SHORT)
       {
@@ -79,10 +102,21 @@ void ScanExistingHedgePositions()
          hedgeLotSize = PositionGetDouble(POSITION_VOLUME);
          hedgeEntryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
          hedgeOpenTime = (datetime)PositionGetInteger(POSITION_TIME);
+         hedgesFound++;
 
-         PrintFormat("[Hedge] Recovered existing SHORT hedge: ticket %d, lot %.2f",
-                     hedgeShortTicket, hedgeLotSize);
+         Print("[Hedge] *** RECOVERED EXISTING SHORT HEDGE ***");
+         PrintFormat("[Hedge]   Ticket: %d", hedgeShortTicket);
+         PrintFormat("[Hedge]   Lot Size: %.2f", hedgeLotSize);
+         PrintFormat("[Hedge]   Entry Price: %.5f", hedgeEntryPrice);
+         PrintFormat("[Hedge]   Open Time: %s", TimeToString(hedgeOpenTime, TIME_DATE|TIME_MINUTES));
+         PrintFormat("[Hedge]   Current P/L: %.2f", PositionGetDouble(POSITION_PROFIT));
       }
+   }
+
+   if(hedgesFound == 0) {
+      Print("[Hedge] No existing hedge positions found");
+   } else {
+      PrintFormat("[Hedge] Recovery complete: %d hedge(s) found", hedgesFound);
    }
 }
 
@@ -91,19 +125,46 @@ void ScanExistingHedgePositions()
 //+------------------------------------------------------------------+
 double CalculateHedgeLotSize()
 {
+   if(DetailedLogging) {
+      Print("[Hedge] CalculateHedgeLotSize() - Starting calculation");
+      PrintFormat("[Hedge]   Net Exposure: %.4f lots", netExposure);
+      PrintFormat("[Hedge]   Hedge Multiplier: %.2f", Hedge_Multiplier);
+   }
+
    // Hedge lot = Esposizione netta × Multiplier
-   double lotSize = MathAbs(netExposure) * Hedge_Multiplier;
+   double rawLot = MathAbs(netExposure) * Hedge_Multiplier;
+   double lotSize = rawLot;
+
+   if(DetailedLogging) {
+      PrintFormat("[Hedge]   Raw calculation: |%.4f| × %.2f = %.4f", netExposure, Hedge_Multiplier, rawLot);
+   }
 
    // Minimo BaseLot
-   if(lotSize < BaseLot)
+   bool minApplied = false;
+   if(lotSize < BaseLot) {
       lotSize = BaseLot;
+      minApplied = true;
+   }
 
    // Normalizza
+   double beforeNorm = lotSize;
    lotSize = NormalizeLotSize(lotSize);
 
    // Max check
-   if(lotSize > MaxLotPerLevel)
+   bool maxApplied = false;
+   if(lotSize > MaxLotPerLevel) {
       lotSize = MaxLotPerLevel;
+      maxApplied = true;
+   }
+
+   if(DetailedLogging) {
+      PrintFormat("[Hedge] Lot Calculation Summary:");
+      PrintFormat("[Hedge]   Raw lot: %.4f", rawLot);
+      PrintFormat("[Hedge]   Min lot applied (%.2f): %s", BaseLot, (minApplied ? "YES" : "NO"));
+      PrintFormat("[Hedge]   After normalization: %.2f (was %.4f)", lotSize, beforeNorm);
+      PrintFormat("[Hedge]   Max lot applied (%.2f): %s", MaxLotPerLevel, (maxApplied ? "YES" : "NO"));
+      PrintFormat("[Hedge]   Final lot size: %.2f", lotSize);
+   }
 
    return lotSize;
 }
@@ -117,34 +178,46 @@ double CalculateHedgeLotSize()
 //+------------------------------------------------------------------+
 bool OpenHedgePosition(ENUM_HEDGE_DIRECTION direction)
 {
-   if(!IsHedgingAvailable())
+   Print("═══════════════════════════════════════════════════════════════════");
+   PrintFormat("  OPENING HEDGE POSITION: %s", (direction == HEDGE_LONG ? "LONG" : "SHORT"));
+   Print("═══════════════════════════════════════════════════════════════════");
+
+   if(!IsHedgingAvailable()) {
+      Print("[Hedge] FAILED: Hedging not available");
+      PrintFormat("[Hedge]   Mode: %s, EnableHedging: %s",
+                  EnumToString(NeutralMode), (EnableHedging ? "YES" : "NO"));
       return false;
+   }
 
    // Verifica se già c'è un hedge
    if(currentHedgeDirection != HEDGE_NONE)
    {
       PrintFormat("[Hedge] WARNING: Hedge already open (%s)",
                   currentHedgeDirection == HEDGE_LONG ? "LONG" : "SHORT");
+      PrintFormat("[Hedge]   Current ticket: %d",
+                  (currentHedgeDirection == HEDGE_LONG ? hedgeLongTicket : hedgeShortTicket));
       return false;
    }
 
    // Calcola lot size
    double lotSize = CalculateHedgeLotSize();
+   PrintFormat("[Hedge] Calculated lot size: %.2f", lotSize);
 
    // Prezzi
    double price, sl, tp;
+   double pipValue = symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
 
    if(direction == HEDGE_LONG)
    {
       price = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
-      sl = price - Hedge_SL_Pips * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
-      tp = price + Hedge_TP_Pips * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
+      sl = price - Hedge_SL_Pips * pipValue;
+      tp = price + Hedge_TP_Pips * pipValue;
    }
    else // HEDGE_SHORT
    {
       price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      sl = price + Hedge_SL_Pips * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
-      tp = price - Hedge_TP_Pips * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
+      sl = price + Hedge_SL_Pips * pipValue;
+      tp = price - Hedge_TP_Pips * pipValue;
    }
 
    // Normalizza prezzi
@@ -152,8 +225,14 @@ bool OpenHedgePosition(ENUM_HEDGE_DIRECTION direction)
    sl = NormalizeDouble(sl, symbolDigits);
    tp = NormalizeDouble(tp, symbolDigits);
 
+   PrintFormat("[Hedge] Price levels:");
+   PrintFormat("[Hedge]   Entry: %.5f", price);
+   PrintFormat("[Hedge]   SL: %.5f (%.1f pips)", sl, Hedge_SL_Pips);
+   PrintFormat("[Hedge]   TP: %.5f (%.1f pips)", tp, Hedge_TP_Pips);
+
    // Magic number per hedge
    int hedgeMagic = MagicNumber + (direction == HEDGE_LONG ? MAGIC_HEDGE_LONG : MAGIC_HEDGE_SHORT);
+   PrintFormat("[Hedge] Magic Number: %d", hedgeMagic);
 
    // Configura trade
    trade.SetExpertMagicNumber(hedgeMagic);
@@ -161,6 +240,8 @@ bool OpenHedgePosition(ENUM_HEDGE_DIRECTION direction)
 
    // Commento ordine
    string comment = StringFormat("SUGAMARA_HEDGE_%s", direction == HEDGE_LONG ? "LONG" : "SHORT");
+
+   Print("[Hedge] Sending order to broker...");
 
    // Esegui ordine
    bool result;
@@ -177,6 +258,7 @@ bool OpenHedgePosition(ENUM_HEDGE_DIRECTION direction)
    if(result)
    {
       ulong ticket = trade.ResultOrder();
+      double executedPrice = trade.ResultPrice();
 
       if(direction == HEDGE_LONG)
          hedgeLongTicket = ticket;
@@ -185,18 +267,33 @@ bool OpenHedgePosition(ENUM_HEDGE_DIRECTION direction)
 
       currentHedgeDirection = direction;
       hedgeLotSize = lotSize;
-      hedgeEntryPrice = price;
+      hedgeEntryPrice = executedPrice;
       hedgeOpenTime = TimeCurrent();
+
+      Print("[Hedge] *** ORDER EXECUTED SUCCESSFULLY ***");
+      PrintFormat("[Hedge]   Ticket: %d", ticket);
+      PrintFormat("[Hedge]   Type: %s", (direction == HEDGE_LONG ? "BUY" : "SELL"));
+      PrintFormat("[Hedge]   Lot Size: %.2f", lotSize);
+      PrintFormat("[Hedge]   Executed Price: %.5f (requested: %.5f)", executedPrice, price);
+      PrintFormat("[Hedge]   Slippage: %.1f pips", MathAbs(executedPrice - price) / pipValue);
+      PrintFormat("[Hedge]   SL: %.5f, TP: %.5f", sl, tp);
+      PrintFormat("[Hedge]   Time: %s", TimeToString(hedgeOpenTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 
       LogMessage(LOG_SUCCESS, StringFormat(
          "[Hedge] Opened %s: ticket %d, lot %.2f, price %.5f, SL %.5f, TP %.5f",
          direction == HEDGE_LONG ? "LONG" : "SHORT",
-         ticket, lotSize, price, sl, tp));
+         ticket, lotSize, executedPrice, sl, tp));
 
       return true;
    }
    else
    {
+      Print("[Hedge] *** ORDER FAILED ***");
+      PrintFormat("[Hedge]   Error Code: %d", trade.ResultRetcode());
+      PrintFormat("[Hedge]   Error Description: %s", trade.ResultRetcodeDescription());
+      PrintFormat("[Hedge]   Requested: %s %.2f @ %.5f",
+                  (direction == HEDGE_LONG ? "BUY" : "SELL"), lotSize, price);
+
       LogMessage(LOG_ERROR, StringFormat(
          "[Hedge] FAILED to open %s: error %d - %s",
          direction == HEDGE_LONG ? "LONG" : "SHORT",
@@ -211,14 +308,23 @@ bool OpenHedgePosition(ENUM_HEDGE_DIRECTION direction)
 //+------------------------------------------------------------------+
 bool CloseHedgePosition()
 {
-   if(currentHedgeDirection == HEDGE_NONE)
+   Print("═══════════════════════════════════════════════════════════════════");
+   Print("  CLOSING HEDGE POSITION");
+   Print("═══════════════════════════════════════════════════════════════════");
+
+   if(currentHedgeDirection == HEDGE_NONE) {
+      Print("[Hedge] No hedge position to close");
       return true;  // Niente da chiudere
+   }
 
    ulong ticket = (currentHedgeDirection == HEDGE_LONG) ? hedgeLongTicket : hedgeShortTicket;
+   string hedgeType = (currentHedgeDirection == HEDGE_LONG) ? "LONG" : "SHORT";
+
+   PrintFormat("[Hedge] Closing %s hedge, Ticket: %d", hedgeType, ticket);
 
    if(ticket == 0)
    {
-      Print("[Hedge] WARNING: No ticket to close");
+      Print("[Hedge] WARNING: No ticket to close - resetting variables");
       ResetHedgeVariables();
       return false;
    }
@@ -227,9 +333,27 @@ bool CloseHedgePosition()
    if(!PositionSelectByTicket(ticket))
    {
       PrintFormat("[Hedge] Position %d not found - already closed?", ticket);
+      Print("[Hedge] Resetting hedge variables");
       ResetHedgeVariables();
       return true;
    }
+
+   // Get position details before closing
+   double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+   double currentPrice = PositionGetDouble(POSITION_PRICE_CURRENT);
+   double profit = PositionGetDouble(POSITION_PROFIT);
+   double lots = PositionGetDouble(POSITION_VOLUME);
+   datetime openTime = (datetime)PositionGetInteger(POSITION_TIME);
+   int duration = (int)(TimeCurrent() - openTime);
+
+   PrintFormat("[Hedge] Position details:");
+   PrintFormat("[Hedge]   Entry: %.5f", entryPrice);
+   PrintFormat("[Hedge]   Current: %.5f", currentPrice);
+   PrintFormat("[Hedge]   Lots: %.2f", lots);
+   PrintFormat("[Hedge]   Unrealized P/L: %.2f", profit);
+   PrintFormat("[Hedge]   Duration: %d seconds", duration);
+
+   Print("[Hedge] Sending close request to broker...");
 
    // Chiudi posizione
    bool result = trade.PositionClose(ticket);
@@ -237,18 +361,27 @@ bool CloseHedgePosition()
    if(result)
    {
       double closePrice = trade.ResultPrice();
-      double profit = PositionGetDouble(POSITION_PROFIT);
+
+      Print("[Hedge] *** POSITION CLOSED SUCCESSFULLY ***");
+      PrintFormat("[Hedge]   Ticket: %d", ticket);
+      PrintFormat("[Hedge]   Type: %s", hedgeType);
+      PrintFormat("[Hedge]   Close Price: %.5f", closePrice);
+      PrintFormat("[Hedge]   Realized P/L: %.2f", profit);
+      PrintFormat("[Hedge]   Duration: %d seconds", duration);
 
       LogMessage(LOG_SUCCESS, StringFormat(
          "[Hedge] Closed %s: ticket %d, profit %.2f",
-         currentHedgeDirection == HEDGE_LONG ? "LONG" : "SHORT",
-         ticket, profit));
+         hedgeType, ticket, profit));
 
       ResetHedgeVariables();
       return true;
    }
    else
    {
+      Print("[Hedge] *** CLOSE FAILED ***");
+      PrintFormat("[Hedge]   Error Code: %d", trade.ResultRetcode());
+      PrintFormat("[Hedge]   Error Description: %s", trade.ResultRetcodeDescription());
+
       LogMessage(LOG_ERROR, StringFormat(
          "[Hedge] FAILED to close: error %d - %s",
          trade.ResultRetcode(), trade.ResultRetcodeDescription()));
@@ -262,12 +395,26 @@ bool CloseHedgePosition()
 //+------------------------------------------------------------------+
 void ResetHedgeVariables()
 {
+   // Save previous state for logging
+   ENUM_HEDGE_DIRECTION prevDirection = currentHedgeDirection;
+   ulong prevTicket = (currentHedgeDirection == HEDGE_LONG) ? hedgeLongTicket : hedgeShortTicket;
+   double prevLot = hedgeLotSize;
+
    currentHedgeDirection = HEDGE_NONE;
    hedgeLongTicket = 0;
    hedgeShortTicket = 0;
    hedgeLotSize = 0;
    hedgeOpenTime = 0;
    hedgeEntryPrice = 0;
+
+   if(DetailedLogging) {
+      Print("[Hedge] ResetHedgeVariables() - Variables reset to default");
+      if(prevDirection != HEDGE_NONE) {
+         PrintFormat("[Hedge]   Previous state: %s, Ticket: %d, Lot: %.2f",
+                     (prevDirection == HEDGE_LONG ? "LONG" : "SHORT"), prevTicket, prevLot);
+      }
+      Print("[Hedge]   All hedge variables cleared");
+   }
 }
 
 //+------------------------------------------------------------------+
@@ -282,13 +429,32 @@ void MonitorHedgePositions()
       return;
 
    ulong ticket = (currentHedgeDirection == HEDGE_LONG) ? hedgeLongTicket : hedgeShortTicket;
+   string hedgeType = (currentHedgeDirection == HEDGE_LONG) ? "LONG" : "SHORT";
 
    // Verifica se la posizione è ancora aperta
    if(!PositionSelectByTicket(ticket))
    {
       // Posizione chiusa (probabilmente da TP/SL)
-      PrintFormat("[Hedge] Position %d closed (TP/SL hit)", ticket);
+      Print("[Hedge] *** HEDGE POSITION CLOSED EXTERNALLY ***");
+      PrintFormat("[Hedge]   Ticket: %d", ticket);
+      PrintFormat("[Hedge]   Type: %s", hedgeType);
+      PrintFormat("[Hedge]   Entry Price: %.5f", hedgeEntryPrice);
+      PrintFormat("[Hedge]   Lot Size: %.2f", hedgeLotSize);
+      PrintFormat("[Hedge]   Duration: %d seconds", (int)(TimeCurrent() - hedgeOpenTime));
+      Print("[Hedge]   Reason: Likely TP or SL hit");
+
       ResetHedgeVariables();
+   }
+   else if(DetailedLogging)
+   {
+      // Position still open - log current status
+      double profit = PositionGetDouble(POSITION_PROFIT);
+      double currentPrice = PositionGetDouble(POSITION_PRICE_CURRENT);
+      double sl = PositionGetDouble(POSITION_SL);
+      double tp = PositionGetDouble(POSITION_TP);
+
+      PrintFormat("[Hedge] Monitor: %s #%d - Price: %.5f, P/L: %.2f, SL: %.5f, TP: %.5f",
+                  hedgeType, ticket, currentPrice, profit, sl, tp);
    }
 }
 
@@ -400,18 +566,53 @@ void OnHedgeTradeTransaction(const MqlTradeTransaction& trans,
 //+------------------------------------------------------------------+
 void CloseAllHedges()
 {
+   Print("═══════════════════════════════════════════════════════════════════");
+   Print("  EMERGENCY: CLOSING ALL HEDGE POSITIONS");
+   Print("═══════════════════════════════════════════════════════════════════");
+
+   int closedCount = 0;
+   double totalProfit = 0;
+
    if(hedgeLongTicket > 0)
    {
-      if(PositionSelectByTicket(hedgeLongTicket))
-         trade.PositionClose(hedgeLongTicket);
+      PrintFormat("[Hedge] Closing LONG hedge, Ticket: %d", hedgeLongTicket);
+      if(PositionSelectByTicket(hedgeLongTicket)) {
+         double profit = PositionGetDouble(POSITION_PROFIT);
+         if(trade.PositionClose(hedgeLongTicket)) {
+            PrintFormat("[Hedge]   LONG hedge closed - P/L: %.2f", profit);
+            totalProfit += profit;
+            closedCount++;
+         } else {
+            PrintFormat("[Hedge]   FAILED to close LONG: %d - %s",
+                        trade.ResultRetcode(), trade.ResultRetcodeDescription());
+         }
+      } else {
+         Print("[Hedge]   LONG position not found (already closed?)");
+      }
    }
 
    if(hedgeShortTicket > 0)
    {
-      if(PositionSelectByTicket(hedgeShortTicket))
-         trade.PositionClose(hedgeShortTicket);
+      PrintFormat("[Hedge] Closing SHORT hedge, Ticket: %d", hedgeShortTicket);
+      if(PositionSelectByTicket(hedgeShortTicket)) {
+         double profit = PositionGetDouble(POSITION_PROFIT);
+         if(trade.PositionClose(hedgeShortTicket)) {
+            PrintFormat("[Hedge]   SHORT hedge closed - P/L: %.2f", profit);
+            totalProfit += profit;
+            closedCount++;
+         } else {
+            PrintFormat("[Hedge]   FAILED to close SHORT: %d - %s",
+                        trade.ResultRetcode(), trade.ResultRetcodeDescription());
+         }
+      } else {
+         Print("[Hedge]   SHORT position not found (already closed?)");
+      }
    }
 
    ResetHedgeVariables();
-   Print("[Hedge] All hedge positions closed");
+
+   Print("───────────────────────────────────────────────────────────────────");
+   PrintFormat("[Hedge] Emergency close complete: %d positions closed", closedCount);
+   PrintFormat("[Hedge] Total P/L: %.2f", totalProfit);
+   Print("═══════════════════════════════════════════════════════════════════");
 }

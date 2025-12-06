@@ -9,13 +9,28 @@
 #property link      "https://sugamara.com"
 
 //+------------------------------------------------------------------+
-//| AMARANTH/AZURE COLOR SCHEME                                      |
+//| AMARANTH/AZURE COLOR SCHEME v3.0                                 |
+//| Sfondo: Amaranto Scuro | Dashboard: Blu Turchese                 |
 //+------------------------------------------------------------------+
-// Background Colors (Dark Amaranth)
-#define CLR_BG_DARK       C'35,8,20'         // Panel background (dark amaranth)
+// NOTE: Non usare #define con variabili input (evaluate at compile-time!)
+// Usare direttamente Theme_ChartBackground, Theme_DashboardBG, etc. nel codice
+
+// Background Colors (Dark Amaranth) - Literal fallbacks
+#define CLR_BG_DARK       C'45,20,35'        // Panel background (amaranto scuro)
 #define CLR_BG_MEDIUM     C'50,12,30'        // Section background
 #define CLR_BG_LIGHT      C'68,18,42'        // Highlight background
 #define CLR_BORDER        C'120,40,80'       // Border color
+
+// Dashboard Colors (Blu Turchese) - Literal fallbacks
+#define CLR_DASH_BG       C'20,60,80'        // Dashboard background (blu turchese)
+#define CLR_DASH_TEXT     clrCyan            // Dashboard text (azzurro)
+#define CLR_DASH_ACCENT   clrAqua            // Dashboard accent
+
+// Getter functions to use actual input values at runtime
+color GetThemeChartBackground() { return Theme_ChartBackground; }
+color GetThemeDashboardBG() { return Theme_DashboardBG; }
+color GetThemeDashboardText() { return Theme_DashboardText; }
+color GetThemeDashboardAccent() { return Theme_DashboardAccent; }
 
 // Text Colors (Azure Gradient)
 #define CLR_AZURE_1       C'100,180,255'     // Lightest azure (titles)
@@ -24,7 +39,7 @@
 #define CLR_AZURE_4       C'30,90,160'       // Darkest azure (inactive)
 
 // Accent Colors
-#define CLR_CYAN          C'0,220,255'       // Highlight cyan
+#define CLR_CYAN          clrCyan            // Highlight cyan
 #define CLR_TEAL          C'0,180,180'       // Teal accent
 #define CLR_WHITE         clrWhite           // White text
 #define CLR_SILVER        C'180,190,200'     // Normal text
@@ -45,11 +60,11 @@
 #define CLR_MODE_CASCADE  C'80,180,255'      // Azure for CASCADE
 #define CLR_MODE_RANGEBOX C'0,200,200'       // Teal for RANGEBOX
 
-// Panel Background Colors
-#define CLR_PANEL_GRIDA   C'25,15,35'        // Grid A panel (dark purple amaranth)
-#define CLR_PANEL_GRIDB   C'15,25,35'        // Grid B panel (dark blue amaranth)
-#define CLR_PANEL_BUTTONS C'35,8,20'         // Buttons panel
-#define CLR_PANEL_PERF    C'20,30,40'        // Performance panel
+// Panel Background Colors (Blu Turchese Theme)
+#define CLR_PANEL_GRIDA   C'15,40,55'        // Grid A panel (dark teal)
+#define CLR_PANEL_GRIDB   C'15,45,60'        // Grid B panel (dark cyan)
+#define CLR_PANEL_BUTTONS C'20,50,70'        // Buttons panel (turchese scuro)
+#define CLR_PANEL_PERF    C'15,35,50'        // Performance panel
 
 //+------------------------------------------------------------------+
 //| DASHBOARD CONSTANTS                                              |
@@ -377,38 +392,60 @@ void CreateUnifiedDashboard() {
 }
 
 //+------------------------------------------------------------------+
-//| Create Control Buttons (6 + CLOSE ALL)                           |
+//| Create Control Buttons v3.0 (MARKET/LIMIT/STOP/CLOSE)            |
 //+------------------------------------------------------------------+
 void CreateControlButtons(int startY, int startX, int panelWidth) {
     int x = startX + 10;
     int y = startY + 10;
-    int btnWidth = 95;
-    int btnHeight = 30;
+    int btnWidth = 70;
+    int btnHeight = 35;
     int spacing = 5;
 
-    // BUY Label
-    DashLabel("LBL_BUY", x + panelWidth/2 - 25, y, "BUY (Grid A)", clrLimeGreen, 9, "Arial Bold");
-    y += 18;
+    // v3.0 Control Buttons Mode
+    if(Enable_AdvancedButtons) {
+        // Status Label
+        DashLabel("BTN_STATUS_LABEL", x, y, "ENTRY MODE SELECT", CLR_DASH_TEXT, 10, "Arial Bold");
+        y += 22;
 
-    // BUY Buttons (3 in a row)
-    DashButton("BTN_BUY_MARKET", x, y, btnWidth, btnHeight, "MARKET", clrLimeGreen);
-    DashButton("BTN_BUY_LIMIT", x + btnWidth + spacing, y, btnWidth, btnHeight, "LIMIT", clrDodgerBlue);
-    DashButton("BTN_BUY_STOP", x + (btnWidth + spacing)*2, y, btnWidth, btnHeight, "STOP", clrGold);
-    y += btnHeight + 8;
+        // 4 Main Buttons: MARKET | LIMIT | STOP | CLOSE
+        DashButton("BTN_V3_MARKET", x, y, btnWidth, btnHeight, "MARKET", C'0,150,80');
+        DashButton("BTN_V3_LIMIT", x + btnWidth + spacing, y, btnWidth, btnHeight, "LIMIT", C'30,120,200');
+        DashButton("BTN_V3_STOP", x + (btnWidth + spacing)*2, y, btnWidth, btnHeight, "STOP", C'200,150,0');
+        DashButton("BTN_V3_CLOSE", x + (btnWidth + spacing)*3, y, btnWidth, btnHeight, "CLOSE", C'180,30,30');
+        y += btnHeight + 8;
 
-    // SELL Label
-    DashLabel("LBL_SELL", x + panelWidth/2 - 25, y, "SELL (Grid B)", clrRed, 9, "Arial Bold");
-    y += 18;
+        // Entry Mode Status
+        DashLabel("BTN_MODE_STATUS", x, y, "Mode: READY", CLR_CYAN, 9, "Arial Bold");
+        y += 20;
 
-    // SELL Buttons (3 in a row)
-    DashButton("BTN_SELL_MARKET", x, y, btnWidth, btnHeight, "MARKET", clrRed);
-    DashButton("BTN_SELL_LIMIT", x + btnWidth + spacing, y, btnWidth, btnHeight, "LIMIT", clrOrangeRed);
-    DashButton("BTN_SELL_STOP", x + (btnWidth + spacing)*2, y, btnWidth, btnHeight, "STOP", clrDarkOrange);
-    y += btnHeight + 10;
+        // Activation Price Label
+        DashLabel("BTN_ACTIVATION_LABEL", x, y, "Activation: ---", clrGray, 8);
+    }
+    else {
+        // Legacy v2.0 Buttons
+        // BUY Label
+        DashLabel("LBL_BUY", x + panelWidth/2 - 25, y, "BUY (Grid A)", clrLimeGreen, 9, "Arial Bold");
+        y += 18;
 
-    // CLOSE ALL Button (full width)
-    int closeAllWidth = (btnWidth + spacing)*3 - spacing;
-    DashButton("BTN_CLOSE_ALL", x, y, closeAllWidth, btnHeight + 4, "CLOSE ALL POSITIONS", C'180,0,0');
+        // BUY Buttons (3 in a row)
+        DashButton("BTN_BUY_MARKET", x, y, 95, 30, "MARKET", clrLimeGreen);
+        DashButton("BTN_BUY_LIMIT", x + 100, y, 95, 30, "LIMIT", clrDodgerBlue);
+        DashButton("BTN_BUY_STOP", x + 200, y, 95, 30, "STOP", clrGold);
+        y += 38;
+
+        // SELL Label
+        DashLabel("LBL_SELL", x + panelWidth/2 - 25, y, "SELL (Grid B)", clrRed, 9, "Arial Bold");
+        y += 18;
+
+        // SELL Buttons (3 in a row)
+        DashButton("BTN_SELL_MARKET", x, y, 95, 30, "MARKET", clrRed);
+        DashButton("BTN_SELL_LIMIT", x + 100, y, 95, 30, "LIMIT", clrOrangeRed);
+        DashButton("BTN_SELL_STOP", x + 200, y, 95, 30, "STOP", clrDarkOrange);
+        y += 40;
+
+        // CLOSE ALL Button (full width)
+        DashButton("BTN_CLOSE_ALL", x, y, 290, 34, "CLOSE ALL POSITIONS", C'180,0,0');
+    }
 
     ChartRedraw(0);
 }

@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                              Sugamara v2.0.0.mq5 |
+//|                                              Sugamara v3.0.0.mq5 |
 //|                                                                  |
 //|   SUGAMARA - DOUBLE GRID NEUTRAL MULTIMODE                       |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025 - Sugamara Development Team                  |
-//|  Version: 2.0.0 MULTIMODE                                        |
+//|  Version: 3.0.0 MULTIMODE + ADVANCED FEATURES                    |
 //|  Release Date: December 2025                                     |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID NEUTRAL - 3 MODALITÀ SELEZIONABILI          |
@@ -16,18 +16,21 @@
 //|  NEUTRAL_CASCADE:  TP=Entry precedente, ATR opzionale (consigliato)|
 //|  NEUTRAL_RANGEBOX: Range Box + Hedge, ATR opzionale (produzione) |
 //|                                                                   |
-//|  - Grid A (Long Bias): Accumula LONG in salita                   |
-//|  - Grid B (Short Bias): Accumula SHORT in salita                 |
-//|  - Auto-Hedging: Protezione intrinseca tramite grid speculari    |
-//|  - ATR Opzionale: Spacing adattivo per CASCADE e RANGEBOX        |
+//|  v3.0 NEW FEATURES:                                              |
+//|  - Partial Take Profit (50%/75%/100%)                            |
+//|  - Trailing Stop Asimmetrico                                     |
+//|  - ATR Multi-Timeframe Dashboard                                 |
+//|  - Manual S/R Drag & Drop                                        |
+//|  - Control Buttons (MARKET/LIMIT/STOP/CLOSE)                     |
+//|  - Visual Theme: Amaranto Scuro + Blu Turchese                   |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
-#property version   "2.00"
-#property description "SUGAMARA v2.0 - Double Grid Neutral MULTIMODE"
+#property version   "3.00"
+#property description "SUGAMARA v3.0 - Double Grid Neutral MULTIMODE"
 #property description "3 Modalità: PURE / CASCADE / RANGEBOX"
-#property description "ATR Opzionale per spacing adattivo"
+#property description "v3.0: Partial TP, Trailing, ATR MTF, Manual S/R"
 #property strict
 
 //+------------------------------------------------------------------+
@@ -63,18 +66,30 @@
 #include "Trading/HedgingManager.mqh"
 #include "Trading/ShieldManager.mqh"
 
+// v3.0 NEW Trading Modules
+#include "Trading/PartialTPManager.mqh"
+#include "Trading/GridTrailingManager.mqh"
+
 // UI Module
 #include "UI/Dashboard.mqh"
+
+// v3.0 NEW UI Modules
+#include "UI/ManualSR.mqh"
+#include "UI/ControlButtons.mqh"
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                    |
 //+------------------------------------------------------------------+
 int OnInit() {
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA v2.0.0 - DOUBLE GRID NEUTRAL MULTIMODE                 ");
+    Print("  SUGAMARA v3.0.0 - DOUBLE GRID NEUTRAL MULTIMODE                 ");
     Print("  Market Neutral • PURE / CASCADE / RANGEBOX                      ");
+    Print("  v3.0: Partial TP | Trailing | ATR MTF | Manual S/R              ");
     Print("  Copyright (C) 2025 - Sugamara Development Team                  ");
     Print("═══════════════════════════════════════════════════════════════════");
+
+    //--- APPLY VISUAL THEME ---
+    ApplyVisualTheme();
 
     //--- STEP 0: Validate Mode Parameters and Print Config ---
     if(!ValidateModeParameters()) {
@@ -198,6 +213,26 @@ int OnInit() {
         Print("WARNING: Failed to initialize ADX Monitor");
     }
 
+    //--- STEP 13.7: Initialize ATR Multi-TF (v3.0) ---
+    if(!InitializeATRMultiTF()) {
+        Print("WARNING: Failed to initialize ATR Multi-TF");
+    }
+
+    //--- STEP 13.8: Initialize Partial TP Manager (v3.0) ---
+    if(!InitializePartialTPManager()) {
+        Print("WARNING: Failed to initialize Partial TP Manager");
+    }
+
+    //--- STEP 13.9: Initialize Trailing Manager (v3.0) ---
+    if(!InitializeTrailingManager()) {
+        Print("WARNING: Failed to initialize Trailing Manager");
+    }
+
+    //--- STEP 13.10: Initialize Manual S/R (v3.0) ---
+    if(!InitializeManualSR()) {
+        Print("WARNING: Failed to initialize Manual S/R");
+    }
+
     //--- STEP 14: Initialize Grid A ---
     if(!InitializeGridA()) {
         Print("CRITICAL: Failed to initialize Grid A");
@@ -256,7 +291,7 @@ int OnInit() {
 
     Print("");
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA v2.0 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA v3.0 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName());
     Print("  System State: ACTIVE");
     Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions());
@@ -270,6 +305,13 @@ int OnInit() {
             Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
         }
     }
+    Print("───────────────────────────────────────────────────────────────────");
+    Print("  v3.0 FEATURES:");
+    Print("  ✅ Partial TP: ", Enable_PartialTP ? "ENABLED" : "DISABLED");
+    Print("  ✅ Trailing Asym: ", Enable_TrailingAsymmetric ? "ENABLED" : "DISABLED");
+    Print("  ✅ ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
+    Print("  ✅ Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
+    Print("  ✅ Control Buttons: ", Enable_AdvancedButtons ? "ENABLED" : "DISABLED");
     Print("═══════════════════════════════════════════════════════════════════");
 
     if(EnableAlerts) {
@@ -318,6 +360,13 @@ void OnDeinit(const int reason) {
     // Release Indicators
     DeinitializeVolatilityMonitor();
     DeinitializeADXMonitor();
+
+    // v3.0: Deinitialize new modules
+    DeinitializeATRMultiTF();
+    DeinitializePartialTPManager();
+    DeinitializeTrailingManager();
+    DeinitializeManualSR();
+    DeinitializeControlButtons();
 
     // Clean up UI
     CleanupUI();
@@ -408,6 +457,18 @@ void OnTick() {
     UpdateVolatilityMonitor();
     UpdateADXMonitor();
 
+    //--- v3.0: UPDATE ATR MULTI-TF ---
+    UpdateATRMultiTF();
+
+    //--- v3.0: PROCESS PARTIAL TAKE PROFIT ---
+    ProcessPartialTPs();
+
+    //--- v3.0: PROCESS TRAILING STOPS ---
+    ProcessTrailingStops();
+
+    //--- v3.0: PROCESS ENTRY MODE WAITING (LIMIT/STOP) ---
+    ProcessEntryModeWaiting();
+
     //--- UPDATE EQUITY TRACKING ---
     UpdateEquityTracking();
 
@@ -456,12 +517,28 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
     if(id == CHARTEVENT_KEYDOWN) {
         HandleKeyPress((int)lparam);
     }
+
+    // v3.0: Handle Manual S/R Drag events
+    if(id == CHARTEVENT_OBJECT_DRAG) {
+        OnManualSRDrag(sparam);
+    }
+
+    // v3.0: Handle object end drag (for precise positioning)
+    if(id == CHARTEVENT_OBJECT_ENDEDIT || id == CHARTEVENT_OBJECT_CHANGE) {
+        OnManualSREndDrag(lparam, dparam, sparam);
+    }
 }
 
 //+------------------------------------------------------------------+
 //| Handle Object Click                                               |
 //+------------------------------------------------------------------+
 void HandleObjectClick(string objectName) {
+    // v3.0: Handle new control buttons
+    if(StringFind(objectName, "BTN_V3_") == 0 || StringFind(objectName, "SUGAMARA_BTN_") == 0) {
+        HandleControlButtonClick(objectName);
+        return;
+    }
+
     // Handle button clicks from Dashboard
     if(StringFind(objectName, "BTN_") == 0) {
         HandleButtonClick(objectName);
@@ -514,6 +591,42 @@ void HandleKeyPress(int key) {
     if(key == 'N' || key == 'n') {
         SetNewsPause(!isNewsPause);
     }
+}
+
+//+------------------------------------------------------------------+
+//| Apply Visual Theme v3.0                                           |
+//| Sfondo: Amaranto Scuro | Candele: Blu/Giallo                      |
+//+------------------------------------------------------------------+
+void ApplyVisualTheme() {
+    // Apply chart background color (Amaranto Scuro)
+    ChartSetInteger(0, CHART_COLOR_BACKGROUND, Theme_ChartBackground);
+
+    // Apply candle colors
+    ChartSetInteger(0, CHART_COLOR_CANDLE_BULL, Theme_CandleBull);  // Blu splendente
+    ChartSetInteger(0, CHART_COLOR_CANDLE_BEAR, Theme_CandleBear);  // Giallo
+    ChartSetInteger(0, CHART_COLOR_CHART_UP, Theme_CandleBull);
+    ChartSetInteger(0, CHART_COLOR_CHART_DOWN, Theme_CandleBear);
+
+    // Apply grid and axis colors (complementary)
+    ChartSetInteger(0, CHART_COLOR_GRID, C'60,30,45');        // Griglia amaranto chiaro
+    ChartSetInteger(0, CHART_COLOR_FOREGROUND, clrWhite);     // Testo bianco
+    ChartSetInteger(0, CHART_COLOR_CHART_LINE, clrCyan);      // Linea chart cyan
+
+    // Apply volume colors
+    ChartSetInteger(0, CHART_COLOR_VOLUME, clrDodgerBlue);
+    ChartSetInteger(0, CHART_COLOR_ASK, clrRed);
+    ChartSetInteger(0, CHART_COLOR_BID, clrLime);
+
+    // Apply last price line
+    ChartSetInteger(0, CHART_COLOR_LAST, clrYellow);
+    ChartSetInteger(0, CHART_COLOR_STOP_LEVEL, clrRed);
+
+    // Show bid/ask lines
+    ChartSetInteger(0, CHART_SHOW_ASK_LINE, true);
+    ChartSetInteger(0, CHART_SHOW_BID_LINE, true);
+
+    Print("Visual Theme v3.0 applied: Amaranto Scuro + Blu/Giallo candles");
+    ChartRedraw(0);
 }
 
 //+------------------------------------------------------------------+

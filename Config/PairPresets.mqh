@@ -205,6 +205,87 @@ void ApplyPairPresets() {
             break;
 
         //==============================================================
+        // EUR/GBP - Excellent Mean Reverting European Cross
+        //==============================================================
+        case PAIR_EURGBP:
+            // Characteristics
+            activePair_Spread = 1.5;
+            activePair_DailyRange = 55.0;
+            activePair_ATR_Typical = 16.0;
+            activePair_MinBrokerDistance = 10.0;
+
+            // Recommended Settings
+            activePair_RecommendedSpacing = 15.0;
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.02;
+            activePair_MinCapital = 2500.0;
+
+            // Performance Targets
+            activePair_TargetROI = 10.0;
+            activePair_TargetWinRate = 85.0;       // Excellent for mean reversion
+            activePair_MaxDrawdown = 7.0;
+
+            // Sessions
+            activePair_BestSessions = "London (08:00-16:00 GMT)";
+
+            Print("PRESET LOADED: EUR/GBP - Excellent Mean Reverting Configuration");
+            break;
+
+        //==============================================================
+        // GBP/USD - Currently Mean Reverting
+        //==============================================================
+        case PAIR_GBPUSD:
+            // Characteristics
+            activePair_Spread = 1.2;
+            activePair_DailyRange = 100.0;
+            activePair_ATR_Typical = 28.0;
+            activePair_MinBrokerDistance = 10.0;
+
+            // Recommended Settings
+            activePair_RecommendedSpacing = 22.0;      // Wider spacing for higher volatility
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.015;
+            activePair_MinCapital = 4000.0;
+
+            // Performance Targets
+            activePair_TargetROI = 12.0;
+            activePair_TargetWinRate = 75.0;
+            activePair_MaxDrawdown = 12.0;
+
+            // Sessions
+            activePair_BestSessions = "London (08:00-16:00 GMT), London-NY Overlap";
+
+            Print("PRESET LOADED: GBP/USD - Mean Reverting Configuration");
+            break;
+
+        //==============================================================
+        // USD/CHF - Safe Haven Pair
+        //==============================================================
+        case PAIR_USDCHF:
+            // Characteristics
+            activePair_Spread = 1.5;
+            activePair_DailyRange = 60.0;
+            activePair_ATR_Typical = 18.0;
+            activePair_MinBrokerDistance = 10.0;
+
+            // Recommended Settings
+            activePair_RecommendedSpacing = 16.0;
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.02;
+            activePair_MinCapital = 3000.0;
+
+            // Performance Targets
+            activePair_TargetROI = 10.0;
+            activePair_TargetWinRate = 80.0;
+            activePair_MaxDrawdown = 8.0;
+
+            // Sessions
+            activePair_BestSessions = "London (08:00-16:00 GMT), NY session";
+
+            Print("PRESET LOADED: USD/CHF - Safe Haven Configuration");
+            break;
+
+        //==============================================================
         // CUSTOM - User Manual Settings
         //==============================================================
         case PAIR_CUSTOM:
@@ -276,6 +357,15 @@ bool ValidatePairSymbolMatch() {
         case PAIR_NZDCAD:
             expectedSymbol = "NZDCAD";
             break;
+        case PAIR_EURGBP:
+            expectedSymbol = "EURGBP";
+            break;
+        case PAIR_GBPUSD:
+            expectedSymbol = "GBPUSD";
+            break;
+        case PAIR_USDCHF:
+            expectedSymbol = "USDCHF";
+            break;
         case PAIR_CUSTOM:
             // Custom pair - no validation
             return true;
@@ -319,6 +409,9 @@ string GetPairDisplayName(ENUM_FOREX_PAIR pair) {
         case PAIR_EURCHF: return "EUR/CHF";
         case PAIR_AUDCAD: return "AUD/CAD";
         case PAIR_NZDCAD: return "NZD/CAD";
+        case PAIR_EURGBP: return "EUR/GBP";
+        case PAIR_GBPUSD: return "GBP/USD";
+        case PAIR_USDCHF: return "USD/CHF";
         case PAIR_CUSTOM: return "CUSTOM";
         default: return "UNKNOWN";
     }
@@ -335,6 +428,9 @@ string GetPairRiskLevel(ENUM_FOREX_PAIR pair) {
         case PAIR_EURCHF: return "LOW";
         case PAIR_AUDCAD: return "MEDIUM";
         case PAIR_NZDCAD: return "MEDIUM";
+        case PAIR_EURGBP: return "LOW";      // Excellent for mean reversion
+        case PAIR_GBPUSD: return "MEDIUM-HIGH";  // Higher volatility
+        case PAIR_USDCHF: return "LOW-MEDIUM";   // Safe haven
         case PAIR_CUSTOM: return "VARIABLE";
         default: return "UNKNOWN";
     }
@@ -357,6 +453,12 @@ string GetPairRecommendation(ENUM_FOREX_PAIR pair) {
             return "Good for CASCADE. Commodity correlation adds stability.";
         case PAIR_NZDCAD:
             return "Similar to AUD/CAD. Good backup pair.";
+        case PAIR_EURGBP:
+            return "EXCELLENT for NEUTRAL! European economies correlate. Tight range.";
+        case PAIR_GBPUSD:
+            return "Good for mean reversion. Higher volatility - use wider spacing.";
+        case PAIR_USDCHF:
+            return "Good for RANGEBOX. Safe haven - stable, beware risk-off events.";
         case PAIR_CUSTOM:
             return "Verify all parameters manually before live trading.";
         default:

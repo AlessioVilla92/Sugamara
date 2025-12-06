@@ -447,13 +447,29 @@ double GetNetExposureLots() {
 }
 
 //+------------------------------------------------------------------+
-//| GRID VISUALIZATION HELPERS                                       |
+//| GRID VISUALIZATION HELPERS v3.0                                  |
+//| Colori per Order Type:                                           |
+//|   BUY STOP: Verde Scuro | BUY LIMIT: Verde Chiaro                |
+//|   SELL STOP: Rosso      | SELL LIMIT: Arancione                  |
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//| Get Color for Grid Line                                          |
+//| Get Color for Grid Line v3.0 - Based on Order Type               |
 //+------------------------------------------------------------------+
 color GetGridLineColor(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
+    // Get the order type for this grid position
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
+
+    // v3.0: Color based on order type
+    switch(orderType) {
+        case ORDER_TYPE_BUY_STOP:   return GridLine_BuyStop;    // Verde scuro
+        case ORDER_TYPE_BUY_LIMIT:  return GridLine_BuyLimit;   // Verde chiaro
+        case ORDER_TYPE_SELL_STOP:  return GridLine_SellStop;   // Rosso
+        case ORDER_TYPE_SELL_LIMIT: return GridLine_SellLimit;  // Arancione
+        default: break;
+    }
+
+    // Fallback to legacy colors
     if(side == GRID_A) {
         return (zone == ZONE_UPPER) ? COLOR_GRID_A_UPPER : COLOR_GRID_A_LOWER;
     } else {
@@ -472,7 +488,8 @@ string GetGridObjectPrefix(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
 }
 
 //+------------------------------------------------------------------+
-//| Create Grid Level Line on Chart                                  |
+//| Create Grid Level Line on Chart v3.0                             |
+//| Stesso spessore per tutte le linee                               |
 //+------------------------------------------------------------------+
 void CreateGridLevelLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, double price) {
     if(!ShowGridLines) return;
@@ -480,7 +497,23 @@ void CreateGridLevelLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, do
     string name = GetGridObjectPrefix(side, zone) + "L" + IntegerToString(level + 1);
     color clr = GetGridLineColor(side, zone);
 
-    CreateHLine(name, price, clr, 1, STYLE_DOT);
+    // v3.0: Stesso spessore per tutte le linee (GridLine_Width)
+    CreateHLine(name, price, clr, GridLine_Width, STYLE_SOLID);
+
+    // Add order type label
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
+    string orderTypeLabel = GetOrderTypeString(orderType);
+    string labelName = name + "_LBL";
+
+    // Create small label next to line
+    ObjectDelete(0, labelName);
+    if(ObjectCreate(0, labelName, OBJ_TEXT, 0, TimeCurrent() + PeriodSeconds() * 5, price)) {
+        ObjectSetString(0, labelName, OBJPROP_TEXT, orderTypeLabel);
+        ObjectSetInteger(0, labelName, OBJPROP_COLOR, clr);
+        ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 7);
+        ObjectSetString(0, labelName, OBJPROP_FONT, "Arial");
+        ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_LEFT);
+    }
 }
 
 //+------------------------------------------------------------------+
