@@ -1,12 +1,22 @@
 //+------------------------------------------------------------------+
 //|                                                    Dashboard.mqh |
-//|                        Sugamara v2.0 - Dashboard Display         |
+//|                        Sugamara v3.0 - Dashboard Display         |
 //|                                                                  |
 //|  Visual dashboard for Double Grid Neutral MULTIMODE              |
 //|  Color Scheme: AMARANTH/AZURE GRADIENT - 2 COLUMN LAYOUT         |
+//|                                                                  |
+//|  v3.0: ROBUST PERSISTENCE - Dashboard auto-recreates on restart  |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
+
+//+------------------------------------------------------------------+
+//| DASHBOARD PERSISTENCE SYSTEM                                     |
+//| Auto-verifies and recreates dashboard objects on restart         |
+//+------------------------------------------------------------------+
+bool g_dashboardInitialized = false;
+datetime g_lastDashboardCheck = 0;
+const int DASHBOARD_CHECK_INTERVAL = 5;  // Seconds between checks
 
 //+------------------------------------------------------------------+
 //| AMARANTH/AZURE COLOR SCHEME v3.0                                 |
@@ -223,22 +233,141 @@ void UpdatePauseButton() {
 }
 
 //+------------------------------------------------------------------+
-//| Initialize Dashboard - 2 Column Layout                           |
+//| Initialize Dashboard - 2 Column Layout (ROBUST VERSION)          |
 //+------------------------------------------------------------------+
 bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  CREATING SUGAMARA DASHBOARD v2.0 - 2 COLUMN LAYOUT              ");
+    Print("  CREATING SUGAMARA DASHBOARD v3.0 - ROBUST PERSISTENCE           ");
     Print("═══════════════════════════════════════════════════════════════════");
+
+    // Force clean creation to ensure all objects are fresh
+    RemoveDashboard();
+    Sleep(50);  // Small delay to ensure objects are deleted
 
     CreateUnifiedDashboard();
     CreateVolatilityPanel();
     CreateADXPanel();
     CreateShieldPanel();
 
-    LogMessage(LOG_SUCCESS, "Dashboard v2.0 initialized with Amaranth/Azure theme");
+    // Mark dashboard as initialized
+    g_dashboardInitialized = true;
+    g_lastDashboardCheck = TimeCurrent();
+
+    // Verify dashboard was created correctly
+    if(!VerifyDashboardExists()) {
+        Print("WARNING: Dashboard verification failed - attempting recreation");
+        RecreateEntireDashboard();
+    }
+
+    ChartRedraw(0);
+    LogMessage(LOG_SUCCESS, "Dashboard v3.0 initialized with Amaranth/Azure theme (ROBUST)");
     return true;
+}
+
+//+------------------------------------------------------------------+
+//| Verify Dashboard Exists - Check critical objects                  |
+//+------------------------------------------------------------------+
+bool VerifyDashboardExists() {
+    if(!ShowDashboard) return true;
+
+    // Check for critical dashboard objects
+    string criticalObjects[] = {
+        "TITLE_PANEL",
+        "MODE_PANEL",
+        "LEFT_GRIDA_PANEL",
+        "RIGHT_GRIDB_PANEL",
+        "LEFT_EXPOSURE_PANEL",
+        "RIGHT_PERF_PANEL",
+        "VOL_PANEL",
+        "ADX_PANEL",
+        "SHIELD_PANEL"
+    };
+
+    int missingCount = 0;
+    for(int i = 0; i < ArraySize(criticalObjects); i++) {
+        if(ObjectFind(0, criticalObjects[i]) < 0) {
+            missingCount++;
+        }
+    }
+
+    // If more than 2 critical objects are missing, dashboard needs recreation
+    if(missingCount > 2) {
+        Print("Dashboard verification: ", missingCount, " critical objects missing");
+        return false;
+    }
+
+    return true;
+}
+
+//+------------------------------------------------------------------+
+//| Recreate Entire Dashboard - Force complete rebuild                |
+//+------------------------------------------------------------------+
+void RecreateEntireDashboard() {
+    if(!ShowDashboard) return;
+
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  RECREATING DASHBOARD (Auto-Recovery)                             ");
+    Print("═══════════════════════════════════════════════════════════════════");
+
+    // Remove any partial objects
+    RemoveDashboard();
+    Sleep(100);
+
+    // Recreate all components
+    CreateUnifiedDashboard();
+    CreateVolatilityPanel();
+    CreateADXPanel();
+    CreateShieldPanel();
+
+    // Initialize control buttons if enabled
+    if(Enable_AdvancedButtons) {
+        InitializeControlButtons(g_btnY, g_leftX, g_colWidth);
+    }
+
+    g_dashboardInitialized = true;
+    g_lastDashboardCheck = TimeCurrent();
+
+    ChartRedraw(0);
+    Print("SUCCESS: Dashboard recreated successfully");
+}
+
+//+------------------------------------------------------------------+
+//| Check Dashboard Persistence - Called periodically from OnTick    |
+//+------------------------------------------------------------------+
+void CheckDashboardPersistence() {
+    if(!ShowDashboard) return;
+
+    // If dashboard was marked for recreation (e.g., object deleted externally)
+    if(!g_dashboardInitialized) {
+        Print("INFO: Dashboard initialization flag reset - recreating...");
+        RecreateEntireDashboard();
+        return;
+    }
+
+    // Only check every DASHBOARD_CHECK_INTERVAL seconds
+    if(TimeCurrent() - g_lastDashboardCheck < DASHBOARD_CHECK_INTERVAL) return;
+    g_lastDashboardCheck = TimeCurrent();
+
+    // Quick check: verify main panel exists
+    if(ObjectFind(0, "TITLE_PANEL") < 0) {
+        Print("WARNING: Dashboard missing - auto-recreating...");
+        RecreateEntireDashboard();
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Ensure Dashboard On Chart Change                                  |
+//+------------------------------------------------------------------+
+void EnsureDashboardOnChartEvent() {
+    if(!ShowDashboard) return;
+
+    // Verify and recreate if needed
+    if(!VerifyDashboardExists()) {
+        Print("INFO: Dashboard objects missing after chart event - recreating");
+        RecreateEntireDashboard();
+    }
 }
 
 //+------------------------------------------------------------------+
@@ -367,7 +496,7 @@ void CreateUnifiedDashboard() {
     rightY += rangeboxHeight;
 
     //--- PERFORMANCE PANEL ---
-    int perfHeight = 170;
+    int perfHeight = 190;  // Increased for Risk line
     DashRectangle("RIGHT_PERF_PANEL", rightX, rightY, colWidth, perfHeight, CLR_PANEL_PERF);
 
     int py = rightY + 8;
@@ -380,6 +509,8 @@ void CreateUnifiedDashboard() {
     DashLabel("RIGHT_PERF_BALANCE", rightX + 10, py, "Balance: $---", CLR_WHITE, 8);
     py += 16;
     DashLabel("RIGHT_PERF_DD", rightX + 10, py, "Drawdown: 0.00%", CLR_WHITE, 8);
+    py += 16;
+    DashLabel("RIGHT_PERF_RISK", rightX + 10, py, "Risk: ---", CLR_PROFIT, 9, "Arial Bold");
     py += 20;
     DashLabel("RIGHT_PERF_WINRATE", rightX + 10, py, "Win Rate: --% (0W/0L)", CLR_SILVER, 8);
     py += 16;
@@ -765,6 +896,20 @@ void UpdatePerformanceSection() {
     color ddColor = dd > 10 ? CLR_LOSS : (dd > 5 ? CLR_NEUTRAL : CLR_WHITE);
     ObjectSetString(0, "RIGHT_PERF_DD", OBJPROP_TEXT, StringFormat("Drawdown: %.2f%%", dd));
     ObjectSetInteger(0, "RIGHT_PERF_DD", OBJPROP_COLOR, ddColor);
+
+    // Risk-Based Status (if enabled)
+    if(LotMode == LOT_RISK_BASED) {
+        double currentDD = GetCurrentUnrealizedDrawdown();
+        double riskPercent = (RiskCapital_USD > 0) ? (currentDD / RiskCapital_USD * 100.0) : 0;
+        color riskColor = riskPercent > 80 ? CLR_LOSS : (riskPercent > 50 ? CLR_NEUTRAL : CLR_PROFIT);
+
+        ObjectSetString(0, "RIGHT_PERF_RISK", OBJPROP_TEXT,
+                        StringFormat("Risk: $%.0f / $%.0f (%.0f%%)", currentDD, RiskCapital_USD, riskPercent));
+        ObjectSetInteger(0, "RIGHT_PERF_RISK", OBJPROP_COLOR, riskColor);
+    } else {
+        ObjectSetString(0, "RIGHT_PERF_RISK", OBJPROP_TEXT, "Risk: FIXED MODE");
+        ObjectSetInteger(0, "RIGHT_PERF_RISK", OBJPROP_COLOR, clrGray);
+    }
 
     ObjectSetString(0, "RIGHT_PERF_WINRATE", OBJPROP_TEXT,
                     StringFormat("Win Rate: %.0f%% (%dW/%dL)", winRate, sessionWins, sessionLosses));

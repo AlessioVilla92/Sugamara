@@ -207,6 +207,15 @@ bool isDailyLossLimitReached = false;       // Flag loss limit giornaliero
 bool isNewsPause = false;                   // Flag pausa news manuale
 
 //+------------------------------------------------------------------+
+//| 💰 RISK-BASED LOT CALCULATION VARIABLES                          |
+//+------------------------------------------------------------------+
+double riskBasedBaseLot = 0;                // Lot base calcolato da rischio
+double riskBasedMultiplier = 1.0;           // Moltiplicatore risk-based (usa LotMultiplier)
+double maxTheoreticalDrawdown = 0;          // DD teorico massimo calcolato
+double currentRealizedRisk = 0;             // Rischio realizzato corrente ($)
+bool riskBasedLotsCalculated = false;       // Flag: lot gia calcolati
+
+//+------------------------------------------------------------------+
 //| SESSION STATISTICS                                               |
 //+------------------------------------------------------------------+
 double sessionRealizedProfit = 0;           // Profitto realizzato sessione

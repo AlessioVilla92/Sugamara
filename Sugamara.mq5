@@ -76,6 +76,7 @@
 // v3.0 NEW UI Modules
 #include "UI/ManualSR.mqh"
 #include "UI/ControlButtons.mqh"
+#include "UI/ShieldZonesVisual.mqh"
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                    |
@@ -186,6 +187,13 @@ int OnInit() {
             Print("WARNING: Failed to initialize Shield Intelligente");
         }
         // Calculate breakout levels after grid initialization (will recalc after grids)
+    }
+
+    //--- STEP 10.8: Initialize Shield Zones Visual (v3.0) ---
+    if(IsRangeBoxAvailable() && Enable_ShieldZonesVisual) {
+        if(!InitializeShieldZonesVisual()) {
+            Print("WARNING: Failed to initialize Shield Zones Visual");
+        }
     }
 
     //--- STEP 11: Initialize Position Monitor ---
@@ -331,17 +339,19 @@ void OnDeinit(const int reason) {
 
     // Log reason
     string reasonText = "";
+    bool shouldCleanUI = true;  // v3.0: Smart UI cleanup flag
+
     switch(reason) {
         case REASON_PROGRAM:     reasonText = "EA removed"; break;
         case REASON_REMOVE:      reasonText = "EA removed from chart"; break;
-        case REASON_RECOMPILE:   reasonText = "EA recompiled"; break;
+        case REASON_RECOMPILE:   reasonText = "EA recompiled"; shouldCleanUI = false; break;
         case REASON_CHARTCHANGE: reasonText = "Chart symbol/period changed"; break;
         case REASON_CHARTCLOSE:  reasonText = "Chart closed"; break;
-        case REASON_PARAMETERS:  reasonText = "Parameters changed"; break;
+        case REASON_PARAMETERS:  reasonText = "Parameters changed"; shouldCleanUI = false; break;
         case REASON_ACCOUNT:     reasonText = "Account changed"; break;
         case REASON_TEMPLATE:    reasonText = "Template applied"; break;
         case REASON_INITFAILED:  reasonText = "Initialization failed"; break;
-        case REASON_CLOSE:       reasonText = "Terminal closed"; break;
+        case REASON_CLOSE:       reasonText = "Terminal closed"; shouldCleanUI = false; break;
         default:                 reasonText = "Unknown reason"; break;
     }
     Print("Reason: ", reason, " (", reasonText, ")");
@@ -366,16 +376,25 @@ void OnDeinit(const int reason) {
     DeinitializePartialTPManager();
     DeinitializeTrailingManager();
     DeinitializeManualSR();
-    DeinitializeControlButtons();
 
-    // Clean up UI
-    CleanupUI();
+    // v3.0: Smart UI cleanup - Don't remove UI on recompile/terminal close
+    // The UI will be automatically recreated on next initialization
+    if(shouldCleanUI) {
+        Print("Cleaning up UI objects...");
+        DeinitializeControlButtons();
+        DeinitializeShieldZonesVisual();
+        CleanupUI();
 
-    // Clean up RangeBox visualization
-    if(IsRangeBoxAvailable())
-        RemoveRangeBoxVisualization();
+        // Clean up RangeBox visualization
+        if(IsRangeBoxAvailable())
+            RemoveRangeBoxVisualization();
+    } else {
+        Print("Preserving UI objects for quick restart...");
+        // Reset initialization flag so dashboard will be verified on restart
+        g_dashboardInitialized = false;
+    }
 
-    // Deinitialize Shield
+    // Deinitialize Shield (logic only, not visual)
     if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
         DeinitializeShield();
         DeinitializeRangeBoxShield();
@@ -474,6 +493,9 @@ void OnTick() {
 
     //--- UPDATE DASHBOARD ---
     UpdateDashboard();
+
+    //--- CHECK DASHBOARD PERSISTENCE (v3.0 ROBUST) ---
+    CheckDashboardPersistence();
 }
 
 //+------------------------------------------------------------------+
@@ -526,6 +548,22 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
     // v3.0: Handle object end drag (for precise positioning)
     if(id == CHARTEVENT_OBJECT_ENDEDIT || id == CHARTEVENT_OBJECT_CHANGE) {
         OnManualSREndDrag(lparam, dparam, sparam);
+    }
+
+    // v3.0: ROBUST DASHBOARD - Ensure dashboard exists after chart changes
+    if(id == CHARTEVENT_CHART_CHANGE) {
+        EnsureDashboardOnChartEvent();
+    }
+
+    // v3.0: Handle object delete - recreate dashboard if critical object deleted
+    if(id == CHARTEVENT_OBJECT_DELETE) {
+        if(StringFind(sparam, "TITLE_PANEL") >= 0 ||
+           StringFind(sparam, "MODE_PANEL") >= 0 ||
+           StringFind(sparam, "LEFT_") >= 0 ||
+           StringFind(sparam, "RIGHT_") >= 0) {
+            Print("WARNING: Dashboard object deleted externally - scheduling recreation");
+            g_dashboardInitialized = false;  // Force recreation on next tick
+        }
     }
 }
 

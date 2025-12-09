@@ -260,11 +260,19 @@ double CalculateGridSL(double baseEntryPoint, ENUM_GRID_SIDE side, ENUM_GRID_ZON
 double CalculateGridLotSize(int level) {
     double lot = BaseLot;
 
-    if(LotMode == LOT_PROGRESSIVE) {
+    // RISK-BASED MODE: usa lot calcolati da capitale rischio
+    if(LotMode == LOT_RISK_BASED) {
+        if(!riskBasedLotsCalculated) {
+            CalculateRiskBasedLots();
+        }
+        // Progressive con base calcolata da rischio
+        lot = riskBasedBaseLot * MathPow(LotMultiplier, level);
+    }
+    else if(LotMode == LOT_PROGRESSIVE) {
         // Progressive: Lot = BaseLot × Multiplier^level
         lot = BaseLot * MathPow(LotMultiplier, level);
     }
-    // LOT_UNIFORM: Keep BaseLot
+    // LOT_FIXED: Keep BaseLot
 
     // Apply limits and normalize
     return NormalizeLotSize(lot);
@@ -290,6 +298,256 @@ bool IsWithinMaxTotalLot(int levelsPerSide) {
     // Total = 2 grids × 2 zones × levels
     double totalLots = CalculateTotalGridLots(levelsPerSide) * 4;
     return (totalLots <= MaxTotalLot);
+}
+
+//+------------------------------------------------------------------+
+//| 💰 RISK-BASED LOT CALCULATION SYSTEM                             |
+//| Calcola lot automatici per garantire max loss = RiskCapital      |
+//| IMPORTANTE: NON piazza SL automatici - Shield gestisce rischio   |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Calculate Risk-Based Lot Sizes                                   |
+//| Formula: BaseLot = RiskCapital / DrawdownFactor                  |
+//| DrawdownFactor = Σ(Distance_i × Mult^i × PipValue) × 2 zones     |
+//|                                                                  |
+//| ⚠️ IMPORTANTE: Questo sistema NON piazza Stop Loss automatici!   |
+//| I lot vengono calcolati per limitare il DD teorico massimo.      |
+//| La protezione avviene tramite Shield (hedging), NON chiusure.    |
+//+------------------------------------------------------------------+
+void CalculateRiskBasedLots() {
+    if(riskBasedLotsCalculated) return;  // Gia calcolato
+
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  💰 RISK-BASED LOT CALCULATION");
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  ⚠️ NOTA: Questo sistema calcola SOLO i lot size.");
+    Print("  ⚠️ NON vengono piazzati Stop Loss automatici!");
+    Print("  ⚠️ La protezione avviene tramite Shield (hedging).");
+    Print("───────────────────────────────────────────────────────────────────");
+
+    // Get pip value for 1 lot
+    double pipValue = GetPipValueForLot(1.0);
+    if(pipValue <= 0) {
+        Print("  ❌ ERROR: Cannot calculate pip value");
+        Print("     TickValue or TickSize not available from broker");
+        riskBasedBaseLot = symbolMinLot;
+        riskBasedLotsCalculated = true;
+        Print("  ⚠️ Using minimum lot: ", DoubleToString(symbolMinLot, 2));
+        Print("═══════════════════════════════════════════════════════════════════");
+        return;
+    }
+
+    // Get current spacing
+    double spacing = (currentSpacing_Pips > 0) ? currentSpacing_Pips : Fixed_Spacing_Pips;
+
+    // Log input parameters
+    Print("  📊 INPUT PARAMETERS:");
+    PrintFormat("     Symbol: %s", _Symbol);
+    PrintFormat("     Risk Capital: $%.2f", RiskCapital_USD);
+    PrintFormat("     Risk Buffer: %.1f%%", RiskBuffer_Percent);
+    PrintFormat("     Grid Levels: %d per side", GridLevelsPerSide);
+    PrintFormat("     Spacing: %.1f pips", spacing);
+    PrintFormat("     Lot Multiplier: %.2f", LotMultiplier);
+    PrintFormat("     Pip Value (1 lot): $%.4f", pipValue);
+    Print("───────────────────────────────────────────────────────────────────");
+
+    // Apply risk buffer
+    double effectiveRisk = RiskCapital_USD * (1.0 - RiskBuffer_Percent / 100.0);
+    PrintFormat("  💵 Effective Risk: $%.2f (after %.1f%% buffer)", effectiveRisk, RiskBuffer_Percent);
+
+    // Calculate drawdown factor for worst case scenario
+    double drawdownFactor = CalculateDrawdownFactor(spacing, pipValue);
+
+    if(drawdownFactor <= 0) {
+        Print("  ❌ ERROR: DrawdownFactor is zero or negative");
+        riskBasedBaseLot = symbolMinLot;
+        riskBasedLotsCalculated = true;
+        Print("  ⚠️ Using minimum lot: ", DoubleToString(symbolMinLot, 2));
+        Print("═══════════════════════════════════════════════════════════════════");
+        return;
+    }
+
+    PrintFormat("  📈 Drawdown Factor: %.2f (per 1 base lot)", drawdownFactor);
+
+    // Calculate base lot
+    riskBasedBaseLot = effectiveRisk / drawdownFactor;
+    PrintFormat("  🔢 Calculated Base Lot: %.4f", riskBasedBaseLot);
+
+    // Apply broker limits
+    double originalLot = riskBasedBaseLot;
+    riskBasedBaseLot = MathMax(riskBasedBaseLot, symbolMinLot);
+    riskBasedBaseLot = MathMin(riskBasedBaseLot, MaxLotPerLevel);
+
+    if(riskBasedBaseLot != originalLot) {
+        PrintFormat("  ⚠️ Lot adjusted to broker limits: %.4f -> %.4f", originalLot, riskBasedBaseLot);
+        PrintFormat("     Min Lot: %.2f | Max Lot: %.2f", symbolMinLot, MaxLotPerLevel);
+    }
+
+    // Normalize to lot step
+    riskBasedBaseLot = NormalizeLotSize(riskBasedBaseLot);
+
+    // Store theoretical max drawdown
+    maxTheoreticalDrawdown = drawdownFactor * riskBasedBaseLot;
+
+    // Mark as calculated
+    riskBasedLotsCalculated = true;
+    riskBasedMultiplier = LotMultiplier;
+
+    // Final summary
+    Print("───────────────────────────────────────────────────────────────────");
+    Print("  ✅ CALCULATION COMPLETE:");
+    PrintFormat("     Base Lot (Level 1): %.2f", riskBasedBaseLot);
+    PrintFormat("     Max Theoretical DD: $%.2f", maxTheoreticalDrawdown);
+    PrintFormat("     Risk Capital: $%.2f", RiskCapital_USD);
+    PrintFormat("     DD/Risk Ratio: %.1f%%", (maxTheoreticalDrawdown / RiskCapital_USD) * 100);
+    Print("───────────────────────────────────────────────────────────────────");
+
+    // Show lot progression table
+    Print("  📋 LOT PROGRESSION TABLE:");
+    Print("     Level | Lot Size | Distance | DD Contribution");
+    Print("     ------|----------|----------|----------------");
+
+    double totalDD = 0;
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        double lot = NormalizeLotSize(riskBasedBaseLot * MathPow(LotMultiplier, i));
+        double distance = (i + 1) * spacing;
+        double ddContrib = distance * lot * pipValue;
+        totalDD += ddContrib;
+
+        PrintFormat("     L%d    | %.2f     | %.0f pips | $%.2f",
+                    i + 1, lot, distance, ddContrib);
+    }
+    Print("     ------|----------|----------|----------------");
+    PrintFormat("     TOTAL (1 zone)         | $%.2f", totalDD);
+    PrintFormat("     TOTAL (2 zones worst)  | $%.2f", totalDD * 2);
+
+    Print("───────────────────────────────────────────────────────────────────");
+    Print("  🛡️ PROTEZIONE:");
+    Print("     • NO Stop Loss automatici piazzati");
+    Print("     • Shield 3 Fasi gestisce breakout con HEDGING");
+    Print("     • Posizioni restano aperte durante protezione");
+    Print("     • Possibile recupero su rimbalzo prezzo");
+    Print("═══════════════════════════════════════════════════════════════════");
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Drawdown Factor (sum of distance × lot × pipValue)     |
+//| Worst case scenario: all levels filled in one direction          |
+//+------------------------------------------------------------------+
+double CalculateDrawdownFactor(double spacingPips, double pipValuePerLot) {
+    double factor = 0;
+
+    // Per ogni livello: distanza dall'entry × lot × pipValue
+    // Distanza Level N = (N × spacing) pips
+    // Lot Level N = BaseLot × Multiplier^N (normalizzato a BaseLot=1)
+
+    for(int level = 0; level < GridLevelsPerSide; level++) {
+        // Distance from entry point to this level (in pips)
+        double distancePips = (level + 1) * spacingPips;
+
+        // Lot multiplier at this level (relative to base = 1)
+        double lotMult = MathPow(LotMultiplier, level);
+
+        // DD contribution = distance × lot × pipValue (per 1 base lot)
+        factor += distancePips * lotMult * pipValuePerLot;
+    }
+
+    // Multiply by number of zones that could go against us
+    // In worst case, 2 zones on one side (e.g., Upper + Lower BUY-biased)
+    // But with Double Grid Neutral, it's 2 grids × 1 bad zone each = 2 zones
+    factor *= 2;  // Conservative: 2 zones losing
+
+    return factor;
+}
+
+//+------------------------------------------------------------------+
+//| Get Pip Value for Specified Lot Size                             |
+//+------------------------------------------------------------------+
+double GetPipValueForLot(double lotSize) {
+    double tickValue = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+    double tickSize = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+    double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+
+    if(tickSize <= 0 || point <= 0) return 0;
+
+    // Pip size (usually 10 points for 5-digit, 1 point for 4-digit)
+    double pipSize = GetPipSize();
+
+    // Pip value = (tickValue / tickSize) × pipSize × lotSize
+    double pipValue = (tickValue / tickSize) * pipSize * lotSize;
+
+    return pipValue;
+}
+
+//+------------------------------------------------------------------+
+//| Get Pip Size for Current Symbol                                  |
+//+------------------------------------------------------------------+
+double GetPipSize() {
+    int digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
+    double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+
+    // For 5/3 digit brokers, pip = 10 points
+    // For 4/2 digit brokers, pip = 1 point
+    if(digits == 5 || digits == 3) {
+        return point * 10;
+    }
+    return point;
+}
+
+//+------------------------------------------------------------------+
+//| Recalculate Risk-Based Lots (call when spacing changes)          |
+//+------------------------------------------------------------------+
+void RecalculateRiskBasedLots() {
+    riskBasedLotsCalculated = false;
+    CalculateRiskBasedLots();
+}
+
+//+------------------------------------------------------------------+
+//| Get Current Risk Status String for Dashboard                     |
+//+------------------------------------------------------------------+
+string GetRiskStatusString() {
+    if(LotMode != LOT_RISK_BASED) {
+        return "FIXED";
+    }
+
+    double currentDD = GetCurrentUnrealizedDrawdown();
+    double riskPercent = (maxTheoreticalDrawdown > 0) ?
+                         (currentDD / maxTheoreticalDrawdown * 100.0) : 0;
+
+    return "$" + DoubleToString(currentDD, 0) + " / $" +
+           DoubleToString(RiskCapital_USD, 0) + " (" +
+           DoubleToString(riskPercent, 0) + "%)";
+}
+
+//+------------------------------------------------------------------+
+//| Get Current Unrealized Drawdown (floating loss)                  |
+//+------------------------------------------------------------------+
+double GetCurrentUnrealizedDrawdown() {
+    double totalDD = 0;
+
+    // Sum all negative floating P/L from grid positions
+    int total = PositionsTotal();
+    for(int i = 0; i < total; i++) {
+        ulong ticket = PositionGetTicket(i);
+        if(ticket == 0) continue;
+
+        // Check if it's our position
+        long posMagic = PositionGetInteger(POSITION_MAGIC);
+        if(posMagic >= MagicNumber && posMagic <= MagicNumber + MAGIC_OFFSET_GRID_B + 10000) {
+            double profit = PositionGetDouble(POSITION_PROFIT);
+            double swap = PositionGetDouble(POSITION_SWAP);
+            double commission = 0;  // Commission usually in ticket close
+
+            double netPL = profit + swap + commission;
+            if(netPL < 0) {
+                totalDD += MathAbs(netPL);
+            }
+        }
+    }
+
+    currentRealizedRisk = totalDD;
+    return totalDD;
 }
 
 //+------------------------------------------------------------------+

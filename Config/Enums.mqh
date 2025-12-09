@@ -71,6 +71,14 @@ enum ENUM_SHIELD_PHASE {
 };
 
 //+------------------------------------------------------------------+
+//| 🛡️ SHIELD ORDER TYPE - Tipo ordine Shield (MARKET vs STOP)       |
+//+------------------------------------------------------------------+
+enum ENUM_SHIELD_ORDER_TYPE {
+    SHIELD_ORDER_MARKET = 0,    // MARKET - Esecuzione immediata (CONSIGLIATO)
+    SHIELD_ORDER_STOP = 1       // STOP - Pending order al livello breakout
+};
+
+//+------------------------------------------------------------------+
 //| 🔄 BREAKOUT DIRECTION - Direzione breakout                       |
 //+------------------------------------------------------------------+
 enum ENUM_BREAKOUT_DIRECTION {
@@ -102,7 +110,8 @@ enum ENUM_SPACING_MODE {
 //+------------------------------------------------------------------+
 enum ENUM_LOT_MODE {
     LOT_FIXED,                  // Fixed - Lot size fisso per tutti i livelli
-    LOT_PROGRESSIVE             // Progressive - Lot crescente per livello (CONSIGLIATO)
+    LOT_PROGRESSIVE,            // Progressive - Lot crescente per livello
+    LOT_RISK_BASED              // Risk-Based - Calcola lot da capitale rischio (CONSIGLIATO)
 };
 
 //+------------------------------------------------------------------+

@@ -269,6 +269,11 @@ input ENUM_SHIELD_MODE ShieldMode = SHIELD_3_PHASES;         // 🛡️ Modalita
 // SHIELD_SIMPLE    = Attivazione diretta su breakout
 // SHIELD_3_PHASES  = Warning -> Pre-Shield -> Active (CONSIGLIATO)
 
+input group "    ╔═ SELEZIONA TIPO ORDINE SHIELD ════════════════════════🔽🔽🔽"
+input ENUM_SHIELD_ORDER_TYPE ShieldOrderType = SHIELD_ORDER_MARKET; // 🛡️ Tipo Ordine Shield ▼
+// SHIELD_ORDER_MARKET = Esecuzione immediata a mercato (CONSIGLIATO)
+// SHIELD_ORDER_STOP   = Pending STOP order al livello breakout
+
 input group "    📐 SHIELD BREAKOUT PARAMETERS"
 input double    Breakout_Buffer_Pips = 20.0;                 // 📏 Buffer Breakout oltre ultimo grid (pips)
 input double    Reentry_Buffer_Pips = 30.0;                  // 📏 Buffer Rientro nel range (pips)
@@ -280,6 +285,19 @@ input double    Warning_Zone_Percent = 10.0;                 // 📊 Warning Zon
 input bool      Shield_Use_Trailing = false;                 // ✅ Trailing per Shield
 input double    Shield_Trailing_Start = 30.0;                // 📏 Trailing Start (pips)
 input double    Shield_Trailing_Step = 10.0;                 // 📏 Trailing Step (pips)
+
+input group "    🎨 SHIELD ZONES VISUAL (Fasce Colorate)"
+input bool      Enable_ShieldZonesVisual = true;             // ✅ Mostra Fasce Shield Zones
+input uchar     ShieldZones_Transparency = 180;              // 🔍 Trasparenza Fasce Pericolo (0=opaco, 255=invisibile)
+input color     ShieldZone_Phase1_Color = clrYellow;         // 🟡 Fase 1 (Warning) - Giallo
+input color     ShieldZone_Phase2_Color = clrOrange;         // 🟠 Fase 2 (Pre-Shield) - Arancione
+input color     ShieldZone_Phase3_Color = clrRed;            // 🔴 Fase 3 (Breakout) - Rosso
+input color     ShieldEntry_Line_Color = C'139,0,0';         // 🔴 Linea Entry Shield - Rosso Scuro
+input int       ShieldEntry_Line_Width = 2;                  // 📏 Spessore Linea Entry Shield
+input ENUM_LINE_STYLE ShieldEntry_Line_Style = STYLE_DASH;   // 📐 Stile Linea Entry Shield
+input bool      Enable_ProfitZoneVisual = true;              // ✅ Mostra Zona Profit (Verde)
+input color     ProfitZone_Color = clrLime;                  // 🟢 Colore Zona Profit - Verde
+input uchar     ProfitZone_Transparency = 220;               // 🔍 Trasparenza Zona Profit (molto trasparente)
 
 input group "    🔧 LEGACY HEDGE (Backward Compatibility)"
 input bool      EnableHedging = true;                        // ✅ Abilita hedging (maps to Shield)
@@ -299,12 +317,21 @@ input group "╚═════════════════════�
 input group "    ╔═ SELEZIONA LOT MODE ════════════════════════════════════🔽🔽🔽"
 input ENUM_LOT_MODE LotMode = LOT_PROGRESSIVE;               // 💵 Lot Calculation Mode ▼
 
-input group "    📊 LOT PARAMETERS"
+input group "    📊 LOT PARAMETERS (FIXED/PROGRESSIVE)"
 input double    BaseLot = 0.02;                              // 💵 Lot Base (livello 1)
 input double    LotMultiplier = 1.15;                        // 📈 Moltiplicatore Progressivo
 // Level 1: 0.02, Level 2: 0.023, Level 3: 0.026, Level 4: 0.03, Level 5: 0.035
 input double    MaxLotPerLevel = 0.12;                       // 🔒 Max Lot per Livello
 input double    MaxTotalLot = 0.60;                          // 🔒 Max Lot Totale (tutti gli ordini)
+
+input group "    💰 RISK-BASED LOT SETTINGS (se LOT_RISK_BASED)"
+input double    RiskCapital_USD = 100.0;                     // 💰 Capitale Rischio MAX ($)
+// Se chiudi TUTTO in loss, perderai massimo questo importo
+input bool      IncludeShieldInRisk = true;                  // 🛡️ Includi Shield nel calcolo rischio
+// IMPORTANTE: Shield NON piazza SL automatici!
+// Shield = protezione tramite hedging, NON chiusura forzata
+input double    RiskBuffer_Percent = 10.0;                   // 📊 Buffer Sicurezza (%)
+// Calcola lot per perdere (RiskCapital - 10%) come margine
 
 //+------------------------------------------------------------------+
 //| 🔟 🎯 PERFECT CASCADE SYSTEM                                      |
