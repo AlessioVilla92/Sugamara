@@ -110,7 +110,7 @@ input group "║  🎨 VISUAL THEME (v3.0)                                   ║
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    🖼️ CHART COLORS"
-input color     Theme_ChartBackground = C'45,20,35';        // 🎨 Sfondo Chart (Amaranto Scuro)
+input color     Theme_ChartBackground = clrBlack;           // 🎨 Sfondo Chart (Nero)
 input color     Theme_CandleBull = clrDodgerBlue;           // 📈 Candele Bullish (Blu Splendente)
 input color     Theme_CandleBear = clrYellow;               // 📉 Candele Bearish (Giallo)
 
@@ -288,7 +288,7 @@ input double    Shield_Trailing_Step = 10.0;                 // 📏 Trailing St
 
 input group "    🎨 SHIELD ZONES VISUAL (Fasce Colorate)"
 input bool      Enable_ShieldZonesVisual = true;             // ✅ Mostra Fasce Shield Zones
-input uchar     ShieldZones_Transparency = 180;              // 🔍 Trasparenza Fasce Pericolo (0=opaco, 255=invisibile)
+input uchar     ShieldZones_Transparency = 210;              // 🔍 Trasparenza Fasce Pericolo (0=opaco, 255=invisibile)
 input color     ShieldZone_Phase1_Color = clrYellow;         // 🟡 Fase 1 (Warning) - Giallo
 input color     ShieldZone_Phase2_Color = clrOrange;         // 🟠 Fase 2 (Pre-Shield) - Arancione
 input color     ShieldZone_Phase3_Color = clrRed;            // 🔴 Fase 3 (Breakout) - Rosso

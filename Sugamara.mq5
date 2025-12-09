@@ -267,6 +267,13 @@ int OnInit() {
         return(INIT_FAILED);
     }
 
+    //--- STEP 17.3: Sync RangeBox with Grid Levels ---
+    // CRITICAL: S/R = Last Grid Levels (not Manual/Daily_HL/ATR)
+    // Resistance = highest Grid B Upper, Support = lowest Grid A Lower
+    if(IsRangeBoxAvailable()) {
+        SyncRangeBoxWithGrid();
+    }
+
     //--- STEP 17.5: Calculate Breakout Levels for Shield ---
     if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
         if(!CalculateBreakoutLevels()) {
@@ -645,8 +652,8 @@ void ApplyVisualTheme() {
     ChartSetInteger(0, CHART_COLOR_CHART_UP, Theme_CandleBull);
     ChartSetInteger(0, CHART_COLOR_CHART_DOWN, Theme_CandleBear);
 
-    // Apply grid and axis colors (complementary)
-    ChartSetInteger(0, CHART_COLOR_GRID, C'60,30,45');        // Griglia amaranto chiaro
+    // Apply grid and axis colors (for black background)
+    ChartSetInteger(0, CHART_COLOR_GRID, C'40,40,50');        // Griglia grigio scuro
     ChartSetInteger(0, CHART_COLOR_FOREGROUND, clrWhite);     // Testo bianco
     ChartSetInteger(0, CHART_COLOR_CHART_LINE, clrCyan);      // Linea chart cyan
 

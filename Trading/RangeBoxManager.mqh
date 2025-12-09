@@ -667,6 +667,111 @@ bool IsReentryConfirmedShield(ENUM_BREAKOUT_DIRECTION originalDirection)
 }
 
 //+------------------------------------------------------------------+
+//| Sync RangeBox with Grid Levels                                   |
+//| S/R = Last Grid Levels (Resistance = highest Grid B Upper,       |
+//|                         Support = lowest Grid A Lower)           |
+//| Warning Zone starts 10% INSIDE the range                         |
+//+------------------------------------------------------------------+
+void SyncRangeBoxWithGrid()
+{
+   if(NeutralMode != NEUTRAL_RANGEBOX) {
+      if(DetailedLogging)
+         Print("[RangeBox] SyncRangeBoxWithGrid() - Skip: Not in RANGEBOX mode");
+      return;
+   }
+
+   Print("═══════════════════════════════════════════════════════════════════");
+   Print("  SYNCING RANGEBOX WITH GRID LEVELS");
+   Print("═══════════════════════════════════════════════════════════════════");
+
+   // Find highest Grid B Upper level (RESISTANCE)
+   double highestGridB = 0;
+   int highestGridBIndex = -1;
+   for(int i = 0; i < GridLevelsPerSide; i++) {
+      if(gridB_Upper_EntryPrices[i] > highestGridB) {
+         highestGridB = gridB_Upper_EntryPrices[i];
+         highestGridBIndex = i;
+      }
+   }
+
+   // Find lowest Grid A Lower level (SUPPORT)
+   double lowestGridA = DBL_MAX;
+   int lowestGridAIndex = -1;
+   for(int i = 0; i < GridLevelsPerSide; i++) {
+      if(gridA_Lower_EntryPrices[i] > 0 && gridA_Lower_EntryPrices[i] < lowestGridA) {
+         lowestGridA = gridA_Lower_EntryPrices[i];
+         lowestGridAIndex = i;
+      }
+   }
+
+   // Validate
+   if(highestGridB == 0 || lowestGridA == DBL_MAX) {
+      Print("  ERROR: Cannot sync - Grid levels not initialized");
+      PrintFormat("    Highest Grid B: %.5f (index %d)", highestGridB, highestGridBIndex);
+      PrintFormat("    Lowest Grid A: %.5f (index %d)", lowestGridA, lowestGridAIndex);
+      return;
+   }
+
+   // Store previous values for logging
+   double prevResistance = rangeBox.resistance;
+   double prevSupport = rangeBox.support;
+
+   // Sync RangeBox with Grid Levels
+   rangeBox.resistance = highestGridB;
+   rangeBox.support = lowestGridA;
+   rangeBox_Resistance = highestGridB;
+   rangeBox_Support = lowestGridA;
+
+   // Calculate center and range
+   rangeBox.center = (rangeBox.resistance + rangeBox.support) / 2.0;
+   rangeBox.rangeHeight = PointsToPips(rangeBox.resistance - rangeBox.support);
+
+   // Calculate Warning Zones (10% INSIDE the range)
+   double rangeSize = rangeBox.resistance - rangeBox.support;
+   double warningBuffer = rangeSize * (Warning_Zone_Percent / 100.0);
+   rangeBox.warningZoneUp = rangeBox.resistance - warningBuffer;
+   rangeBox.warningZoneDown = rangeBox.support + warningBuffer;
+
+   rangeBox.isValid = true;
+   rangeBox.lastCalc = TimeCurrent();
+
+   // Detailed logging
+   Print("───────────────────────────────────────────────────────────────────");
+   Print("  RANGEBOX SYNCED WITH GRID LEVELS");
+   Print("───────────────────────────────────────────────────────────────────");
+   PrintFormat("  RESISTANCE: %.5f (Grid B Upper[%d])", rangeBox.resistance, highestGridBIndex);
+   PrintFormat("  SUPPORT:    %.5f (Grid A Lower[%d])", rangeBox.support, lowestGridAIndex);
+   Print("───────────────────────────────────────────────────────────────────");
+   PrintFormat("  Range Height: %.1f pips", rangeBox.rangeHeight);
+   PrintFormat("  Center: %.5f", rangeBox.center);
+   Print("───────────────────────────────────────────────────────────────────");
+   PrintFormat("  Warning Zone Up:   %.5f (%.1f%% inside)",
+               rangeBox.warningZoneUp, Warning_Zone_Percent);
+   PrintFormat("  Warning Zone Down: %.5f (%.1f%% inside)",
+               rangeBox.warningZoneDown, Warning_Zone_Percent);
+   Print("───────────────────────────────────────────────────────────────────");
+
+   if(prevResistance > 0 && prevSupport > 0) {
+      double resDiff = MathAbs(rangeBox.resistance - prevResistance);
+      double supDiff = MathAbs(rangeBox.support - prevSupport);
+      if(resDiff > symbolPoint || supDiff > symbolPoint) {
+         Print("  DELTA from previous:");
+         PrintFormat("    Resistance: %.5f -> %.5f (delta: %.1f pips)",
+                     prevResistance, rangeBox.resistance, PointsToPips(resDiff));
+         PrintFormat("    Support: %.5f -> %.5f (delta: %.1f pips)",
+                     prevSupport, rangeBox.support, PointsToPips(supDiff));
+      }
+   }
+   Print("═══════════════════════════════════════════════════════════════════");
+
+   // Update visualization
+   if(ShowRangeBox) {
+      DrawRangeBoxVisualization();
+      DrawWarningZones();
+   }
+}
+
+//+------------------------------------------------------------------+
 //| Get Last Grid B Level (highest)                                  |
 //+------------------------------------------------------------------+
 double GetLastGridBLevel()

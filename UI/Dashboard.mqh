@@ -239,10 +239,22 @@ bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  CREATING SUGAMARA DASHBOARD v3.0 - ROBUST PERSISTENCE           ");
+    Print("  SUGAMARA DASHBOARD v3.1 - PERSISTENT MODE                        ");
     Print("═══════════════════════════════════════════════════════════════════");
 
-    // Force clean creation to ensure all objects are fresh
+    // Check if dashboard already exists and is complete
+    if(VerifyDashboardExists()) {
+        Print("Dashboard already exists - skipping recreation, updating values only");
+        g_dashboardInitialized = true;
+        g_lastDashboardCheck = TimeCurrent();
+        UpdateDashboard();
+        ChartRedraw(0);
+        LogMessage(LOG_SUCCESS, "Dashboard v3.1 restored from existing objects");
+        return true;
+    }
+
+    // Dashboard doesn't exist or is incomplete - create fresh
+    Print("Creating new dashboard...");
     RemoveDashboard();
     Sleep(50);  // Small delay to ensure objects are deleted
 
@@ -262,7 +274,7 @@ bool InitializeDashboard() {
     }
 
     ChartRedraw(0);
-    LogMessage(LOG_SUCCESS, "Dashboard v3.0 initialized with Amaranth/Azure theme (ROBUST)");
+    LogMessage(LOG_SUCCESS, "Dashboard v3.1 initialized with Amaranth/Azure theme (PERSISTENT)");
     return true;
 }
 
@@ -292,9 +304,9 @@ bool VerifyDashboardExists() {
         }
     }
 
-    // If more than 2 critical objects are missing, dashboard needs recreation
-    if(missingCount > 2) {
-        Print("Dashboard verification: ", missingCount, " critical objects missing");
+    // If ANY critical objects are missing, dashboard needs recreation
+    if(missingCount > 0) {
+        Print("Dashboard verification: ", missingCount, " critical objects missing - will recreate");
         return false;
     }
 

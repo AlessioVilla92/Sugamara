@@ -280,11 +280,31 @@ void ProcessShield3Phases(double currentPrice)
 //+------------------------------------------------------------------+
 void EnterWarningPhase(ENUM_BREAKOUT_DIRECTION direction)
 {
+   ENUM_SHIELD_PHASE oldPhase = shield.phase;
    shield.phase = PHASE_WARNING;
    lastBreakoutDirection = direction;
 
-   Print("=== SHIELD PHASE 1: WARNING ===");
-   Print("  Direction: ", (direction == BREAKOUT_UP ? "UP" : "DOWN"));
+   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+
+   Print("═══════════════════════════════════════════════════════════════════");
+   Print("  SHIELD PHASE TRANSITION: NORMAL -> WARNING");
+   Print("═══════════════════════════════════════════════════════════════════");
+   PrintFormat("  Direction: %s", (direction == BREAKOUT_UP ? "UP (approaching RESISTANCE)" : "DOWN (approaching SUPPORT)"));
+   PrintFormat("  Current Price: %.5f", currentPrice);
+   Print("───────────────────────────────────────────────────────────────────");
+   PrintFormat("  Resistance: %.5f", rangeBox.resistance);
+   PrintFormat("  Support: %.5f", rangeBox.support);
+   PrintFormat("  Warning Zone Up: %.5f", rangeBox.warningZoneUp);
+   PrintFormat("  Warning Zone Down: %.5f", rangeBox.warningZoneDown);
+   Print("───────────────────────────────────────────────────────────────────");
+   if(direction == BREAKOUT_UP) {
+      PrintFormat("  Distance to Resistance: %.1f pips", PointsToPips(rangeBox.resistance - currentPrice));
+      PrintFormat("  Next Level: Grid B Upper[last] = %.5f", GetLastGridBLevel());
+   } else {
+      PrintFormat("  Distance to Support: %.1f pips", PointsToPips(currentPrice - rangeBox.support));
+      PrintFormat("  Next Level: Grid A Lower[last] = %.5f", GetLastGridALevel());
+   }
+   Print("═══════════════════════════════════════════════════════════════════");
 
    // Alert
    if(EnableAlerts) {
@@ -300,11 +320,20 @@ void EnterWarningPhase(ENUM_BREAKOUT_DIRECTION direction)
 //+------------------------------------------------------------------+
 void ExitWarningPhase()
 {
+   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+
+   Print("═══════════════════════════════════════════════════════════════════");
+   Print("  SHIELD PHASE TRANSITION: WARNING -> NORMAL");
+   Print("═══════════════════════════════════════════════════════════════════");
+   PrintFormat("  Reason: Price returned inside safe zone");
+   PrintFormat("  Current Price: %.5f", currentPrice);
+   PrintFormat("  Warning Zone Up: %.5f", rangeBox.warningZoneUp);
+   PrintFormat("  Warning Zone Down: %.5f", rangeBox.warningZoneDown);
+   Print("═══════════════════════════════════════════════════════════════════");
+
    shield.phase = PHASE_NORMAL;
    lastBreakoutDirection = BREAKOUT_NONE;
    currentSystemState = STATE_INSIDE_RANGE;
-
-   Print("[Shield] Exited Warning Zone - Back to normal");
 }
 
 //+------------------------------------------------------------------+
@@ -315,9 +344,27 @@ void EnterPreShieldPhase(ENUM_BREAKOUT_DIRECTION direction)
    shield.phase = PHASE_PRE_SHIELD;
    lastBreakoutDirection = direction;
 
-   Print("=== SHIELD PHASE 2: PRE-SHIELD ===");
-   Print("  Direction: ", (direction == BREAKOUT_UP ? "UP" : "DOWN"));
-   Print("  Shield PENDING ready for activation");
+   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+
+   Print("═══════════════════════════════════════════════════════════════════");
+   Print("  SHIELD PHASE TRANSITION: WARNING -> PRE-SHIELD");
+   Print("═══════════════════════════════════════════════════════════════════");
+   PrintFormat("  Direction: %s", (direction == BREAKOUT_UP ? "UP (BREAKOUT IMMINENT)" : "DOWN (BREAKOUT IMMINENT)"));
+   PrintFormat("  Current Price: %.5f", currentPrice);
+   Print("───────────────────────────────────────────────────────────────────");
+   PrintFormat("  Resistance: %.5f", rangeBox.resistance);
+   PrintFormat("  Support: %.5f", rangeBox.support);
+   Print("───────────────────────────────────────────────────────────────────");
+   if(direction == BREAKOUT_UP) {
+      PrintFormat("  Upper Breakout Level: %.5f", upperBreakoutLevel);
+      PrintFormat("  Distance to Breakout: %.1f pips", PointsToPips(upperBreakoutLevel - currentPrice));
+   } else {
+      PrintFormat("  Lower Breakout Level: %.5f", lowerBreakoutLevel);
+      PrintFormat("  Distance to Breakout: %.1f pips", PointsToPips(currentPrice - lowerBreakoutLevel));
+   }
+   PrintFormat("  Shield Order Type: %s", GetShieldOrderTypeName());
+   Print("  Shield PENDING - Ready for immediate activation!");
+   Print("═══════════════════════════════════════════════════════════════════");
 
    // Alert
    if(EnableAlerts) {
@@ -332,9 +379,16 @@ void EnterPreShieldPhase(ENUM_BREAKOUT_DIRECTION direction)
 //+------------------------------------------------------------------+
 void CancelPreShield()
 {
+   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+
    Print("═══════════════════════════════════════════════════════════════════");
-   Print("  CANCELLING PRE-SHIELD");
+   Print("  SHIELD PHASE TRANSITION: PRE-SHIELD -> NORMAL (CANCELLED)");
    Print("═══════════════════════════════════════════════════════════════════");
+   PrintFormat("  Reason: Price returned inside range before breakout");
+   PrintFormat("  Current Price: %.5f", currentPrice);
+   PrintFormat("  Resistance: %.5f", rangeBox.resistance);
+   PrintFormat("  Support: %.5f", rangeBox.support);
+   Print("───────────────────────────────────────────────────────────────────");
 
    // Cancel pending STOP order if exists
    if(ShieldOrderType == SHIELD_ORDER_STOP && shieldPendingTicket > 0) {
