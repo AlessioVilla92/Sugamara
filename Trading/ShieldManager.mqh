@@ -499,7 +499,7 @@ void ActivateShieldLong(string source)
    // STOP ORDER - Pending order al livello breakout
    //------------------------------------------------------------------
    else if(ShieldOrderType == SHIELD_ORDER_STOP) {
-      double stopPrice = rangeBox.lowerBreakout;  // Breakout level inferiore
+      double stopPrice = lowerBreakoutLevel;  // Breakout level inferiore
       stopPrice = NormalizeDouble(stopPrice, symbolDigits);
 
       Print("───────────────────────────────────────────────────────────────────");
@@ -604,7 +604,7 @@ void ActivateShieldShort(string source)
    // STOP ORDER - Pending order al livello breakout
    //------------------------------------------------------------------
    else if(ShieldOrderType == SHIELD_ORDER_STOP) {
-      double stopPrice = rangeBox.upperBreakout;  // Breakout level superiore
+      double stopPrice = upperBreakoutLevel;  // Breakout level superiore
       stopPrice = NormalizeDouble(stopPrice, symbolDigits);
 
       Print("───────────────────────────────────────────────────────────────────");

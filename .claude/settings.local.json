@@ -4,7 +4,8 @@
       "Bash(wc:*)",
       "Bash(\"C:\\Program Files\\MetaTrader 5\\metaeditor64.exe\" /compile:Sugamara.mq5 /log:compile.log)",
       "Bash(findstr:*)",
-      "Bash(\"C:\\Program Files\\MetaTrader 5\\metaeditor64.exe\" /compile:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Sugamara.mq5\" /log:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\compile.log\" /inc:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\")"
+      "Bash(\"C:\\Program Files\\MetaTrader 5\\metaeditor64.exe\" /compile:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Sugamara.mq5\" /log:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\compile.log\" /inc:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\")",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
