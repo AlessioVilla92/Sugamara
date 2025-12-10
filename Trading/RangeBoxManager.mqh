@@ -384,10 +384,18 @@ bool InitializeRangeBoxForShield()
       rangeBox.center = (rangeBox.resistance + rangeBox.support) / 2.0;
       rangeBox.rangeHeight = PointsToPips(rangeBox.resistance - rangeBox.support);
 
-      // Calculate Warning Zones (for Shield 3 Phases)
-      double warningBuffer = (rangeBox.resistance - rangeBox.support) * (Warning_Zone_Percent / 100.0);
-      rangeBox.warningZoneUp = rangeBox.resistance - warningBuffer;
-      rangeBox.warningZoneDown = rangeBox.support + warningBuffer;
+      // v4.4: Calculate Warning Zones using dynamic formula (N - 0.5) × spacing
+      // This places warning zone HALFWAY between penultimate and last grid level
+      double spacing = currentSpacing_Pips * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
+      if(spacing == 0) {
+         // Fallback: calculate from range
+         spacing = (rangeBox.resistance - rangeBox.support) / (GridLevelsPerSide * 2);
+      }
+      double warningMultiplier = GridLevelsPerSide - 0.5;
+      // N=5 → 4.5 | N=7 → 6.5 | N=9 → 8.5
+      double basePrice = (entryPoint > 0) ? entryPoint : rangeBox.center;
+      rangeBox.warningZoneUp = basePrice + (spacing * warningMultiplier);
+      rangeBox.warningZoneDown = basePrice - (spacing * warningMultiplier);
 
       rangeBox.isValid = true;
       rangeBox.lastCalc = TimeCurrent();
@@ -726,11 +734,18 @@ void SyncRangeBoxWithGrid()
    rangeBox.center = (rangeBox.resistance + rangeBox.support) / 2.0;
    rangeBox.rangeHeight = PointsToPips(rangeBox.resistance - rangeBox.support);
 
-   // Calculate Warning Zones (10% INSIDE the range)
-   double rangeSize = rangeBox.resistance - rangeBox.support;
-   double warningBuffer = rangeSize * (Warning_Zone_Percent / 100.0);
-   rangeBox.warningZoneUp = rangeBox.resistance - warningBuffer;
-   rangeBox.warningZoneDown = rangeBox.support + warningBuffer;
+   // v4.4: Calculate Warning Zones using dynamic formula (N - 0.5) × spacing
+   // This places warning zone HALFWAY between penultimate and last grid level
+   double spacing = currentSpacing_Pips * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
+   if(spacing == 0) {
+      // Fallback: calculate from range
+      spacing = (rangeBox.resistance - rangeBox.support) / (GridLevelsPerSide * 2);
+   }
+   double warningMultiplier = GridLevelsPerSide - 0.5;
+   // N=5 → 4.5 | N=7 → 6.5 | N=9 → 8.5
+   double basePrice = (entryPoint > 0) ? entryPoint : rangeBox.center;
+   rangeBox.warningZoneUp = basePrice + (spacing * warningMultiplier);
+   rangeBox.warningZoneDown = basePrice - (spacing * warningMultiplier);
 
    rangeBox.isValid = true;
    rangeBox.lastCalc = TimeCurrent();

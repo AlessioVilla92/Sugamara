@@ -52,7 +52,7 @@ void ApplyPairPresets() {
 
             // Recommended Settings
             activePair_RecommendedSpacing = EURUSD_DefaultSpacing;
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
@@ -77,7 +77,7 @@ void ApplyPairPresets() {
 
             // Recommended Settings
             activePair_RecommendedSpacing = USDCAD_DefaultSpacing;
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
@@ -101,8 +101,8 @@ void ApplyPairPresets() {
             activePair_MinBrokerDistance = 15.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 16.0;
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedSpacing = 10.0;
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
@@ -126,8 +126,8 @@ void ApplyPairPresets() {
             activePair_MinBrokerDistance = 10.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 15.0;
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedSpacing = 10.0;
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
@@ -151,8 +151,8 @@ void ApplyPairPresets() {
             activePair_MinBrokerDistance = 12.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 18.0;
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedSpacing = 10.0;
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
@@ -176,8 +176,8 @@ void ApplyPairPresets() {
             activePair_MinBrokerDistance = 15.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 18.0;
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedSpacing = 10.0;
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
@@ -201,8 +201,8 @@ void ApplyPairPresets() {
             activePair_MinBrokerDistance = 10.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 15.0;
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedSpacing = 10.0;
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
@@ -226,8 +226,8 @@ void ApplyPairPresets() {
             activePair_MinBrokerDistance = 10.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 22.0;      // Wider spacing for higher volatility
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedSpacing = 10.0;      // Standard spacing
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
@@ -251,8 +251,8 @@ void ApplyPairPresets() {
             activePair_MinBrokerDistance = 10.0;
 
             // Recommended Settings
-            activePair_RecommendedSpacing = 16.0;
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedSpacing = 10.0;
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
@@ -276,8 +276,8 @@ void ApplyPairPresets() {
             activePair_MinBrokerDistance = 10.0;
 
             // Recommended Settings - Wider spacing for breakout moves
-            activePair_RecommendedSpacing = 20.0;  // Wider for momentum
-            activePair_RecommendedLevels = 5;
+            activePair_RecommendedSpacing = 10.0;  // Standard spacing
+            activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets - Breakout focused

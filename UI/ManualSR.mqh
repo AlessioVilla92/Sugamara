@@ -24,8 +24,8 @@
 #define SR_RECT_UPPER_LOSS    "SUGAMARA_RECT_UPPER_LOSS"
 #define SR_RECT_LOWER_LOSS    "SUGAMARA_RECT_LOWER_LOSS"
 
-// Faded red color for loss zones (R:255, G:100, B:100 with transparency effect)
-#define CLR_LOSS_ZONE         C'255,120,120'
+// Dark red color for loss zones (v4.4.1 - darker and more muted)
+#define CLR_LOSS_ZONE         C'180,50,50'
 
 //+------------------------------------------------------------------+
 //| GLOBAL VARIABLES                                                 |
@@ -48,23 +48,40 @@ bool InitializeManualSR() {
     }
 
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  INITIALIZING MANUAL S/R SYSTEM v3.0");
+    Print("  INITIALIZING MANUAL S/R SYSTEM v4.4 (Dynamic Positioning)");
     Print("═══════════════════════════════════════════════════════════════════");
 
     double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-    double atrValue = GetATRPips() * symbolPoint * 10;
-    if(atrValue == 0) atrValue = 50 * symbolPoint * 10;
 
-    // Initialize default positions
+    // v4.4: Calculate spacing in price units
+    double spacing = currentSpacing_Pips * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
+    if(spacing == 0) {
+        // Fallback: use ATR-based spacing if currentSpacing not yet set
+        spacing = GetATRPips() * symbolPoint * 10;
+        if(spacing == 0) spacing = 15 * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
+    }
+
+    // v4.4: S/R Formula = (N + 0.25) × spacing
+    // Places S/R just after the last grid level
+    double srMultiplier = GridLevelsPerSide + 0.25;
+    // N=5 → 5.25 | N=7 → 7.25 | N=9 → 9.25
+
+    // Use entryPoint if available, otherwise currentPrice
+    double basePrice = (entryPoint > 0) ? entryPoint : currentPrice;
+
+    // Initialize default positions with dynamic formula
     if(manualSR_Resistance == 0) {
-        manualSR_Resistance = currentPrice + atrValue * 3;
+        manualSR_Resistance = basePrice + (spacing * srMultiplier);
     }
     if(manualSR_Support == 0) {
-        manualSR_Support = currentPrice - atrValue * 3;
+        manualSR_Support = basePrice - (spacing * srMultiplier);
     }
     if(manualSR_Activation == 0) {
-        manualSR_Activation = currentPrice;
+        manualSR_Activation = basePrice;
     }
+
+    Print("  S/R Multiplier: ", DoubleToString(srMultiplier, 2), " (N+0.25 where N=", GridLevelsPerSide, ")");
+    Print("  Spacing: ", DoubleToString(spacing / symbolPoint / ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1), 1), " pips");
 
     // Use manual values if provided in inputs
     if(RangeBox_Resistance > 0) manualSR_Resistance = RangeBox_Resistance;

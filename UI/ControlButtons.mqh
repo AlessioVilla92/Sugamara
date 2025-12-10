@@ -36,13 +36,9 @@ datetime waitStartTime = 0;
 //| Initialize Control Buttons                                       |
 //+------------------------------------------------------------------+
 bool InitializeControlButtons(int startX, int startY, int panelWidth) {
-    if(!Enable_AdvancedButtons) {
-        Print("INFO: Advanced Control Buttons are DISABLED");
-        return true;
-    }
-
+    // v4.4: Buttons are ALWAYS active (Enable_AdvancedButtons removed)
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  INITIALIZING CONTROL BUTTONS v4.3 (Simplified)");
+    Print("  INITIALIZING CONTROL BUTTONS v4.4 (Always Active)");
     Print("═══════════════════════════════════════════════════════════════════");
 
     int x = startX + 10;
@@ -123,7 +119,7 @@ void CreateButtonLabel(string name, int x, int y, int width, string text, color 
 //| Handle Button Click                                              |
 //+------------------------------------------------------------------+
 void HandleControlButtonClick(string objectName) {
-    if(!Enable_AdvancedButtons) return;
+    // v4.4: No check needed - buttons always active
 
     // Reset button state
     ObjectSetInteger(0, objectName, OBJPROP_STATE, false);

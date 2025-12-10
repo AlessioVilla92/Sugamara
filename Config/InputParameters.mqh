@@ -21,7 +21,7 @@ input bool      Enable_PartialTP = true;                    // ✅ Partial Take 
 input bool      Enable_TrailingAsymmetric = true;           // ✅ Trailing Stop Asimmetrico
 input bool      Enable_ATRMultiTF = true;                   // ✅ ATR Multi-Timeframe Dashboard
 input bool      Enable_ManualSR = true;                     // ✅ Manual S/R Drag & Drop
-input bool      Enable_AdvancedButtons = true;              // ✅ Control Buttons (Market/Limit/Stop)
+// Enable_AdvancedButtons REMOVED (v4.4) - Buttons are ALWAYS active
 
 //+------------------------------------------------------------------+
 //| 💰 PARTIAL TAKE PROFIT SETTINGS                                  |
@@ -110,7 +110,7 @@ input group "║  🎨 VISUAL THEME (v3.0)                                   ║
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    🖼️ CHART COLORS"
-input color     Theme_ChartBackground = clrBlack;           // 🎨 Sfondo Chart (Nero)
+input color     Theme_ChartBackground = C'25,12,35';        // 🎨 Sfondo Chart (Viola Scurissimo)
 input color     Theme_CandleBull = clrDodgerBlue;           // 📈 Candele Bullish (Blu Splendente)
 input color     Theme_CandleBear = clrYellow;               // 📉 Candele Bearish (Giallo)
 
@@ -179,9 +179,9 @@ input int       ATR_RecalcHours = 4;                         // 🔄 Ore tra Ric
 
 input group "    🎯 ATR DECISION TABLE (Spacing Adattivo)"
 input double    ATR_Calm_Threshold = 15.0;                   // 📊 Soglia ATR Calmo (pips)
-input double    ATR_Calm_Spacing = 15.0;                     // 📏 Spacing se ATR < 15
+input double    ATR_Calm_Spacing = 10.0;                     // 📏 Spacing se ATR < 15
 input double    ATR_Normal_Threshold = 30.0;                 // 📊 Soglia ATR Normale (pips)
-input double    ATR_Normal_Spacing = 20.0;                   // 📏 Spacing se ATR 15-30
+input double    ATR_Normal_Spacing = 10.0;                   // 📏 Spacing se ATR 15-30
 input double    ATR_Volatile_Threshold = 50.0;               // 📊 Soglia ATR Volatile (pips)
 input double    ATR_Volatile_Spacing = 30.0;                 // 📏 Spacing se ATR 30-50
 input double    ATR_Extreme_Spacing = 40.0;                  // 📏 Spacing se ATR > 50
@@ -276,8 +276,8 @@ input group "║  5️⃣  📐 GRID CONFIGURATION                              
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📏 GRID STRUCTURE"
-input int       GridLevelsPerSide = 5;                       // 🔢 Livelli per Lato (3-10)
-// 5 livelli × 2 zone × 2 grid = 20 ordini totali
+input int       GridLevelsPerSide = 7;                       // 🔢 Livelli per Lato (3-10) [Default: 7]
+// 7 livelli × 2 zone × 2 grid = 28 ordini totali
 
 input group "    ╔═ SELEZIONA SPACING MODE ════════════════════════════════🔽🔽🔽"
 input ENUM_SPACING_MODE SpacingMode = SPACING_ATR;           // 📏 Modalità Spacing ▼
@@ -387,7 +387,6 @@ input double    BaseLot = 0.02;                              // 💵 Lot Base (l
 input double    LotMultiplier = 1.15;                        // 📈 Moltiplicatore Progressivo
 // Level 1: 0.02, Level 2: 0.023, Level 3: 0.026, Level 4: 0.03, Level 5: 0.035
 input double    MaxLotPerLevel = 0.12;                       // 🔒 Max Lot per Livello
-input double    MaxTotalLot = 0.60;                          // 🔒 Max Lot Totale (tutti gli ordini)
 
 input group "    💰 RISK-BASED LOT SETTINGS (se LOT_RISK_BASED)"
 input double    RiskCapital_USD = 100.0;                     // 💰 Capitale Rischio MAX ($)
@@ -679,7 +678,7 @@ input group "║      Spread: 0.8-1.5 pips | Range: 60-100 pips/day       ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 EUR/USD GRID SETTINGS"
-input double    EURUSD_DefaultSpacing = 20.0;                // 📏 Spacing Default (pips)
+input double    EURUSD_DefaultSpacing = 9.0;                 // 📏 Spacing Default (pips)
 input double    EURUSD_TP_Pips = 18.0;                       // 🎯 TP per livello (pips)
 input double    EURUSD_EstimatedSpread = 1.0;                // 📊 Spread Stimato (pips)
 input double    EURUSD_DailyRange = 80.0;                    // 📈 Range Giornaliero (pips)
@@ -696,7 +695,7 @@ input group "║      Spread: 1.0-1.8 pips | Range: 50-80 pips/day        ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 USD/CAD GRID SETTINGS"
-input double    USDCAD_DefaultSpacing = 18.0;                // 📏 Spacing Default (pips)
+input double    USDCAD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
 input double    USDCAD_TP_Pips = 16.0;                       // 🎯 TP per livello (pips)
 input double    USDCAD_EstimatedSpread = 1.3;                // 📊 Spread Stimato (pips)
 input double    USDCAD_DailyRange = 65.0;                    // 📈 Range Giornaliero (pips)
@@ -716,7 +715,7 @@ input double    Custom_Spread = 1.5;                         // 📊 Spread Stim
 input double    Custom_DailyRange = 100.0;                   // 📈 Range Giornaliero (pips)
 input double    Custom_ATR_Typical = 25.0;                   // 📊 ATR Tipico (pips)
 input double    Custom_MinLot = 0.01;                        // 💵 Lot Minimo
-input double    Custom_DefaultSpacing = 20.0;                // 📏 Spacing Default (pips)
+input double    Custom_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
 
 //+------------------------------------------------------------------+
 //| 2️⃣2️⃣ 🎨 LEGACY COLOR SCHEME (Grid Lines by Level)                |

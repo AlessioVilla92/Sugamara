@@ -292,15 +292,6 @@ double CalculateTotalGridLots(int levels) {
 }
 
 //+------------------------------------------------------------------+
-//| Check if Total Lots Exceed Maximum                               |
-//+------------------------------------------------------------------+
-bool IsWithinMaxTotalLot(int levelsPerSide) {
-    // Total = 2 grids × 2 zones × levels
-    double totalLots = CalculateTotalGridLots(levelsPerSide) * 4;
-    return (totalLots <= MaxTotalLot);
-}
-
-//+------------------------------------------------------------------+
 //| 💰 RISK-BASED LOT CALCULATION SYSTEM                             |
 //| Calcola lot automatici per garantire max loss = RiskCapital      |
 //| IMPORTANTE: NON piazza SL automatici - Shield gestisce rischio   |
@@ -849,12 +840,6 @@ bool ValidateGridConfiguration() {
         return false;
     }
 
-    // Check total lots
-    if(!IsWithinMaxTotalLot(GridLevelsPerSide)) {
-        LogMessage(LOG_ERROR, "Total lots exceed MaxTotalLot: " + DoubleToString(MaxTotalLot, 2));
-        return false;
-    }
-
     // Check entry point
     if(entryPoint <= 0) {
         LogMessage(LOG_ERROR, "Invalid entry point: " + DoubleToString(entryPoint, symbolDigits));
@@ -1103,5 +1088,94 @@ void RecordCloseTime(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
             gridB_Lower_LastClose[level] = now;
         }
     }
+}
+
+//+------------------------------------------------------------------+
+//| ═══════════════════════════════════════════════════════════════ |
+//| 📐 DYNAMIC S/R AND WARNING ZONE HELPERS (v4.4)                  |
+//| ═══════════════════════════════════════════════════════════════ |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Get S/R Multiplier (N + 0.25)                                     |
+//| Places S/R immediately after the last fillable grid level         |
+//| N=5 → 5.25 | N=7 → 7.25 | N=9 → 9.25                              |
+//+------------------------------------------------------------------+
+double GetSRMultiplier() {
+    return GridLevelsPerSide + 0.25;
+}
+
+//+------------------------------------------------------------------+
+//| Get Warning Zone Multiplier (N - 0.5)                             |
+//| Places warning zone HALFWAY between penultimate and last grid     |
+//| N=5 → 4.5 | N=7 → 6.5 | N=9 → 8.5                                 |
+//+------------------------------------------------------------------+
+double GetWarningZoneMultiplier() {
+    return GridLevelsPerSide - 0.5;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate S/R Level from Entry Point                              |
+//| Formula: S/R = entry ± (spacing × (N + 0.25))                     |
+//+------------------------------------------------------------------+
+double CalculateSRLevel(double entry, double spacingPips, bool isResistance) {
+    double multiplier = GetSRMultiplier();
+    double spacingPoints = PipsToPoints(spacingPips);
+
+    if(isResistance)
+        return NormalizeDouble(entry + (spacingPoints * multiplier), symbolDigits);
+    else
+        return NormalizeDouble(entry - (spacingPoints * multiplier), symbolDigits);
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Warning Zone Level from Entry Point                     |
+//| Formula: Warning = entry ± (spacing × (N - 0.5))                  |
+//+------------------------------------------------------------------+
+double CalculateWarningZoneLevel(double entry, double spacingPips, bool isUpper) {
+    double multiplier = GetWarningZoneMultiplier();
+    double spacingPoints = PipsToPoints(spacingPips);
+
+    if(isUpper)
+        return NormalizeDouble(entry + (spacingPoints * multiplier), symbolDigits);
+    else
+        return NormalizeDouble(entry - (spacingPoints * multiplier), symbolDigits);
+}
+
+//+------------------------------------------------------------------+
+//| Get Current Spacing in Points (for convenience)                   |
+//+------------------------------------------------------------------+
+double GetCurrentSpacingPoints() {
+    return PipsToPoints(currentSpacing_Pips);
+}
+
+//+------------------------------------------------------------------+
+//| Log Dynamic Positioning Info                                      |
+//+------------------------------------------------------------------+
+void LogDynamicPositioningInfo() {
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  📐 DYNAMIC POSITIONING INFO (v4.4)");
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  Grid Levels Per Side: ", GridLevelsPerSide);
+    Print("  Current Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
+    Print("───────────────────────────────────────────────────────────────────");
+    Print("  S/R Multiplier: ", DoubleToString(GetSRMultiplier(), 2), " (N+0.25)");
+    Print("  Warning Zone Multiplier: ", DoubleToString(GetWarningZoneMultiplier(), 2), " (N-0.5)");
+    Print("───────────────────────────────────────────────────────────────────");
+
+    if(entryPoint > 0) {
+        double srUp = CalculateSRLevel(entryPoint, currentSpacing_Pips, true);
+        double srDown = CalculateSRLevel(entryPoint, currentSpacing_Pips, false);
+        double warnUp = CalculateWarningZoneLevel(entryPoint, currentSpacing_Pips, true);
+        double warnDown = CalculateWarningZoneLevel(entryPoint, currentSpacing_Pips, false);
+
+        Print("  CALCULATED LEVELS:");
+        PrintFormat("    Entry Point: %.5f", entryPoint);
+        PrintFormat("    Warning Up: %.5f (%.1f pips)", warnUp, PointsToPips(warnUp - entryPoint));
+        PrintFormat("    Warning Down: %.5f (%.1f pips)", warnDown, PointsToPips(entryPoint - warnDown));
+        PrintFormat("    S/R Up (Resistance): %.5f (%.1f pips)", srUp, PointsToPips(srUp - entryPoint));
+        PrintFormat("    S/R Down (Support): %.5f (%.1f pips)", srDown, PointsToPips(entryPoint - srDown));
+    }
+    Print("═══════════════════════════════════════════════════════════════════");
 }
 

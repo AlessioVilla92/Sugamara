@@ -308,28 +308,13 @@ int OnInit() {
     }
 
     //--- STEP 18: Place Initial Orders ---
-    // v4.3: If Control Buttons enabled, wait for START button click
-    if(Enable_AdvancedButtons) {
-        Print("");
-        Print("═══════════════════════════════════════════════════════════════════");
-        Print("  GRID ORDERS ON STANDBY - WAITING FOR START BUTTON");
-        Print("═══════════════════════════════════════════════════════════════════");
-        Print("  Click START button to place grid orders");
-        systemState = STATE_IDLE;
-    } else {
-        Print("");
-        Print("═══════════════════════════════════════════════════════════════════");
-        Print("  PLACING INITIAL GRID ORDERS");
-        Print("═══════════════════════════════════════════════════════════════════");
-
-        bool gridAPlaced = PlaceAllGridAOrders();
-        bool gridBPlaced = PlaceAllGridBOrders();
-
-        if(!gridAPlaced || !gridBPlaced) {
-            Print("WARNING: Some orders failed to place - system will retry");
-        }
-        systemState = STATE_ACTIVE;
-    }
+    // v4.4: Control Buttons ALWAYS active - wait for START button click
+    Print("");
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  GRID ORDERS ON STANDBY - WAITING FOR START BUTTON");
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  Click START button to place grid orders");
+    systemState = STATE_IDLE;
 
     //--- STEP 19: Draw Grid Visualization ---
     DrawGridVisualization();
@@ -345,7 +330,7 @@ int OnInit() {
     Print("═══════════════════════════════════════════════════════════════════");
     Print("  SUGAMARA v4.3 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName());
-    Print("  System State: ", Enable_AdvancedButtons ? "IDLE (Click START)" : "ACTIVE");
+    Print("  System State: IDLE (Click START)");
     Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions());
     Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions());
     if(IsRangeBoxAvailable()) {
@@ -363,7 +348,7 @@ int OnInit() {
     Print("  ✅ Trailing Asym: ", Enable_TrailingAsymmetric ? "ENABLED" : "DISABLED");
     Print("  ✅ ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
     Print("  ✅ Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
-    Print("  ✅ Control Buttons: ", Enable_AdvancedButtons ? "ENABLED" : "DISABLED");
+    Print("  ✅ Control Buttons: ALWAYS ACTIVE (v4.4)");
     Print("───────────────────────────────────────────────────────────────────");
     Print("  v4.0 FEATURES:");
     Print("  ✅ Dynamic ATR Spacing: ", (EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) ? "ENABLED" : "DISABLED");
@@ -925,8 +910,8 @@ void ApplyVisualTheme() {
     ChartSetInteger(0, CHART_COLOR_CHART_UP, Theme_CandleBull);
     ChartSetInteger(0, CHART_COLOR_CHART_DOWN, Theme_CandleBear);
 
-    // Apply grid and axis colors (for black background)
-    ChartSetInteger(0, CHART_COLOR_GRID, C'40,40,50');        // Griglia grigio scuro
+    // Hide grid and apply axis colors
+    ChartSetInteger(0, CHART_SHOW_GRID, false);               // Nasconde griglia tratteggiata
     ChartSetInteger(0, CHART_COLOR_FOREGROUND, clrWhite);     // Testo bianco
     ChartSetInteger(0, CHART_COLOR_CHART_LINE, clrCyan);      // Linea chart cyan
 
@@ -943,7 +928,7 @@ void ApplyVisualTheme() {
     ChartSetInteger(0, CHART_SHOW_ASK_LINE, true);
     ChartSetInteger(0, CHART_SHOW_BID_LINE, true);
 
-    Print("Visual Theme v3.0 applied: Amaranto Scuro + Blu/Giallo candles");
+    Print("Visual Theme v3.0 applied: Viola Scurissimo + Blu/Giallo candles (No Grid)");
     ChartRedraw(0);
 }
 

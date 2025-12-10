@@ -239,7 +239,7 @@ bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA DASHBOARD v3.1 - PERSISTENT MODE                        ");
+    Print("  SUGAMARA DASHBOARD V4.4 - PERSISTENT MODE                        ");
     Print("═══════════════════════════════════════════════════════════════════");
 
     // Check if dashboard already exists and is complete
@@ -333,10 +333,8 @@ void RecreateEntireDashboard() {
     CreateADXPanel();
     CreateShieldPanel();
 
-    // Initialize control buttons if enabled
-    if(Enable_AdvancedButtons) {
-        InitializeControlButtons(g_btnY, g_leftX, g_colWidth);
-    }
+    // v4.4: Control buttons ALWAYS active
+    InitializeControlButtons(g_btnY, g_leftX, g_colWidth);
 
     g_dashboardInitialized = true;
     g_lastDashboardCheck = TimeCurrent();
@@ -396,7 +394,7 @@ void CreateUnifiedDashboard() {
     //═══════════════════════════════════════════════════════════════
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 15, "SUGAMARA v2.0", CLR_GOLD, 16, "Arial Black");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 15, "SUGAMARA V4.4", CLR_GOLD, 16, "Arial Black");
     DashLabel("TITLE_SUB", x + totalWidth/2 - 70, y + 42, "Double Grid Neutral", CLR_AZURE_1, 10, "Arial Bold");
     y += titleHeight;
 
@@ -547,46 +545,19 @@ void CreateControlButtons(int startY, int startX, int panelWidth) {
     int btnHeight = 35;
     int spacing = 10;
 
-    // v4.3 Control Buttons Mode (Simplified: START + CLOSE only)
-    if(Enable_AdvancedButtons) {
-        // Status Label (matches ControlButtons.mqh BTN_STATUS_V3)
-        DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY - Click START", CLR_DASH_TEXT, 10, "Arial Bold");
-        y += 22;
+    // v4.4: Control Buttons ALWAYS active (Simplified: START + CLOSE only)
+    // Status Label (matches ControlButtons.mqh BTN_STATUS_V3)
+    DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY - Click START", CLR_DASH_TEXT, 10, "Arial Bold");
+    y += 22;
 
-        // v4.3: 2 Main Buttons: START | CLOSE (LIMIT/STOP removed - not needed for neutral grid)
-        // Names MUST match ControlButtons.mqh: BTN_START_V3 and BTN_CLOSEALL_V3
-        DashButton("SUGAMARA_BTN_START", x, y, btnStartWidth, btnHeight, "START", C'0,150,80');
-        DashButton("SUGAMARA_BTN_CLOSEALL", x + btnStartWidth + spacing, y, btnCloseWidth, btnHeight, "CLOSE", C'180,30,30');
-        y += btnHeight + 8;
+    // v4.3: 2 Main Buttons: START | CLOSE (LIMIT/STOP removed - not needed for neutral grid)
+    // Names MUST match ControlButtons.mqh: BTN_START_V3 and BTN_CLOSEALL_V3
+    DashButton("SUGAMARA_BTN_START", x, y, btnStartWidth, btnHeight, "START", C'0,150,80');
+    DashButton("SUGAMARA_BTN_CLOSEALL", x + btnStartWidth + spacing, y, btnCloseWidth, btnHeight, "CLOSE", C'180,30,30');
+    y += btnHeight + 8;
 
-        // Entry Mode Status
-        DashLabel("BTN_MODE_STATUS", x, y, "Mode: READY", CLR_CYAN, 9, "Arial Bold");
-    }
-    else {
-        // Legacy v2.0 Buttons
-        // BUY Label
-        DashLabel("LBL_BUY", x + panelWidth/2 - 25, y, "BUY (Grid A)", clrLimeGreen, 9, "Arial Bold");
-        y += 18;
-
-        // BUY Buttons (3 in a row)
-        DashButton("BTN_BUY_MARKET", x, y, 95, 30, "MARKET", clrLimeGreen);
-        DashButton("BTN_BUY_LIMIT", x + 100, y, 95, 30, "LIMIT", clrDodgerBlue);
-        DashButton("BTN_BUY_STOP", x + 200, y, 95, 30, "STOP", clrGold);
-        y += 38;
-
-        // SELL Label
-        DashLabel("LBL_SELL", x + panelWidth/2 - 25, y, "SELL (Grid B)", clrRed, 9, "Arial Bold");
-        y += 18;
-
-        // SELL Buttons (3 in a row)
-        DashButton("BTN_SELL_MARKET", x, y, 95, 30, "MARKET", clrRed);
-        DashButton("BTN_SELL_LIMIT", x + 100, y, 95, 30, "LIMIT", clrOrangeRed);
-        DashButton("BTN_SELL_STOP", x + 200, y, 95, 30, "STOP", clrDarkOrange);
-        y += 40;
-
-        // CLOSE ALL Button (full width)
-        DashButton("BTN_CLOSE_ALL", x, y, 290, 34, "CLOSE ALL POSITIONS", C'180,0,0');
-    }
+    // Entry Mode Status
+    DashLabel("BTN_MODE_STATUS", x, y, "Mode: READY", CLR_CYAN, 9, "Arial Bold");
 
     ChartRedraw(0);
 }
