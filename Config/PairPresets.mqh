@@ -21,12 +21,10 @@ double activePair_MinBrokerDistance = 0;    // Distanza minima broker (pips)
 // Recommended Settings
 double activePair_RecommendedSpacing = 0;   // Spacing consigliato (pips)
 int    activePair_RecommendedLevels = 0;    // Livelli consigliati per lato
-double activePair_RecommendedBaseLot = 0;   // Lot base consigliato
-double activePair_MinCapital = 0;           // Capitale minimo consigliato ($)
+double activePair_RecommendedBaseLot = 0;   // Lot base (sempre 0.01)
 
 // Performance Targets
 double activePair_TargetROI = 0;            // ROI mensile target (%)
-double activePair_TargetWinRate = 0;        // Win rate target (%)
 double activePair_MaxDrawdown = 0;          // Max drawdown atteso (%)
 
 // Trading Sessions
@@ -55,12 +53,10 @@ void ApplyPairPresets() {
             // Recommended Settings
             activePair_RecommendedSpacing = EURUSD_DefaultSpacing;
             activePair_RecommendedLevels = 5;
-            activePair_RecommendedBaseLot = 0.02;
-            activePair_MinCapital = 3000.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
             activePair_TargetROI = 12.0;
-            activePair_TargetWinRate = 80.0;
             activePair_MaxDrawdown = 10.0;
 
             // Sessions
@@ -82,12 +78,10 @@ void ApplyPairPresets() {
             // Recommended Settings
             activePair_RecommendedSpacing = USDCAD_DefaultSpacing;
             activePair_RecommendedLevels = 5;
-            activePair_RecommendedBaseLot = 0.02;
-            activePair_MinCapital = 2800.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
             activePair_TargetROI = 10.0;
-            activePair_TargetWinRate = 78.0;
             activePair_MaxDrawdown = 10.0;
 
             // Sessions
@@ -109,18 +103,16 @@ void ApplyPairPresets() {
             // Recommended Settings
             activePair_RecommendedSpacing = 16.0;
             activePair_RecommendedLevels = 5;
-            activePair_RecommendedBaseLot = 0.015;
-            activePair_MinCapital = 2500.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
             activePair_TargetROI = 10.0;
-            activePair_TargetWinRate = 85.0;       // Highest win rate!
             activePair_MaxDrawdown = 8.0;
 
             // Sessions
             activePair_BestSessions = "Asia (22:00-08:00 GMT), Sydney overlap";
 
-            Print("PRESET LOADED: AUD/NZD - High Win Rate Configuration (BEST FOR NEUTRAL)");
+            Print("PRESET LOADED: AUD/NZD - BEST FOR NEUTRAL");
             break;
 
         //==============================================================
@@ -136,18 +128,16 @@ void ApplyPairPresets() {
             // Recommended Settings
             activePair_RecommendedSpacing = 15.0;
             activePair_RecommendedLevels = 5;
-            activePair_RecommendedBaseLot = 0.02;
-            activePair_MinCapital = 2500.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
             activePair_TargetROI = 8.0;
-            activePair_TargetWinRate = 85.0;
             activePair_MaxDrawdown = 6.0;
 
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT)";
 
-            Print("PRESET LOADED: EUR/CHF - Ultra-Low Volatility Configuration");
+            Print("PRESET LOADED: EUR/CHF - Ultra-Low Volatility");
             break;
 
         //==============================================================
@@ -163,18 +153,16 @@ void ApplyPairPresets() {
             // Recommended Settings
             activePair_RecommendedSpacing = 18.0;
             activePair_RecommendedLevels = 5;
-            activePair_RecommendedBaseLot = 0.02;
-            activePair_MinCapital = 3000.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
             activePair_TargetROI = 10.0;
-            activePair_TargetWinRate = 78.0;
             activePair_MaxDrawdown = 10.0;
 
             // Sessions
             activePair_BestSessions = "Asia-London overlap, NY session";
 
-            Print("PRESET LOADED: AUD/CAD - Commodity Pair Configuration");
+            Print("PRESET LOADED: AUD/CAD - Commodity Pair");
             break;
 
         //==============================================================
@@ -190,18 +178,16 @@ void ApplyPairPresets() {
             // Recommended Settings
             activePair_RecommendedSpacing = 18.0;
             activePair_RecommendedLevels = 5;
-            activePair_RecommendedBaseLot = 0.015;
-            activePair_MinCapital = 2800.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
             activePair_TargetROI = 9.0;
-            activePair_TargetWinRate = 80.0;
             activePair_MaxDrawdown = 9.0;
 
             // Sessions
             activePair_BestSessions = "Asia session, early London";
 
-            Print("PRESET LOADED: NZD/CAD - Secondary Range Pair Configuration");
+            Print("PRESET LOADED: NZD/CAD - Secondary Range Pair");
             break;
 
         //==============================================================
@@ -217,18 +203,16 @@ void ApplyPairPresets() {
             // Recommended Settings
             activePair_RecommendedSpacing = 15.0;
             activePair_RecommendedLevels = 5;
-            activePair_RecommendedBaseLot = 0.02;
-            activePair_MinCapital = 2500.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
             activePair_TargetROI = 10.0;
-            activePair_TargetWinRate = 85.0;       // Excellent for mean reversion
             activePair_MaxDrawdown = 7.0;
 
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT)";
 
-            Print("PRESET LOADED: EUR/GBP - Excellent Mean Reverting Configuration");
+            Print("PRESET LOADED: EUR/GBP - Excellent Mean Reverting");
             break;
 
         //==============================================================
@@ -244,18 +228,16 @@ void ApplyPairPresets() {
             // Recommended Settings
             activePair_RecommendedSpacing = 22.0;      // Wider spacing for higher volatility
             activePair_RecommendedLevels = 5;
-            activePair_RecommendedBaseLot = 0.015;
-            activePair_MinCapital = 4000.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
             activePair_TargetROI = 12.0;
-            activePair_TargetWinRate = 75.0;
             activePair_MaxDrawdown = 12.0;
 
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT), London-NY Overlap";
 
-            Print("PRESET LOADED: GBP/USD - Mean Reverting Configuration");
+            Print("PRESET LOADED: GBP/USD - Mean Reverting");
             break;
 
         //==============================================================
@@ -271,18 +253,42 @@ void ApplyPairPresets() {
             // Recommended Settings
             activePair_RecommendedSpacing = 16.0;
             activePair_RecommendedLevels = 5;
-            activePair_RecommendedBaseLot = 0.02;
-            activePair_MinCapital = 3000.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Performance Targets
             activePair_TargetROI = 10.0;
-            activePair_TargetWinRate = 80.0;
             activePair_MaxDrawdown = 8.0;
 
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT), NY session";
 
-            Print("PRESET LOADED: USD/CHF - Safe Haven Configuration");
+            Print("PRESET LOADED: USD/CHF - Safe Haven");
+            break;
+
+        //==============================================================
+        // USD/JPY - Test Breakout (High Volatility Sessions)
+        //==============================================================
+        case PAIR_USDJPY:
+            // Characteristics - Optimized for BREAKOUT testing
+            activePair_Spread = 1.0;
+            activePair_DailyRange = 95.0;          // Wide range, good for breakouts
+            activePair_ATR_Typical = 28.0;         // Higher volatility
+            activePair_MinBrokerDistance = 10.0;
+
+            // Recommended Settings - Wider spacing for breakout moves
+            activePair_RecommendedSpacing = 20.0;  // Wider for momentum
+            activePair_RecommendedLevels = 5;
+            activePair_RecommendedBaseLot = 0.01;
+
+            // Performance Targets - Breakout focused
+            activePair_TargetROI = 15.0;           // Higher potential
+            activePair_MaxDrawdown = 15.0;         // Higher DD expected
+
+            // Sessions - Tokyo open and London-NY overlap best for breakouts
+            activePair_BestSessions = "Tokyo (00:00-08:00 GMT), London-NY Overlap (13:00-17:00 GMT)";
+
+            Print("PRESET LOADED: USD/JPY - Test Breakout Configuration");
+            Print("   NOTE: Optimized for candle breakout testing!");
             break;
 
         //==============================================================
@@ -298,12 +304,10 @@ void ApplyPairPresets() {
             // Use input parameters directly
             activePair_RecommendedSpacing = Custom_DefaultSpacing;
             activePair_RecommendedLevels = GridLevelsPerSide;
-            activePair_RecommendedBaseLot = BaseLot;
-            activePair_MinCapital = 3000.0;
+            activePair_RecommendedBaseLot = 0.01;
 
             // Generic targets
             activePair_TargetROI = 10.0;
-            activePair_TargetWinRate = 75.0;
             activePair_MaxDrawdown = 12.0;
 
             activePair_BestSessions = "Verify manually for your pair";
@@ -322,9 +326,8 @@ void ApplyPairPresets() {
     Print("  ATR Typical: ", activePair_ATR_Typical, " pips");
     Print("  Recommended Spacing: ", activePair_RecommendedSpacing, " pips");
     Print("  Recommended Levels: ", activePair_RecommendedLevels, " per side");
-    Print("  Min Capital: $", activePair_MinCapital);
+    Print("  Base Lot: ", activePair_RecommendedBaseLot, " (standard 0.01)");
     Print("  Target ROI: ", activePair_TargetROI, "% monthly");
-    Print("  Target Win Rate: ", activePair_TargetWinRate, "%");
     Print("  Max Drawdown: ", activePair_MaxDrawdown, "%");
     Print("  Best Sessions: ", activePair_BestSessions);
     Print("═══════════════════════════════════════════════════════════════════");
@@ -365,6 +368,9 @@ bool ValidatePairSymbolMatch() {
             break;
         case PAIR_USDCHF:
             expectedSymbol = "USDCHF";
+            break;
+        case PAIR_USDJPY:
+            expectedSymbol = "USDJPY";
             break;
         case PAIR_CUSTOM:
             // Custom pair - no validation
@@ -412,6 +418,7 @@ string GetPairDisplayName(ENUM_FOREX_PAIR pair) {
         case PAIR_EURGBP: return "EUR/GBP";
         case PAIR_GBPUSD: return "GBP/USD";
         case PAIR_USDCHF: return "USD/CHF";
+        case PAIR_USDJPY: return "USD/JPY";
         case PAIR_CUSTOM: return "CUSTOM";
         default: return "UNKNOWN";
     }
@@ -431,6 +438,7 @@ string GetPairRiskLevel(ENUM_FOREX_PAIR pair) {
         case PAIR_EURGBP: return "LOW";      // Excellent for mean reversion
         case PAIR_GBPUSD: return "MEDIUM-HIGH";  // Higher volatility
         case PAIR_USDCHF: return "LOW-MEDIUM";   // Safe haven
+        case PAIR_USDJPY: return "MEDIUM-HIGH"; // Breakout volatility
         case PAIR_CUSTOM: return "VARIABLE";
         default: return "UNKNOWN";
     }
@@ -459,6 +467,8 @@ string GetPairRecommendation(ENUM_FOREX_PAIR pair) {
             return "Good for mean reversion. Higher volatility - use wider spacing.";
         case PAIR_USDCHF:
             return "Good for RANGEBOX. Safe haven - stable, beware risk-off events.";
+        case PAIR_USDJPY:
+            return "TEST BREAKOUT pair. High volatility - ideal for candle breakout tests.";
         case PAIR_CUSTOM:
             return "Verify all parameters manually before live trading.";
         default:

@@ -70,6 +70,11 @@
 #include "Trading/PartialTPManager.mqh"
 #include "Trading/GridTrailingManager.mqh"
 
+// v4.0 NEW Modules
+#include "Utils/DynamicATRAdapter.mqh"
+#include "Indicators/CenterCalculator.mqh"
+#include "Trading/GridRecenterManager.mqh"
+
 // UI Module
 #include "UI/Dashboard.mqh"
 
@@ -241,6 +246,27 @@ int OnInit() {
         Print("WARNING: Failed to initialize Manual S/R");
     }
 
+    //--- STEP 13.11: Initialize Dynamic ATR Adapter (v4.0) ---
+    if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
+        if(!InitializeDynamicATRAdapter()) {
+            Print("WARNING: Failed to initialize Dynamic ATR Adapter");
+        }
+    }
+
+    //--- STEP 13.12: Initialize Center Calculator (v4.0) ---
+    if(EnableAutoRecenter || ShowCenterIndicators) {
+        if(!InitializeCenterCalculator()) {
+            Print("WARNING: Failed to initialize Center Calculator");
+        }
+    }
+
+    //--- STEP 13.13: Initialize Recenter Manager (v4.0) ---
+    if(EnableAutoRecenter) {
+        if(!InitializeRecenterManager()) {
+            Print("WARNING: Failed to initialize Recenter Manager");
+        }
+    }
+
     //--- STEP 14: Initialize Grid A ---
     if(!InitializeGridA()) {
         Print("CRITICAL: Failed to initialize Grid A");
@@ -282,16 +308,27 @@ int OnInit() {
     }
 
     //--- STEP 18: Place Initial Orders ---
-    Print("");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  PLACING INITIAL GRID ORDERS");
-    Print("═══════════════════════════════════════════════════════════════════");
+    // v4.3: If Control Buttons enabled, wait for START button click
+    if(Enable_AdvancedButtons) {
+        Print("");
+        Print("═══════════════════════════════════════════════════════════════════");
+        Print("  GRID ORDERS ON STANDBY - WAITING FOR START BUTTON");
+        Print("═══════════════════════════════════════════════════════════════════");
+        Print("  Click START button to place grid orders");
+        systemState = STATE_IDLE;
+    } else {
+        Print("");
+        Print("═══════════════════════════════════════════════════════════════════");
+        Print("  PLACING INITIAL GRID ORDERS");
+        Print("═══════════════════════════════════════════════════════════════════");
 
-    bool gridAPlaced = PlaceAllGridAOrders();
-    bool gridBPlaced = PlaceAllGridBOrders();
+        bool gridAPlaced = PlaceAllGridAOrders();
+        bool gridBPlaced = PlaceAllGridBOrders();
 
-    if(!gridAPlaced || !gridBPlaced) {
-        Print("WARNING: Some orders failed to place - system will retry");
+        if(!gridAPlaced || !gridBPlaced) {
+            Print("WARNING: Some orders failed to place - system will retry");
+        }
+        systemState = STATE_ACTIVE;
     }
 
     //--- STEP 19: Draw Grid Visualization ---
@@ -302,13 +339,13 @@ int OnInit() {
     LogATRReport();
 
     //--- INITIALIZATION COMPLETE ---
-    systemState = STATE_ACTIVE;
+    // systemState already set above based on Enable_AdvancedButtons
 
     Print("");
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA v3.0 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA v4.3 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName());
-    Print("  System State: ACTIVE");
+    Print("  System State: ", Enable_AdvancedButtons ? "IDLE (Click START)" : "ACTIVE");
     Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions());
     Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions());
     if(IsRangeBoxAvailable()) {
@@ -327,7 +364,46 @@ int OnInit() {
     Print("  ✅ ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
     Print("  ✅ Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
     Print("  ✅ Control Buttons: ", Enable_AdvancedButtons ? "ENABLED" : "DISABLED");
+    Print("───────────────────────────────────────────────────────────────────");
+    Print("  v4.0 FEATURES:");
+    Print("  ✅ Dynamic ATR Spacing: ", (EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) ? "ENABLED" : "DISABLED");
+    if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
+        Print("     ATR Step: ", GetATRStepName(currentATRStep));
+        Print("     Current Spacing: ", DoubleToString(GetDynamicSpacing(), 1), " pips");
+    }
+    Print("  ✅ Center Indicators: ", ShowCenterIndicators ? "ENABLED" : "DISABLED");
+    Print("  ✅ Auto-Recenter: ", EnableAutoRecenter ? "ENABLED" : "DISABLED");
+    Print("  ✅ ATR Extreme Warning: ", ATR_EnableExtremeWarning ? "ENABLED" : "DISABLED");
+    Print("  ✅ ATR Alert on Spacing: ", ATR_AlertOnSpacingChange ? "ENABLED" : "DISABLED");
     Print("═══════════════════════════════════════════════════════════════════");
+
+    //--- v4.1: Setup Timer with dynamic interval (uses user parameter) ---
+    int timerInterval = MathMax(ATR_CheckInterval_Seconds, 60);
+    EventSetTimer(timerInterval);
+    Print("[TIMER] Set to ", timerInterval, " seconds (ATR_CheckInterval_Seconds = ", ATR_CheckInterval_Seconds, ")");
+
+    //--- v4.2: Log ATR Dynamic Spacing Configuration ---
+    if(EnableDynamicATRSpacing && ATR_DetailedLogging && NeutralMode != NEUTRAL_PURE) {
+        Print("");
+        Print("╔══════════════════════════════════════════════════════════════╗");
+        Print("║          ATR DYNAMIC SPACING INITIALIZED v4.2                ║");
+        Print("╠══════════════════════════════════════════════════════════════╣");
+        Print("║  Check Interval: ", ATR_CheckInterval_Seconds, " seconds");
+        Print("║  Min Time Between Changes: ", ATR_MinTimeBetweenChanges, " seconds");
+        Print("║  Step Change Threshold: ", DoubleToString(ATR_StepChangeThreshold, 1), "%");
+        Print("║  Timeframe: ", EnumToString(ATR_Timeframe));
+        Print("║  Detailed Logging: ", ATR_DetailedLogging ? "ON" : "OFF");
+        Print("║  Alert on Change: ", ATR_AlertOnSpacingChange ? "ON" : "OFF");
+        Print("╠══════════════════════════════════════════════════════════════╣");
+        Print("║  SOGLIE ATR (pips):");
+        Print("║    VERY_LOW: < ", DoubleToString(ATR_Threshold_VeryLow, 1), " -> ", DoubleToString(Spacing_VeryLow_Pips, 1), " pips spacing");
+        Print("║    LOW: < ", DoubleToString(ATR_Threshold_Low, 1), " -> ", DoubleToString(Spacing_Low_Pips, 1), " pips spacing");
+        Print("║    NORMAL: < ", DoubleToString(ATR_Threshold_Normal, 1), " -> ", DoubleToString(Spacing_Normal_Pips, 1), " pips spacing");
+        Print("║    HIGH: < ", DoubleToString(ATR_Threshold_High, 1), " -> ", DoubleToString(Spacing_High_Pips, 1), " pips spacing");
+        Print("║    EXTREME: >= ", DoubleToString(ATR_Threshold_High, 1), " -> ", DoubleToString(Spacing_Extreme_Pips, 1), " pips spacing");
+        Print("╚══════════════════════════════════════════════════════════════╝");
+        Print("");
+    }
 
     if(EnableAlerts) {
         Alert("SUGAMARA: System initialized and ACTIVE");
@@ -384,6 +460,14 @@ void OnDeinit(const int reason) {
     DeinitializeTrailingManager();
     DeinitializeManualSR();
 
+    // v4.0: Deinitialize new modules
+    if(ShowCenterIndicators || EnableAutoRecenter) {
+        DeinitializeCenterCalculator();
+    }
+
+    // v4.0: Kill timer
+    EventKillTimer();
+
     // v3.0: Smart UI cleanup - Don't remove UI on recompile/terminal close
     // The UI will be automatically recreated on next initialization
     if(shouldCleanUI) {
@@ -435,6 +519,34 @@ void OnTick() {
         // Risk check failed - don't process further
         UpdateDashboard();
         return;
+    }
+
+    //--- v4.1: ATR EXTREME WARNING (fast check every 10 seconds) ---
+    if(ATR_EnableExtremeWarning) {
+        datetime now = TimeCurrent();
+        if(now - g_lastExtremeCheck >= ATR_ExtremeCheck_Seconds) {
+            g_lastExtremeCheck = now;
+
+            double atrNow = GetATRPipsUnified(0);  // Cache only - fast
+            if(atrNow >= ATR_ExtremeThreshold_Pips) {
+                if(!g_extremePauseActive) {
+                    g_extremePauseActive = true;
+                    Print("WARNING: ATR EXTREME: ", DoubleToString(atrNow, 1), " pips (threshold: ",
+                          DoubleToString(ATR_ExtremeThreshold_Pips, 1), ")");
+                    if(ATR_PauseOnExtreme) {
+                        Print("   New orders PAUSED due to extreme volatility");
+                    }
+                    if(ATR_AlertOnSpacingChange) {
+                        Alert("SUGAMARA [", _Symbol, "] ATR EXTREME: ", DoubleToString(atrNow, 1), " pips!");
+                    }
+                }
+            } else {
+                if(g_extremePauseActive) {
+                    g_extremePauseActive = false;
+                    Print("INFO: ATR returned to normal: ", DoubleToString(atrNow, 1), " pips");
+                }
+            }
+        }
     }
 
     //--- UPDATE POSITION STATUSES ---
@@ -522,13 +634,36 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
 }
 
 //+------------------------------------------------------------------+
-//| Timer function (if enabled)                                       |
+//| Timer function (v4.0 enhanced)                                    |
 //+------------------------------------------------------------------+
 void OnTimer() {
-    // Can be used for periodic tasks like:
-    // - ATR recalculation
-    // - Dashboard updates
-    // - Risk checks
+    // Skip if system not active
+    if(systemState != STATE_ACTIVE) return;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.0: ATR Dynamic Spacing Check
+    // ═══════════════════════════════════════════════════════════════════
+    if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
+        CheckAndAdaptATRSpacing();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.0: Center Indicators Update (every 5 minutes)
+    // ═══════════════════════════════════════════════════════════════════
+    static datetime lastCenterUpdate = 0;
+    if(TimeCurrent() - lastCenterUpdate >= 300) {
+        if(ShowCenterIndicators || EnableAutoRecenter) {
+            UpdateCenterIndicators();
+        }
+        lastCenterUpdate = TimeCurrent();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.0: Auto-Recenter Check (every 5 minutes)
+    // ═══════════════════════════════════════════════════════════════════
+    if(EnableAutoRecenter) {
+        CheckAndRecenterGrid();
+    }
 }
 
 //+------------------------------------------------------------------+
@@ -571,6 +706,22 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
             Print("WARNING: Dashboard object deleted externally - scheduling recreation");
             g_dashboardInitialized = false;  // Force recreation on next tick
         }
+        // v4.0: Handle center indicators deleted externally
+        if(StringFind(sparam, "CENTER_") >= 0 && ShowCenterIndicators) {
+            DrawCenterIndicators();  // Redraw
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Handle v4.0 Recenter Button Click                                 |
+//+------------------------------------------------------------------+
+void HandleRecenterButtonClick(string objectName) {
+    if(objectName == "BTN_CONFIRM_RECENTER" || objectName == "SUGAMARA_BTN_CONFIRM_RECENTER") {
+        ConfirmPendingRecenter();
+    }
+    if(objectName == "BTN_CANCEL_RECENTER" || objectName == "SUGAMARA_BTN_CANCEL_RECENTER") {
+        CancelPendingRecenter();
     }
 }
 
@@ -578,6 +729,12 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
 //| Handle Object Click                                               |
 //+------------------------------------------------------------------+
 void HandleObjectClick(string objectName) {
+    // v4.0: Handle recenter buttons
+    if(StringFind(objectName, "RECENTER") >= 0) {
+        HandleRecenterButtonClick(objectName);
+        return;
+    }
+
     // v3.0: Handle new control buttons
     if(StringFind(objectName, "BTN_V3_") == 0 || StringFind(objectName, "SUGAMARA_BTN_") == 0) {
         HandleControlButtonClick(objectName);
@@ -636,6 +793,122 @@ void HandleKeyPress(int key) {
     if(key == 'N' || key == 'n') {
         SetNewsPause(!isNewsPause);
     }
+
+    // V = v4.0 Full Status Report
+    if(key == 'V' || key == 'v') {
+        LogV4StatusReport();
+    }
+
+    // D = Dynamic ATR Report
+    if(key == 'D' || key == 'd') {
+        if(IsATRDynamicAvailable()) {
+            LogATRDynamicReport();
+        } else {
+            Print("Dynamic ATR Spacing not available (PURE mode or disabled)");
+        }
+    }
+
+    // C = Center Indicators Report
+    if(key == 'C' || key == 'c') {
+        if(ShowCenterIndicators || EnableAutoRecenter) {
+            LogCenterIndicatorsReport();
+        } else {
+            Print("Center Indicators not available (disabled)");
+        }
+    }
+
+    // E = Recenter Status Report
+    if(key == 'E' || key == 'e') {
+        if(EnableAutoRecenter) {
+            LogRecenterReport();
+        } else {
+            Print("Auto-Recenter not available (disabled)");
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| LOG v4.0 COMPLETE STATUS REPORT                                   |
+//| Master report combining all v4.0 modules                          |
+//+------------------------------------------------------------------+
+void LogV4StatusReport() {
+    Print("");
+    Print("╔═══════════════════════════════════════════════════════════════════╗");
+    Print("║       SUGAMARA v4.0 - COMPLETE STATUS REPORT                      ║");
+    Print("║       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                      ║");
+    Print("╚═══════════════════════════════════════════════════════════════════╝");
+    Print("");
+
+    // System Overview
+    Print("┌─────────────────────────────────────────────────────────────────┐");
+    Print("│  SYSTEM OVERVIEW                                                │");
+    Print("├─────────────────────────────────────────────────────────────────┤");
+    Print("│  Mode: ", EnumToString(NeutralMode));
+    Print("│  State: ", EnumToString(systemState));
+    Print("│  Entry Point: ", DoubleToString(entryPoint, symbolDigits));
+    Print("│  Current Price: ", DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), symbolDigits));
+    Print("│  Current Spacing: ", DoubleToString(GetDynamicSpacing(), 1), " pips");
+    Print("└─────────────────────────────────────────────────────────────────┘");
+    Print("");
+
+    // v4.0 Modules Status
+    Print("┌─────────────────────────────────────────────────────────────────┐");
+    Print("│  v4.0 MODULES STATUS                                            │");
+    Print("├─────────────────────────────────────────────────────────────────┤");
+
+    // ATR Dynamic Spacing
+    if(NeutralMode == NEUTRAL_PURE) {
+        Print("│  🔄 ATR Dynamic Spacing: N/A (PURE mode - fixed spacing)");
+    } else if(EnableDynamicATRSpacing) {
+        Print("│  🔄 ATR Dynamic Spacing: ACTIVE");
+        Print("│      Step: ", GetATRStepName(currentATRStep),
+              " | ATR: ", DoubleToString(GetATRInPips(), 1), " pips");
+        Print("│      Spacing: ", DoubleToString(GetDynamicSpacing(), 1), " pips");
+    } else {
+        Print("│  🔄 ATR Dynamic Spacing: DISABLED");
+    }
+
+    // Center Indicators
+    if(ShowCenterIndicators || EnableAutoRecenter) {
+        Print("│  🎯 Center Indicators: ACTIVE");
+        if(g_centerCalc.isValid) {
+            Print("│      Optimal Center: ", DoubleToString(g_centerCalc.optimalCenter, symbolDigits));
+            Print("│      Confidence: ", DoubleToString(g_centerCalc.confidence, 1), "%");
+        } else {
+            Print("│      Status: Calculating...");
+        }
+    } else {
+        Print("│  🎯 Center Indicators: DISABLED");
+    }
+
+    // Auto-Recenter
+    if(EnableAutoRecenter) {
+        Print("│  🔁 Auto-Recenter: ACTIVE");
+        Print("│      Session Recenters: ", g_recenterCount);
+        if(g_recenterPending) {
+            Print("│      Status: ⚠️ PENDING USER CONFIRMATION");
+        } else {
+            string reason;
+            bool canRecenter = CheckRecenterConditions(reason);
+            Print("│      Status: ", canRecenter ? "✅ Ready" : ("❌ " + reason));
+        }
+    } else {
+        Print("│  🔁 Auto-Recenter: DISABLED");
+    }
+
+    Print("└─────────────────────────────────────────────────────────────────┘");
+    Print("");
+
+    // Hotkeys reminder
+    Print("┌─────────────────────────────────────────────────────────────────┐");
+    Print("│  v4.0 HOTKEYS                                                   │");
+    Print("├─────────────────────────────────────────────────────────────────┤");
+    Print("│  V = This report (v4.0 Full Status)                             │");
+    Print("│  D = Dynamic ATR Spacing detailed report                        │");
+    Print("│  C = Center Indicators detailed report                          │");
+    Print("│  E = Auto-Recenter detailed report                              │");
+    Print("└─────────────────────────────────────────────────────────────────┘");
+    Print("");
 }
 
 //+------------------------------------------------------------------+

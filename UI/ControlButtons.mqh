@@ -1,12 +1,10 @@
 //+------------------------------------------------------------------+
 //|                                             ControlButtons.mqh   |
-//|                        Sugamara v3.0 - Control Buttons           |
+//|                        Sugamara v4.3 - Control Buttons           |
 //|                                                                  |
-//|  4 Bottoni Principali:                                           |
-//|  - MARKET: Partenza immediata @ prezzo corrente                  |
-//|  - LIMIT: Aspetta che prezzo torni a livello attivazione         |
-//|  - STOP: Aspetta breakout di un livello                          |
-//|  - CLOSE ALL: Chiude tutto e resetta                             |
+//|  2 Bottoni Principali (Semplificato per Grid Neutrale):          |
+//|  - START: Partenza immediata @ prezzo corrente                   |
+//|  - CLOSE: Chiude tutto e resetta                                 |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
@@ -14,21 +12,16 @@
 //+------------------------------------------------------------------+
 //| BUTTON CONSTANTS                                                 |
 //+------------------------------------------------------------------+
-#define BTN_MARKET_V3     "SUGAMARA_BTN_MARKET"
-#define BTN_LIMIT_V3      "SUGAMARA_BTN_LIMIT"
-#define BTN_STOP_V3       "SUGAMARA_BTN_STOP"
+#define BTN_START_V3      "SUGAMARA_BTN_START"
 #define BTN_CLOSEALL_V3   "SUGAMARA_BTN_CLOSEALL"
 #define BTN_STATUS_V3     "SUGAMARA_BTN_STATUS"
 
 //+------------------------------------------------------------------+
 //| BUTTON COLORS                                                    |
 //+------------------------------------------------------------------+
-#define CLR_BTN_MARKET    C'0,150,80'       // Verde scuro
-#define CLR_BTN_LIMIT     C'30,120,200'     // Blu
-#define CLR_BTN_STOP      C'200,150,0'      // Oro
+#define CLR_BTN_START     C'0,150,80'       // Verde scuro
 #define CLR_BTN_CLOSE     C'180,30,30'      // Rosso scuro
 #define CLR_BTN_ACTIVE    C'0,200,100'      // Verde brillante
-#define CLR_BTN_WAITING   C'200,180,50'     // Giallo attesa
 
 //+------------------------------------------------------------------+
 //| GLOBAL VARIABLES                                                 |
@@ -49,36 +42,31 @@ bool InitializeControlButtons(int startX, int startY, int panelWidth) {
     }
 
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  INITIALIZING CONTROL BUTTONS v3.0");
+    Print("  INITIALIZING CONTROL BUTTONS v4.3 (Simplified)");
     Print("═══════════════════════════════════════════════════════════════════");
 
     int x = startX + 10;
     int y = startY + 10;
-    int btnWidth = 70;
+    int btnStartWidth = 140;   // START largo
+    int btnCloseWidth = 120;   // CLOSE largo
     int btnHeight = 35;
-    int spacing = 5;
+    int spacing = 10;
 
     // Status Label
-    CreateButtonLabel(BTN_STATUS_V3, x, y, panelWidth - 20, "READY - Select Entry Mode", Theme_DashboardText);
+    CreateButtonLabel(BTN_STATUS_V3, x, y, panelWidth - 20, "READY - Click START", Theme_DashboardText);
     y += 25;
 
-    // MARKET Button
-    CreateControlButton(BTN_MARKET_V3, x, y, btnWidth, btnHeight, "MARKET", CLR_BTN_MARKET);
+    // START Button (verde)
+    CreateControlButton(BTN_START_V3, x, y, btnStartWidth, btnHeight, "START", CLR_BTN_START);
 
-    // LIMIT Button
-    CreateControlButton(BTN_LIMIT_V3, x + btnWidth + spacing, y, btnWidth, btnHeight, "LIMIT", CLR_BTN_LIMIT);
-
-    // STOP Button
-    CreateControlButton(BTN_STOP_V3, x + (btnWidth + spacing) * 2, y, btnWidth, btnHeight, "STOP", CLR_BTN_STOP);
-
-    // CLOSE ALL Button
-    CreateControlButton(BTN_CLOSEALL_V3, x + (btnWidth + spacing) * 3, y, btnWidth + 15, btnHeight, "CLOSE", CLR_BTN_CLOSE);
+    // CLOSE Button (rosso)
+    CreateControlButton(BTN_CLOSEALL_V3, x + btnStartWidth + spacing, y, btnCloseWidth, btnHeight, "CLOSE", CLR_BTN_CLOSE);
 
     // Set default mode
-    currentEntryMode = DefaultEntryMode;
+    currentEntryMode = ENTRY_MARKET;
     buttonState = BTN_STATE_IDLE;
 
-    Print("  Default Entry Mode: ", GetEntryModeName(currentEntryMode));
+    Print("  Layout: START (", btnStartWidth, "px) | CLOSE (", btnCloseWidth, "px)");
     Print("═══════════════════════════════════════════════════════════════════");
 
     ChartRedraw(0);
@@ -141,11 +129,11 @@ void HandleControlButtonClick(string objectName) {
     ObjectSetInteger(0, objectName, OBJPROP_STATE, false);
 
     //══════════════════════════════════════════════════════════════
-    // MARKET Button
+    // START Button
     //══════════════════════════════════════════════════════════════
-    if(objectName == BTN_MARKET_V3) {
+    if(objectName == BTN_START_V3) {
         Print("═══════════════════════════════════════════════════════════════════");
-        Print("  MARKET MODE SELECTED - Starting Immediately");
+        Print("  START BUTTON CLICKED - Starting Grid Immediately");
         Print("═══════════════════════════════════════════════════════════════════");
 
         currentEntryMode = ENTRY_MARKET;
@@ -153,75 +141,11 @@ void HandleControlButtonClick(string objectName) {
         waitingForActivation = false;
 
         // Highlight active button
-        HighlightActiveButton(BTN_MARKET_V3);
-        UpdateStatusLabel("MARKET MODE - Starting Grid...");
+        HighlightActiveButton(BTN_START_V3);
+        UpdateStatusLabel("STARTING GRID...");
 
         // Start grid immediately
         StartGridSystem();
-
-        return;
-    }
-
-    //══════════════════════════════════════════════════════════════
-    // LIMIT Button
-    //══════════════════════════════════════════════════════════════
-    if(objectName == BTN_LIMIT_V3) {
-        Print("═══════════════════════════════════════════════════════════════════");
-        Print("  LIMIT MODE SELECTED - Waiting for Price Return");
-        Print("═══════════════════════════════════════════════════════════════════");
-
-        currentEntryMode = ENTRY_LIMIT;
-        buttonState = BTN_STATE_WAITING;
-        waitingForActivation = true;
-        waitStartTime = TimeCurrent();
-
-        // Highlight waiting button
-        HighlightActiveButton(BTN_LIMIT_V3);
-
-        double activationPrice = (Enable_ManualSR) ? GetManualActivation() :
-                                 (LimitActivation_Price > 0) ? LimitActivation_Price :
-                                 SymbolInfoDouble(_Symbol, SYMBOL_BID);
-
-        UpdateStatusLabel("LIMIT: Waiting @ " + DoubleToString(activationPrice, _Digits));
-
-        Print("  Activation Price: ", DoubleToString(activationPrice, _Digits));
-        Print("  Drag the GOLD line to set activation level");
-
-        if(EnableAlerts) {
-            Alert("SUGAMARA: LIMIT mode - Waiting for price @ ", DoubleToString(activationPrice, _Digits));
-        }
-
-        return;
-    }
-
-    //══════════════════════════════════════════════════════════════
-    // STOP Button
-    //══════════════════════════════════════════════════════════════
-    if(objectName == BTN_STOP_V3) {
-        Print("═══════════════════════════════════════════════════════════════════");
-        Print("  STOP MODE SELECTED - Waiting for Breakout");
-        Print("═══════════════════════════════════════════════════════════════════");
-
-        currentEntryMode = ENTRY_STOP;
-        buttonState = BTN_STATE_WAITING;
-        waitingForActivation = true;
-        waitStartTime = TimeCurrent();
-
-        // Highlight waiting button
-        HighlightActiveButton(BTN_STOP_V3);
-
-        double activationPrice = (Enable_ManualSR) ? GetManualActivation() :
-                                 (StopActivation_Price > 0) ? StopActivation_Price :
-                                 SymbolInfoDouble(_Symbol, SYMBOL_BID);
-
-        UpdateStatusLabel("STOP: Waiting breakout @ " + DoubleToString(activationPrice, _Digits));
-
-        Print("  Breakout Price: ", DoubleToString(activationPrice, _Digits));
-        Print("  Drag the GOLD line to set breakout level");
-
-        if(EnableAlerts) {
-            Alert("SUGAMARA: STOP mode - Waiting for breakout @ ", DoubleToString(activationPrice, _Digits));
-        }
 
         return;
     }
@@ -255,69 +179,6 @@ void HandleControlButtonClick(string objectName) {
 }
 
 //+------------------------------------------------------------------+
-//| Process Entry Mode Waiting                                       |
-//+------------------------------------------------------------------+
-void ProcessEntryModeWaiting() {
-    if(!Enable_AdvancedButtons || !waitingForActivation) return;
-
-    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-    double activationPrice = (Enable_ManualSR) ? GetManualActivation() :
-                             (currentEntryMode == ENTRY_LIMIT) ? LimitActivation_Price :
-                             StopActivation_Price;
-
-    if(activationPrice == 0) return;
-
-    bool shouldActivate = false;
-    double tolerance = 3 * symbolPoint * 10; // 3 pips tolerance
-
-    if(currentEntryMode == ENTRY_LIMIT) {
-        // LIMIT: Activate when price RETURNS to level
-        shouldActivate = (MathAbs(currentPrice - activationPrice) <= tolerance);
-    }
-    else if(currentEntryMode == ENTRY_STOP) {
-        // STOP: Activate when price BREAKS through level
-        // Determine direction based on current price vs activation
-        static double lastCheckPrice = 0;
-
-        if(lastCheckPrice == 0) lastCheckPrice = currentPrice;
-
-        // If price was below and now above = upward breakout
-        if(lastCheckPrice <= activationPrice && currentPrice > activationPrice + tolerance) {
-            shouldActivate = true;
-            Print("STOP: Upward breakout detected");
-        }
-        // If price was above and now below = downward breakout
-        else if(lastCheckPrice >= activationPrice && currentPrice < activationPrice - tolerance) {
-            shouldActivate = true;
-            Print("STOP: Downward breakout detected");
-        }
-
-        lastCheckPrice = currentPrice;
-    }
-
-    if(shouldActivate) {
-        Print("═══════════════════════════════════════════════════════════════════");
-        Print("  ACTIVATION TRIGGERED!");
-        Print("  Mode: ", GetEntryModeName(currentEntryMode));
-        Print("  Price: ", DoubleToString(currentPrice, _Digits));
-        Print("═══════════════════════════════════════════════════════════════════");
-
-        waitingForActivation = false;
-        buttonState = BTN_STATE_ACTIVE;
-
-        UpdateStatusLabel(GetEntryModeName(currentEntryMode) + " ACTIVATED!");
-
-        // Start the grid system
-        StartGridSystem();
-
-        if(EnableAlerts) {
-            Alert("SUGAMARA: ", GetEntryModeName(currentEntryMode), " mode activated @ ",
-                  DoubleToString(currentPrice, _Digits));
-        }
-    }
-}
-
-//+------------------------------------------------------------------+
 //| Start Grid System                                                |
 //+------------------------------------------------------------------+
 void StartGridSystem() {
@@ -334,7 +195,7 @@ void StartGridSystem() {
         PlaceAllGridAOrders();
         PlaceAllGridBOrders();
 
-        Print("SUCCESS: Grid system started in ", GetEntryModeName(currentEntryMode), " mode");
+        Print("SUCCESS: Grid system started");
         UpdateStatusLabel("ACTIVE - Grid Running");
     } else {
         Print("ERROR: Failed to start grid system");
@@ -347,14 +208,11 @@ void StartGridSystem() {
 //| Highlight Active Button                                          |
 //+------------------------------------------------------------------+
 void HighlightActiveButton(string activeBtn) {
-    // Reset all buttons
-    ObjectSetInteger(0, BTN_MARKET_V3, OBJPROP_BGCOLOR, CLR_BTN_MARKET);
-    ObjectSetInteger(0, BTN_LIMIT_V3, OBJPROP_BGCOLOR, CLR_BTN_LIMIT);
-    ObjectSetInteger(0, BTN_STOP_V3, OBJPROP_BGCOLOR, CLR_BTN_STOP);
+    // Reset START button
+    ObjectSetInteger(0, BTN_START_V3, OBJPROP_BGCOLOR, CLR_BTN_START);
 
-    // Highlight active/waiting
-    color highlightColor = (buttonState == BTN_STATE_WAITING) ? CLR_BTN_WAITING : CLR_BTN_ACTIVE;
-    ObjectSetInteger(0, activeBtn, OBJPROP_BGCOLOR, highlightColor);
+    // Highlight active
+    ObjectSetInteger(0, activeBtn, OBJPROP_BGCOLOR, CLR_BTN_ACTIVE);
 
     ChartRedraw(0);
 }
@@ -363,9 +221,7 @@ void HighlightActiveButton(string activeBtn) {
 //| Reset Button Highlights                                          |
 //+------------------------------------------------------------------+
 void ResetButtonHighlights() {
-    ObjectSetInteger(0, BTN_MARKET_V3, OBJPROP_BGCOLOR, CLR_BTN_MARKET);
-    ObjectSetInteger(0, BTN_LIMIT_V3, OBJPROP_BGCOLOR, CLR_BTN_LIMIT);
-    ObjectSetInteger(0, BTN_STOP_V3, OBJPROP_BGCOLOR, CLR_BTN_STOP);
+    ObjectSetInteger(0, BTN_START_V3, OBJPROP_BGCOLOR, CLR_BTN_START);
     ChartRedraw(0);
 }
 
@@ -410,16 +266,14 @@ void CancelWaiting() {
     waitingForActivation = false;
     buttonState = BTN_STATE_IDLE;
     ResetButtonHighlights();
-    UpdateStatusLabel("READY - Select Entry Mode");
+    UpdateStatusLabel("READY - Click START");
 }
 
 //+------------------------------------------------------------------+
 //| Remove Control Buttons                                           |
 //+------------------------------------------------------------------+
 void RemoveControlButtons() {
-    ObjectDelete(0, BTN_MARKET_V3);
-    ObjectDelete(0, BTN_LIMIT_V3);
-    ObjectDelete(0, BTN_STOP_V3);
+    ObjectDelete(0, BTN_START_V3);
     ObjectDelete(0, BTN_CLOSEALL_V3);
     ObjectDelete(0, BTN_STATUS_V3);
     ChartRedraw(0);
@@ -431,5 +285,17 @@ void RemoveControlButtons() {
 void DeinitializeControlButtons() {
     RemoveControlButtons();
     Print("Control Buttons: Deinitialized");
+}
+
+//+------------------------------------------------------------------+
+//| Process Entry Mode Waiting (Stub - LIMIT/STOP modes removed)     |
+//| v4.3: This function is kept for backwards compatibility          |
+//| but does nothing since LIMIT/STOP modes are no longer supported  |
+//+------------------------------------------------------------------+
+void ProcessEntryModeWaiting() {
+    // v4.3: LIMIT and STOP modes have been removed
+    // Grid Neutral only uses immediate START
+    // This function is a stub for backwards compatibility
+    return;
 }
 

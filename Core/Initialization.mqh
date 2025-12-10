@@ -76,9 +76,7 @@ void PrintSystemConfiguration() {
     // Performance Targets
     Print("\n[PERFORMANCE TARGETS]");
     Print("  Target ROI: ", activePair_TargetROI, "% monthly");
-    Print("  Target Win Rate: ", activePair_TargetWinRate, "%");
     Print("  Max Drawdown: ", activePair_MaxDrawdown, "%");
-    Print("  Min Capital: $", activePair_MinCapital);
 
     Print("\n═══════════════════════════════════════════════════════════════════");
 }

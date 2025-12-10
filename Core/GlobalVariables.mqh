@@ -51,6 +51,91 @@ datetime lastATRRecalc = 0;                 // Ultimo ricalcolo ATR
 double currentSpacing_Pips = 0;             // Spacing corrente calcolato da ATR
 
 //+------------------------------------------------------------------+
+//| 🔄 ATR DYNAMIC SPACING v4.0                                      |
+//+------------------------------------------------------------------+
+ENUM_ATR_STEP   currentATRStep = ATR_STEP_NORMAL;      // Step ATR corrente (5 livelli)
+ENUM_ATR_STEP   lastATRStep = ATR_STEP_NORMAL;         // Step ATR precedente
+double          lastATRValue_Dynamic = 0;               // Ultimo valore ATR per dynamic
+datetime        lastATRCheck_Dynamic = 0;               // Ultimo check ATR dynamic
+datetime        lastSpacingChange = 0;                  // Ultimo cambio spacing
+double          previousSpacing_Pips = 0;               // Spacing precedente
+bool            spacingChangeInProgress = false;        // Flag: cambio in corso
+
+//+------------------------------------------------------------------+
+//| 📦 ATR UNIFIED CACHE v4.1 - Single Source of Truth               |
+//+------------------------------------------------------------------+
+struct ATRCacheStruct {
+    double valuePips;                                   // Valore ATR in pips
+    ENUM_ATR_STEP step;                                 // Step corrente
+    datetime lastFullUpdate;                            // Ultimo aggiornamento completo
+    datetime lastBarTime;                               // Tempo ultima candela usata
+    bool isValid;                                       // Cache valida
+};
+ATRCacheStruct g_atrCache;
+
+//+------------------------------------------------------------------+
+//| ⚠️ ATR EXTREME WARNING v4.1                                      |
+//+------------------------------------------------------------------+
+bool            g_extremePauseActive = false;           // Flag: pausa per ATR extreme attiva
+datetime        g_lastExtremeCheck = 0;                 // Ultimo check extreme
+
+//+------------------------------------------------------------------+
+//| 📝 ATR LOGGING STATE v4.2                                        |
+//+------------------------------------------------------------------+
+int             g_atrStepChangeCount = 0;               // Contatore cambi step sessione
+int             g_spacingChangeCount = 0;               // Contatore cambi spacing sessione
+datetime        g_lastLoggedATRChange = 0;              // Ultimo log ATR
+string          g_lastATRStepName = "";                 // Nome ultimo step loggato
+
+//+------------------------------------------------------------------+
+//| 🎯 CENTER CALCULATOR v4.0                                        |
+//+------------------------------------------------------------------+
+// Pivot Point Daily
+struct PivotLevels {
+    double pivot;                           // Pivot centrale
+    double r1, r2, r3;                      // Resistenze
+    double s1, s2, s3;                      // Supporti
+    datetime calcTime;                      // Timestamp calcolo
+    bool isValid;
+};
+PivotLevels g_pivotLevels;
+
+// Donchian Channel
+struct DonchianLevels {
+    double upper;                           // Upper band (Highest High)
+    double lower;                           // Lower band (Lowest Low)
+    double center;                          // Centro (Upper + Lower) / 2
+    datetime calcTime;
+    bool isValid;
+};
+DonchianLevels g_donchianLevels;
+
+// Center Calculation Result
+struct CenterCalculation {
+    double pivotCenter;                     // Valore Pivot
+    double emaCenter;                       // Valore EMA
+    double donchianCenter;                  // Valore Donchian Center
+    double optimalCenter;                   // Centro ponderato finale
+    double confidence;                      // 0-100% (quanto i 3 indicatori sono allineati)
+    datetime calcTime;
+    bool isValid;
+};
+CenterCalculation g_centerCalc;
+
+// Center Indicator Handles
+int g_emaHandle = INVALID_HANDLE;           // Handle EMA indicator
+datetime g_lastPivotCalcDay = 0;            // Giorno ultimo calcolo pivot
+datetime g_lastCenterCalc = 0;              // Ultimo calcolo centro
+
+//+------------------------------------------------------------------+
+//| 🔄 AUTO-RECENTER v4.0                                            |
+//+------------------------------------------------------------------+
+datetime        g_lastRecenterTime = 0;     // Timestamp ultimo recenter
+datetime        g_lastRecenterCheck = 0;    // Ultimo check recenter
+int             g_recenterCount = 0;        // Contatore recenter sessione
+bool            g_recenterPending = false;  // Flag: recenter in attesa conferma
+
+//+------------------------------------------------------------------+
 //| GRID STRUCTURE                                                   |
 //| Ogni array ha dimensione [MAX_GRID_LEVELS] = 10 elementi         |
 //| Indice 0 = Level 1 (piu vicino a entry)                          |
@@ -312,7 +397,63 @@ void InitializeArrays() {
     breakoutDetectionTime = 0;
     lastBreakoutDirection = BREAKOUT_NONE;
 
-    Print("SUCCESS: All grid arrays and Shield initialized");
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.0: Initialize ATR Dynamic Spacing
+    // ═══════════════════════════════════════════════════════════════════
+    currentATRStep = ATR_STEP_NORMAL;
+    lastATRStep = ATR_STEP_NORMAL;
+    lastATRValue_Dynamic = 0;
+    lastATRCheck_Dynamic = 0;
+    lastSpacingChange = 0;
+    previousSpacing_Pips = 0;
+    spacingChangeInProgress = false;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.1: Initialize ATR Unified Cache
+    // ═══════════════════════════════════════════════════════════════════
+    ZeroMemory(g_atrCache);
+    g_atrCache.valuePips = 0;
+    g_atrCache.step = ATR_STEP_NORMAL;
+    g_atrCache.lastFullUpdate = 0;
+    g_atrCache.lastBarTime = 0;
+    g_atrCache.isValid = false;
+
+    // v4.1: Extreme Warning
+    g_extremePauseActive = false;
+    g_lastExtremeCheck = 0;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.2: Initialize ATR Logging State
+    // ═══════════════════════════════════════════════════════════════════
+    g_atrStepChangeCount = 0;
+    g_spacingChangeCount = 0;
+    g_lastLoggedATRChange = 0;
+    g_lastATRStepName = "";
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.0: Initialize Center Calculator Structures
+    // ═══════════════════════════════════════════════════════════════════
+    ZeroMemory(g_pivotLevels);
+    g_pivotLevels.isValid = false;
+
+    ZeroMemory(g_donchianLevels);
+    g_donchianLevels.isValid = false;
+
+    ZeroMemory(g_centerCalc);
+    g_centerCalc.isValid = false;
+
+    g_lastPivotCalcDay = 0;
+    g_lastCenterCalc = 0;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.0: Initialize Auto-Recenter
+    // ═══════════════════════════════════════════════════════════════════
+    g_lastRecenterTime = 0;
+    g_lastRecenterCheck = 0;
+    g_recenterCount = 0;
+    g_recenterPending = false;
+
+    Print("SUCCESS: All grid arrays, Shield, and v4.0 modules initialized");
 }
 
 //+------------------------------------------------------------------+

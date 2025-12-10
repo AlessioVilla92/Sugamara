@@ -403,12 +403,14 @@ void CreateUnifiedDashboard() {
     //═══════════════════════════════════════════════════════════════
     // MODE & SYMBOL PANEL (Full Width)
     //═══════════════════════════════════════════════════════════════
-    int modeHeight = 45;
+    int modeHeight = 55;
     DashRectangle("MODE_PANEL", x, y, totalWidth, modeHeight, CLR_BG_DARK);
-    DashLabel("MODE_INFO1", x + 15, y + 10, "Mode: ---", CLR_CYAN, 9);
-    DashLabel("MODE_INFO2", x + 15, y + 28, "Symbol: --- | Spread: ---", CLR_SILVER, 8);
-    DashLabel("MODE_INFO3", x + 320, y + 10, "Spacing: --- pips", CLR_AZURE_1, 9);
-    DashLabel("MODE_INFO4", x + 320, y + 28, "ATR: --- | ADX: ---", CLR_SILVER, 8);
+    DashLabel("MODE_INFO1", x + 15, y + 8, "Mode: ---", CLR_CYAN, 9);
+    DashLabel("MODE_INFO2", x + 15, y + 24, "Symbol: --- | Spread: ---", CLR_SILVER, 8);
+    DashLabel("MODE_INFO3", x + 15, y + 38, "Pair: --- | Grids: --- | Spacing: ---", CLR_AZURE_2, 8);
+    DashLabel("MODE_INFO4", x + 350, y + 8, "ATR: --- pips", CLR_AZURE_1, 9);
+    DashLabel("MODE_INFO5", x + 350, y + 24, "ADX: ---", CLR_SILVER, 8);
+    DashLabel("MODE_INFO6", x + 350, y + 38, "Step: ---", CLR_AZURE_2, 8);
     y += modeHeight;
 
     //═══════════════════════════════════════════════════════════════
@@ -540,29 +542,25 @@ void CreateUnifiedDashboard() {
 void CreateControlButtons(int startY, int startX, int panelWidth) {
     int x = startX + 10;
     int y = startY + 10;
-    int btnWidth = 70;
+    int btnStartWidth = 140;   // v4.3: START largo
+    int btnCloseWidth = 120;   // v4.3: CLOSE largo
     int btnHeight = 35;
-    int spacing = 5;
+    int spacing = 10;
 
-    // v3.0 Control Buttons Mode
+    // v4.3 Control Buttons Mode (Simplified: START + CLOSE only)
     if(Enable_AdvancedButtons) {
-        // Status Label
-        DashLabel("BTN_STATUS_LABEL", x, y, "ENTRY MODE SELECT", CLR_DASH_TEXT, 10, "Arial Bold");
+        // Status Label (matches ControlButtons.mqh BTN_STATUS_V3)
+        DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY - Click START", CLR_DASH_TEXT, 10, "Arial Bold");
         y += 22;
 
-        // 4 Main Buttons: MARKET | LIMIT | STOP | CLOSE
-        DashButton("BTN_V3_MARKET", x, y, btnWidth, btnHeight, "MARKET", C'0,150,80');
-        DashButton("BTN_V3_LIMIT", x + btnWidth + spacing, y, btnWidth, btnHeight, "LIMIT", C'30,120,200');
-        DashButton("BTN_V3_STOP", x + (btnWidth + spacing)*2, y, btnWidth, btnHeight, "STOP", C'200,150,0');
-        DashButton("BTN_V3_CLOSE", x + (btnWidth + spacing)*3, y, btnWidth, btnHeight, "CLOSE", C'180,30,30');
+        // v4.3: 2 Main Buttons: START | CLOSE (LIMIT/STOP removed - not needed for neutral grid)
+        // Names MUST match ControlButtons.mqh: BTN_START_V3 and BTN_CLOSEALL_V3
+        DashButton("SUGAMARA_BTN_START", x, y, btnStartWidth, btnHeight, "START", C'0,150,80');
+        DashButton("SUGAMARA_BTN_CLOSEALL", x + btnStartWidth + spacing, y, btnCloseWidth, btnHeight, "CLOSE", C'180,30,30');
         y += btnHeight + 8;
 
         // Entry Mode Status
         DashLabel("BTN_MODE_STATUS", x, y, "Mode: READY", CLR_CYAN, 9, "Arial Bold");
-        y += 20;
-
-        // Activation Price Label
-        DashLabel("BTN_ACTIVATION_LABEL", x, y, "Activation: ---", clrGray, 8);
     }
     else {
         // Legacy v2.0 Buttons
@@ -738,19 +736,46 @@ void UpdateDashboard() {
 //| Update Mode Section                                              |
 //+------------------------------------------------------------------+
 void UpdateModeSection() {
+    // Line 1: Mode
     string modeText = "Mode: " + GetModeName();
     ObjectSetString(0, "MODE_INFO1", OBJPROP_TEXT, modeText);
     ObjectSetInteger(0, "MODE_INFO1", OBJPROP_COLOR, GetModeColor());
 
+    // Line 2: Symbol + Spread
     string symbolText = StringFormat("Symbol: %s | Spread: %.1f pips", _Symbol, GetSpreadPips());
     ObjectSetString(0, "MODE_INFO2", OBJPROP_TEXT, symbolText);
 
-    string spacingText = StringFormat("Spacing: %.1f pips", currentSpacing_Pips);
-    ObjectSetString(0, "MODE_INFO3", OBJPROP_TEXT, spacingText);
+    // Line 3: Pair + Grids + Spacing (DYNAMIC)
+    string pairName = GetPairDisplayName(SelectedPair);
+    double dynSpacing = GetDynamicSpacing();
+    string pairGridText = StringFormat("Pair: %s | Grids: %d | Spacing: %.1f pips",
+                                        pairName, GridLevelsPerSide, dynSpacing);
+    ObjectSetString(0, "MODE_INFO3", OBJPROP_TEXT, pairGridText);
 
+    // Line 4: ATR
     double atrPips = GetATRPips();
-    string atrADXText = StringFormat("ATR: %.1f pips", atrPips);
-    ObjectSetString(0, "MODE_INFO4", OBJPROP_TEXT, atrADXText);
+    string atrText = StringFormat("ATR: %.1f pips", atrPips);
+    ObjectSetString(0, "MODE_INFO4", OBJPROP_TEXT, atrText);
+
+    // Line 5: ADX
+    double adxVal = GetADXValue(PERIOD_M15, 0);
+    string adxText = StringFormat("ADX: %.1f", adxVal);
+    ObjectSetString(0, "MODE_INFO5", OBJPROP_TEXT, adxText);
+
+    // Line 6: ATR Step (v4.0 Dynamic)
+    if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
+        string stepName = GetATRStepName(currentATRStep);
+        ObjectSetString(0, "MODE_INFO6", OBJPROP_TEXT, "Step: " + stepName);
+        // Color based on step
+        color stepColor = CLR_AZURE_2;
+        if(currentATRStep == ATR_STEP_EXTREME) stepColor = CLR_LOSS;
+        else if(currentATRStep == ATR_STEP_HIGH) stepColor = CLR_NEUTRAL;
+        else if(currentATRStep == ATR_STEP_VERY_LOW) stepColor = clrGray;
+        ObjectSetInteger(0, "MODE_INFO6", OBJPROP_COLOR, stepColor);
+    } else {
+        ObjectSetString(0, "MODE_INFO6", OBJPROP_TEXT, "Step: N/A (Fixed)");
+        ObjectSetInteger(0, "MODE_INFO6", OBJPROP_COLOR, clrGray);
+    }
 }
 
 //+------------------------------------------------------------------+

@@ -429,3 +429,124 @@ string GetATRSummary() {
     return DoubleToString(atrPips, 1) + " pips (" + GetATRConditionName(condition) + ")";
 }
 
+//+------------------------------------------------------------------+
+//| ═══════════════════════════════════════════════════════════════════
+//| ATR UNIFIED CACHE SYSTEM v4.1 - Single Source of Truth
+//| ═══════════════════════════════════════════════════════════════════
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Calculate ATR Step from ATR Value (5 discrete levels)             |
+//+------------------------------------------------------------------+
+ENUM_ATR_STEP CalculateATRStep(double atrPips) {
+    if(atrPips < ATR_Threshold_VeryLow) {
+        return ATR_STEP_VERY_LOW;
+    } else if(atrPips < ATR_Threshold_Low) {
+        return ATR_STEP_LOW;
+    } else if(atrPips < ATR_Threshold_Normal) {
+        return ATR_STEP_NORMAL;
+    } else if(atrPips < ATR_Threshold_High) {
+        return ATR_STEP_HIGH;
+    } else {
+        return ATR_STEP_EXTREME;
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Get ATR Step Name (helper)                                        |
+//+------------------------------------------------------------------+
+string GetATRStepName(ENUM_ATR_STEP step) {
+    switch(step) {
+        case ATR_STEP_VERY_LOW:  return "VERY_LOW";
+        case ATR_STEP_LOW:       return "LOW";
+        case ATR_STEP_NORMAL:    return "NORMAL";
+        case ATR_STEP_HIGH:      return "HIGH";
+        case ATR_STEP_EXTREME:   return "EXTREME";
+        default:                 return "UNKNOWN";
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Get Spacing for ATR Step (5 levels)                               |
+//+------------------------------------------------------------------+
+double GetSpacingForATRStep(ENUM_ATR_STEP step) {
+    double spacing = 0;
+
+    switch(step) {
+        case ATR_STEP_VERY_LOW:  spacing = Spacing_VeryLow_Pips; break;
+        case ATR_STEP_LOW:       spacing = Spacing_Low_Pips; break;
+        case ATR_STEP_NORMAL:    spacing = Spacing_Normal_Pips; break;
+        case ATR_STEP_HIGH:      spacing = Spacing_High_Pips; break;
+        case ATR_STEP_EXTREME:   spacing = Spacing_Extreme_Pips; break;
+        default:                 spacing = Spacing_Normal_Pips; break;
+    }
+
+    // Apply absolute limits
+    spacing = MathMax(spacing, DynamicSpacing_Min_Pips);
+    spacing = MathMin(spacing, DynamicSpacing_Max_Pips);
+
+    return spacing;
+}
+
+//+------------------------------------------------------------------+
+//| Get ATR Unified - Single Source of Truth v4.1                     |
+//| updateMode: 0=cache only, 1=force update, 2=if new bar            |
+//+------------------------------------------------------------------+
+double GetATRPipsUnified(int updateMode = 0) {
+    if(atrHandle == INVALID_HANDLE) {
+        return g_atrCache.valuePips;  // Return stale if handle invalid
+    }
+
+    datetime currentBarTime = iTime(_Symbol, ATR_Timeframe, 0);
+
+    // Mode 0: Cache only (for dashboard - fast)
+    if(updateMode == 0 && g_atrCache.isValid) {
+        return g_atrCache.valuePips;
+    }
+
+    // Mode 2: Update only on new candle
+    if(updateMode == 2 && g_atrCache.lastBarTime == currentBarTime && g_atrCache.isValid) {
+        return g_atrCache.valuePips;
+    }
+
+    // Mode 1 or cache miss: Force update from indicator
+    double atrBuffer[];
+    ArraySetAsSeries(atrBuffer, true);
+
+    if(CopyBuffer(atrHandle, 0, 0, 1, atrBuffer) <= 0) {
+        return g_atrCache.valuePips;  // Return stale on error
+    }
+
+    // Convert to pips
+    double atrValue = atrBuffer[0];
+    double atrPips = atrValue / symbolPoint;
+
+    // JPY pair correction (3 or 5 digits)
+    if(symbolDigits == 3 || symbolDigits == 5) {
+        atrPips /= 10.0;
+    }
+
+    // Update cache
+    g_atrCache.valuePips = atrPips;
+    g_atrCache.step = CalculateATRStep(atrPips);
+    g_atrCache.lastFullUpdate = TimeCurrent();
+    g_atrCache.lastBarTime = currentBarTime;
+    g_atrCache.isValid = true;
+
+    return g_atrCache.valuePips;
+}
+
+//+------------------------------------------------------------------+
+//| Initialize ATR Cache                                              |
+//+------------------------------------------------------------------+
+void InitializeATRCache() {
+    // Force initial update
+    if(atrHandle != INVALID_HANDLE) {
+        GetATRPipsUnified(1);  // Force update
+        if(ATR_DetailedLogging) {
+            Print("[ATR CACHE] Initialized: ", DoubleToString(g_atrCache.valuePips, 1),
+                  " pips, Step: ", GetATRStepName(g_atrCache.step));
+        }
+    }
+}
+

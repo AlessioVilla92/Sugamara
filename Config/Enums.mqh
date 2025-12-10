@@ -30,6 +30,7 @@ enum ENUM_FOREX_PAIR {
     PAIR_EURGBP,    // 🇪🇺🇬🇧 EUR/GBP (Spread: 1-2, Range: 40-70 pips) - EXCELLENT NEUTRAL
     PAIR_GBPUSD,    // 🇬🇧🇺🇸 GBP/USD (Spread: 1-2, Range: 80-120 pips) - Mean Reverting
     PAIR_USDCHF,    // 🇺🇸🇨🇭 USD/CHF (Spread: 1-2, Range: 50-70 pips) - Safe Haven
+    PAIR_USDJPY,    // 🇺🇸🇯🇵 USD/JPY - Test Breakout (Spread: 0.8-1.5, Range: 70-120 pips)
     PAIR_CUSTOM     // ⚙️ Custom (Impostazioni Manuali)
 };
 
@@ -204,6 +205,26 @@ enum ENUM_ATR_CONDITION {
     ATR_NORMAL,                 // ATR 15-30 pips - Condizioni normali
     ATR_VOLATILE,               // ATR 30-50 pips - Mercato volatile
     ATR_EXTREME                 // ATR > 50 pips - Volatilità estrema
+};
+
+//+------------------------------------------------------------------+
+//| 📊 ATR STEP v4.0 - Step discreti per ATR Dynamic Spacing         |
+//+------------------------------------------------------------------+
+enum ENUM_ATR_STEP {
+    ATR_STEP_VERY_LOW = 0,      // VERY_LOW - Mercato piatto/notte
+    ATR_STEP_LOW = 1,           // LOW - Bassa volatilità
+    ATR_STEP_NORMAL = 2,        // NORMAL - Condizioni tipiche
+    ATR_STEP_HIGH = 3,          // HIGH - Volatilità elevata
+    ATR_STEP_EXTREME = 4        // EXTREME - News/eventi
+};
+
+//+------------------------------------------------------------------+
+//| 🔄 REOPEN MODE v4.0 - Modalità calcolo prezzo riapertura         |
+//+------------------------------------------------------------------+
+enum ENUM_REOPEN_MODE {
+    REOPEN_MODE_SAME_POINT = 0,     // Stesso Punto - Riapre esattamente al prezzo originale
+    REOPEN_MODE_ATR_DRIVEN = 1,     // ATR Driven - Riapre al prezzo calcolato da ATR corrente
+    REOPEN_MODE_HYBRID = 2          // Ibrido - Stesso punto se vicino, ATR se lontano
 };
 
 //+------------------------------------------------------------------+

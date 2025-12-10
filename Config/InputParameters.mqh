@@ -187,6 +187,71 @@ input double    ATR_Volatile_Spacing = 30.0;                 // 📏 Spacing se 
 input double    ATR_Extreme_Spacing = 40.0;                  // 📏 Spacing se ATR > 50
 
 //+------------------------------------------------------------------+
+//| 3️⃣.5️⃣ 🔄 ATR DYNAMIC SPACING v4.0                                |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣.5️⃣  🔄 ATR DYNAMIC SPACING v4.0                       ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ⚡ ATTIVAZIONE"
+input bool      EnableDynamicATRSpacing = true;              // ✅ Abilita Spacing Dinamico ATR
+// Se FALSE: usa Fixed_Spacing_Pips o ATR Decision Table esistente
+
+input group "    ⏱️ TIMING"
+input int       ATR_CheckInterval_Seconds = 300;             // ⏱️ Intervallo Check ATR (secondi) [300=5min]
+input int       ATR_MinTimeBetweenChanges = 900;             // ⏱️ Min tempo tra cambi (secondi) [900=15min]
+input double    ATR_StepChangeThreshold = 15.0;              // 📊 Soglia cambio step (%) [cambio solo se >15%]
+
+input group "    📊 SOGLIE ATR PER STEP (pips)"
+input double    ATR_Threshold_VeryLow = 10.0;                // 📊 Soglia VERY_LOW (ATR < X)
+input double    ATR_Threshold_Low = 18.0;                    // 📊 Soglia LOW (ATR < X)
+input double    ATR_Threshold_Normal = 28.0;                 // 📊 Soglia NORMAL (ATR < X)
+input double    ATR_Threshold_High = 40.0;                   // 📊 Soglia HIGH (ATR < X, sopra = EXTREME)
+
+input group "    📏 SPACING PER STEP (pips) - CONFIGURABILI"
+input double    Spacing_VeryLow_Pips = 8.0;                  // 📏 Spacing VERY_LOW (mercato piatto)
+input double    Spacing_Low_Pips = 12.0;                     // 📏 Spacing LOW (bassa volatilità)
+input double    Spacing_Normal_Pips = 18.0;                  // 📏 Spacing NORMAL (condizioni tipiche)
+input double    Spacing_High_Pips = 26.0;                    // 📏 Spacing HIGH (volatilità elevata)
+input double    Spacing_Extreme_Pips = 35.0;                 // 📏 Spacing EXTREME (news/eventi)
+
+input group "    🔒 LIMITI ASSOLUTI"
+input double    DynamicSpacing_Min_Pips = 6.0;               // 🔒 Spacing Minimo Assoluto (pips)
+input double    DynamicSpacing_Max_Pips = 50.0;              // 🔒 Spacing Massimo Assoluto (pips)
+
+//+------------------------------------------------------------------+
+//| 3️⃣.6️⃣ ⚠️ ATR EXTREME WARNING v4.1                                |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣.6️⃣  ⚠️ ATR EXTREME WARNING v4.1                       ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ⚠️ EXTREME WARNING"
+input bool      ATR_EnableExtremeWarning = true;             // ✅ Abilita Warning Veloce su ATR Extreme
+input double    ATR_ExtremeThreshold_Pips = 50.0;            // ⚠️ Soglia ATR Extreme (pips) - Warning se >
+input int       ATR_ExtremeCheck_Seconds = 10;               // ⏱️ Intervallo Check Extreme (secondi)
+input bool      ATR_PauseOnExtreme = false;                  // 🛑 Pausa nuovi ordini su Extreme
+
+//+------------------------------------------------------------------+
+//| 3️⃣.7️⃣ 📝 ATR LOGGING v4.2                                        |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣.7️⃣  📝 ATR LOGGING v4.2                               ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📝 LOGGING DETTAGLIATO"
+input bool      ATR_DetailedLogging = true;                  // ✅ Logging Dettagliato ATR (tutti i cambi)
+input bool      ATR_AlertOnSpacingChange = true;             // 🔔 Alert su Cambio Spacing (popup visibile)
+input bool      ATR_LogEveryCheck = false;                   // 🔍 Log ogni check ATR (debug mode)
+input bool      ATR_LogStepTransitions = true;               // 📊 Log transizioni step ATR
+
+//+------------------------------------------------------------------+
 //| 4️⃣ 🎰 FOREX PAIR SELECTION                                       |
 //+------------------------------------------------------------------+
 
@@ -374,6 +439,19 @@ input int       MaxCyclesPerLevel = 0;                       // 🔢 Max Cicli p
 input double    ReopenOffset_Pips = 5.0;                     // 📏 Offset Reopen (pips)
 // Riapre ordine quando prezzo torna al livello ± offset
 
+input group "    🔄 REOPEN MODE v4.0"
+input ENUM_REOPEN_MODE ReopenMode = REOPEN_MODE_SAME_POINT;  // 📍 Modalità Calcolo Prezzo Reopen ▼
+// REOPEN_MODE_SAME_POINT: Riapre esattamente al prezzo originale
+// REOPEN_MODE_ATR_DRIVEN: Riapre al prezzo calcolato da ATR corrente
+// REOPEN_MODE_HYBRID: Stesso punto se vicino, ATR se lontano (>50% spacing)
+
+input group "    🛡️ SICUREZZA REOPEN v4.0"
+input bool      PauseReopenOnTrend = true;                   // 🛡️ Pausa reopen se trend forte (ADX alto)
+input double    TrendADX_Threshold = 30.0;                   // 📊 Soglia ADX per trend (>30 = trend)
+input bool      PauseReopenNearShield = true;                // 🛡️ Pausa reopen vicino a Shield
+input double    ShieldProximity_Pips = 20.0;                 // 📏 Distanza minima da Shield (pips)
+input bool      PauseReopenOnExtreme = true;                 // 🛡️ Pausa reopen su ATR EXTREME
+
 //+------------------------------------------------------------------+
 //| 1️⃣2️⃣ 🚨 RISK MANAGEMENT                                          |
 //+------------------------------------------------------------------+
@@ -497,6 +575,74 @@ input double    ADX_Rating_5 = 30.0;                         // 📊 Rating 5→
 input double    ADX_Rating_6 = 40.0;                         // 📊 Rating 6→7: Strong
 input double    ADX_Rating_7 = 50.0;                         // 📊 Rating 7→8: Very Strong
 input double    ADX_Rating_8 = 65.0;                         // 📊 Rating 8→9: Extreme
+
+//+------------------------------------------------------------------+
+//| 1️⃣7️⃣.5️⃣ 🎯 CENTER INDICATORS v4.0                                |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  1️⃣7️⃣.5️⃣  🎯 CENTER INDICATORS v4.0                       ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📊 INDICATORI ATTIVI"
+input bool      UsePivotPoint = true;                        // ✅ Usa Pivot Point Daily (40% peso)
+input bool      UseEMA50 = true;                             // ✅ Usa EMA 50 (30% peso)
+input bool      UseDonchianCenter = true;                    // ✅ Usa Donchian Channel Center (30% peso)
+
+input group "    ⚖️ PESI INDICATORI (%)"
+input double    Weight_PivotPoint = 40.0;                    // ⚖️ Peso Pivot Point (%)
+input double    Weight_EMA50 = 30.0;                         // ⚖️ Peso EMA 50 (%)
+input double    Weight_Donchian = 30.0;                      // ⚖️ Peso Donchian Center (%)
+// NOTA: I pesi vengono normalizzati automaticamente a 100%
+
+input group "    ⚙️ PARAMETRI INDICATORI"
+input int       EMA_Period = 50;                             // 📊 Periodo EMA
+input ENUM_TIMEFRAMES EMA_Timeframe = PERIOD_M15;            // 📊 Timeframe EMA ▼
+input int       Donchian_Period = 20;                        // 📊 Periodo Donchian Channel
+input ENUM_TIMEFRAMES Donchian_Timeframe = PERIOD_M15;       // 📊 Timeframe Donchian ▼
+
+input group "    🎨 VISUALIZZAZIONE CENTRO"
+input bool      ShowCenterIndicators = true;                 // ✅ Mostra indicatori su chart
+input color     Color_PivotLine = clrGold;                   // 🟡 Colore Pivot Point
+input color     Color_EMALine = clrDodgerBlue;               // 🔵 Colore EMA
+input color     Color_DonchianUpper = clrMagenta;            // 🟣 Colore Donchian Upper
+input color     Color_DonchianLower = clrMagenta;            // 🟣 Colore Donchian Lower
+input color     Color_DonchianCenter = clrOrchid;            // 🟣 Colore Donchian Center
+input color     Color_OptimalCenter = clrLime;               // 🟢 Colore Centro Ottimale
+input int       CenterLines_Width = 2;                       // 📏 Spessore linee
+
+//+------------------------------------------------------------------+
+//| 1️⃣7️⃣.6️⃣ 🔄 AUTO-RECENTER v4.0                                    |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  1️⃣7️⃣.6️⃣  🔄 AUTO-RECENTER v4.0                           ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ⚙️ ATTIVAZIONE"
+input bool      EnableAutoRecenter = true;                   // ✅ Abilita Auto-Recenter
+input bool      RequireUserConfirm = false;                  // ⚠️ Richiedi conferma utente prima di recenter
+
+input group "    📏 CONDIZIONI TRIGGER"
+input double    Recenter_PriceProximity_Pips = 10.0;         // 📏 Prezzo deve essere entro X pips dal centro
+input double    Recenter_EntryDistance_Pips = 40.0;          // 📏 Entry deve essere lontano almeno X pips dal centro
+input double    Recenter_MinConfidence = 60.0;               // 📊 Confidence minima indicatori (%)
+
+input group "    💰 CONDIZIONI SICUREZZA"
+input double    Recenter_MaxFloatingLoss_USD = 50.0;         // 💰 Max floating loss per reset ($)
+input double    Recenter_MaxFloatingLoss_Pct = 2.0;          // 💰 Max floating loss per reset (% equity)
+input int       Recenter_MinFilledPositions = 0;             // 🔢 Min posizioni filled per bloccare (0=ignora)
+
+input group "    ⏱️ TIMING"
+input int       Recenter_MinInterval_Minutes = 240;          // ⏱️ Intervallo minimo tra recenter (minuti)
+input bool      Recenter_OnlyOnNewBar = true;                // ⏱️ Recenter solo su nuova barra M15
+
+input group "    🛡️ ECCEZIONI (Blocca Recenter se...)"
+input bool      BlockRecenterNearShield = true;              // 🛡️ Blocca recenter vicino a Shield
+input bool      BlockRecenterOnTrend = true;                 // 🛡️ Blocca recenter su trend forte (ADX alto)
+input bool      BlockRecenterHighVolatility = true;          // 🛡️ Blocca recenter su ATR EXTREME
 
 //+------------------------------------------------------------------+
 //| 1️⃣8️⃣ ⚙️ ADVANCED SETTINGS                                        |

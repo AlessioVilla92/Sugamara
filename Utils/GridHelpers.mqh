@@ -870,11 +870,71 @@ bool ValidateGridConfiguration() {
 
 //+------------------------------------------------------------------+
 //| Check if Level Can Reopen                                        |
+//| v4.0: Added safety checks (trend, shield proximity, volatility)  |
 //+------------------------------------------------------------------+
 bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     if(!EnableCyclicReopen) return false;
 
-    // Check cooldown
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.0 SAFETY CHECK 1: Block on strong trend (ADX)
+    // ═══════════════════════════════════════════════════════════════════
+    if(PauseReopenOnTrend && EnableADXMonitor) {
+        if(adxValue_Immediate > TrendADX_Threshold) {
+            if(DetailedLogging) {
+                Print("Reopen blocked: Strong trend (ADX ", DoubleToString(adxValue_Immediate, 1),
+                      " > ", DoubleToString(TrendADX_Threshold, 1), ")");
+            }
+            return false;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.0 SAFETY CHECK 2: Block near Shield activation
+    // ═══════════════════════════════════════════════════════════════════
+    if(PauseReopenNearShield && IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
+        double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+        double proximityPoints = PipsToPoints(ShieldProximity_Pips);
+
+        // Check distance from breakout levels
+        if(upperBreakoutLevel > 0 && (upperBreakoutLevel - currentPrice) < proximityPoints) {
+            if(DetailedLogging) {
+                Print("Reopen blocked: Too close to upper Shield (",
+                      DoubleToString(PointsToPips(upperBreakoutLevel - currentPrice), 1), " pips)");
+            }
+            return false;
+        }
+        if(lowerBreakoutLevel > 0 && (currentPrice - lowerBreakoutLevel) < proximityPoints) {
+            if(DetailedLogging) {
+                Print("Reopen blocked: Too close to lower Shield (",
+                      DoubleToString(PointsToPips(currentPrice - lowerBreakoutLevel), 1), " pips)");
+            }
+            return false;
+        }
+
+        // Also block if Shield is already active
+        if(shield.isActive) {
+            if(DetailedLogging) {
+                Print("Reopen blocked: Shield is active");
+            }
+            return false;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.0 SAFETY CHECK 3: Block on extreme volatility
+    // ═══════════════════════════════════════════════════════════════════
+    if(PauseReopenOnExtreme) {
+        if(currentATRStep == ATR_STEP_EXTREME || currentATR_Condition == ATR_EXTREME) {
+            if(DetailedLogging) {
+                Print("Reopen blocked: Extreme volatility");
+            }
+            return false;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ORIGINAL CHECK: Cooldown
+    // ═══════════════════════════════════════════════════════════════════
     datetime lastClose = 0;
     if(side == GRID_A) {
         if(zone == ZONE_UPPER) {
@@ -897,7 +957,9 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
         return false;  // Still in cooldown
     }
 
-    // Check max cycles
+    // ═══════════════════════════════════════════════════════════════════
+    // ORIGINAL CHECK: Max cycles
+    // ═══════════════════════════════════════════════════════════════════
     if(MaxCyclesPerLevel > 0) {
         int cycles = 0;
         if(side == GRID_A) {
@@ -920,6 +982,75 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     }
 
     return true;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Reopen Price Based on Mode (v4.0)                       |
+//+------------------------------------------------------------------+
+double CalculateReopenPrice(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
+    double originalPrice = 0;
+
+    // Get original entry price
+    if(side == GRID_A) {
+        if(zone == ZONE_UPPER) {
+            originalPrice = gridA_Upper_EntryPrices[level];
+        } else {
+            originalPrice = gridA_Lower_EntryPrices[level];
+        }
+    } else {
+        if(zone == ZONE_UPPER) {
+            originalPrice = gridB_Upper_EntryPrices[level];
+        } else {
+            originalPrice = gridB_Lower_EntryPrices[level];
+        }
+    }
+
+    // Mode selection
+    switch(ReopenMode) {
+        case REOPEN_MODE_SAME_POINT:
+            // Return exact original price
+            return originalPrice;
+
+        case REOPEN_MODE_ATR_DRIVEN:
+            // Recalculate based on current ATR spacing
+            {
+                double newSpacing = GetDynamicSpacing();
+                double spacingPoints = PipsToPoints(newSpacing);
+
+                if(zone == ZONE_UPPER) {
+                    return NormalizeDouble(entryPoint + spacingPoints * (level + 1), symbolDigits);
+                } else {
+                    return NormalizeDouble(entryPoint - spacingPoints * (level + 1), symbolDigits);
+                }
+            }
+
+        case REOPEN_MODE_HYBRID:
+            // If ATR price is close to original (within 50% of spacing), use original
+            // Otherwise use ATR-driven price
+            {
+                double newSpacing = GetDynamicSpacing();
+                double spacingPoints = PipsToPoints(newSpacing);
+                double atrPrice = 0;
+
+                if(zone == ZONE_UPPER) {
+                    atrPrice = NormalizeDouble(entryPoint + spacingPoints * (level + 1), symbolDigits);
+                } else {
+                    atrPrice = NormalizeDouble(entryPoint - spacingPoints * (level + 1), symbolDigits);
+                }
+
+                double diff = MathAbs(originalPrice - atrPrice);
+                double threshold = spacingPoints * 0.5;  // 50% of spacing
+
+                if(diff <= threshold) {
+                    return originalPrice;  // Close enough, use original
+                } else {
+                    return atrPrice;  // Too far, use ATR-driven
+                }
+            }
+
+        default:
+            return originalPrice;
+    }
 }
 
 //+------------------------------------------------------------------+
