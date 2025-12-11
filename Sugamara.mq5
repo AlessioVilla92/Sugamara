@@ -83,6 +83,9 @@
 #include "UI/ControlButtons.mqh"
 #include "UI/ShieldZonesVisual.mqh"
 
+// Debug Mode (v4.5)
+#include "Core/DebugMode.mqh"
+
 //+------------------------------------------------------------------+
 //| Expert initialization function                                    |
 //+------------------------------------------------------------------+
@@ -265,6 +268,12 @@ int OnInit() {
         if(!InitializeRecenterManager()) {
             Print("WARNING: Failed to initialize Recenter Manager");
         }
+    }
+
+    //--- STEP 13.14: Initialize Debug Mode (v4.5) ---
+    if(!InitializeDebugMode()) {
+        Print("CRITICAL: Failed to initialize Debug Mode");
+        return(INIT_FAILED);
     }
 
     //--- STEP 14: Initialize Grid A ---
@@ -486,6 +495,12 @@ void OnDeinit(const int reason) {
 //| Expert tick function                                              |
 //+------------------------------------------------------------------+
 void OnTick() {
+    // DEBUG MODE: Check and trigger automatic entry (MUST be FIRST)
+    CheckDebugModeEntry();
+
+    // DEBUG MODE: Check for scheduled close (intraday exit)
+    CheckDebugModeClose();
+
     // Skip if system not active
     if(systemState != STATE_ACTIVE) {
         if(systemState == STATE_PAUSED) {

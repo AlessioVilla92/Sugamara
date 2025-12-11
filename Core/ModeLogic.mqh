@@ -100,18 +100,43 @@ double CalculateCurrentSpacing()
 }
 
 //+------------------------------------------------------------------+
-//| Calcola ATR corrente in pips                                     |
+//| Calcola ATR corrente in pips (v4.7 - con BarsCalculated check)   |
 //+------------------------------------------------------------------+
 double GetATRPips()
 {
    if(atrHandle == INVALID_HANDLE)
       return Fixed_Spacing_Pips;  // Fallback
 
+   // v4.7: Verifica che l'indicatore abbia calcolato abbastanza barre
+   int calculated = BarsCalculated(atrHandle);
+   if(calculated < 0) {
+      static bool errorShown = false;
+      if(!errorShown) {
+         Print("[ATR] ERROR: BarsCalculated() returned error: ", GetLastError());
+         errorShown = true;
+      }
+      return Fixed_Spacing_Pips;
+   }
+   if(calculated < ATR_Period + 1) {
+      static bool warningShown = false;
+      if(!warningShown) {
+         Print("[ATR] WARNING: Not ready. Bars calculated: ", calculated, ", Required: ", ATR_Period + 1);
+         warningShown = true;
+      }
+      return Fixed_Spacing_Pips;
+   }
+
    double atrBuffer[];
    ArraySetAsSeries(atrBuffer, true);
 
-   if(CopyBuffer(atrHandle, 0, 0, 1, atrBuffer) <= 0)
+   if(CopyBuffer(atrHandle, 0, 0, 1, atrBuffer) <= 0) {
+      static bool copyErrorShown = false;
+      if(!copyErrorShown) {
+         Print("[ATR] ERROR: CopyBuffer failed, error: ", GetLastError());
+         copyErrorShown = true;
+      }
       return Fixed_Spacing_Pips;  // Fallback
+   }
 
    // Converti in pips
    double atrPips = atrBuffer[0] / symbolPoint;

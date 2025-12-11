@@ -131,6 +131,55 @@ bool CheckAndAdaptATRSpacing() {
         return false;
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // v4.6: LINEAR MODE - Check if spacing changed significantly
+    // ═══════════════════════════════════════════════════════════════════
+    if(UseLinearInterpolation) {
+        double targetSpacing = GetInterpolatedSpacing(atrPips);
+        double newSpacing = ApplyRateLimiting(targetSpacing, lastAppliedSpacing_Pips);
+
+        // Check if spacing actually changed enough to warrant grid update
+        double spacingDelta = MathAbs(newSpacing - lastAppliedSpacing_Pips);
+        if(spacingDelta < 0.5) {  // Less than 0.5 pips change - skip
+            lastATRValue_Dynamic = atrPips;
+            return false;
+        }
+
+        // Log the change
+        if(ATR_DetailedLogging || ATR_AlertOnSpacingChange) {
+            Print("[ATR LINEAR] Spacing: ", DoubleToString(lastAppliedSpacing_Pips, 1),
+                  " -> ", DoubleToString(newSpacing, 1), " pips",
+                  " | ATR: ", DoubleToString(atrPips, 1), " pips",
+                  " | Delta: ", DoubleToString(spacingDelta, 1), " pips");
+        }
+
+        if(ATR_AlertOnSpacingChange) {
+            Alert("[SUGAMARA] Spacing changed: ", DoubleToString(lastAppliedSpacing_Pips, 1),
+                  " -> ", DoubleToString(newSpacing, 1), " pips (LINEAR mode)");
+        }
+
+        // Update state and adapt grid
+        double oldSpacing = lastAppliedSpacing_Pips;
+        previousSpacing_Pips = lastAppliedSpacing_Pips;
+        lastAppliedSpacing_Pips = newSpacing;
+        lastSpacingChange = now;
+        lastATRValue_Dynamic = atrPips;
+        currentSpacing_Pips = newSpacing;
+
+        // Adapt grid (only PENDING orders!)
+        AdaptGridToNewSpacing(newSpacing);
+
+        if(ATR_DetailedLogging) {
+            LogATRDynamicReport();
+        }
+
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // LEGACY: STEP-BASED SYSTEM
+    // ═══════════════════════════════════════════════════════════════════
+
     // Calculate new step
     ENUM_ATR_STEP newStep = CalculateATRStep(atrPips);
 
@@ -360,7 +409,7 @@ bool PlaceGridOrder(ENUM_GRID_SIDE gridSide, ENUM_GRID_ZONE zone, int level) {
 }
 
 //+------------------------------------------------------------------+
-//| Get Dynamic Spacing (returns current spacing considering mode)    |
+//| Get Dynamic Spacing (v4.6 - LINEAR + RATE LIMITING)              |
 //+------------------------------------------------------------------+
 double GetDynamicSpacing() {
     // NEUTRAL_PURE always uses fixed spacing
@@ -376,7 +425,23 @@ double GetDynamicSpacing() {
         return Fixed_Spacing_Pips;
     }
 
-    // Use dynamic ATR step-based spacing
+    // v4.6: LINEAR INTERPOLATION with RATE LIMITING
+    if(UseLinearInterpolation) {
+        double currentATR = GetATRPipsUnified(0);
+        double targetSpacing = GetInterpolatedSpacing(currentATR);
+
+        // Apply rate limiting if enabled
+        double finalSpacing = ApplyRateLimiting(targetSpacing, lastAppliedSpacing_Pips);
+
+        // Initialize on first call
+        if(lastAppliedSpacing_Pips <= 0) {
+            lastAppliedSpacing_Pips = finalSpacing;
+        }
+
+        return finalSpacing;
+    }
+
+    // Fallback: legacy step-based system
     return GetSpacingForATRStep(currentATRStep);
 }
 

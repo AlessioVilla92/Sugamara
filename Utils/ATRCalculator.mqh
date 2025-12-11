@@ -221,46 +221,6 @@ string GetVolatilityDescription() {
 }
 
 //+------------------------------------------------------------------+
-//| ATR ADAPTIVE SPACING LOGIC                                       |
-//+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| Get Optimal Spacing for Current Market                           |
-//+------------------------------------------------------------------+
-double GetOptimalSpacing() {
-    switch(SpacingMode) {
-        case SPACING_FIXED:
-            return Fixed_Spacing_Pips;
-
-        case SPACING_ATR:
-            return CalculateATRSpacing();
-
-        case SPACING_GEOMETRIC:
-            return CalculateGeometricSpacing();
-
-        default:
-            return Fixed_Spacing_Pips;
-    }
-}
-
-//+------------------------------------------------------------------+
-//| Calculate Geometric Spacing (% of price)                         |
-//+------------------------------------------------------------------+
-double CalculateGeometricSpacing() {
-    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-    double spacingPrice = currentPrice * (SpacingGeometric_Percent / 100.0);
-
-    // Convert to pips
-    double spacingPips = PointsToPips(spacingPrice);
-
-    // Apply limits
-    spacingPips = MathMax(spacingPips, MIN_SPACING_PIPS);
-    spacingPips = MathMin(spacingPips, MAX_SPACING_PIPS);
-
-    return spacingPips;
-}
-
-//+------------------------------------------------------------------+
 //| ATR INDICATOR MANAGEMENT                                         |
 //+------------------------------------------------------------------+
 
@@ -299,20 +259,48 @@ void ReleaseATRHandle() {
 }
 
 //+------------------------------------------------------------------+
-//| Wait for ATR Data to be Ready                                    |
+//| Wait for ATR Data to be Ready (v4.7 - conditional Sleep)         |
+//| In Strategy Tester: usa Sleep() per attendere                    |
+//| In Live Trading: ritorna subito, riprova al prossimo tick        |
 //+------------------------------------------------------------------+
 bool WaitForATRData(int maxWaitMs = 5000) {
     if(atrHandle == INVALID_HANDLE) return false;
 
+    // v4.7: Verifica se siamo in Strategy Tester
+    bool isTester = MQLInfoInteger(MQL_TESTER);
+
+    // Prima verifica immediata (senza Sleep)
+    double atrBuffer[];
+    ArraySetAsSeries(atrBuffer, true);
+
+    // Check BarsCalculated first
+    int calculated = BarsCalculated(atrHandle);
+    if(calculated >= ATR_Period + 1) {
+        if(CopyBuffer(atrHandle, 0, 0, 1, atrBuffer) > 0 && atrBuffer[0] > 0) {
+            return true;  // Data already ready
+        }
+    }
+
+    // v4.7: In Live Trading, ritorna subito senza bloccare
+    if(!isTester) {
+        // Log solo la prima volta
+        static bool liveWarningShown = false;
+        if(!liveWarningShown) {
+            Print("[ATR] INFO: Live trading - ATR not ready yet, will retry on next tick");
+            liveWarningShown = true;
+        }
+        return false;  // Riprova al prossimo tick
+    }
+
+    // Strategy Tester: usa Sleep() per attendere
     int waitCount = 0;
     int waitInterval = 100;  // ms
 
     while(waitCount * waitInterval < maxWaitMs) {
-        double atrBuffer[];
-        ArraySetAsSeries(atrBuffer, true);
-
-        if(CopyBuffer(atrHandle, 0, 0, 1, atrBuffer) > 0) {
-            if(atrBuffer[0] > 0) {
+        calculated = BarsCalculated(atrHandle);
+        if(calculated >= ATR_Period + 1) {
+            if(CopyBuffer(atrHandle, 0, 0, 1, atrBuffer) > 0 && atrBuffer[0] > 0) {
+                Print("[ATR] INFO: Data ready after ", waitCount * waitInterval, "ms");
                 return true;  // Data ready
             }
         }
@@ -321,7 +309,7 @@ bool WaitForATRData(int maxWaitMs = 5000) {
         waitCount++;
     }
 
-    LogMessage(LOG_WARNING, "Timeout waiting for ATR data");
+    LogMessage(LOG_WARNING, "Timeout waiting for ATR data after " + IntegerToString(maxWaitMs) + "ms");
     return false;
 }
 
@@ -333,6 +321,7 @@ bool WaitForATRData(int maxWaitMs = 5000) {
 //| Get Average ATR Over Period                                      |
 //+------------------------------------------------------------------+
 double GetAverageATR(int periods) {
+    if(periods <= 0) return 0;  // Prevent division by zero
     if(atrHandle == INVALID_HANDLE) return 0;
 
     double atrBuffer[];
@@ -489,19 +478,84 @@ double GetSpacingForATRStep(ENUM_ATR_STEP step) {
 }
 
 //+------------------------------------------------------------------+
-//| Get ATR Unified - Single Source of Truth v4.1                     |
+//| Calculate Spacing with Linear Interpolation (v4.6)               |
+//| Formula: spacing = min + (ATR - minATR) * (max - min) / range    |
+//+------------------------------------------------------------------+
+double GetInterpolatedSpacing(double atrPips) {
+    // Clamp ATR to reference range (floor/ceiling)
+    double atrClamped = MathMax(ATR_Reference_Min, MathMin(ATR_Reference_Max, atrPips));
+
+    // Prevent division by zero
+    double atrRange = ATR_Reference_Max - ATR_Reference_Min;
+    if(atrRange <= 0) atrRange = 42.0;  // Default: 50-8=42
+
+    // Linear interpolation formula
+    double ratio = (atrClamped - ATR_Reference_Min) / atrRange;
+    double spacing = Spacing_Interpolated_Min + ratio * (Spacing_Interpolated_Max - Spacing_Interpolated_Min);
+
+    // Apply absolute limits (safety net)
+    spacing = MathMax(spacing, DynamicSpacing_Min_Pips);
+    spacing = MathMin(spacing, DynamicSpacing_Max_Pips);
+
+    return NormalizeDouble(spacing, 1);
+}
+
+//+------------------------------------------------------------------+
+//| Apply Rate Limiting to Spacing Change (v4.6)                     |
+//| Prevents sudden jumps even with linear interpolation             |
+//+------------------------------------------------------------------+
+double ApplyRateLimiting(double targetSpacing, double currentSpacing) {
+    if(!EnableRateLimiting || currentSpacing <= 0) {
+        return targetSpacing;  // No rate limiting or first call
+    }
+
+    double delta = targetSpacing - currentSpacing;
+
+    // Clamp delta to max allowed change
+    if(MathAbs(delta) > MaxSpacingChangePerCycle) {
+        delta = (delta > 0) ? MaxSpacingChangePerCycle : -MaxSpacingChangePerCycle;
+
+        if(ATR_DetailedLogging) {
+            Print("[RATE LIMIT] Target: ", DoubleToString(targetSpacing, 1),
+                  " | Applied: ", DoubleToString(currentSpacing + delta, 1),
+                  " | Clamped by ", DoubleToString(MaxSpacingChangePerCycle, 1), " pips/cycle");
+        }
+    }
+
+    return NormalizeDouble(currentSpacing + delta, 1);
+}
+
+//+------------------------------------------------------------------+
+//| Get ATR Unified - Single Source of Truth v4.7                     |
 //| updateMode: 0=cache only, 1=force update, 2=if new bar            |
+//| v4.7: Added BarsCalculated check + cache invalid logging          |
 //+------------------------------------------------------------------+
 double GetATRPipsUnified(int updateMode = 0) {
+    // v4.7: Log esplicito se handle invalido
     if(atrHandle == INVALID_HANDLE) {
-        return g_atrCache.valuePips;  // Return stale if handle invalid
+        static bool handleWarningShown = false;
+        if(!handleWarningShown) {
+            Print("[ATR UNIFIED] WARNING: Handle invalid, using cached/fallback value");
+            handleWarningShown = true;
+        }
+        return g_atrCache.valuePips > 0 ? g_atrCache.valuePips : Fixed_Spacing_Pips;
     }
 
     datetime currentBarTime = iTime(_Symbol, ATR_Timeframe, 0);
 
     // Mode 0: Cache only (for dashboard - fast)
-    if(updateMode == 0 && g_atrCache.isValid) {
-        return g_atrCache.valuePips;
+    if(updateMode == 0) {
+        if(g_atrCache.isValid) {
+            return g_atrCache.valuePips;
+        } else {
+            // v4.7: Log esplicito se cache non valida, forza update
+            static bool cacheWarningShown = false;
+            if(!cacheWarningShown) {
+                Print("[ATR UNIFIED] WARNING: Cache not valid, forcing update");
+                cacheWarningShown = true;
+            }
+            updateMode = 1;  // Forza update
+        }
     }
 
     // Mode 2: Update only on new candle
@@ -509,12 +563,36 @@ double GetATRPipsUnified(int updateMode = 0) {
         return g_atrCache.valuePips;
     }
 
+    // v4.7: Verifica BarsCalculated prima di CopyBuffer
+    int calculated = BarsCalculated(atrHandle);
+    if(calculated < 0) {
+        static bool barsErrorShown = false;
+        if(!barsErrorShown) {
+            Print("[ATR UNIFIED] ERROR: BarsCalculated() returned error: ", GetLastError());
+            barsErrorShown = true;
+        }
+        return g_atrCache.valuePips > 0 ? g_atrCache.valuePips : Fixed_Spacing_Pips;
+    }
+    if(calculated < ATR_Period + 1) {
+        static bool barsWarningShown = false;
+        if(!barsWarningShown) {
+            Print("[ATR UNIFIED] WARNING: Not ready. Bars: ", calculated, ", Required: ", ATR_Period + 1);
+            barsWarningShown = true;
+        }
+        return g_atrCache.valuePips > 0 ? g_atrCache.valuePips : Fixed_Spacing_Pips;
+    }
+
     // Mode 1 or cache miss: Force update from indicator
     double atrBuffer[];
     ArraySetAsSeries(atrBuffer, true);
 
     if(CopyBuffer(atrHandle, 0, 0, 1, atrBuffer) <= 0) {
-        return g_atrCache.valuePips;  // Return stale on error
+        static bool copyErrorShown = false;
+        if(!copyErrorShown) {
+            Print("[ATR UNIFIED] ERROR: CopyBuffer failed, error: ", GetLastError());
+            copyErrorShown = true;
+        }
+        return g_atrCache.valuePips > 0 ? g_atrCache.valuePips : Fixed_Spacing_Pips;
     }
 
     // Convert to pips

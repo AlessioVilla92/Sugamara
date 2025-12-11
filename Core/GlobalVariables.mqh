@@ -61,6 +61,10 @@ datetime        lastSpacingChange = 0;                  // Ultimo cambio spacing
 double          previousSpacing_Pips = 0;               // Spacing precedente
 bool            spacingChangeInProgress = false;        // Flag: cambio in corso
 
+// Rate Limiting state (v4.6)
+double          lastAppliedSpacing_Pips = 0;            // Ultimo spacing effettivamente applicato
+datetime        lastRateLimitedChange = 0;              // Timestamp ultimo cambio rate-limited
+
 //+------------------------------------------------------------------+
 //| 📦 ATR UNIFIED CACHE v4.1 - Single Source of Truth               |
 //+------------------------------------------------------------------+

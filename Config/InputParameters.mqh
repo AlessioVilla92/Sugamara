@@ -24,6 +24,21 @@ input bool      Enable_ManualSR = true;                     // ✅ Manual S/R Dr
 // Enable_AdvancedButtons REMOVED (v4.4) - Buttons are ALWAYS active
 
 //+------------------------------------------------------------------+
+//| DEBUG MODE - Strategy Tester Auto-Start                          |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  DEBUG MODE - BACKTEST AUTOMATION                        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    DEBUG SETTINGS"
+input bool      EnableDebugMode = false;                     // Enable Debug Mode (Auto Entry)
+input bool      DebugImmediateEntry = true;                  // Immediate Entry (First Tick)
+input string    DebugEntryTime = "09:30";                    // Entry Time (HH:MM) - se non immediate
+input string    DebugCloseTime = "";                         // Close Time (HH:MM) - vuoto = no close
+
+//+------------------------------------------------------------------+
 //| 💰 PARTIAL TAKE PROFIT SETTINGS                                  |
 //+------------------------------------------------------------------+
 
@@ -220,6 +235,17 @@ input double    Spacing_Extreme_Pips = 35.0;                 // 📏 Spacing EXT
 input group "    🔒 LIMITI ASSOLUTI"
 input double    DynamicSpacing_Min_Pips = 6.0;               // 🔒 Spacing Minimo Assoluto (pips)
 input double    DynamicSpacing_Max_Pips = 50.0;              // 🔒 Spacing Massimo Assoluto (pips)
+
+input group "    📈 LINEAR INTERPOLATION + RATE LIMITING (v4.6)"
+input bool      UseLinearInterpolation = true;               // ✅ Usa Interpolazione Lineare (elimina salti)
+input double    ATR_Reference_Min = 8.0;                     // 📊 ATR Minimo Riferimento (pips)
+input double    ATR_Reference_Max = 50.0;                    // 📊 ATR Massimo Riferimento (pips)
+input double    Spacing_Interpolated_Min = 8.0;              // 📏 Spacing Minimo (pips) - mercato calmo
+input double    Spacing_Interpolated_Max = 35.0;             // 📏 Spacing Massimo (pips) - alta volatilita
+
+input group "    🛡️ RATE LIMITING (Anti-Spike)"
+input bool      EnableRateLimiting = true;                   // ✅ Limita cambio spacing per ciclo
+input double    MaxSpacingChangePerCycle = 3.0;              // 📏 Max cambio per ciclo (pips) - anti spike
 
 //+------------------------------------------------------------------+
 //| 3️⃣.6️⃣ ⚠️ ATR EXTREME WARNING v4.1                                |

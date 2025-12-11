@@ -331,26 +331,6 @@ int CountOrdersByMagic(int magic) {
 }
 
 //+------------------------------------------------------------------+
-//| Get Total Open Profit                                            |
-//+------------------------------------------------------------------+
-double GetTotalOpenProfit(int magic) {
-    double totalProfit = 0;
-
-    for(int i = PositionsTotal() - 1; i >= 0; i--) {
-        ulong ticket = PositionGetTicket(i);
-        if(PositionSelectByTicket(ticket)) {
-            if(PositionGetInteger(POSITION_MAGIC) == magic &&
-               PositionGetString(POSITION_SYMBOL) == _Symbol) {
-                totalProfit += PositionGetDouble(POSITION_PROFIT);
-                totalProfit += PositionGetDouble(POSITION_SWAP);
-            }
-        }
-    }
-
-    return totalProfit;
-}
-
-//+------------------------------------------------------------------+
 //| ACCOUNT FUNCTIONS                                                |
 //+------------------------------------------------------------------+
 

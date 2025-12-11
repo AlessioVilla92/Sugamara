@@ -35,7 +35,6 @@ double manualSR_Resistance = 0.0;
 double manualSR_Support = 0.0;
 double manualSR_Activation = 0.0;
 bool manualSR_Initialized = false;
-bool manualSR_DragActive = false;
 string manualSR_DragObject = "";
 
 //+------------------------------------------------------------------+

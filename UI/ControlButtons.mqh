@@ -30,7 +30,6 @@
 ENUM_ENTRY_MODE currentEntryMode = ENTRY_MARKET;
 ENUM_BUTTON_STATE buttonState = BTN_STATE_IDLE;
 bool waitingForActivation = false;
-datetime waitStartTime = 0;
 
 //+------------------------------------------------------------------+
 //| Initialize Control Buttons                                       |
