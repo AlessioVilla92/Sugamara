@@ -147,18 +147,7 @@ bool CheckRecenterConditions(string &reason) {
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // CONDITION 9: Block on strong trend
-    // ═══════════════════════════════════════════════════════════════════
-    if(BlockRecenterOnTrend && EnableADXMonitor) {
-        if(adxValue_Immediate > TrendADX_Threshold) {
-            reason = StringFormat("Strong trend detected (ADX %.1f > %.1f)",
-                                  adxValue_Immediate, TrendADX_Threshold);
-            return false;
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    // CONDITION 10: Block on extreme volatility
+    // CONDITION 9: Block on extreme volatility
     // ═══════════════════════════════════════════════════════════════════
     if(BlockRecenterHighVolatility) {
         if(currentATRStep == ATR_STEP_EXTREME ||
@@ -228,8 +217,10 @@ void CheckAndRecenterGrid() {
 //| CRITICAL: This resets the entire grid system!                     |
 //+------------------------------------------------------------------+
 bool ExecuteGridRecenter(double newEntryPoint) {
-    // Store old entry for logging
+    // FIX v4.5: Store old values for rollback in case of failure
     double oldEntry = entryPoint;
+    datetime oldEntryTime = entryPointTime;
+    double oldSpacing = currentSpacing_Pips;
 
     // STEP 1: Close all Grid A positions
     Print("Step 1: Closing Grid A positions...");
@@ -246,7 +237,7 @@ bool ExecuteGridRecenter(double newEntryPoint) {
 
     Print("Closed: ", closedA + closedB, " positions, Canceled: ", canceledA + canceledB, " pending");
 
-    // STEP 4: Update entry point
+    // STEP 4: Update entry point (tentatively)
     entryPoint = NormalizeDouble(newEntryPoint, symbolDigits);
     entryPointTime = TimeCurrent();
 
@@ -262,14 +253,24 @@ bool ExecuteGridRecenter(double newEntryPoint) {
     // STEP 8: Initialize Grid A with new entry point
     Print("Step 8: Initializing new Grid A...");
     if(!InitializeGridA()) {
-        Print("ERROR: Failed to reinitialize Grid A");
+        Print("ERROR: Failed to reinitialize Grid A - ROLLING BACK");
+        // FIX v4.5: Rollback to old entry point
+        entryPoint = oldEntry;
+        entryPointTime = oldEntryTime;
+        currentSpacing_Pips = oldSpacing;
+        CalculateRangeBoundaries();
         return false;
     }
 
     // STEP 9: Initialize Grid B with new entry point
     Print("Step 9: Initializing new Grid B...");
     if(!InitializeGridB()) {
-        Print("ERROR: Failed to reinitialize Grid B");
+        Print("ERROR: Failed to reinitialize Grid B - ROLLING BACK");
+        // FIX v4.5: Rollback to old entry point
+        entryPoint = oldEntry;
+        entryPointTime = oldEntryTime;
+        currentSpacing_Pips = oldSpacing;
+        CalculateRangeBoundaries();
         return false;
     }
 
@@ -511,7 +512,6 @@ void LogRecenterReport() {
     Print("║  Max Floating Loss: $", DoubleToString(Recenter_MaxFloatingLoss_USD, 2),
           " or ", DoubleToString(Recenter_MaxFloatingLoss_Pct, 1), "% equity");
     Print("║  Block Near Shield: ", BlockRecenterNearShield ? "YES" : "NO");
-    Print("║  Block On Trend: ", BlockRecenterOnTrend ? "YES (ADX>" + DoubleToString(TrendADX_Threshold, 0) + ")" : "NO");
     Print("║  Block High Volatility: ", BlockRecenterHighVolatility ? "YES (ATR EXTREME)" : "NO");
     Print("╟───────────────────────────────────────────────────────────────────╢");
     Print("║ CURRENT STATE                                                     ║");
@@ -664,13 +664,9 @@ void LogConditionsCheck() {
     bool shieldOK = !BlockRecenterNearShield || !IsRangeBoxAvailable() || (!shield.isActive && shield.phase < PHASE_WARNING);
     Print("│  8. Shield Clear: ", shieldOK ? "✅" : "❌ (Shield active/warning)");
 
-    // Condition 9: Trend
-    bool trendOK = !BlockRecenterOnTrend || !EnableADXMonitor || adxValue_Immediate <= TrendADX_Threshold;
-    Print("│  9. Trend Clear: ", trendOK ? "✅" : "❌ (ADX=" + DoubleToString(adxValue_Immediate, 1) + ")");
-
-    // Condition 10: Volatility
+    // Condition 9: Volatility
     bool volOK = !BlockRecenterHighVolatility || (currentATRStep != ATR_STEP_EXTREME && currentATR_Condition != ATR_EXTREME);
-    Print("│  10. Volatility OK: ", volOK ? "✅" : "❌ (EXTREME volatility)");
+    Print("│  9. Volatility OK: ", volOK ? "✅" : "❌ (EXTREME volatility)");
 
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");

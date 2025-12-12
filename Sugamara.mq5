@@ -47,6 +47,7 @@
 #include "Core/BrokerValidation.mqh"
 #include "Core/Initialization.mqh"
 #include "Core/ModeLogic.mqh"
+#include "Core/SessionManager.mqh"  // v4.6 Auto Session
 
 // Utility Modules
 #include "Utils/Helpers.mqh"
@@ -224,12 +225,7 @@ int OnInit() {
         Print("WARNING: Failed to initialize Volatility Monitor");
     }
 
-    //--- STEP 13.6: Initialize ADX Monitor ---
-    if(!InitializeADXMonitor()) {
-        Print("WARNING: Failed to initialize ADX Monitor");
-    }
-
-    //--- STEP 13.7: Initialize ATR Multi-TF (v3.0) ---
+    //--- STEP 13.6: Initialize ATR Multi-TF (v3.0) ---
     if(!InitializeATRMultiTF()) {
         Print("WARNING: Failed to initialize ATR Multi-TF");
     }
@@ -399,6 +395,9 @@ int OnInit() {
         Print("");
     }
 
+    //--- v4.6: Initialize Session Manager ---
+    InitializeSessionManager();
+
     if(EnableAlerts) {
         Alert("SUGAMARA: System initialized and ACTIVE");
     }
@@ -446,7 +445,6 @@ void OnDeinit(const int reason) {
 
     // Release Indicators
     DeinitializeVolatilityMonitor();
-    DeinitializeADXMonitor();
 
     // v3.0: Deinitialize new modules
     DeinitializeATRMultiTF();
@@ -500,6 +498,16 @@ void OnTick() {
 
     // DEBUG MODE: Check for scheduled close (intraday exit)
     CheckDebugModeClose();
+
+    // v4.6: SESSION MANAGER - Check for auto close at session end
+    CheckSessionClose();
+
+    // v4.6: SESSION MANAGER - Skip trading if outside session hours
+    if(!IsWithinTradingSession()) {
+        // Only update dashboard during idle (no trading actions)
+        UpdateDashboard();
+        return;
+    }
 
     // Skip if system not active
     if(systemState != STATE_ACTIVE) {
@@ -593,7 +601,6 @@ void OnTick() {
 
     //--- UPDATE INDICATORS ---
     UpdateVolatilityMonitor();
-    UpdateADXMonitor();
 
     //--- v3.0: UPDATE ATR MULTI-TF ---
     UpdateATRMultiTF();

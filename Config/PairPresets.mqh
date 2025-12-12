@@ -94,14 +94,14 @@ void ApplyPairPresets() {
         // AUD/NZD - Best for Range Trading (Highly Correlated)
         //==============================================================
         case PAIR_AUDNZD:
-            // Characteristics
-            activePair_Spread = 3.0;
-            activePair_DailyRange = 65.0;
-            activePair_ATR_Typical = 18.0;
+            // Characteristics - v4.6 uses InputParameters
+            activePair_Spread = AUDNZD_EstimatedSpread;
+            activePair_DailyRange = AUDNZD_DailyRange;
+            activePair_ATR_Typical = AUDNZD_ATR_Typical;
             activePair_MinBrokerDistance = 15.0;
 
-            // Recommended Settings
-            activePair_RecommendedSpacing = 10.0;
+            // Recommended Settings - v4.6 uses InputParameters
+            activePair_RecommendedSpacing = AUDNZD_DefaultSpacing;
             activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
@@ -119,14 +119,14 @@ void ApplyPairPresets() {
         // EUR/CHF - Very Low Volatility
         //==============================================================
         case PAIR_EURCHF:
-            // Characteristics
-            activePair_Spread = 1.5;
-            activePair_DailyRange = 50.0;
-            activePair_ATR_Typical = 15.0;
+            // Characteristics - v4.6 uses InputParameters
+            activePair_Spread = EURCHF_EstimatedSpread;
+            activePair_DailyRange = EURCHF_DailyRange;
+            activePair_ATR_Typical = EURCHF_ATR_Typical;
             activePair_MinBrokerDistance = 10.0;
 
-            // Recommended Settings
-            activePair_RecommendedSpacing = 10.0;
+            // Recommended Settings - v4.6 uses InputParameters
+            activePair_RecommendedSpacing = EURCHF_DefaultSpacing;
             activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
@@ -144,14 +144,14 @@ void ApplyPairPresets() {
         // AUD/CAD - Medium Volatility Commodity Pair
         //==============================================================
         case PAIR_AUDCAD:
-            // Characteristics
-            activePair_Spread = 2.5;
-            activePair_DailyRange = 75.0;
-            activePair_ATR_Typical = 22.0;
+            // Characteristics - v4.6 uses InputParameters
+            activePair_Spread = AUDCAD_EstimatedSpread;
+            activePair_DailyRange = AUDCAD_DailyRange;
+            activePair_ATR_Typical = AUDCAD_ATR_Typical;
             activePair_MinBrokerDistance = 12.0;
 
-            // Recommended Settings
-            activePair_RecommendedSpacing = 10.0;
+            // Recommended Settings - v4.6 uses InputParameters
+            activePair_RecommendedSpacing = AUDCAD_DefaultSpacing;
             activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
@@ -169,14 +169,14 @@ void ApplyPairPresets() {
         // NZD/CAD - Similar to AUD/CAD
         //==============================================================
         case PAIR_NZDCAD:
-            // Characteristics
-            activePair_Spread = 3.0;
-            activePair_DailyRange = 70.0;
-            activePair_ATR_Typical = 20.0;
+            // Characteristics - v4.6 uses InputParameters
+            activePair_Spread = NZDCAD_EstimatedSpread;
+            activePair_DailyRange = NZDCAD_DailyRange;
+            activePair_ATR_Typical = NZDCAD_ATR_Typical;
             activePair_MinBrokerDistance = 15.0;
 
-            // Recommended Settings
-            activePair_RecommendedSpacing = 10.0;
+            // Recommended Settings - v4.6 uses InputParameters
+            activePair_RecommendedSpacing = NZDCAD_DefaultSpacing;
             activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
@@ -194,14 +194,14 @@ void ApplyPairPresets() {
         // EUR/GBP - Excellent Mean Reverting European Cross
         //==============================================================
         case PAIR_EURGBP:
-            // Characteristics
-            activePair_Spread = 1.5;
-            activePair_DailyRange = 55.0;
-            activePair_ATR_Typical = 16.0;
+            // Characteristics - v4.6 uses InputParameters
+            activePair_Spread = EURGBP_EstimatedSpread;
+            activePair_DailyRange = EURGBP_DailyRange;
+            activePair_ATR_Typical = EURGBP_ATR_Typical;
             activePair_MinBrokerDistance = 10.0;
 
-            // Recommended Settings
-            activePair_RecommendedSpacing = 10.0;
+            // Recommended Settings - v4.6 uses InputParameters
+            activePair_RecommendedSpacing = EURGBP_DefaultSpacing;
             activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
@@ -219,14 +219,14 @@ void ApplyPairPresets() {
         // GBP/USD - Currently Mean Reverting
         //==============================================================
         case PAIR_GBPUSD:
-            // Characteristics
-            activePair_Spread = 1.2;
-            activePair_DailyRange = 100.0;
-            activePair_ATR_Typical = 28.0;
+            // Characteristics - v4.6 uses InputParameters
+            activePair_Spread = GBPUSD_EstimatedSpread;
+            activePair_DailyRange = GBPUSD_DailyRange;
+            activePair_ATR_Typical = GBPUSD_ATR_Typical;
             activePair_MinBrokerDistance = 10.0;
 
-            // Recommended Settings
-            activePair_RecommendedSpacing = 10.0;      // Standard spacing
+            // Recommended Settings - v4.6 uses InputParameters
+            activePair_RecommendedSpacing = GBPUSD_DefaultSpacing;
             activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
@@ -244,14 +244,14 @@ void ApplyPairPresets() {
         // USD/CHF - Safe Haven Pair
         //==============================================================
         case PAIR_USDCHF:
-            // Characteristics
-            activePair_Spread = 1.5;
-            activePair_DailyRange = 60.0;
-            activePair_ATR_Typical = 18.0;
+            // Characteristics - v4.6 uses InputParameters
+            activePair_Spread = USDCHF_EstimatedSpread;
+            activePair_DailyRange = USDCHF_DailyRange;
+            activePair_ATR_Typical = USDCHF_ATR_Typical;
             activePair_MinBrokerDistance = 10.0;
 
-            // Recommended Settings
-            activePair_RecommendedSpacing = 10.0;
+            // Recommended Settings - v4.6 uses InputParameters
+            activePair_RecommendedSpacing = USDCHF_DefaultSpacing;
             activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 
@@ -269,14 +269,14 @@ void ApplyPairPresets() {
         // USD/JPY - Test Breakout (High Volatility Sessions)
         //==============================================================
         case PAIR_USDJPY:
-            // Characteristics - Optimized for BREAKOUT testing
-            activePair_Spread = 1.0;
-            activePair_DailyRange = 95.0;          // Wide range, good for breakouts
-            activePair_ATR_Typical = 28.0;         // Higher volatility
+            // Characteristics - v4.6 uses InputParameters
+            activePair_Spread = USDJPY_EstimatedSpread;
+            activePair_DailyRange = USDJPY_DailyRange;
+            activePair_ATR_Typical = USDJPY_ATR_Typical;
             activePair_MinBrokerDistance = 10.0;
 
-            // Recommended Settings - Wider spacing for breakout moves
-            activePair_RecommendedSpacing = 10.0;  // Standard spacing
+            // Recommended Settings - v4.6 uses InputParameters
+            activePair_RecommendedSpacing = USDJPY_DefaultSpacing;
             activePair_RecommendedLevels = 7;
             activePair_RecommendedBaseLot = 0.01;
 

@@ -192,14 +192,18 @@ input ENUM_TIMEFRAMES ATR_Timeframe = PERIOD_M5;             // 📊 ATR Timefra
 input int       ATR_Period = 14;                             // 📈 ATR Period (bars)
 input int       ATR_RecalcHours = 4;                         // 🔄 Ore tra Ricalcoli ATR
 
-input group "    🎯 ATR DECISION TABLE (Spacing Adattivo)"
-input double    ATR_Calm_Threshold = 15.0;                   // 📊 Soglia ATR Calmo (pips)
-input double    ATR_Calm_Spacing = 10.0;                     // 📏 Spacing se ATR < 15
-input double    ATR_Normal_Threshold = 30.0;                 // 📊 Soglia ATR Normale (pips)
-input double    ATR_Normal_Spacing = 10.0;                   // 📏 Spacing se ATR 15-30
-input double    ATR_Volatile_Threshold = 50.0;               // 📊 Soglia ATR Volatile (pips)
-input double    ATR_Volatile_Spacing = 30.0;                 // 📏 Spacing se ATR 30-50
-input double    ATR_Extreme_Spacing = 40.0;                  // 📏 Spacing se ATR > 50
+// ═══════════════════════════════════════════════════════════════
+// DEPRECATED v4.5: Legacy ATR Decision Table - Usare ATR_Threshold_* invece
+// Mantenuto per backward compatibility - NON MODIFICARE
+// ═══════════════════════════════════════════════════════════════
+input group "    🎯 ATR DECISION TABLE (LEGACY - Use v4.0 section below)"
+input double    ATR_Calm_Threshold = 15.0;                   // [DEPRECATED] Soglia ATR Calmo
+input double    ATR_Calm_Spacing = 10.0;                     // [DEPRECATED] Spacing se ATR < 15
+input double    ATR_Normal_Threshold = 30.0;                 // [DEPRECATED] Soglia ATR Normale
+input double    ATR_Normal_Spacing = 10.0;                   // [DEPRECATED] Spacing se ATR 15-30
+input double    ATR_Volatile_Threshold = 50.0;               // [DEPRECATED] Soglia ATR Volatile
+input double    ATR_Volatile_Spacing = 30.0;                 // [DEPRECATED] Spacing se ATR 30-50
+input double    ATR_Extreme_Spacing = 40.0;                  // [DEPRECATED] Spacing se ATR > 50
 
 //+------------------------------------------------------------------+
 //| 3️⃣.5️⃣ 🔄 ATR DYNAMIC SPACING v4.0                                |
@@ -215,8 +219,8 @@ input bool      EnableDynamicATRSpacing = true;              // ✅ Abilita Spac
 // Se FALSE: usa Fixed_Spacing_Pips o ATR Decision Table esistente
 
 input group "    ⏱️ TIMING"
-input int       ATR_CheckInterval_Seconds = 300;             // ⏱️ Intervallo Check ATR (secondi) [300=5min]
-input int       ATR_MinTimeBetweenChanges = 900;             // ⏱️ Min tempo tra cambi (secondi) [900=15min]
+input int       ATR_CheckInterval_Seconds = 60;              // ⏱️ Intervallo Check ATR (secondi) [60=1min] - v4.6 più reattivo
+input int       ATR_MinTimeBetweenChanges = 120;             // ⏱️ Min tempo tra cambi (secondi) [120=2min] - v4.6 cooldown ridotto
 input double    ATR_StepChangeThreshold = 15.0;              // 📊 Soglia cambio step (%) [cambio solo se >15%]
 
 input group "    📊 SOGLIE ATR PER STEP (pips)"
@@ -471,8 +475,6 @@ input ENUM_REOPEN_MODE ReopenMode = REOPEN_MODE_SAME_POINT;  // 📍 Modalità C
 // REOPEN_MODE_HYBRID: Stesso punto se vicino, ATR se lontano (>50% spacing)
 
 input group "    🛡️ SICUREZZA REOPEN v4.0"
-input bool      PauseReopenOnTrend = true;                   // 🛡️ Pausa reopen se trend forte (ADX alto)
-input double    TrendADX_Threshold = 30.0;                   // 📊 Soglia ADX per trend (>30 = trend)
 input bool      PauseReopenNearShield = true;                // 🛡️ Pausa reopen vicino a Shield
 input double    ShieldProximity_Pips = 20.0;                 // 📏 Distanza minima da Shield (pips)
 input bool      PauseReopenOnExtreme = true;                 // 🛡️ Pausa reopen su ATR EXTREME
@@ -575,34 +577,7 @@ input double    Volatility_Rating7 = 1.40;                   // 📊 Rating 7→
 input double    Volatility_Rating8 = 2.00;                   // 📊 Rating 8→9 threshold (%)
 
 //+------------------------------------------------------------------+
-//| 1️⃣7️⃣ 📈 ADX TREND STRENGTH                                       |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  1️⃣7️⃣  📈 ADX TREND STRENGTH MONITOR                      ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input bool      EnableADXMonitor = true;                     // ✅ Enable ADX Trend Monitor
-
-input group "    ⏱️ DUAL TIMEFRAME SETTINGS ADX"
-input group "    ╔═ SELEZIONA TIMEFRAME ADX ═══════════════════════════════🔽🔽🔽"
-input ENUM_TIMEFRAMES ADX_TF_Immediate = PERIOD_M15;         // 🔴 Immediate TF ▼
-input ENUM_TIMEFRAMES ADX_TF_Context = PERIOD_CURRENT;       // 🔵 Context TF ▼
-input int       ADX_Period_Monitor = 14;                     // 📈 ADX Period (bars)
-
-input group "    🎯 RATING THRESHOLDS (1-9 Scale)"
-input double    ADX_Rating_1 = 12.0;                         // 📊 Rating 1→2: No Trend
-input double    ADX_Rating_2 = 18.0;                         // 📊 Rating 2→3: Very Weak
-input double    ADX_Rating_3 = 22.0;                         // 📊 Rating 3→4: Weak
-input double    ADX_Rating_4 = 25.0;                         // 📊 Rating 4→5: CRITICAL
-input double    ADX_Rating_5 = 30.0;                         // 📊 Rating 5→6: Confirmed
-input double    ADX_Rating_6 = 40.0;                         // 📊 Rating 6→7: Strong
-input double    ADX_Rating_7 = 50.0;                         // 📊 Rating 7→8: Very Strong
-input double    ADX_Rating_8 = 65.0;                         // 📊 Rating 8→9: Extreme
-
-//+------------------------------------------------------------------+
-//| 1️⃣7️⃣.5️⃣ 🎯 CENTER INDICATORS v4.0                                |
+//| 1️⃣7️⃣ 🎯 CENTER INDICATORS v4.0                                   |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
@@ -666,7 +641,6 @@ input bool      Recenter_OnlyOnNewBar = true;                // ⏱️ Recenter 
 
 input group "    🛡️ ECCEZIONI (Blocca Recenter se...)"
 input bool      BlockRecenterNearShield = true;              // 🛡️ Blocca recenter vicino a Shield
-input bool      BlockRecenterOnTrend = true;                 // 🛡️ Blocca recenter su trend forte (ADX alto)
 input bool      BlockRecenterHighVolatility = true;          // 🛡️ Blocca recenter su ATR EXTREME
 
 //+------------------------------------------------------------------+
@@ -721,19 +695,155 @@ input group "║      Spread: 1.0-1.8 pips | Range: 50-80 pips/day        ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 USD/CAD GRID SETTINGS"
-input double    USDCAD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    USDCAD_TP_Pips = 16.0;                       // 🎯 TP per livello (pips)
+input double    USDCAD_DefaultSpacing = 12.0;                // 📏 Spacing Default (pips) - v4.6 aumentato per spread
+input double    USDCAD_TP_Pips = 20.0;                       // 🎯 TP per livello (pips) - v4.6 aumentato per compensare
 input double    USDCAD_EstimatedSpread = 1.3;                // 📊 Spread Stimato (pips)
 input double    USDCAD_DailyRange = 65.0;                    // 📈 Range Giornaliero (pips)
 input double    USDCAD_ATR_Typical = 22.0;                   // 📊 ATR Tipico (pips)
 
 //+------------------------------------------------------------------+
-//| 2️⃣1️⃣ ⚙️ CUSTOM PAIR SETTINGS                                     |
+//| 2️⃣1️⃣ 🇦🇺🇳🇿 AUD/NZD SOTTOSTANTI (BEST NEUTRAL)                    |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  2️⃣1️⃣  ⚙️ CUSTOM PAIR SETTINGS (if CUSTOM selected)       ║"
+input group "║  2️⃣1️⃣  🇦🇺🇳🇿 SOTTOSTANTI - AUD/NZD (BEST NEUTRAL)         ║"
+input group "║      Spread: 2.5-3.5 pips | Range: 50-80 pips/day        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 AUD/NZD GRID SETTINGS"
+input double    AUDNZD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
+input double    AUDNZD_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
+input double    AUDNZD_EstimatedSpread = 3.0;                // 📊 Spread Stimato (pips)
+input double    AUDNZD_DailyRange = 65.0;                    // 📈 Range Giornaliero (pips)
+input double    AUDNZD_ATR_Typical = 18.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 2️⃣2️⃣ 🇪🇺🇨🇭 EUR/CHF SOTTOSTANTI                                    |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  2️⃣2️⃣  🇪🇺🇨🇭 SOTTOSTANTI - EUR/CHF (LOW VOLATILITY)       ║"
+input group "║      Spread: 1.2-2.0 pips | Range: 40-60 pips/day        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 EUR/CHF GRID SETTINGS"
+input double    EURCHF_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
+input double    EURCHF_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
+input double    EURCHF_EstimatedSpread = 1.5;                // 📊 Spread Stimato (pips)
+input double    EURCHF_DailyRange = 50.0;                    // 📈 Range Giornaliero (pips)
+input double    EURCHF_ATR_Typical = 15.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 2️⃣3️⃣ 🇦🇺🇨🇦 AUD/CAD SOTTOSTANTI                                    |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  2️⃣3️⃣  🇦🇺🇨🇦 SOTTOSTANTI - AUD/CAD (COMMODITY)            ║"
+input group "║      Spread: 2.0-3.0 pips | Range: 60-90 pips/day        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 AUD/CAD GRID SETTINGS"
+input double    AUDCAD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
+input double    AUDCAD_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
+input double    AUDCAD_EstimatedSpread = 2.5;                // 📊 Spread Stimato (pips)
+input double    AUDCAD_DailyRange = 75.0;                    // 📈 Range Giornaliero (pips)
+input double    AUDCAD_ATR_Typical = 22.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 2️⃣4️⃣ 🇳🇿🇨🇦 NZD/CAD SOTTOSTANTI                                    |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  2️⃣4️⃣  🇳🇿🇨🇦 SOTTOSTANTI - NZD/CAD                         ║"
+input group "║      Spread: 2.5-3.5 pips | Range: 55-85 pips/day        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 NZD/CAD GRID SETTINGS"
+input double    NZDCAD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
+input double    NZDCAD_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
+input double    NZDCAD_EstimatedSpread = 3.0;                // 📊 Spread Stimato (pips)
+input double    NZDCAD_DailyRange = 70.0;                    // 📈 Range Giornaliero (pips)
+input double    NZDCAD_ATR_Typical = 20.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 2️⃣5️⃣ 🇪🇺🇬🇧 EUR/GBP SOTTOSTANTI (EXCELLENT NEUTRAL)                |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  2️⃣5️⃣  🇪🇺🇬🇧 SOTTOSTANTI - EUR/GBP (EXCELLENT NEUTRAL)    ║"
+input group "║      Spread: 1.2-2.0 pips | Range: 45-70 pips/day        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 EUR/GBP GRID SETTINGS"
+input double    EURGBP_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
+input double    EURGBP_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
+input double    EURGBP_EstimatedSpread = 1.5;                // 📊 Spread Stimato (pips)
+input double    EURGBP_DailyRange = 55.0;                    // 📈 Range Giornaliero (pips)
+input double    EURGBP_ATR_Typical = 16.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 2️⃣6️⃣ 🇬🇧🇺🇸 GBP/USD SOTTOSTANTI                                    |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  2️⃣6️⃣  🇬🇧🇺🇸 SOTTOSTANTI - GBP/USD (MEAN REVERTING)       ║"
+input group "║      Spread: 1.0-1.5 pips | Range: 80-120 pips/day       ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 GBP/USD GRID SETTINGS"
+input double    GBPUSD_DefaultSpacing = 12.0;                // 📏 Spacing Default (pips)
+input double    GBPUSD_TP_Pips = 20.0;                       // 🎯 TP per livello (pips)
+input double    GBPUSD_EstimatedSpread = 1.2;                // 📊 Spread Stimato (pips)
+input double    GBPUSD_DailyRange = 100.0;                   // 📈 Range Giornaliero (pips)
+input double    GBPUSD_ATR_Typical = 28.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 2️⃣7️⃣ 🇺🇸🇨🇭 USD/CHF SOTTOSTANTI                                    |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  2️⃣7️⃣  🇺🇸🇨🇭 SOTTOSTANTI - USD/CHF (SAFE HAVEN)           ║"
+input group "║      Spread: 1.2-2.0 pips | Range: 50-75 pips/day        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 USD/CHF GRID SETTINGS"
+input double    USDCHF_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
+input double    USDCHF_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
+input double    USDCHF_EstimatedSpread = 1.5;                // 📊 Spread Stimato (pips)
+input double    USDCHF_DailyRange = 60.0;                    // 📈 Range Giornaliero (pips)
+input double    USDCHF_ATR_Typical = 18.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 2️⃣8️⃣ 🇺🇸🇯🇵 USD/JPY SOTTOSTANTI                                    |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  2️⃣8️⃣  🇺🇸🇯🇵 SOTTOSTANTI - USD/JPY (HIGH VOLATILITY)      ║"
+input group "║      Spread: 0.8-1.5 pips | Range: 80-110 pips/day       ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 USD/JPY GRID SETTINGS"
+input double    USDJPY_DefaultSpacing = 12.0;                // 📏 Spacing Default (pips)
+input double    USDJPY_TP_Pips = 20.0;                       // 🎯 TP per livello (pips)
+input double    USDJPY_EstimatedSpread = 1.0;                // 📊 Spread Stimato (pips)
+input double    USDJPY_DailyRange = 95.0;                    // 📈 Range Giornaliero (pips)
+input double    USDJPY_ATR_Typical = 28.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 2️⃣9️⃣ ⚙️ CUSTOM PAIR SETTINGS                                     |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  2️⃣9️⃣  ⚙️ CUSTOM PAIR SETTINGS (if CUSTOM selected)       ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 CUSTOM PAIR PARAMETERS"
@@ -744,12 +854,12 @@ input double    Custom_MinLot = 0.01;                        // 💵 Lot Minimo
 input double    Custom_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
 
 //+------------------------------------------------------------------+
-//| 2️⃣2️⃣ 🎨 LEGACY COLOR SCHEME (Grid Lines by Level)                |
+//| 3️⃣0️⃣ 🎨 LEGACY COLOR SCHEME (Grid Lines by Level)                |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  2️⃣2️⃣  🎨 LEGACY COLOR SCHEME - Grid Lines by Level       ║"
+input group "║  3️⃣0️⃣  🎨 LEGACY COLOR SCHEME - Grid Lines by Level       ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    🔵 Main System Colors"
@@ -776,4 +886,42 @@ input color COLOR_GRID_B_2 = C'80,200,230';           // 🔵 Grid B Level 2
 input color COLOR_GRID_B_3 = C'60,180,205';           // 🔵 Grid B Level 3
 input color COLOR_GRID_B_4 = C'40,160,180';           // 🔵 Grid B Level 4
 input color COLOR_GRID_B_5 = C'30,140,160';           // 🔵 Grid B Level 5+
+
+//+------------------------------------------------------------------+
+//| 3️⃣1️⃣ ⏰ AUTOMATIC HOUR SESSION v4.6                              |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣1️⃣  ⏰ AUTOMATIC HOUR SESSION v4.6                     ║"
+input group "║      Auto Start/Stop trading based on time               ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ⏰ SESSION SETTINGS"
+input bool      EnableAutoSession = false;                   // ✅ Enable Automatic Session
+input bool      EnableSessionStart = true;                   // ✅ Enable Auto Start at Time
+input string    SessionStartTime = "09:30";                  // 🕘 Start Time (HH:MM broker time)
+input bool      EnableSessionClose = true;                   // ✅ Enable Auto Close at Time
+input string    SessionCloseTime = "17:00";                  // 🕔 Close Time (HH:MM broker time)
+
+input group "    🔒 END OF SESSION ACTIONS"
+input bool      CloseAllOnSessionEnd = true;                 // ✅ Close All Positions at Session End
+input bool      DeletePendingOnEnd = true;                   // ✅ Delete All Pending Orders at End
+
+//+------------------------------------------------------------------+
+//| 3️⃣2️⃣ 🎨 TP VISUAL LINES v4.6                                     |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣2️⃣  🎨 TP VISUAL LINES v4.6                            ║"
+input group "║      Show TP levels on chart with colors                 ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    🎨 TP LINE SETTINGS"
+input bool      ShowTPLines = true;                          // ✅ Show TP Lines on Chart
+input color     TP_Line_Buy_Color = clrLightYellow;          // 🟡 TP Color for BUY orders
+input color     TP_Line_Sell_Color = clrRed;                 // 🔴 TP Color for SELL orders
+input ENUM_LINE_STYLE TP_Line_Style = STYLE_DASH;            // 📏 TP Line Style (dashed)
+input int       TP_Line_Width = 1;                           // 📐 TP Line Width
 

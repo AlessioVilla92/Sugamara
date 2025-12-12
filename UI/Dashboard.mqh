@@ -260,7 +260,6 @@ bool InitializeDashboard() {
 
     CreateUnifiedDashboard();
     CreateVolatilityPanel();
-    CreateADXPanel();
     CreateShieldPanel();
 
     // Mark dashboard as initialized
@@ -293,7 +292,6 @@ bool VerifyDashboardExists() {
         "LEFT_EXPOSURE_PANEL",
         "RIGHT_PERF_PANEL",
         "VOL_PANEL",
-        "ADX_PANEL",
         "SHIELD_PANEL"
     };
 
@@ -330,11 +328,11 @@ void RecreateEntireDashboard() {
     // Recreate all components
     CreateUnifiedDashboard();
     CreateVolatilityPanel();
-    CreateADXPanel();
     CreateShieldPanel();
 
     // v4.4: Control buttons ALWAYS active
-    InitializeControlButtons(g_btnY, g_leftX, g_colWidth);
+    // FIX v4.5: Corrected parameter order (startX, startY, panelWidth)
+    InitializeControlButtons(g_leftX, g_btnY, g_colWidth);
 
     g_dashboardInitialized = true;
     g_lastDashboardCheck = TimeCurrent();
@@ -407,8 +405,7 @@ void CreateUnifiedDashboard() {
     DashLabel("MODE_INFO2", x + 15, y + 24, "Symbol: --- | Spread: ---", CLR_SILVER, 8);
     DashLabel("MODE_INFO3", x + 15, y + 38, "Pair: --- | Grids: --- | Spacing: ---", CLR_AZURE_2, 8);
     DashLabel("MODE_INFO4", x + 350, y + 8, "ATR: --- pips", CLR_AZURE_1, 9);
-    DashLabel("MODE_INFO5", x + 350, y + 24, "ADX: ---", CLR_SILVER, 8);
-    DashLabel("MODE_INFO6", x + 350, y + 38, "Step: ---", CLR_AZURE_2, 8);
+    DashLabel("MODE_INFO6", x + 350, y + 24, "Step: ---", CLR_AZURE_2, 8);
     y += modeHeight;
 
     //═══════════════════════════════════════════════════════════════
@@ -602,45 +599,6 @@ void CreateVolatilityPanel() {
 }
 
 //+------------------------------------------------------------------+
-//| Create ADX Trend Strength Panel (Right Side)                     |
-//+------------------------------------------------------------------+
-void CreateADXPanel() {
-    int adxX = Dashboard_X + TOTAL_WIDTH + 10;
-    int adxY = Dashboard_Y + 168;
-    int adxWidth = 175;
-    int adxHeight = 150;
-
-    DashRectangle("ADX_PANEL", adxX, adxY, adxWidth, adxHeight, C'35,15,15');
-
-    int ly = adxY + 8;
-    DashLabel("ADX_TITLE", adxX + 10, ly, "ADX MONITOR", CLR_GOLD, 9, "Arial Bold");
-    ly += 20;
-    DashLabel("ADX_SEPARATOR", adxX + 10, ly, "------------------------", clrGray, 7);
-    ly += 15;
-
-    // IMMEDIATE Section
-    DashLabel("ADX_IMMEDIATE_TITLE", adxX + 10, ly, "IMMEDIATE (M15):", CLR_CYAN, 8, "Arial Bold");
-    ly += 16;
-    DashLabel("ADX_IMMEDIATE_VALUE", adxX + 10, ly, "ADX: ---", clrGray, 8);
-    ly += 14;
-    DashLabel("ADX_IMMEDIATE_DI", adxX + 10, ly, "+DI: --- | -DI: ---", clrGray, 8);
-    ly += 18;
-
-    // CONTEXT Section
-    DashLabel("ADX_CONTEXT_TITLE", adxX + 10, ly, "CONTEXT (H1):", CLR_NEUTRAL, 8, "Arial Bold");
-    ly += 16;
-    DashLabel("ADX_CONTEXT_VALUE", adxX + 10, ly, "ADX: ---", clrGray, 8);
-    ly += 14;
-    DashLabel("ADX_CONTEXT_DI", adxX + 10, ly, "+DI: --- | -DI: ---", clrGray, 8);
-    ly += 18;
-
-    // Trend Status
-    DashLabel("ADX_TREND_STATUS", adxX + 10, ly, "Trend: NEUTRAL", clrGray, 9, "Arial Bold");
-
-    Print("SUCCESS: ADX Panel created");
-}
-
-//+------------------------------------------------------------------+
 //| Create Shield Panel (Right Side)                                  |
 //+------------------------------------------------------------------+
 void CreateShieldPanel() {
@@ -697,7 +655,6 @@ void UpdateDashboard() {
     UpdateRangeBoxSection();
     UpdatePerformanceSection();
     UpdateVolatilityPanel();
-    UpdateADXPanel();
     UpdateShieldSection();
 
     ChartRedraw(0);
@@ -728,12 +685,7 @@ void UpdateModeSection() {
     string atrText = StringFormat("ATR: %.1f pips", atrPips);
     ObjectSetString(0, "MODE_INFO4", OBJPROP_TEXT, atrText);
 
-    // Line 5: ADX
-    double adxVal = GetADXValue(PERIOD_M15, 0);
-    string adxText = StringFormat("ADX: %.1f", adxVal);
-    ObjectSetString(0, "MODE_INFO5", OBJPROP_TEXT, adxText);
-
-    // Line 6: ATR Step (v4.0 Dynamic)
+    // Line 5: ATR Step (v4.0 Dynamic)
     if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
         string stepName = GetATRStepName(currentATRStep);
         ObjectSetString(0, "MODE_INFO6", OBJPROP_TEXT, "Step: " + stepName);
@@ -956,55 +908,6 @@ void UpdateVolatilityPanel() {
 }
 
 //+------------------------------------------------------------------+
-//| Update ADX Panel - NO LAG                                        |
-//+------------------------------------------------------------------+
-void UpdateADXPanel() {
-    // Immediate ADX (M15)
-    double adxM15 = GetADXValue(PERIOD_M15, 0);
-    double plusDIM15 = GetADXValue(PERIOD_M15, 1);
-    double minusDIM15 = GetADXValue(PERIOD_M15, 2);
-
-    ObjectSetString(0, "ADX_IMMEDIATE_VALUE", OBJPROP_TEXT, StringFormat("ADX: %.1f", adxM15));
-    ObjectSetString(0, "ADX_IMMEDIATE_DI", OBJPROP_TEXT,
-                    StringFormat("+DI: %.1f | -DI: %.1f", plusDIM15, minusDIM15));
-
-    color adxM15Color = adxM15 > 25 ? CLR_PROFIT : (adxM15 > 20 ? CLR_NEUTRAL : clrGray);
-    ObjectSetInteger(0, "ADX_IMMEDIATE_VALUE", OBJPROP_COLOR, adxM15Color);
-
-    // Context ADX (H1)
-    double adxH1 = GetADXValue(PERIOD_H1, 0);
-    double plusDIH1 = GetADXValue(PERIOD_H1, 1);
-    double minusDIH1 = GetADXValue(PERIOD_H1, 2);
-
-    ObjectSetString(0, "ADX_CONTEXT_VALUE", OBJPROP_TEXT, StringFormat("ADX: %.1f", adxH1));
-    ObjectSetString(0, "ADX_CONTEXT_DI", OBJPROP_TEXT,
-                    StringFormat("+DI: %.1f | -DI: %.1f", plusDIH1, minusDIH1));
-
-    color adxH1Color = adxH1 > 25 ? CLR_PROFIT : (adxH1 > 20 ? CLR_NEUTRAL : clrGray);
-    ObjectSetInteger(0, "ADX_CONTEXT_VALUE", OBJPROP_COLOR, adxH1Color);
-
-    // Trend Status
-    string trendText = "Trend: ";
-    color trendColor = clrGray;
-
-    if(adxH1 > 25) {
-        if(plusDIH1 > minusDIH1) {
-            trendText += "BULLISH";
-            trendColor = CLR_PROFIT;
-        } else {
-            trendText += "BEARISH";
-            trendColor = CLR_LOSS;
-        }
-    } else {
-        trendText += "NEUTRAL";
-        trendColor = CLR_NEUTRAL;
-    }
-
-    ObjectSetString(0, "ADX_TREND_STATUS", OBJPROP_TEXT, trendText);
-    ObjectSetInteger(0, "ADX_TREND_STATUS", OBJPROP_COLOR, trendColor);
-}
-
-//+------------------------------------------------------------------+
 //| Update Shield Section                                             |
 //+------------------------------------------------------------------+
 void UpdateShieldSection() {
@@ -1123,22 +1026,6 @@ double GetATRValue(ENUM_TIMEFRAMES tf) {
 }
 
 //+------------------------------------------------------------------+
-//| Helper: Get ADX Value for Timeframe                              |
-//| bufferIndex: 0=ADX, 1=+DI, 2=-DI                                 |
-//+------------------------------------------------------------------+
-double GetADXValue(ENUM_TIMEFRAMES tf, int bufferIndex) {
-    int handle = iADX(_Symbol, tf, 14);
-    if(handle == INVALID_HANDLE) return 0;
-
-    double buffer[];
-    ArraySetAsSeries(buffer, true);
-    if(CopyBuffer(handle, bufferIndex, 0, 1, buffer) <= 0) return 0;
-
-    IndicatorRelease(handle);
-    return buffer[0];
-}
-
-//+------------------------------------------------------------------+
 //| Helper: Get ATR Condition Text                                   |
 //+------------------------------------------------------------------+
 string GetATRConditionText(double atrPips) {
@@ -1228,7 +1115,6 @@ void RemoveDashboard() {
     DeleteObjectsByPrefix("LEFT_");
     DeleteObjectsByPrefix("RIGHT_");
     DeleteObjectsByPrefix("VOL_");
-    DeleteObjectsByPrefix("ADX_");
     DeleteObjectsByPrefix("BTN_");
     DeleteObjectsByPrefix("LBL_");
     ChartRedraw(0);

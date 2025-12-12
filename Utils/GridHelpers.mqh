@@ -181,13 +181,35 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
 
     // CASCADE MODE: Decide tra PERFECT e RATIO
     if(CascadeMode == CASCADE_PERFECT) {
+        double cascadeTP;
+
         // Perfect Cascade: TP = Entry del livello precedente (verso entry point)
         if(level == 0) {
             // Level 1: TP = Entry Point centrale
-            return entryPointPrice;
+            cascadeTP = entryPointPrice;
         } else {
             // Livelli successivi: TP = Entry del livello precedente
-            return CalculateGridLevelPrice(entryPointPrice, zone, level - 1, spacingPips);
+            cascadeTP = CalculateGridLevelPrice(entryPointPrice, zone, level - 1, spacingPips);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FIX v4.5: Validazione direzione TP
+        // Per BUY: TP deve essere >= orderEntryPrice (prezzo deve salire)
+        // Per SELL: TP deve essere <= orderEntryPrice (prezzo deve scendere)
+        // ═══════════════════════════════════════════════════════════════
+        bool tpDirectionValid = isBuy ? (cascadeTP >= orderEntryPrice) : (cascadeTP <= orderEntryPrice);
+
+        if(tpDirectionValid) {
+            return cascadeTP;
+        }
+
+        // TP nella direzione sbagliata! Usa fallback ratio-based
+        // Questo garantisce sempre un TP nella direzione corretta
+        double tpDistance = spacingPrice * CascadeTP_Ratio;
+        if(isBuy) {
+            return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
+        } else {
+            return NormalizeDouble(orderEntryPrice - tpDistance, symbolDigits);
         }
     }
 
@@ -766,15 +788,33 @@ void CreateGridLevelLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, do
 }
 
 //+------------------------------------------------------------------+
-//| Create TP Line on Chart                                          |
+//| Create TP Line on Chart v4.6                                     |
+//| Uses configurable colors: yellow for BUY, red for SELL           |
 //+------------------------------------------------------------------+
 void CreateGridTPLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, double price) {
-    if(!ShowGridLines) return;
+    // v4.6: Use new ShowTPLines parameter
+    if(!ShowTPLines) return;
 
     string name = GetGridObjectPrefix(side, zone) + "TP" + IntegerToString(level + 1);
-    color clr = (side == GRID_A) ? COLOR_GRID_A_TP : COLOR_GRID_B_TP;
 
-    CreateHLine(name, price, clr, 1, STYLE_DASH);
+    // v4.6: Determine color based on order type (BUY = yellow, SELL = red)
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
+    bool isBuy = (orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_BUY_STOP);
+    color clr = isBuy ? TP_Line_Buy_Color : TP_Line_Sell_Color;
+
+    // v4.6: Use configurable style and width
+    CreateHLine(name, price, clr, TP_Line_Width, TP_Line_Style);
+
+    // Add small TP label
+    string labelName = name + "_LBL";
+    ObjectDelete(0, labelName);
+    if(ObjectCreate(0, labelName, OBJ_TEXT, 0, TimeCurrent() + PeriodSeconds() * 3, price)) {
+        ObjectSetString(0, labelName, OBJPROP_TEXT, "TP");
+        ObjectSetInteger(0, labelName, OBJPROP_COLOR, clr);
+        ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 6);
+        ObjectSetString(0, labelName, OBJPROP_FONT, "Arial");
+        ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_LEFT);
+    }
 }
 
 //+------------------------------------------------------------------+
@@ -861,20 +901,7 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     if(!EnableCyclicReopen) return false;
 
     // ═══════════════════════════════════════════════════════════════════
-    // v4.0 SAFETY CHECK 1: Block on strong trend (ADX)
-    // ═══════════════════════════════════════════════════════════════════
-    if(PauseReopenOnTrend && EnableADXMonitor) {
-        if(adxValue_Immediate > TrendADX_Threshold) {
-            if(DetailedLogging) {
-                Print("Reopen blocked: Strong trend (ADX ", DoubleToString(adxValue_Immediate, 1),
-                      " > ", DoubleToString(TrendADX_Threshold, 1), ")");
-            }
-            return false;
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    // v4.0 SAFETY CHECK 2: Block near Shield activation
+    // v4.0 SAFETY CHECK 1: Block near Shield activation
     // ═══════════════════════════════════════════════════════════════════
     if(PauseReopenNearShield && IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
         double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);

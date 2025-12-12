@@ -336,7 +336,7 @@ void InitializeArrays() {
     ArrayInitialize(gridA_Upper_SL, 0);
     ArrayInitialize(gridA_Upper_LastClose, 0);
     ArrayInitialize(gridA_Upper_Cycles, 0);
-    for(int i = 0; i < 10; i++) gridA_Upper_Status[i] = ORDER_NONE;
+    for(int i = 0; i < MAX_GRID_LEVELS; i++) gridA_Upper_Status[i] = ORDER_NONE;  // FIX v4.5
 
     // Grid A Lower
     ArrayInitialize(gridA_Lower_Tickets, 0);
@@ -346,7 +346,7 @@ void InitializeArrays() {
     ArrayInitialize(gridA_Lower_SL, 0);
     ArrayInitialize(gridA_Lower_LastClose, 0);
     ArrayInitialize(gridA_Lower_Cycles, 0);
-    for(int i = 0; i < 10; i++) gridA_Lower_Status[i] = ORDER_NONE;
+    for(int i = 0; i < MAX_GRID_LEVELS; i++) gridA_Lower_Status[i] = ORDER_NONE;  // FIX v4.5
 
     // Grid B Upper
     ArrayInitialize(gridB_Upper_Tickets, 0);
@@ -356,7 +356,7 @@ void InitializeArrays() {
     ArrayInitialize(gridB_Upper_SL, 0);
     ArrayInitialize(gridB_Upper_LastClose, 0);
     ArrayInitialize(gridB_Upper_Cycles, 0);
-    for(int i = 0; i < 10; i++) gridB_Upper_Status[i] = ORDER_NONE;
+    for(int i = 0; i < MAX_GRID_LEVELS; i++) gridB_Upper_Status[i] = ORDER_NONE;  // FIX v4.5
 
     // Grid B Lower
     ArrayInitialize(gridB_Lower_Tickets, 0);
@@ -366,7 +366,7 @@ void InitializeArrays() {
     ArrayInitialize(gridB_Lower_SL, 0);
     ArrayInitialize(gridB_Lower_LastClose, 0);
     ArrayInitialize(gridB_Lower_Cycles, 0);
-    for(int i = 0; i < 10; i++) gridB_Lower_Status[i] = ORDER_NONE;
+    for(int i = 0; i < MAX_GRID_LEVELS; i++) gridB_Lower_Status[i] = ORDER_NONE;  // FIX v4.5
 
     // Initialize Shield Structure
     ZeroMemory(shield);

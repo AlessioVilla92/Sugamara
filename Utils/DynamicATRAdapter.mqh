@@ -427,7 +427,7 @@ double GetDynamicSpacing() {
 
     // v4.6: LINEAR INTERPOLATION with RATE LIMITING
     if(UseLinearInterpolation) {
-        double currentATR = GetATRPipsUnified(0);
+        double currentATR = GetATRPipsUnified(2);  // Mode 2: Update on new bar (was 0=cache only - BUG FIX)
         double targetSpacing = GetInterpolatedSpacing(currentATR);
 
         // Apply rate limiting if enabled

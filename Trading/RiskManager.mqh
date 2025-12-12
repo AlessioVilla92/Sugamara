@@ -189,9 +189,12 @@ bool HasSufficientMargin() {
     double freeMargin = GetFreeMargin();
     double marginLevel = GetMarginLevel();
 
-    // Minimum free margin check
-    if(freeMargin < 100) {
-        LogMessage(LOG_WARNING, "Free margin too low: " + FormatMoney(freeMargin));
+    // FIX v4.5: Dynamic margin check based on equity (1% minimum, at least $50)
+    double minMarginRequired = AccountInfoDouble(ACCOUNT_EQUITY) * 0.01;
+    if(minMarginRequired < 50) minMarginRequired = 50;  // Minimum absolute $50
+
+    if(freeMargin < minMarginRequired) {
+        LogMessage(LOG_WARNING, "Free margin too low: " + FormatMoney(freeMargin) + " (min: " + FormatMoney(minMarginRequired) + ")");
         return false;
     }
 

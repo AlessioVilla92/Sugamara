@@ -298,11 +298,11 @@ double ValidateStopLoss(double price, double sl, bool isBuy) {
 
     double minDistance = symbolStopsLevel * symbolPoint;
     if(minDistance < symbolPoint * 10) {
-        minDistance = symbolPoint * 50;  // Default 5 pips minimum
+        minDistance = symbolPoint * 30;  // Default 3 pips minimum (was 50=5pips - v4.6 FIX)
     }
 
     // Add safety margin
-    minDistance *= 1.2;
+    minDistance *= 1.1;  // 10% margin (was 1.2=20% - v4.6 FIX)
 
     if(isBuy) {
         // For BUY, SL must be below price
@@ -330,11 +330,11 @@ double ValidateTakeProfit(double price, double tp, bool isBuy) {
 
     double minDistance = symbolStopsLevel * symbolPoint;
     if(minDistance < symbolPoint * 10) {
-        minDistance = symbolPoint * 50;  // Default 5 pips minimum
+        minDistance = symbolPoint * 30;  // Default 3 pips minimum (was 50=5pips - v4.6 FIX)
     }
 
     // Add safety margin
-    minDistance *= 1.2;
+    minDistance *= 1.1;  // 10% margin (was 1.2=20% - v4.6 FIX)
 
     if(isBuy) {
         // For BUY, TP must be above price
@@ -362,7 +362,7 @@ bool IsValidPendingPrice(double price, ENUM_ORDER_TYPE orderType) {
     double minDistance = symbolStopsLevel * symbolPoint;
 
     if(minDistance < symbolPoint * 10) {
-        minDistance = symbolPoint * 50;
+        minDistance = symbolPoint * 30;  // FIX v4.5: Unified to 3 pips minimum
     }
 
     switch(orderType) {
@@ -396,7 +396,7 @@ double GetSafeOrderPrice(double desiredPrice, ENUM_ORDER_TYPE orderType) {
     double minDistance = symbolStopsLevel * symbolPoint;
 
     if(minDistance < symbolPoint * 10) {
-        minDistance = symbolPoint * 50;
+        minDistance = symbolPoint * 30;  // FIX v4.5: Unified to 3 pips minimum
     }
 
     // Add safety margin

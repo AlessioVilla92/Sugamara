@@ -268,7 +268,8 @@ double CalculateCenterConfidence() {
 
     // Convert to confidence: lower stdDev = higher confidence
     // Threshold: if stdDev is 0.1% of price = 50% confidence
-    double stdDevPercent = (stdDev / mean) * 100;
+    // FIX v4.5: Protezione divisione per zero
+    double stdDevPercent = (mean > 0) ? ((stdDev / mean) * 100) : 0;
 
     // Map 0-0.5% stdDev to 100-0% confidence
     double confidence = MathMax(0, 100 - (stdDevPercent * 200));
