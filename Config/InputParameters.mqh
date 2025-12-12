@@ -17,8 +17,6 @@ input group "║  🆕 SUGAMARA v3.0 - NEW FEATURES                          ║
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ✅ FEATURE TOGGLES"
-input bool      Enable_PartialTP = true;                    // ✅ Partial Take Profit (50%/75%/100%)
-input bool      Enable_TrailingAsymmetric = true;           // ✅ Trailing Stop Asimmetrico
 input bool      Enable_ATRMultiTF = true;                   // ✅ ATR Multi-Timeframe Dashboard
 input bool      Enable_ManualSR = true;                     // ✅ Manual S/R Drag & Drop
 // Enable_AdvancedButtons REMOVED (v4.4) - Buttons are ALWAYS active
@@ -47,6 +45,8 @@ input group "╔═════════════════════�
 input group "║  💰 PARTIAL TAKE PROFIT (v3.0)                            ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
+input bool      Enable_PartialTP = true;                    // ✅ Abilita Partial Take Profit
+
 input group "    📊 PARTIAL TP LEVELS"
 input double    PartialTP_Level1_Percent = 50.0;            // 📊 Level 1: % verso TP
 input double    PartialTP_Level1_Close = 50.0;              // 📉 Chiudi % posizione a Level 1
@@ -62,6 +62,8 @@ input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  📈 TRAILING STOP ASIMMETRICO (v3.0)                      ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
+
+input bool      Enable_TrailingAsymmetric = false;          // ✅ Abilita Trailing Stop Asimmetrico ( Disattivato 12dic )
 
 input group "    🎯 TRAILING PARAMETERS"
 input double    Trailing_Aggressive_Pips = 5.0;             // ⚡ Trailing Aggressivo (pips) - verso breakout
@@ -135,10 +137,10 @@ input color     Theme_DashboardText = clrCyan;              // 📝 Dashboard Te
 input color     Theme_DashboardAccent = clrAqua;            // ⭐ Dashboard Accent
 
 input group "    📏 GRID LINE COLORS"
-input color     GridLine_BuyStop = clrDarkGreen;            // 🟢 BUY STOP: Verde Scuro
-input color     GridLine_BuyLimit = clrLime;                // 🟢 BUY LIMIT: Verde Chiaro
-input color     GridLine_SellStop = clrRed;                 // 🔴 SELL STOP: Rosso
+input color     GridLine_BuyLimit = clrDarkGreen;           // 🟢 BUY LIMIT: Verde Scuro
+input color     GridLine_BuyStop = clrBlue;                 // 🔵 BUY STOP: Blu
 input color     GridLine_SellLimit = clrOrange;             // 🟠 SELL LIMIT: Arancione
+input color     GridLine_SellStop = clrPlum;                // 🟣 SELL STOP: Viola Chiaro
 input int       GridLine_Width = 2;                         // 📏 Spessore Linee Grid
 
 //+------------------------------------------------------------------+
@@ -261,7 +263,7 @@ input group "║  3️⃣.6️⃣  ⚠️ ATR EXTREME WARNING v4.1              
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ⚠️ EXTREME WARNING"
-input bool      ATR_EnableExtremeWarning = true;             // ✅ Abilita Warning Veloce su ATR Extreme
+input bool      ATR_EnableExtremeWarning = false;            // ✅ Abilita Warning Veloce su ATR Extreme ( Disattivato 12dic )
 input double    ATR_ExtremeThreshold_Pips = 50.0;            // ⚠️ Soglia ATR Extreme (pips) - Warning se >
 input int       ATR_ExtremeCheck_Seconds = 10;               // ⏱️ Intervallo Check Extreme (secondi)
 input bool      ATR_PauseOnExtreme = false;                  // 🛑 Pausa nuovi ordini su Extreme
@@ -463,10 +465,12 @@ input group "    ╔═ SELEZIONA TRIGGER MODE ═══════════
 input ENUM_REOPEN_TRIGGER ReopenTrigger = REOPEN_PRICE_LEVEL;// 📊 Trigger Reopen ▼
 
 input group "    📐 CYCLIC PARAMETERS"
+input bool      EnableCyclicCooldown = false;                // ✅ Abilita Cooldown Temporale ( Disattivato 12dic )
 input int       CyclicCooldown_Seconds = 120;                // ⏱️ Cooldown tra Cicli (sec)
 input int       MaxCyclesPerLevel = 0;                       // 🔢 Max Cicli per Livello (0=infiniti)
-input double    ReopenOffset_Pips = 5.0;                     // 📏 Offset Reopen (pips)
-// Riapre ordine quando prezzo torna al livello ± offset
+input bool      EnableReopenOffset = true;                   // ✅ Abilita Offset Bidirezionale
+input double    ReopenOffset_Pips = 5.0;                     // 📏 Offset Bidirezionale (±pips)
+// Riapre ordine quando prezzo torna al livello ± offset (es: 5 pips = zona ±5 pips)
 
 input group "    🔄 REOPEN MODE v4.0"
 input ENUM_REOPEN_MODE ReopenMode = REOPEN_MODE_SAME_POINT;  // 📍 Modalità Calcolo Prezzo Reopen ▼
@@ -475,9 +479,9 @@ input ENUM_REOPEN_MODE ReopenMode = REOPEN_MODE_SAME_POINT;  // 📍 Modalità C
 // REOPEN_MODE_HYBRID: Stesso punto se vicino, ATR se lontano (>50% spacing)
 
 input group "    🛡️ SICUREZZA REOPEN v4.0"
-input bool      PauseReopenNearShield = true;                // 🛡️ Pausa reopen vicino a Shield
+input bool      PauseReopenNearShield = false;               // 🛡️ Pausa reopen vicino a Shield ( Disattivato 12dic )
 input double    ShieldProximity_Pips = 20.0;                 // 📏 Distanza minima da Shield (pips)
-input bool      PauseReopenOnExtreme = true;                 // 🛡️ Pausa reopen su ATR EXTREME
+input bool      PauseReopenOnExtreme = false;                // 🛡️ Pausa reopen su ATR EXTREME ( Disattivato 12dic )
 
 //+------------------------------------------------------------------+
 //| 1️⃣2️⃣ 🚨 RISK MANAGEMENT                                          |
@@ -494,7 +498,7 @@ input double    DailyProfitTarget_USD = 100.0;               // 💵 Profit Targ
 input double    DailyLossLimit_USD = 50.0;                   // 📉 Loss Limit ($)
 
 input group "    ⚠️ VOLATILITY PAUSE"
-input bool      PauseOnHighATR = true;                       // ✅ Pausa se ATR Alto
+input bool      PauseOnHighATR = false;                      // ✅ Pausa se ATR Alto ( Disattivato 12dic )
 input double    HighATR_Threshold = 50.0;                    // 📊 Soglia ATR Pausa (pips)
 // Non piazza nuovi ordini se ATR > 50 pips
 
@@ -622,7 +626,7 @@ input group "║  1️⃣7️⃣.6️⃣  🔄 AUTO-RECENTER v4.0               
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ⚙️ ATTIVAZIONE"
-input bool      EnableAutoRecenter = true;                   // ✅ Abilita Auto-Recenter
+input bool      EnableAutoRecenter = false;                  // ✅ Abilita Auto-Recenter ( Disattivato 12dic )
 input bool      RequireUserConfirm = false;                  // ⚠️ Richiedi conferma utente prima di recenter
 
 input group "    📏 CONDIZIONI TRIGGER"

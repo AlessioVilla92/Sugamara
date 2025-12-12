@@ -261,6 +261,7 @@ bool InitializeDashboard() {
     CreateUnifiedDashboard();
     CreateVolatilityPanel();
     CreateShieldPanel();
+    CreateGridLegendPanel();
 
     // Mark dashboard as initialized
     g_dashboardInitialized = true;
@@ -292,7 +293,8 @@ bool VerifyDashboardExists() {
         "LEFT_EXPOSURE_PANEL",
         "RIGHT_PERF_PANEL",
         "VOL_PANEL",
-        "SHIELD_PANEL"
+        "SHIELD_PANEL",
+        "GRID_LEGEND_PANEL"
     };
 
     int missingCount = 0;
@@ -329,6 +331,7 @@ void RecreateEntireDashboard() {
     CreateUnifiedDashboard();
     CreateVolatilityPanel();
     CreateShieldPanel();
+    CreateGridLegendPanel();
 
     // v4.4: Control buttons ALWAYS active
     // FIX v4.5: Corrected parameter order (startX, startY, panelWidth)
@@ -635,6 +638,35 @@ void CreateShieldPanel() {
     DashLabel("SHIELD_PL", shieldX + 10, ly, "P/L: ---", clrGray, 9, "Arial Bold");
 
     Print("SUCCESS: Shield Panel created");
+}
+
+//+------------------------------------------------------------------+
+//| Create Grid Legend Panel (Right Side)                             |
+//+------------------------------------------------------------------+
+void CreateGridLegendPanel() {
+    int legendX = Dashboard_X + TOTAL_WIDTH + 10;
+    int legendY = Dashboard_Y + 478;  // Sotto SHIELD_PANEL
+    int legendWidth = 175;
+    int legendHeight = 100;
+
+    DashRectangle("GRID_LEGEND_PANEL", legendX, legendY, legendWidth, legendHeight, CLR_BG_DARK);
+
+    int ly = legendY + 8;
+    DashLabel("LEGEND_TITLE", legendX + 10, ly, "GRID LINES", CLR_GOLD, 9, "Arial Bold");
+    ly += 20;
+    DashLabel("LEGEND_SEP", legendX + 10, ly, "------------------------", clrGray, 7);
+    ly += 15;
+
+    // Legend Items con colori delle grid lines
+    DashLabel("LEGEND_BL", legendX + 10, ly, "■ BUY LIMIT (GA Up)", GridLine_BuyLimit, 8);
+    ly += 16;
+    DashLabel("LEGEND_SS", legendX + 10, ly, "■ SELL STOP (GA Low)", GridLine_SellStop, 8);
+    ly += 16;
+    DashLabel("LEGEND_SL", legendX + 10, ly, "■ SELL LIMIT (GB Up)", GridLine_SellLimit, 8);
+    ly += 16;
+    DashLabel("LEGEND_BS", legendX + 10, ly, "■ BUY STOP (GB Low)", GridLine_BuyStop, 8);
+
+    Print("SUCCESS: Grid Legend Panel created");
 }
 
 //+------------------------------------------------------------------+
@@ -1117,6 +1149,9 @@ void RemoveDashboard() {
     DeleteObjectsByPrefix("VOL_");
     DeleteObjectsByPrefix("BTN_");
     DeleteObjectsByPrefix("LBL_");
+    DeleteObjectsByPrefix("LEGEND_");
+    DeleteObjectsByPrefix("GRID_LEGEND_");
+    DeleteObjectsByPrefix("SHIELD_");
     ChartRedraw(0);
 }
 

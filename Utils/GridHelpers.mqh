@@ -964,9 +964,12 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
 
     if(lastClose == 0) return true;  // Never closed, can open
 
-    int elapsed = SecondsElapsed(lastClose);
-    if(elapsed < CyclicCooldown_Seconds) {
-        return false;  // Still in cooldown
+    // COOLDOWN CHECK (v4.6 - Disabilitabile)
+    if(EnableCyclicCooldown) {
+        int elapsed = SecondsElapsed(lastClose);
+        if(elapsed < CyclicCooldown_Seconds) {
+            return false;  // Still in cooldown
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1072,8 +1075,14 @@ bool IsPriceAtReopenLevel(double levelPrice) {
     if(ReopenTrigger != REOPEN_PRICE_LEVEL) return true;
 
     double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-    double offsetPrice = PipsToPoints(ReopenOffset_Pips);
 
+    // Se offset disabilitato, riapre solo al prezzo esatto (tolleranza 1 pip)
+    if(!EnableReopenOffset) {
+        double minOffset = PipsToPoints(1.0);  // Tolleranza minima 1 pip
+        return (MathAbs(currentPrice - levelPrice) <= minOffset);
+    }
+
+    double offsetPrice = PipsToPoints(ReopenOffset_Pips);
     return (MathAbs(currentPrice - levelPrice) <= offsetPrice);
 }
 
