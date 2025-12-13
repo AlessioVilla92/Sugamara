@@ -159,7 +159,7 @@ input bool      EnableAlerts = true;                         // 🔔 Enable Aler
 
 input group "    🚨 EMERGENCY PROTECTION"
 input bool      EnableEmergencyStop = true;                  // ✅ Enable Emergency Stop
-input double    EmergencyStop_Percent = 12.0;                // 📉 Emergency Stop DD (%)
+input double    EmergencyStop_Percent = 20.0;                // 📉 Emergency Stop DD (%) - Aumentato per grid puro ribelle
 
 //+------------------------------------------------------------------+
 //| 2️⃣ ⭐ MODALITÀ GRIDBOT ⭐                                        |
@@ -462,7 +462,7 @@ input group "    ♻️ CYCLIC ACTIVATION"
 input bool      EnableCyclicReopen = true;                   // ✅ Abilita Cyclic Reopen
 
 input group "    ╔═ SELEZIONA TRIGGER MODE ════════════════════════════════🔽🔽🔽"
-input ENUM_REOPEN_TRIGGER ReopenTrigger = REOPEN_PRICE_LEVEL;// 📊 Trigger Reopen ▼
+input ENUM_REOPEN_TRIGGER ReopenTrigger = REOPEN_IMMEDIATE;  // 📊 Trigger Reopen ▼ (IMMEDIATE = griglia sempre completa!)
 
 input group "    📐 CYCLIC PARAMETERS"
 input bool      EnableCyclicCooldown = false;                // ✅ Abilita Cooldown Temporale ( Disattivato 12dic )
@@ -515,7 +515,7 @@ input group "║  1️⃣3️⃣  🛑 STOP LOSS CONFIGURATION                  
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    🌐 GLOBAL STOP LOSS"
-input bool      UseGlobalStopLoss = true;                    // ✅ Usa SL Globale
+input bool      UseGlobalStopLoss = false;                   // ❌ DISABILITATO - Rompe la logica neutrale! L'auto-hedging compensa le perdite
 input double    GlobalSL_Percent = 120.0;                    // 📊 SL Globale (% del range)
 // SL = Entry ± (Range × 120%) = 20% oltre il range
 
@@ -909,7 +909,7 @@ input bool      EnableSessionClose = true;                   // ✅ Enable Auto 
 input string    SessionCloseTime = "17:00";                  // 🕔 Close Time (HH:MM broker time)
 
 input group "    🔒 END OF SESSION ACTIONS"
-input bool      CloseAllOnSessionEnd = true;                 // ✅ Close All Positions at Session End
+input bool      CloseAllOnSessionEnd = false;                // ❌ DISABILITATO per grid 24/7 puro ribelle
 input bool      DeletePendingOnEnd = true;                   // ✅ Delete All Pending Orders at End
 
 //+------------------------------------------------------------------+

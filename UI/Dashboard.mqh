@@ -239,7 +239,7 @@ bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA DASHBOARD V4.4 - PERSISTENT MODE                        ");
+    Print("  SUGAMARA PURE RIBELLE V4.5 - GRID NEUTRAL 24/7                    ");
     Print("═══════════════════════════════════════════════════════════════════");
 
     // Check if dashboard already exists and is complete
@@ -395,8 +395,8 @@ void CreateUnifiedDashboard() {
     //═══════════════════════════════════════════════════════════════
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 15, "SUGAMARA V4.4", CLR_GOLD, 16, "Arial Black");
-    DashLabel("TITLE_SUB", x + totalWidth/2 - 70, y + 42, "Double Grid Neutral", CLR_AZURE_1, 10, "Arial Bold");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 120, y + 15, "SUGAMARA PURE RIBELLE", CLR_GOLD, 16, "Arial Black");
+    DashLabel("TITLE_SUB", x + totalWidth/2 - 60, y + 42, "V4.5 - Grid Neutral 24/7", CLR_AZURE_1, 10, "Arial Bold");
     y += titleHeight;
 
     //═══════════════════════════════════════════════════════════════

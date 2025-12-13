@@ -127,6 +127,7 @@ enum ENUM_CASCADE_MODE {
 //| 🔄 REOPEN TRIGGER - Trigger per riapertura ciclica               |
 //+------------------------------------------------------------------+
 enum ENUM_REOPEN_TRIGGER {
+    REOPEN_IMMEDIATE,           // Immediate - Riapre SUBITO dopo chiusura (griglia sempre completa!)
     REOPEN_PRICE_LEVEL,         // Price Level - Riapre quando prezzo torna al livello
     REOPEN_TIME_BASED,          // Time Based - Riapre dopo X secondi
     REOPEN_HYBRID               // Hybrid - Price Level + Time Based
