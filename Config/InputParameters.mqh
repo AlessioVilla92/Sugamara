@@ -158,8 +158,8 @@ input bool      DetailedLogging = true;                      // 📝 Detailed Lo
 input bool      EnableAlerts = true;                         // 🔔 Enable Alerts
 
 input group "    🚨 EMERGENCY PROTECTION"
-input bool      EnableEmergencyStop = true;                  // ✅ Enable Emergency Stop
-input double    EmergencyStop_Percent = 20.0;                // 📉 Emergency Stop DD (%) - Aumentato per grid puro ribelle
+input bool      EnableEmergencyStop = false;                 // ❌ DISABILITATO - RIBELLE TOTALE! Nessun limite automatico
+input double    EmergencyStop_Percent = 20.0;                // 📉 Emergency Stop DD (%) - Non usato se EnableEmergencyStop=false
 
 //+------------------------------------------------------------------+
 //| 2️⃣ ⭐ MODALITÀ GRIDBOT ⭐                                        |
