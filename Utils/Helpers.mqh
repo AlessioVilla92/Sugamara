@@ -214,6 +214,253 @@ void LogGridStatus(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, string s
 }
 
 //+------------------------------------------------------------------+
+//| ENHANCED LOGGING SYSTEM v5.0 - SUGAMARA RIBELLE                  |
+//| Detailed logging for all EA functionalities                      |
+//+------------------------------------------------------------------+
+
+// Log Categories
+#define LOG_CAT_SYSTEM    "[SYSTEM]"
+#define LOG_CAT_GRID      "[GRID]"
+#define LOG_CAT_ORDER     "[ORDER]"
+#define LOG_CAT_CASCADE   "[CASCADE]"
+#define LOG_CAT_SHIELD    "[SHIELD]"
+#define LOG_CAT_ATR       "[ATR]"
+#define LOG_CAT_CYCLE     "[CYCLE]"
+#define LOG_CAT_REOPEN    "[REOPEN]"
+
+//+------------------------------------------------------------------+
+//| Get Current Timestamp String                                      |
+//+------------------------------------------------------------------+
+string GetLogTimestamp() {
+    datetime now = TimeCurrent();
+    return TimeToString(now, TIME_DATE|TIME_SECONDS);
+}
+
+//+------------------------------------------------------------------+
+//| Log System Event (Initialization, Shutdown, State Changes)        |
+//+------------------------------------------------------------------+
+void LogSystem(string message, bool forceLog = false) {
+    if(!DetailedLogging && !forceLog) return;
+    PrintFormat("%s %s %s", GetLogTimestamp(), LOG_CAT_SYSTEM, message);
+}
+
+//+------------------------------------------------------------------+
+//| Log Grid Event (Level calculations, prices, state)                |
+//+------------------------------------------------------------------+
+void LogGrid(ENUM_GRID_SIDE side, string message) {
+    if(!DetailedLogging) return;
+    string gridName = (side == GRID_A) ? "A" : "B";
+    PrintFormat("%s %s Grid%s: %s", GetLogTimestamp(), LOG_CAT_GRID, gridName, message);
+}
+
+//+------------------------------------------------------------------+
+//| Log Order Event (Placement, Fill, Close, Modify)                  |
+//+------------------------------------------------------------------+
+void LogOrder(string action, ulong ticket, string details) {
+    if(!DetailedLogging) return;
+    PrintFormat("%s %s %s #%d - %s", GetLogTimestamp(), LOG_CAT_ORDER, action, ticket, details);
+}
+
+//+------------------------------------------------------------------+
+//| Log CASCADE_OVERLAP Specific Events                               |
+//+------------------------------------------------------------------+
+void LogCascadeOverlap(string event, string details) {
+    if(!DetailedLogging) return;
+    PrintFormat("%s %s [OVERLAP] %s: %s", GetLogTimestamp(), LOG_CAT_CASCADE, event, details);
+}
+
+//+------------------------------------------------------------------+
+//| Log Shield Events (3 Phases, Activation, Deactivation)            |
+//+------------------------------------------------------------------+
+void LogShield(string phase, string action, string details = "") {
+    if(!DetailedLogging) return;
+    if(details != "") {
+        PrintFormat("%s %s [%s] %s - %s", GetLogTimestamp(), LOG_CAT_SHIELD, phase, action, details);
+    } else {
+        PrintFormat("%s %s [%s] %s", GetLogTimestamp(), LOG_CAT_SHIELD, phase, action);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Log ATR/Volatility Events                                         |
+//+------------------------------------------------------------------+
+void LogATR(double atrValue, double spacing, string condition) {
+    if(!DetailedLogging) return;
+    PrintFormat("%s %s ATR=%.2f pips | Spacing=%.1f pips | Condition: %s",
+                GetLogTimestamp(), LOG_CAT_ATR, atrValue, spacing, condition);
+}
+
+//+------------------------------------------------------------------+
+//| Log Cycle Completion                                              |
+//+------------------------------------------------------------------+
+void LogCycle(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, int cycleNum, double profit) {
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    PrintFormat("%s %s Grid%s-%s-L%d: Cycle #%d completed | Profit: $%.2f",
+                GetLogTimestamp(), LOG_CAT_CYCLE, gridName, zoneName, level+1, cycleNum, profit);
+}
+
+//+------------------------------------------------------------------+
+//| Log Reopen Event                                                  |
+//+------------------------------------------------------------------+
+void LogReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, string reason) {
+    if(!DetailedLogging) return;
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    PrintFormat("%s %s Grid%s-%s-L%d: %s",
+                GetLogTimestamp(), LOG_CAT_REOPEN, gridName, zoneName, level+1, reason);
+}
+
+//+------------------------------------------------------------------+
+//| Log Detailed Order Placement (CASCADE_OVERLAP)                    |
+//+------------------------------------------------------------------+
+void LogOrderPlacement(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
+                       ENUM_ORDER_TYPE orderType, double price, double tp, double sl, double lot) {
+    if(!DetailedLogging) return;
+
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    string typeName = "";
+
+    switch(orderType) {
+        case ORDER_TYPE_BUY_LIMIT:  typeName = "BUY_LIMIT"; break;
+        case ORDER_TYPE_BUY_STOP:   typeName = "BUY_STOP"; break;
+        case ORDER_TYPE_SELL_LIMIT: typeName = "SELL_LIMIT"; break;
+        case ORDER_TYPE_SELL_STOP:  typeName = "SELL_STOP"; break;
+        default: typeName = "UNKNOWN"; break;
+    }
+
+    // Check if this is a hedge order (CASCADE_OVERLAP)
+    string hedgeInfo = "";
+    if(IsCascadeOverlapMode()) {
+        if((side == GRID_A && zone == ZONE_LOWER) || (side == GRID_B && zone == ZONE_UPPER)) {
+            hedgeInfo = " [HEDGE -3pip]";
+        } else {
+            hedgeInfo = " [TREND]";
+        }
+    }
+
+    PrintFormat("%s %s Grid%s-%s-L%d: %s%s @ %.5f | TP=%.5f | SL=%.5f | Lot=%.2f",
+                GetLogTimestamp(), LOG_CAT_ORDER, gridName, zoneName, level+1,
+                typeName, hedgeInfo, price, tp, sl, lot);
+}
+
+//+------------------------------------------------------------------+
+//| Log Order Fill (Position Opened)                                  |
+//+------------------------------------------------------------------+
+void LogOrderFill(ulong ticket, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, double fillPrice) {
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+
+    string direction = "";
+    if(IsCascadeOverlapMode()) {
+        direction = (side == GRID_A) ? "LONG" : "SHORT";
+    } else {
+        direction = ((side == GRID_A && zone == ZONE_UPPER) || (side == GRID_B && zone == ZONE_LOWER)) ? "LONG" : "SHORT";
+    }
+
+    PrintFormat("%s %s FILLED #%d | Grid%s-%s-L%d | %s @ %.5f",
+                GetLogTimestamp(), LOG_CAT_ORDER, ticket, gridName, zoneName, level+1, direction, fillPrice);
+}
+
+//+------------------------------------------------------------------+
+//| Log Position Close (TP Hit, SL Hit, Manual)                       |
+//+------------------------------------------------------------------+
+void LogPositionClose(ulong ticket, string reason, double profit, double closePrice) {
+    string profitStr = (profit >= 0) ? StringFormat("+$%.2f", profit) : StringFormat("-$%.2f", MathAbs(profit));
+    PrintFormat("%s %s CLOSED #%d | %s | %s @ %.5f",
+                GetLogTimestamp(), LOG_CAT_ORDER, ticket, reason, profitStr, closePrice);
+}
+
+//+------------------------------------------------------------------+
+//| Log Session Summary                                               |
+//+------------------------------------------------------------------+
+void LogSessionSummary() {
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  SUGAMARA RIBELLE - SESSION SUMMARY");
+    Print("═══════════════════════════════════════════════════════════════════");
+    PrintFormat("  Timestamp: %s", GetLogTimestamp());
+    PrintFormat("  Total Wins: %d | Total Losses: %d", sessionWins, sessionLosses);
+    PrintFormat("  Win Rate: %.1f%%", GetWinRate());
+    PrintFormat("  Realized P/L: $%.2f", sessionRealizedProfit);
+    if(IsCascadeOverlapMode()) {
+        Print("  Mode: CASCADE_OVERLAP (Grid A=BUY, Grid B=SELL)");
+        PrintFormat("  Hedge Spacing: %.1f pips", Hedge_Spacing_Pips);
+    }
+    Print("═══════════════════════════════════════════════════════════════════");
+}
+
+//+------------------------------------------------------------------+
+//| Log Grid Initialization Summary                                   |
+//+------------------------------------------------------------------+
+void LogGridInitSummary(ENUM_GRID_SIDE side) {
+    if(!DetailedLogging) return;
+
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string orderTypes = "";
+
+    if(IsCascadeOverlapMode()) {
+        if(side == GRID_A) {
+            orderTypes = "Upper=BUY_STOP, Lower=BUY_LIMIT(-3pip)";
+        } else {
+            orderTypes = "Upper=SELL_LIMIT(+3pip), Lower=SELL_STOP";
+        }
+    } else {
+        if(side == GRID_A) {
+            orderTypes = "Upper=BUY_LIMIT, Lower=SELL_STOP";
+        } else {
+            orderTypes = "Upper=SELL_LIMIT, Lower=BUY_STOP";
+        }
+    }
+
+    Print("───────────────────────────────────────────────────────────────────");
+    PrintFormat("  GRID %s INITIALIZED", gridName);
+    PrintFormat("  Entry Point: %.5f", entryPoint);
+    PrintFormat("  Spacing: %.1f pips", currentSpacing_Pips);
+    PrintFormat("  Levels per side: %d", GridLevelsPerSide);
+    PrintFormat("  Order Types: %s", orderTypes);
+    Print("───────────────────────────────────────────────────────────────────");
+}
+
+//+------------------------------------------------------------------+
+//| Log Price Movement Alert                                          |
+//+------------------------------------------------------------------+
+void LogPriceAlert(string zone, double currentPrice, double triggerLevel, double distance) {
+    if(!DetailedLogging) return;
+    PrintFormat("%s [ALERT] Price in %s zone | Current=%.5f | Trigger=%.5f | Distance=%.1f pips",
+                GetLogTimestamp(), zone, currentPrice, triggerLevel, distance);
+}
+
+//+------------------------------------------------------------------+
+//| Log Startup Banner                                                |
+//+------------------------------------------------------------------+
+void LogStartupBanner() {
+    Print("");
+    Print("╔═══════════════════════════════════════════════════════════════════╗");
+    Print("║                                                                   ║");
+    Print("║     ███████╗██╗   ██╗ ██████╗  █████╗ ███╗   ███╗ █████╗ ██████╗  ║");
+    Print("║     ██╔════╝██║   ██║██╔════╝ ██╔══██╗████╗ ████║██╔══██╗██╔══██╗ ║");
+    Print("║     ███████╗██║   ██║██║  ███╗███████║██╔████╔██║███████║██████╔╝ ║");
+    Print("║     ╚════██║██║   ██║██║   ██║██╔══██║██║╚██╔╝██║██╔══██║██╔══██╗ ║");
+    Print("║     ███████║╚██████╔╝╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║██║  ██║ ║");
+    Print("║     ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ║");
+    Print("║                                                                   ║");
+    Print("║                      R I B E L L E   v5.0                         ║");
+    Print("║              CASCADE SOVRAPPOSTO - DUNE THEME                     ║");
+    Print("║                  \"The Spice Must Flow\"                            ║");
+    Print("║                                                                   ║");
+    Print("╚═══════════════════════════════════════════════════════════════════╝");
+    Print("");
+    PrintFormat("  Symbol: %s | Timeframe: %s", _Symbol, EnumToString((ENUM_TIMEFRAMES)Period()));
+    PrintFormat("  Start Time: %s", GetLogTimestamp());
+    if(IsCascadeOverlapMode()) {
+        Print("  Mode: CASCADE_OVERLAP (Grid A=SOLO BUY, Grid B=SOLO SELL)");
+        PrintFormat("  Hedge Spacing: %.1f pips", Hedge_Spacing_Pips);
+    }
+    Print("");
+}
+
+//+------------------------------------------------------------------+
 //| MATH & CALCULATION FUNCTIONS                                     |
 //+------------------------------------------------------------------+
 

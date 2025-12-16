@@ -1,36 +1,36 @@
 //+==================================================================+
-//|                                              Sugamara v3.0.0.mq5 |
+//|                                    SUGAMARA RIBELLE v5.0         |
 //|                                                                  |
-//|   SUGAMARA - DOUBLE GRID NEUTRAL MULTIMODE                       |
+//|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
-//|   Market Neutral • PURE / CASCADE / RANGEBOX                     |
+//|   "The Spice Must Flow" - DUNE Theme                             |
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
-//|  Copyright (C) 2025 - Sugamara Development Team                  |
-//|  Version: 3.0.0 MULTIMODE + ADVANCED FEATURES                    |
+//|  Copyright (C) 2025 - Sugamara Ribelle Development Team          |
+//|  Version: 5.0.0 CASCADE SOVRAPPOSTO                              |
 //|  Release Date: December 2025                                     |
 //+------------------------------------------------------------------+
-//|  SISTEMA DOUBLE GRID NEUTRAL - 3 MODALITÀ SELEZIONABILI          |
-//|                                                                   |
-//|  NEUTRAL_PURE:     Spacing fisso, TP fisso, NO ATR (learning)    |
-//|  NEUTRAL_CASCADE:  TP=Entry precedente, ATR opzionale (consigliato)|
-//|  NEUTRAL_RANGEBOX: Range Box + Hedge, ATR opzionale (produzione) |
-//|                                                                   |
-//|  v3.0 NEW FEATURES:                                              |
-//|  - Partial Take Profit (50%/75%/100%)                            |
-//|  - Trailing Stop Asimmetrico                                     |
-//|  - ATR Multi-Timeframe Dashboard                                 |
+//|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
+//|                                                                  |
+//|  Grid A = SOLO ordini BUY (Upper: BUY STOP, Lower: BUY LIMIT)    |
+//|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
+//|  Hedge automatico a 3 pips di distanza                           |
+//|                                                                  |
+//|  v5.0 FEATURES:                                                  |
+//|  - CASCADE_OVERLAP: Grid A=BUY puro, Grid B=SELL puro            |
+//|  - Hedge Spacing: 3 pips (STOP <-> LIMIT)                        |
+//|  - DUNE/Arrakis Desert Theme                                     |
+//|  - Enhanced Logging System                                       |
+//|  - Shield 3 Phases Protection                                    |
 //|  - Manual S/R Drag & Drop                                        |
-//|  - Control Buttons (MARKET/LIMIT/STOP/CLOSE)                     |
-//|  - Visual Theme: Amaranto Scuro + Blu Turchese                   |
 //+------------------------------------------------------------------+
 
-#property copyright "Sugamara (C) 2025"
+#property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
-#property version   "3.00"
-#property description "SUGAMARA v3.0 - Double Grid Neutral MULTIMODE"
-#property description "3 Modalità: PURE / CASCADE / RANGEBOX"
-#property description "v3.0: Partial TP, Trailing, ATR MTF, Manual S/R"
+#property version   "5.00"
+#property description "SUGAMARA RIBELLE v5.0 - CASCADE SOVRAPPOSTO"
+#property description "Grid A = SOLO BUY | Grid B = SOLO SELL"
+#property description "DUNE Theme - The Spice Must Flow"
 #property strict
 
 //+------------------------------------------------------------------+
@@ -63,18 +63,14 @@
 #include "Trading/GridBSystem.mqh"
 #include "Trading/PositionMonitor.mqh"
 #include "Trading/RiskManager.mqh"
-#include "Trading/RangeBoxManager.mqh"
-#include "Trading/HedgingManager.mqh"
 #include "Trading/ShieldManager.mqh"
 
 // v3.0 NEW Trading Modules
 #include "Trading/PartialTPManager.mqh"
-#include "Trading/GridTrailingManager.mqh"
 
 // v4.0 NEW Modules
 #include "Utils/DynamicATRAdapter.mqh"
 #include "Indicators/CenterCalculator.mqh"
-#include "Trading/GridRecenterManager.mqh"
 
 // UI Module
 #include "UI/Dashboard.mqh"
@@ -91,15 +87,13 @@
 //| Expert initialization function                                    |
 //+------------------------------------------------------------------+
 int OnInit() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA v3.0.0 - DOUBLE GRID NEUTRAL MULTIMODE                 ");
-    Print("  Market Neutral • PURE / CASCADE / RANGEBOX                      ");
-    Print("  v3.0: Partial TP | Trailing | ATR MTF | Manual S/R              ");
-    Print("  Copyright (C) 2025 - Sugamara Development Team                  ");
-    Print("═══════════════════════════════════════════════════════════════════");
+    //--- STARTUP BANNER (Enhanced Logging v5.0) ---
+    LogStartupBanner();
+    LogSystem("OnInit() started", true);
 
-    //--- APPLY VISUAL THEME ---
+    //--- APPLY VISUAL THEME (DUNE Theme) ---
     ApplyVisualTheme();
+    LogSystem("Visual theme applied: DUNE/Arrakis");
 
     //--- STEP 0: Validate Mode Parameters and Print Config ---
     if(!ValidateModeParameters()) {
@@ -174,21 +168,11 @@ int OnInit() {
     //--- STEP 10: Calculate Range Boundaries ---
     CalculateRangeBoundaries();
 
-    //--- STEP 10.5: Initialize RangeBox (only NEUTRAL_RANGEBOX) ---
-    if(IsRangeBoxAvailable()) {
-        if(!InitializeRangeBox()) {
-            Print("CRITICAL: Failed to initialize RangeBox");
-            systemState = STATE_ERROR;
-            return(INIT_FAILED);
-        }
-    }
+    //--- STEP 10.5: Initialize RangeBox (REMOVED - CASCADE_OVERLAP puro) ---
+    // RangeBoxManager eliminato - CASCADE SOVRAPPOSTO non lo richiede
 
-    //--- STEP 10.6: Initialize Hedging (only NEUTRAL_RANGEBOX with EnableHedging) ---
-    if(IsHedgingAvailable()) {
-        if(!InitializeHedgingManager()) {
-            Print("WARNING: Failed to initialize Hedging Manager");
-        }
-    }
+    //--- STEP 10.6: Initialize Hedging (REMOVED - hedge integrato in CASCADE_OVERLAP) ---
+    // HedgingManager eliminato - l'hedge è integrato nei LIMIT orders
 
     //--- STEP 10.7: Initialize Shield Intelligente (only NEUTRAL_RANGEBOX) ---
     if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
@@ -235,10 +219,8 @@ int OnInit() {
         Print("WARNING: Failed to initialize Partial TP Manager");
     }
 
-    //--- STEP 13.9: Initialize Trailing Manager (v3.0) ---
-    if(!InitializeTrailingManager()) {
-        Print("WARNING: Failed to initialize Trailing Manager");
-    }
+    //--- STEP 13.9: Initialize Trailing Manager (REMOVED - CASCADE_OVERLAP puro) ---
+    // GridTrailingManager eliminato - non necessario per CASCADE SOVRAPPOSTO
 
     //--- STEP 13.10: Initialize Manual S/R (v3.0) ---
     if(!InitializeManualSR()) {
@@ -259,12 +241,8 @@ int OnInit() {
         }
     }
 
-    //--- STEP 13.13: Initialize Recenter Manager (v4.0) ---
-    if(EnableAutoRecenter) {
-        if(!InitializeRecenterManager()) {
-            Print("WARNING: Failed to initialize Recenter Manager");
-        }
-    }
+    //--- STEP 13.13: Initialize Recenter Manager (REMOVED - CASCADE_OVERLAP puro) ---
+    // GridRecenterManager eliminato - non necessario per CASCADE SOVRAPPOSTO
 
     //--- STEP 13.14: Initialize Debug Mode (v4.5) ---
     if(!InitializeDebugMode()) {
@@ -298,19 +276,11 @@ int OnInit() {
         return(INIT_FAILED);
     }
 
-    //--- STEP 17.3: Sync RangeBox with Grid Levels ---
-    // CRITICAL: S/R = Last Grid Levels (not Manual/Daily_HL/ATR)
-    // Resistance = highest Grid B Upper, Support = lowest Grid A Lower
-    if(IsRangeBoxAvailable()) {
-        SyncRangeBoxWithGrid();
-    }
+    //--- STEP 17.3: Sync RangeBox with Grid Levels (REMOVED - CASCADE_OVERLAP) ---
+    // RangeBoxManager eliminato
 
-    //--- STEP 17.5: Calculate Breakout Levels for Shield ---
-    if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
-        if(!CalculateBreakoutLevels()) {
-            Print("WARNING: Failed to calculate breakout levels");
-        }
-    }
+    //--- STEP 17.5: Calculate Breakout Levels for Shield (REMOVED) ---
+    // CalculateBreakoutLevels eliminato con RangeBoxManager
 
     //--- STEP 18: Place Initial Orders ---
     // v4.4: Control Buttons ALWAYS active - wait for START button click
@@ -333,11 +303,11 @@ int OnInit() {
 
     Print("");
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA v4.3 INITIALIZATION COMPLETE");
-    Print("  Mode: ", GetModeName());
+    Print("  SUGAMARA RIBELLE v5.0 INITIALIZATION COMPLETE");
+    Print("  Mode: ", GetModeName(), IsCascadeOverlapMode() ? " (CASCADE SOVRAPPOSTO)" : "");
     Print("  System State: IDLE (Click START)");
-    Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions());
-    Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions());
+    Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions(), IsCascadeOverlapMode() ? " [SOLO BUY]" : "");
+    Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions(), IsCascadeOverlapMode() ? " [SOLO SELL]" : "");
     if(IsRangeBoxAvailable()) {
         Print("  RangeBox: R=", DoubleToString(rangeBox_Resistance, symbolDigits),
               " S=", DoubleToString(rangeBox_Support, symbolDigits));
@@ -348,14 +318,17 @@ int OnInit() {
         }
     }
     Print("───────────────────────────────────────────────────────────────────");
-    Print("  v3.0 FEATURES:");
+    Print("  v5.0 FEATURES:");
+    if(IsCascadeOverlapMode()) {
+        Print("  ✅ CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
+        Print("  ✅ Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
+    }
     Print("  ✅ Partial TP: ", Enable_PartialTP ? "ENABLED" : "DISABLED");
-    Print("  ✅ Trailing Asym: ", Enable_TrailingAsymmetric ? "ENABLED" : "DISABLED");
     Print("  ✅ ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
     Print("  ✅ Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
-    Print("  ✅ Control Buttons: ALWAYS ACTIVE (v4.4)");
+    Print("  ✅ Control Buttons: ALWAYS ACTIVE");
     Print("───────────────────────────────────────────────────────────────────");
-    Print("  v4.0 FEATURES:");
+    Print("  ATR/SPACING FEATURES:");
     Print("  ✅ Dynamic ATR Spacing: ", (EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) ? "ENABLED" : "DISABLED");
     if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
         Print("     ATR Step: ", GetATRStepName(currentATRStep));
@@ -449,7 +422,7 @@ void OnDeinit(const int reason) {
     // v3.0: Deinitialize new modules
     DeinitializeATRMultiTF();
     DeinitializePartialTPManager();
-    DeinitializeTrailingManager();
+    // DeinitializeTrailingManager(); // REMOVED - GridTrailingManager eliminato
     DeinitializeManualSR();
 
     // v4.0: Deinitialize new modules
@@ -468,9 +441,8 @@ void OnDeinit(const int reason) {
         DeinitializeShieldZonesVisual();
         CleanupUI();
 
-        // Clean up RangeBox visualization
-        if(IsRangeBoxAvailable())
-            RemoveRangeBoxVisualization();
+        // Clean up RangeBox visualization (REMOVED - CASCADE_OVERLAP puro)
+        // RangeBoxManager eliminato
     } else {
         Print("Preserving UI objects for quick restart...");
         // Reset initialization flag so dashboard will be verified on restart
@@ -478,9 +450,9 @@ void OnDeinit(const int reason) {
     }
 
     // Deinitialize Shield (logic only, not visual)
-    if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
+    if(ShieldMode != SHIELD_DISABLED) {
         DeinitializeShield();
-        DeinitializeRangeBoxShield();
+        // DeinitializeRangeBoxShield(); // REMOVED - RangeBoxManager eliminato
     }
 
     // Note: We do NOT close orders on deinit - they should persist
@@ -560,20 +532,15 @@ void OnTick() {
     //--- UPDATE POSITION STATUSES ---
     MonitorPositions();
 
-    //--- RANGEBOX: Update state and check breakouts (only NEUTRAL_RANGEBOX) ---
-    if(IsRangeBoxAvailable()) {
-        double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-        UpdateRangeBoxState(currentPrice);
-        RecalculateRangeBox();  // Ricalcola se ATR_BASED e tempo trascorso
-    }
+    //--- RANGEBOX: (REMOVED - CASCADE_OVERLAP puro) ---
+    // RangeBoxManager eliminato
 
-    //--- HEDGING: Monitor hedge positions (only NEUTRAL_RANGEBOX with EnableHedging) ---
-    if(IsHedgingAvailable()) {
-        MonitorHedgePositions();
-    }
+    //--- HEDGING: (REMOVED - hedge integrato in LIMIT orders) ---
+    // HedgingManager eliminato
 
-    //--- SHIELD: Process Shield Intelligente (only NEUTRAL_RANGEBOX with Shield enabled) ---
-    if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
+    //--- SHIELD: Process Shield Intelligente ---
+    // Shield ora gestito direttamente senza RangeBox
+    if(ShieldMode != SHIELD_DISABLED) {
         ProcessShield();
     }
 
@@ -608,8 +575,8 @@ void OnTick() {
     //--- v3.0: PROCESS PARTIAL TAKE PROFIT ---
     ProcessPartialTPs();
 
-    //--- v3.0: PROCESS TRAILING STOPS ---
-    ProcessTrailingStops();
+    //--- v3.0: PROCESS TRAILING STOPS (REMOVED - CASCADE_OVERLAP puro) ---
+    // ProcessTrailingStops(); // GridTrailingManager eliminato
 
     //--- v3.0: PROCESS ENTRY MODE WAITING (LIMIT/STOP) ---
     ProcessEntryModeWaiting();
@@ -634,10 +601,8 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
     // Process trade events (grid orders)
     OnTradeTransactionHandler(trans, request, result);
 
-    // Process hedge events (only NEUTRAL_RANGEBOX)
-    if(IsHedgingAvailable()) {
-        OnHedgeTradeTransaction(trans, request, result);
-    }
+    // Process hedge events (REMOVED - hedge integrato in LIMIT orders CASCADE_OVERLAP)
+    // OnHedgeTradeTransaction eliminato con HedgingManager
 }
 
 //+------------------------------------------------------------------+
@@ -666,11 +631,9 @@ void OnTimer() {
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // v4.0: Auto-Recenter Check (every 5 minutes)
+    // v4.0: Auto-Recenter Check (REMOVED - CASCADE_OVERLAP puro)
     // ═══════════════════════════════════════════════════════════════════
-    if(EnableAutoRecenter) {
-        CheckAndRecenterGrid();
-    }
+    // GridRecenterManager eliminato
 }
 
 //+------------------------------------------------------------------+
@@ -721,15 +684,11 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
 }
 
 //+------------------------------------------------------------------+
-//| Handle v4.0 Recenter Button Click                                 |
+//| Handle v4.0 Recenter Button Click (REMOVED - CASCADE_OVERLAP puro)|
 //+------------------------------------------------------------------+
 void HandleRecenterButtonClick(string objectName) {
-    if(objectName == "BTN_CONFIRM_RECENTER" || objectName == "SUGAMARA_BTN_CONFIRM_RECENTER") {
-        ConfirmPendingRecenter();
-    }
-    if(objectName == "BTN_CANCEL_RECENTER" || objectName == "SUGAMARA_BTN_CANCEL_RECENTER") {
-        CancelPendingRecenter();
-    }
+    // GridRecenterManager eliminato - funzioni non disponibili
+    Print("Recenter functionality removed in CASCADE_OVERLAP mode");
 }
 
 //+------------------------------------------------------------------+
@@ -824,24 +783,20 @@ void HandleKeyPress(int key) {
         }
     }
 
-    // E = Recenter Status Report
+    // E = Recenter Status Report (REMOVED - CASCADE_OVERLAP puro)
     if(key == 'E' || key == 'e') {
-        if(EnableAutoRecenter) {
-            LogRecenterReport();
-        } else {
-            Print("Auto-Recenter not available (disabled)");
-        }
+        Print("Auto-Recenter removed in CASCADE_OVERLAP mode");
     }
 }
 
 //+------------------------------------------------------------------+
-//| LOG v4.0 COMPLETE STATUS REPORT                                   |
-//| Master report combining all v4.0 modules                          |
+//| LOG v5.0 COMPLETE STATUS REPORT                                   |
+//| Master report combining all v5.0 modules                          |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
     Print("");
     Print("╔═══════════════════════════════════════════════════════════════════╗");
-    Print("║       SUGAMARA v4.0 - COMPLETE STATUS REPORT                      ║");
+    Print("║       SUGAMARA RIBELLE v5.0 - COMPLETE STATUS REPORT              ║");
     Print("║       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                      ║");
     Print("╚═══════════════════════════════════════════════════════════════════╝");
     Print("");
@@ -858,10 +813,14 @@ void LogV4StatusReport() {
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v4.0 Modules Status
+    // v5.0 Modules Status
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v4.0 MODULES STATUS                                            │");
+    Print("│  v5.0 MODULES STATUS                                            │");
     Print("├─────────────────────────────────────────────────────────────────┤");
+    if(IsCascadeOverlapMode()) {
+        Print("│  🎯 CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
+        Print("│      Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
+    }
 
     // ATR Dynamic Spacing
     if(NeutralMode == NEUTRAL_PURE) {
@@ -888,54 +847,41 @@ void LogV4StatusReport() {
         Print("│  🎯 Center Indicators: DISABLED");
     }
 
-    // Auto-Recenter
-    if(EnableAutoRecenter) {
-        Print("│  🔁 Auto-Recenter: ACTIVE");
-        Print("│      Session Recenters: ", g_recenterCount);
-        if(g_recenterPending) {
-            Print("│      Status: ⚠️ PENDING USER CONFIRMATION");
-        } else {
-            string reason;
-            bool canRecenter = CheckRecenterConditions(reason);
-            Print("│      Status: ", canRecenter ? "✅ Ready" : ("❌ " + reason));
-        }
-    } else {
-        Print("│  🔁 Auto-Recenter: DISABLED");
-    }
+    // Auto-Recenter (REMOVED - CASCADE_OVERLAP puro)
+    Print("│  🔁 Auto-Recenter: REMOVED (CASCADE_OVERLAP mode)");
 
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
     // Hotkeys reminder
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v4.0 HOTKEYS                                                   │");
+    Print("│  v5.0 HOTKEYS                                                   │");
     Print("├─────────────────────────────────────────────────────────────────┤");
-    Print("│  V = This report (v4.0 Full Status)                             │");
+    Print("│  V = This report (v5.0 Full Status)                             │");
     Print("│  D = Dynamic ATR Spacing detailed report                        │");
     Print("│  C = Center Indicators detailed report                          │");
-    Print("│  E = Auto-Recenter detailed report                              │");
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 }
 
 //+------------------------------------------------------------------+
-//| Apply Visual Theme v3.0                                           |
-//| Sfondo: Amaranto Scuro | Candele: Blu/Giallo                      |
+//| Apply Visual Theme v5.0 - DUNE/Arrakis Desert Theme               |
+//| Sfondo: Desert Night | Candele: Spice Orange/Fremen Blue          |
 //+------------------------------------------------------------------+
 void ApplyVisualTheme() {
-    // Apply chart background color (Amaranto Scuro)
+    // Apply chart background color (Deep Desert Night)
     ChartSetInteger(0, CHART_COLOR_BACKGROUND, Theme_ChartBackground);
 
-    // Apply candle colors
-    ChartSetInteger(0, CHART_COLOR_CANDLE_BULL, Theme_CandleBull);  // Blu splendente
-    ChartSetInteger(0, CHART_COLOR_CANDLE_BEAR, Theme_CandleBear);  // Giallo
+    // Apply candle colors (DUNE Theme)
+    ChartSetInteger(0, CHART_COLOR_CANDLE_BULL, Theme_CandleBull);  // Spice Orange
+    ChartSetInteger(0, CHART_COLOR_CANDLE_BEAR, Theme_CandleBear);  // Fremen Blue
     ChartSetInteger(0, CHART_COLOR_CHART_UP, Theme_CandleBull);
     ChartSetInteger(0, CHART_COLOR_CHART_DOWN, Theme_CandleBear);
 
     // Hide grid and apply axis colors
-    ChartSetInteger(0, CHART_SHOW_GRID, false);               // Nasconde griglia tratteggiata
-    ChartSetInteger(0, CHART_COLOR_FOREGROUND, clrWhite);     // Testo bianco
-    ChartSetInteger(0, CHART_COLOR_CHART_LINE, clrCyan);      // Linea chart cyan
+    ChartSetInteger(0, CHART_SHOW_GRID, false);               // No grid (clean desert)
+    ChartSetInteger(0, CHART_COLOR_FOREGROUND, clrWhite);     // Sand text
+    ChartSetInteger(0, CHART_COLOR_CHART_LINE, clrCyan);      // Fremen blue line
 
     // Apply volume colors
     ChartSetInteger(0, CHART_COLOR_VOLUME, clrDodgerBlue);
@@ -950,7 +896,7 @@ void ApplyVisualTheme() {
     ChartSetInteger(0, CHART_SHOW_ASK_LINE, true);
     ChartSetInteger(0, CHART_SHOW_BID_LINE, true);
 
-    Print("Visual Theme v3.0 applied: Viola Scurissimo + Blu/Giallo candles (No Grid)");
+    Print("Visual Theme v5.0 applied: DUNE/Arrakis Desert Theme (The Spice Must Flow)");
     ChartRedraw(0);
 }
 

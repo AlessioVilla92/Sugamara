@@ -388,7 +388,10 @@ bool IsValidPendingPrice(double price, ENUM_ORDER_TYPE orderType) {
 }
 
 //+------------------------------------------------------------------+
-//| Get Safe Order Price (Adjusts if too close to current)           |
+//| Get Safe Order Price (v5.0 FIX - NO PRICE COLLAPSE)              |
+//| FIX: Non collassa più i prezzi allo stesso valore                |
+//| Ritorna il prezzo originale - la validazione avviene in fase di  |
+//| piazzamento ordine. Questo preserva lo spacing tra i livelli.    |
 //+------------------------------------------------------------------+
 double GetSafeOrderPrice(double desiredPrice, ENUM_ORDER_TYPE orderType) {
     double currentAsk = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
@@ -402,34 +405,51 @@ double GetSafeOrderPrice(double desiredPrice, ENUM_ORDER_TYPE orderType) {
     // Add safety margin
     minDistance *= 1.5;
 
-    double safePrice = desiredPrice;
+    bool priceInvalid = false;
+    string reason = "";
 
     switch(orderType) {
         case ORDER_TYPE_BUY_LIMIT:
             if(desiredPrice >= currentAsk - minDistance) {
-                safePrice = currentAsk - minDistance;
+                priceInvalid = true;
+                reason = StringFormat("BUY LIMIT %.5f too close to Ask %.5f (min dist: %.5f)",
+                                      desiredPrice, currentAsk, minDistance);
             }
             break;
 
         case ORDER_TYPE_SELL_LIMIT:
             if(desiredPrice <= currentBid + minDistance) {
-                safePrice = currentBid + minDistance;
+                priceInvalid = true;
+                reason = StringFormat("SELL LIMIT %.5f too close to Bid %.5f (min dist: %.5f)",
+                                      desiredPrice, currentBid, minDistance);
             }
             break;
 
         case ORDER_TYPE_BUY_STOP:
             if(desiredPrice <= currentAsk + minDistance) {
-                safePrice = currentAsk + minDistance;
+                priceInvalid = true;
+                reason = StringFormat("BUY STOP %.5f too close to Ask %.5f (min dist: %.5f)",
+                                      desiredPrice, currentAsk, minDistance);
             }
             break;
 
         case ORDER_TYPE_SELL_STOP:
             if(desiredPrice >= currentBid - minDistance) {
-                safePrice = currentBid - minDistance;
+                priceInvalid = true;
+                reason = StringFormat("SELL STOP %.5f too close to Bid %.5f (min dist: %.5f)",
+                                      desiredPrice, currentBid, minDistance);
             }
             break;
     }
 
-    return NormalizeDouble(safePrice, symbolDigits);
+    // v5.0 FIX: Log warning but return ORIGINAL price to preserve grid spacing
+    // Orders that fail will be retried by cyclic reopen when price moves
+    if(priceInvalid && DetailedLogging) {
+        Print("[BrokerValidation] WARNING: ", reason);
+        Print("[BrokerValidation] Keeping original price to preserve grid spacing");
+    }
+
+    // RETURN ORIGINAL PRICE - don't collapse to same safe price
+    return NormalizeDouble(desiredPrice, symbolDigits);
 }
 

@@ -439,12 +439,15 @@ input group "║  🔟  🎯 PERFECT CASCADE SYSTEM                             
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ╔═ SELEZIONA CASCADE MODE ════════════════════════════════🔽🔽🔽"
-input ENUM_CASCADE_MODE CascadeMode = CASCADE_PERFECT;       // 📊 Modalità Cascade ▼
+input ENUM_CASCADE_MODE CascadeMode = CASCADE_OVERLAP;       // 📊 Modalità Cascade ▼
 // CASCADE_PERFECT: TP di ogni ordine = Entry del livello successivo
 // Crea una catena perfetta senza gap
 
 input group "    📐 CASCADE PARAMETERS"
 input double    CascadeTP_Ratio = 1.0;                       // 📈 Ratio TP (se CASCADE_RATIO)
+
+input group "    🔀 CASCADE OVERLAP (RIBELLE)"
+input double    Hedge_Spacing_Pips = 3.0;                    // 📏 Distanza STOP ↔ LIMIT (pips) - Solo se CASCADE_OVERLAP
 // TP = Spacing × Ratio (1.0 = uguale a spacing, 1.2 = 20% in più)
 input double    FinalLevel_TP_Pips = 15.0;                   // 🎯 TP Ultimo Livello (pips)
 // L'ultimo livello non ha "successivo", usa TP fisso

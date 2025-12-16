@@ -24,9 +24,10 @@ bool InitializeGridB() {
         return false;
     }
 
-    // Calculate and store values for Upper Zone (Sell Limit)
+    // Calculate and store values for Upper Zone
+    // CASCADE_OVERLAP: SELL LIMIT @ +3 pips (hedge)
     for(int i = 0; i < GridLevelsPerSide; i++) {
-        gridB_Upper_EntryPrices[i] = CalculateGridLevelPrice(entryPoint, ZONE_UPPER, i, currentSpacing_Pips);
+        gridB_Upper_EntryPrices[i] = CalculateGridLevelPrice(entryPoint, ZONE_UPPER, i, currentSpacing_Pips, GRID_B);
         gridB_Upper_TP[i] = CalculateCascadeTP(entryPoint, GRID_B, ZONE_UPPER, i, currentSpacing_Pips, GridLevelsPerSide);
         gridB_Upper_SL[i] = CalculateGridSL(entryPoint, GRID_B, ZONE_UPPER, i, currentSpacing_Pips, GridLevelsPerSide);
         gridB_Upper_Lots[i] = CalculateGridLotSize(i);
@@ -36,9 +37,10 @@ bool InitializeGridB() {
         gridB_Upper_LastClose[i] = 0;
     }
 
-    // Calculate and store values for Lower Zone (Buy Stop)
+    // Calculate and store values for Lower Zone
+    // CASCADE_OVERLAP: SELL STOP (standard)
     for(int i = 0; i < GridLevelsPerSide; i++) {
-        gridB_Lower_EntryPrices[i] = CalculateGridLevelPrice(entryPoint, ZONE_LOWER, i, currentSpacing_Pips);
+        gridB_Lower_EntryPrices[i] = CalculateGridLevelPrice(entryPoint, ZONE_LOWER, i, currentSpacing_Pips, GRID_B);
         gridB_Lower_TP[i] = CalculateCascadeTP(entryPoint, GRID_B, ZONE_LOWER, i, currentSpacing_Pips, GridLevelsPerSide);
         gridB_Lower_SL[i] = CalculateGridSL(entryPoint, GRID_B, ZONE_LOWER, i, currentSpacing_Pips, GridLevelsPerSide);
         gridB_Lower_Lots[i] = CalculateGridLotSize(i);
@@ -53,19 +55,28 @@ bool InitializeGridB() {
 }
 
 //+------------------------------------------------------------------+
-//| Log Grid B Configuration                                         |
+//| Log Grid B Configuration (Enhanced v5.0)                         |
 //+------------------------------------------------------------------+
 void LogGridBConfiguration() {
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  GRID B CONFIGURATION (SHORT BIAS)");
+    if(IsCascadeOverlapMode()) {
+        Print("  GRID B CONFIGURATION - SOLO SELL (CASCADE SOVRAPPOSTO)");
+    } else {
+        Print("  GRID B CONFIGURATION (SHORT BIAS)");
+    }
     Print("═══════════════════════════════════════════════════════════════════");
     Print("Entry Point: ", FormatPrice(entryPoint));
     Print("Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
     Print("Levels per Zone: ", GridLevelsPerSide);
+    if(IsCascadeOverlapMode()) {
+        Print("Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
+        Print("Mode: CASCADE_OVERLAP (Grid B = SOLO ordini SELL)");
+    }
     Print("");
 
-    // Upper Zone (Sell Limit)
-    Print("--- UPPER ZONE (Sell Limit) ---");
+    // Upper Zone - Order type depends on mode
+    string upperType = IsCascadeOverlapMode() ? "SELL LIMIT [HEDGE +3pip]" : "SELL LIMIT";
+    Print("--- UPPER ZONE (", upperType, ") ---");
     for(int i = 0; i < GridLevelsPerSide; i++) {
         Print("  L", i+1, ": Entry=", FormatPrice(gridB_Upper_EntryPrices[i]),
               " TP=", FormatPrice(gridB_Upper_TP[i]),
@@ -74,8 +85,9 @@ void LogGridBConfiguration() {
 
     Print("");
 
-    // Lower Zone (Buy Stop)
-    Print("--- LOWER ZONE (Buy Stop) ---");
+    // Lower Zone - Order type depends on mode
+    string lowerType = IsCascadeOverlapMode() ? "SELL STOP [TREND]" : "BUY STOP";
+    Print("--- LOWER ZONE (", lowerType, ") ---");
     for(int i = 0; i < GridLevelsPerSide; i++) {
         Print("  L", i+1, ": Entry=", FormatPrice(gridB_Lower_EntryPrices[i]),
               " TP=", FormatPrice(gridB_Lower_TP[i]),
@@ -83,6 +95,9 @@ void LogGridBConfiguration() {
     }
 
     Print("═══════════════════════════════════════════════════════════════════");
+
+    // Log enhanced summary for CASCADE_OVERLAP
+    LogGridInitSummary(GRID_B);
 }
 
 //+------------------------------------------------------------------+
@@ -138,17 +153,21 @@ bool PlaceGridBUpperOrder(int level) {
     double sl = gridB_Upper_SL[level];
     double lot = gridB_Upper_Lots[level];
 
-    // Validate price for Sell Limit
-    if(!IsValidPendingPrice(entryPrice, ORDER_TYPE_SELL_LIMIT)) {
-        entryPrice = GetSafeOrderPrice(entryPrice, ORDER_TYPE_SELL_LIMIT);
+    // Get order type (CASCADE_OVERLAP: SELL_LIMIT @ +3 pips)
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_UPPER);
+    bool isBuyOrder = (orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_BUY_STOP);
+
+    // Validate price for order type
+    if(!IsValidPendingPrice(entryPrice, orderType)) {
+        entryPrice = GetSafeOrderPrice(entryPrice, orderType);
     }
 
-    // Validate TP/SL (Sell: TP below entry, SL above)
-    tp = ValidateTakeProfit(entryPrice, tp, false);
-    sl = ValidateStopLoss(entryPrice, sl, false);
+    // Validate TP/SL (direction based on order type)
+    tp = ValidateTakeProfit(entryPrice, tp, isBuyOrder);
+    sl = ValidateStopLoss(entryPrice, sl, isBuyOrder);
 
     // Place order
-    ulong ticket = PlacePendingOrder(ORDER_TYPE_SELL_LIMIT, lot, entryPrice, sl, tp,
+    ulong ticket = PlacePendingOrder(orderType, lot, entryPrice, sl, tp,
                                      GetGridLevelID(GRID_B, ZONE_UPPER, level),
                                      GetGridMagic(GRID_B));
 
@@ -175,17 +194,21 @@ bool PlaceGridBLowerOrder(int level) {
     double sl = gridB_Lower_SL[level];
     double lot = gridB_Lower_Lots[level];
 
-    // Validate price for Buy Stop
-    if(!IsValidPendingPrice(entryPrice, ORDER_TYPE_BUY_STOP)) {
-        entryPrice = GetSafeOrderPrice(entryPrice, ORDER_TYPE_BUY_STOP);
+    // Get order type (CASCADE_OVERLAP: SELL_STOP)
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_LOWER);
+    bool isBuyOrder = (orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_BUY_STOP);
+
+    // Validate price for order type
+    if(!IsValidPendingPrice(entryPrice, orderType)) {
+        entryPrice = GetSafeOrderPrice(entryPrice, orderType);
     }
 
-    // Validate TP/SL (Buy: TP above entry, SL below)
-    tp = ValidateTakeProfit(entryPrice, tp, true);
-    sl = ValidateStopLoss(entryPrice, sl, true);
+    // Validate TP/SL (direction based on order type)
+    tp = ValidateTakeProfit(entryPrice, tp, isBuyOrder);
+    sl = ValidateStopLoss(entryPrice, sl, isBuyOrder);
 
     // Place order
-    ulong ticket = PlacePendingOrder(ORDER_TYPE_BUY_STOP, lot, entryPrice, sl, tp,
+    ulong ticket = PlacePendingOrder(orderType, lot, entryPrice, sl, tp,
                                      GetGridLevelID(GRID_B, ZONE_LOWER, level),
                                      GetGridMagic(GRID_B));
 

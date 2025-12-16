@@ -347,13 +347,8 @@ void AdaptGridToNewSpacing(double newSpacing) {
         }
     }
 
-    // Update RangeBox if applicable
-    if(IsRangeBoxAvailable()) {
-        SyncRangeBoxWithGrid();
-        if(ShieldMode != SHIELD_DISABLED) {
-            CalculateBreakoutLevels();
-        }
-    }
+    // Update RangeBox if applicable (REMOVED - CASCADE_OVERLAP puro)
+    // RangeBoxManager eliminato - breakout levels calcolati da grid edges
 
     // Update grid visualization
     if(ShowGridLines) {

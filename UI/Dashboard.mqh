@@ -1,13 +1,13 @@
 //+------------------------------------------------------------------+
 //|                                                    Dashboard.mqh |
-//|                        Sugamara v3.0 - Dashboard Display         |
+//|                     SUGAMARA RIBELLE v5.0 - Dashboard Display    |
 //|                                                                  |
-//|  Visual dashboard for Double Grid Neutral MULTIMODE              |
-//|  Color Scheme: AMARANTH/AZURE GRADIENT - 2 COLUMN LAYOUT         |
+//|  Visual dashboard for CASCADE SOVRAPPOSTO (RIBELLE)              |
+//|  Color Scheme: DUNE/ARRAKIS DESERT THEME - 2 COLUMN LAYOUT       |
 //|                                                                  |
-//|  v3.0: ROBUST PERSISTENCE - Dashboard auto-recreates on restart  |
+//|  v5.0: DUNE Theme + Detailed Logging + CASCADE_OVERLAP           |
 //+------------------------------------------------------------------+
-#property copyright "Sugamara (C) 2025"
+#property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
 
 //+------------------------------------------------------------------+
@@ -19,22 +19,23 @@ datetime g_lastDashboardCheck = 0;
 const int DASHBOARD_CHECK_INTERVAL = 5;  // Seconds between checks
 
 //+------------------------------------------------------------------+
-//| AMARANTH/AZURE COLOR SCHEME v3.0                                 |
-//| Sfondo: Amaranto Scuro | Dashboard: Blu Turchese                 |
+//| DUNE/ARRAKIS DESERT COLOR SCHEME v5.0                            |
+//| "The spice must flow" - Inspired by Dune (2021/2024)             |
+//|                                                                  |
+//| Palette: Desert sands, Spice Orange, Fremen Blue, Sandworm Gold  |
 //+------------------------------------------------------------------+
 // NOTE: Non usare #define con variabili input (evaluate at compile-time!)
-// Usare direttamente Theme_ChartBackground, Theme_DashboardBG, etc. nel codice
 
-// Background Colors (Dark Amaranth) - Literal fallbacks
-#define CLR_BG_DARK       C'45,20,35'        // Panel background (amaranto scuro)
-#define CLR_BG_MEDIUM     C'50,12,30'        // Section background
-#define CLR_BG_LIGHT      C'68,18,42'        // Highlight background
-#define CLR_BORDER        C'120,40,80'       // Border color
+// Background Colors (Arrakis Night - Deep Desert)
+#define CLR_BG_DARK       C'35,28,20'        // Deep desert night (charcoal brown)
+#define CLR_BG_MEDIUM     C'45,35,25'        // Desert dusk (warm brown)
+#define CLR_BG_LIGHT      C'60,48,35'        // Desert twilight (ochre brown)
+#define CLR_BORDER        C'120,90,50'       // Sand border (tan)
 
-// Dashboard Colors (Blu Turchese) - Literal fallbacks
-#define CLR_DASH_BG       C'20,60,80'        // Dashboard background (blu turchese)
-#define CLR_DASH_TEXT     clrCyan            // Dashboard text (azzurro)
-#define CLR_DASH_ACCENT   clrAqua            // Dashboard accent
+// Dashboard Colors (Spice Melange Theme)
+#define CLR_DASH_BG       C'50,40,28'        // Spice den background
+#define CLR_DASH_TEXT     C'230,200,150'     // Sand text (warm cream)
+#define CLR_DASH_ACCENT   C'255,180,80'      // Spice orange accent
 
 // Getter functions to use actual input values at runtime
 color GetThemeChartBackground() { return Theme_ChartBackground; }
@@ -42,39 +43,47 @@ color GetThemeDashboardBG() { return Theme_DashboardBG; }
 color GetThemeDashboardText() { return Theme_DashboardText; }
 color GetThemeDashboardAccent() { return Theme_DashboardAccent; }
 
-// Text Colors (Azure Gradient)
-#define CLR_AZURE_1       C'100,180,255'     // Lightest azure (titles)
-#define CLR_AZURE_2       C'70,150,220'      // Medium azure (sections)
-#define CLR_AZURE_3       C'50,120,190'      // Darker azure (labels)
-#define CLR_AZURE_4       C'30,90,160'       // Darkest azure (inactive)
+// Text Colors (Desert Sand Gradient - Light to Dark)
+#define CLR_SAND_1        C'255,220,170'     // Brightest sand (titles)
+#define CLR_SAND_2        C'220,185,140'     // Medium sand (sections)
+#define CLR_SAND_3        C'180,150,110'     // Darker sand (labels)
+#define CLR_SAND_4        C'140,115,80'      // Darkest sand (inactive)
 
-// Accent Colors
-#define CLR_CYAN          clrCyan            // Highlight cyan
-#define CLR_TEAL          C'0,180,180'       // Teal accent
+// Accent Colors (Spice & Fremen)
+#define CLR_SPICE         C'255,140,50'      // Spice melange orange
+#define CLR_FREMEN_BLUE   C'80,140,200'      // Fremen blue eyes
 #define CLR_WHITE         clrWhite           // White text
-#define CLR_SILVER        C'180,190,200'     // Normal text
-#define CLR_GOLD          clrGold            // Gold accent
+#define CLR_SILVER        C'200,190,170'     // Desert silver (warm gray)
+#define CLR_GOLD          C'255,200,80'      // Sandworm gold
 
-// Status Colors
-#define CLR_PROFIT        C'0,220,100'       // Green profit
-#define CLR_LOSS          C'255,80,80'       // Red loss
-#define CLR_NEUTRAL       C'255,200,50'      // Yellow neutral/warning
-#define CLR_ACTIVE        C'0,255,180'       // Active system
+// Status Colors (Desert Palette)
+#define CLR_PROFIT        C'120,200,80'      // Oasis green (muted)
+#define CLR_LOSS          C'220,80,60'       // Desert sun red
+#define CLR_NEUTRAL       C'255,200,80'      // Warning gold
+#define CLR_ACTIVE        C'100,180,220'     // Active Fremen blue
 
-// Grid Colors (Azure Variants)
-#define CLR_GRID_A        C'60,160,255'      // Grid A - Light Blue
-#define CLR_GRID_B        C'100,200,255'     // Grid B - Cyan Blue
+// Grid Colors (Desert Variants - BUY=Gold, SELL=Bronze)
+#define CLR_GRID_A        C'255,180,80'      // Grid A - Spice Gold (BUY)
+#define CLR_GRID_B        C'200,140,80'      // Grid B - Desert Bronze (SELL)
 
-// Mode Colors
-#define CLR_MODE_PURE     C'150,150,255'     // Purple-ish for PURE
-#define CLR_MODE_CASCADE  C'80,180,255'      // Azure for CASCADE
-#define CLR_MODE_RANGEBOX C'0,200,200'       // Teal for RANGEBOX
+// Mode Colors (Arrakis Modes)
+#define CLR_MODE_PURE     C'180,160,120'     // Sandstone for PURE
+#define CLR_MODE_CASCADE  C'255,160,60'      // Spice Orange for CASCADE
+#define CLR_MODE_RANGEBOX C'140,180,160'     // Sietch green for RANGEBOX
 
-// Panel Background Colors (Blu Turchese Theme)
-#define CLR_PANEL_GRIDA   C'15,40,55'        // Grid A panel (dark teal)
-#define CLR_PANEL_GRIDB   C'15,45,60'        // Grid B panel (dark cyan)
-#define CLR_PANEL_BUTTONS C'20,50,70'        // Buttons panel (turchese scuro)
-#define CLR_PANEL_PERF    C'15,35,50'        // Performance panel
+// Panel Background Colors (Desert Night Theme)
+#define CLR_PANEL_GRIDA   C'45,38,28'        // Grid A panel (warm brown - BUY)
+#define CLR_PANEL_GRIDB   C'40,35,28'        // Grid B panel (cool brown - SELL)
+#define CLR_PANEL_BUTTONS C'55,45,32'        // Buttons panel (spice brown)
+#define CLR_PANEL_PERF    C'38,32,24'        // Performance panel (deep night)
+
+// Legacy aliases for compatibility
+#define CLR_AZURE_1       CLR_SAND_1
+#define CLR_AZURE_2       CLR_SAND_2
+#define CLR_AZURE_3       CLR_SAND_3
+#define CLR_AZURE_4       CLR_SAND_4
+#define CLR_CYAN          CLR_SPICE
+#define CLR_TEAL          CLR_FREMEN_BLUE
 
 //+------------------------------------------------------------------+
 //| DASHBOARD CONSTANTS                                              |
@@ -239,7 +248,8 @@ bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA PURE RIBELLE V4.5 - GRID NEUTRAL 24/7                    ");
+    Print("  SUGAMARA RIBELLE v5.0 - CASCADE SOVRAPPOSTO - DUNE THEME          ");
+    Print("  \"The Spice Must Flow\" - Grid Trading System 24/7                 ");
     Print("═══════════════════════════════════════════════════════════════════");
 
     // Check if dashboard already exists and is complete
@@ -391,12 +401,12 @@ void CreateUnifiedDashboard() {
     int totalWidth = TOTAL_WIDTH;
 
     //═══════════════════════════════════════════════════════════════
-    // TITLE PANEL (Full Width)
+    // TITLE PANEL (Full Width) - DUNE THEME
     //═══════════════════════════════════════════════════════════════
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 120, y + 15, "SUGAMARA PURE RIBELLE", CLR_GOLD, 16, "Arial Black");
-    DashLabel("TITLE_SUB", x + totalWidth/2 - 60, y + 42, "V4.5 - Grid Neutral 24/7", CLR_AZURE_1, 10, "Arial Bold");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 100, y + 15, "SUGAMARA RIBELLE", CLR_GOLD, 16, "Arial Black");
+    DashLabel("TITLE_SUB", x + totalWidth/2 - 85, y + 42, "CASCADE SOVRAPPOSTO - The Spice Must Flow", CLR_SAND_1, 10, "Arial Bold");
     y += titleHeight;
 
     //═══════════════════════════════════════════════════════════════
@@ -417,12 +427,12 @@ void CreateUnifiedDashboard() {
     int leftX = x;
     int leftY = y;
 
-    //--- GRID A PANEL (Long Bias) ---
+    //--- GRID A PANEL (SOLO BUY - Spice Harvesters) ---
     int gridAHeight = 180;
     DashRectangle("LEFT_GRIDA_PANEL", leftX, leftY, colWidth, gridAHeight, CLR_PANEL_GRIDA);
 
     int ay = leftY + 8;
-    DashLabel("LEFT_GRIDA_TITLE", leftX + 10, ay, "GRID A (Long Bias)", CLR_GRID_A, 11, "Arial Bold");
+    DashLabel("LEFT_GRIDA_TITLE", leftX + 10, ay, "GRID A - SOLO BUY", CLR_GRID_A, 11, "Arial Bold");
     ay += 22;
     DashLabel("LEFT_GRIDA_STATUS", leftX + 10, ay, "Status: IDLE", clrGray, 9);
     ay += 18;
@@ -469,12 +479,12 @@ void CreateUnifiedDashboard() {
     int rightX = x + colWidth;
     int rightY = y;
 
-    //--- GRID B PANEL (Short Bias) ---
+    //--- GRID B PANEL (SOLO SELL - Sandworm Riders) ---
     int gridBHeight = 180;
     DashRectangle("RIGHT_GRIDB_PANEL", rightX, rightY, colWidth, gridBHeight, CLR_PANEL_GRIDB);
 
     int by = rightY + 8;
-    DashLabel("RIGHT_GRIDB_TITLE", rightX + 10, by, "GRID B (Short Bias)", CLR_GRID_B, 11, "Arial Bold");
+    DashLabel("RIGHT_GRIDB_TITLE", rightX + 10, by, "GRID B - SOLO SELL", CLR_GRID_B, 11, "Arial Bold");
     by += 22;
     DashLabel("RIGHT_GRIDB_STATUS", rightX + 10, by, "Status: IDLE", clrGray, 9);
     by += 18;

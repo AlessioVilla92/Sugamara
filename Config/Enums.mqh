@@ -120,7 +120,8 @@ enum ENUM_LOT_MODE {
 //+------------------------------------------------------------------+
 enum ENUM_CASCADE_MODE {
     CASCADE_PERFECT,            // Perfect - TP = Entry livello precedente (CONSIGLIATO)
-    CASCADE_RATIO               // Ratio - TP = Spacing × Ratio
+    CASCADE_RATIO,              // Ratio - TP = Spacing × Ratio
+    CASCADE_OVERLAP             // Overlap - Grid A=BUY, Grid B=SELL sovrapposti (RIBELLE)
 };
 
 //+------------------------------------------------------------------+

@@ -11,7 +11,11 @@
       "Bash(\"C:\\Program Files\\MetaTrader 5\\metaeditor64.exe\" /compile:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Sugamara.mq5\" /log:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\compile2.log\")",
       "Bash(\"C:\\Program Files\\MetaTrader 5\\metaeditor64.exe\" /compile:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Sugamara.mq5\" /log:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\compile.log\")",
       "Bash(find:*)",
-      "Bash(\"C:\\Program Files\\MetaTrader 5\\metaeditor64.exe\" /compile:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Sugamara.mq5\" /log:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\compile.log\" /inc:\"C:\\Program Files\\MetaTrader 5\\MQL5\")"
+      "Bash(\"C:\\Program Files\\MetaTrader 5\\metaeditor64.exe\" /compile:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Sugamara.mq5\" /log:\"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\compile.log\" /inc:\"C:\\Program Files\\MetaTrader 5\\MQL5\")",
+      "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Trading\\HedgingManager.mqh\")",
+      "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Trading\\GridTrailingManager.mqh\")",
+      "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Trading\\GridRecenterManager.mqh\")",
+      "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Trading\\RangeBoxManager.mqh\")"
     ],
     "deny": [],
     "ask": []

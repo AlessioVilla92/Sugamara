@@ -523,22 +523,15 @@ bool InitializeMode()
          break;
 
       case NEUTRAL_RANGEBOX:
+         // RANGEBOX MODE RIMOSSO - CASCADE_OVERLAP puro non lo richiede
+         Print("WARNING: NEUTRAL_RANGEBOX mode not available - use CASCADE_OVERLAP");
+         Print("  Fallback to CASCADE spacing...");
          if(IsATREnabled() && currentATR_Pips > 0) {
             currentSpacing_Pips = CalculateCurrentSpacing();
          } else {
             currentSpacing_Pips = Fixed_Spacing_Pips;
          }
-         Print("  RANGEBOX Mode: Spacing ", currentSpacing_Pips, " pips");
-
-         // Initialize RangeBox for Shield
-         if(!InitializeRangeBoxForShield()) {
-            Print("WARNING: RangeBox initialization failed");
-         }
-
-         // Initialize Shield
-         if(!InitializeShield()) {
-            Print("WARNING: Shield initialization failed");
-         }
+         // RangeBoxManager e funzioni eliminate
          break;
    }
 
@@ -564,17 +557,11 @@ void ProcessModeOnTick()
          break;
 
       case NEUTRAL_RANGEBOX: {
-         // RangeBox mode: ATR check + Range monitoring + Shield processing
+         // RANGEBOX MODE RIMOSSO - usa CASCADE behavior
          if(IsATREnabled()) {
             CheckATRRecalculation();
          }
-
-         // Update Range Box state
-         double rbCurrentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-         UpdateRangeBoxState(rbCurrentPrice);
-
-         // Process Shield
-         ProcessShield();
+         // RangeBoxManager funzioni eliminate
          break;
       }
    }
@@ -619,11 +606,10 @@ void DeinitializeMode()
 {
    Print("[ModeLogic] Deinitializing mode: ", GetModeName());
 
-   if(NeutralMode == NEUTRAL_RANGEBOX) {
-      // Deinitialize Shield
+   // RANGEBOX MODE REMOVED - CASCADE_OVERLAP puro
+   // Solo Shield rimane attivo (se abilitato)
+   if(ShieldMode != SHIELD_DISABLED) {
       DeinitializeShield();
-      // Deinitialize RangeBox
-      DeinitializeRangeBoxShield();
    }
 
    Print("[ModeLogic] Mode deinitialized");

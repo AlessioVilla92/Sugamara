@@ -911,9 +911,10 @@ void ProcessShield()
       return;
    }
 
-   if(NeutralMode != NEUTRAL_RANGEBOX) {
+   // Shield funziona con RANGEBOX mode O con CASCADE_OVERLAP mode
+   if(NeutralMode != NEUTRAL_RANGEBOX && !IsCascadeOverlapMode()) {
       if(DetailedLogging) {
-         Print("[Shield] ProcessShield() skipped - Not in RANGEBOX mode");
+         Print("[Shield] ProcessShield() skipped - Not in RANGEBOX/CASCADE_OVERLAP mode");
       }
       return;
    }

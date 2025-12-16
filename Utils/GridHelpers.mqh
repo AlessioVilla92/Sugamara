@@ -60,10 +60,38 @@ string GetGridLevelID(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
 
 //+------------------------------------------------------------------+
 //| Get Order Type for Grid Position                                 |
-//| Grid A Upper: Buy Limit  | Grid A Lower: Sell Stop               |
-//| Grid B Upper: Sell Limit | Grid B Lower: Buy Stop                |
+//| STANDARD MODE:                                                   |
+//|   Grid A Upper: Buy Limit  | Grid A Lower: Sell Stop             |
+//|   Grid B Upper: Sell Limit | Grid B Lower: Buy Stop              |
+//| CASCADE_OVERLAP MODE (RIBELLE):                                  |
+//|   Grid A = SOLO BUY  (Upper: BUY STOP,  Lower: BUY LIMIT)        |
+//|   Grid B = SOLO SELL (Upper: SELL LIMIT, Lower: SELL STOP)       |
 //+------------------------------------------------------------------+
 ENUM_ORDER_TYPE GetGridOrderType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
+    //═══════════════════════════════════════════════════════════════
+    // CASCADE_OVERLAP MODE: Grid A = solo BUY, Grid B = solo SELL
+    //═══════════════════════════════════════════════════════════════
+    if(CascadeMode == CASCADE_OVERLAP) {
+        if(side == GRID_A) {
+            // Grid A = SOLO ordini BUY
+            if(zone == ZONE_UPPER) {
+                return ORDER_TYPE_BUY_STOP;    // BUY STOP @ livello (trend capture)
+            } else {
+                return ORDER_TYPE_BUY_LIMIT;   // BUY LIMIT @ livello - 3 pips (hedge)
+            }
+        } else {  // GRID_B
+            // Grid B = SOLO ordini SELL
+            if(zone == ZONE_UPPER) {
+                return ORDER_TYPE_SELL_LIMIT;  // SELL LIMIT @ livello + 3 pips (hedge)
+            } else {
+                return ORDER_TYPE_SELL_STOP;   // SELL STOP @ livello (trend capture)
+            }
+        }
+    }
+
+    //═══════════════════════════════════════════════════════════════
+    // STANDARD MODE: Comportamento originale
+    //═══════════════════════════════════════════════════════════════
     if(side == GRID_A) {
         if(zone == ZONE_UPPER) {
             return ORDER_TYPE_BUY_LIMIT;   // Grid A Upper: Buy Limit
@@ -77,6 +105,26 @@ ENUM_ORDER_TYPE GetGridOrderType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
             return ORDER_TYPE_BUY_STOP;    // Grid B Lower: Buy Stop
         }
     }
+}
+
+//+------------------------------------------------------------------+
+//| CASCADE_OVERLAP HELPER FUNCTIONS                                 |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Check if CASCADE_OVERLAP mode is active                          |
+//+------------------------------------------------------------------+
+bool IsCascadeOverlapMode() {
+    return (CascadeMode == CASCADE_OVERLAP);
+}
+
+//+------------------------------------------------------------------+
+//| Get Hedge Offset in Points (3 pips default)                      |
+//| Used to offset LIMIT orders from STOP orders                     |
+//+------------------------------------------------------------------+
+double GetHedgeOffset() {
+    if(!IsCascadeOverlapMode()) return 0;
+    return PipsToPoints(Hedge_Spacing_Pips);
 }
 
 //+------------------------------------------------------------------+
@@ -127,16 +175,36 @@ string GetOrderTypeString(ENUM_ORDER_TYPE orderType) {
 
 //+------------------------------------------------------------------+
 //| Calculate Entry Price for Grid Level                             |
+//| CASCADE_OVERLAP: Applica offset hedge per LIMIT orders           |
+//|   Grid A Lower: -3 pips (BUY LIMIT hedge)                        |
+//|   Grid B Upper: +3 pips (SELL LIMIT hedge)                       |
 //+------------------------------------------------------------------+
-double CalculateGridLevelPrice(double baseEntryPoint, ENUM_GRID_ZONE zone, int level, double spacingPips) {
+double CalculateGridLevelPrice(double baseEntryPoint, ENUM_GRID_ZONE zone, int level,
+                                double spacingPips, ENUM_GRID_SIDE side = GRID_A) {
     double spacingPrice = PipsToPoints(spacingPips);
+    double hedgeOffset = 0;
+
+    //═══════════════════════════════════════════════════════════════
+    // CASCADE_OVERLAP: Applica offset per hedge orders
+    //═══════════════════════════════════════════════════════════════
+    if(IsCascadeOverlapMode()) {
+        if(side == GRID_A && zone == ZONE_LOWER) {
+            // Grid A Lower: BUY LIMIT a -3 pips dal livello
+            hedgeOffset = -GetHedgeOffset();
+        }
+        else if(side == GRID_B && zone == ZONE_UPPER) {
+            // Grid B Upper: SELL LIMIT a +3 pips dal livello
+            hedgeOffset = GetHedgeOffset();
+        }
+        // Grid A Upper e Grid B Lower: nessun offset (STOP orders)
+    }
 
     if(zone == ZONE_UPPER) {
         // Upper zone: prices above entry point
-        return NormalizeDouble(baseEntryPoint + (spacingPrice * (level + 1)), symbolDigits);
+        return NormalizeDouble(baseEntryPoint + (spacingPrice * (level + 1)) + hedgeOffset, symbolDigits);
     } else {
         // Lower zone: prices below entry point
-        return NormalizeDouble(baseEntryPoint - (spacingPrice * (level + 1)), symbolDigits);
+        return NormalizeDouble(baseEntryPoint - (spacingPrice * (level + 1)) + hedgeOffset, symbolDigits);
     }
 }
 
@@ -220,6 +288,38 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
             return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
         } else {
             return NormalizeDouble(orderEntryPrice - tpDistance, symbolDigits);
+        }
+    }
+
+    //═══════════════════════════════════════════════════════════════
+    // CASCADE_OVERLAP MODE (RIBELLE): TP differenziati STOP vs LIMIT
+    // STOP orders: TP = spacing (catturano trend)
+    // LIMIT orders (hedge): TP = spacing + hedge (tornano verso entry)
+    //═══════════════════════════════════════════════════════════════
+    if(CascadeMode == CASCADE_OVERLAP) {
+        ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
+        double hedgeOffset = GetHedgeOffset();
+
+        // Determina se è un ordine STOP o LIMIT
+        bool isStopOrder = (orderType == ORDER_TYPE_BUY_STOP || orderType == ORDER_TYPE_SELL_STOP);
+
+        if(isStopOrder) {
+            // STOP orders: TP = entry + spacing (nella direzione del trend)
+            double tpDistance = spacingPrice;
+            if(isBuy) {
+                return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
+            } else {
+                return NormalizeDouble(orderEntryPrice - tpDistance, symbolDigits);
+            }
+        } else {
+            // LIMIT orders (hedge): TP più lungo per compensare l'offset
+            // TP = spacing + hedge_offset (torna verso l'entry point)
+            double tpDistance = spacingPrice + hedgeOffset;
+            if(isBuy) {
+                return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
+            } else {
+                return NormalizeDouble(orderEntryPrice - tpDistance, symbolDigits);
+            }
         }
     }
 
@@ -1213,5 +1313,123 @@ void LogDynamicPositioningInfo() {
         PrintFormat("    S/R Down (Support): %.5f (%.1f pips)", srDown, PointsToPips(entryPoint - srDown));
     }
     Print("═══════════════════════════════════════════════════════════════════");
+}
+
+//+------------------------------------------------------------------+
+//| CASCADE_OVERLAP: STUB FUNCTIONS FOR SHIELD (replaces RangeBox)    |
+//| These functions use grid edges as breakout levels                 |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Get Last Grid B Upper Level (Resistance)                          |
+//+------------------------------------------------------------------+
+double GetLastGridBLevel() {
+    double spacing = (currentSpacing_Pips > 0) ? currentSpacing_Pips : Fixed_Spacing_Pips;
+    double spacingPoints = PipsToPoints(spacing);
+    return NormalizeDouble(entryPoint + (spacingPoints * GridLevelsPerSide), symbolDigits);
+}
+
+//+------------------------------------------------------------------+
+//| Get Last Grid A Lower Level (Support)                             |
+//+------------------------------------------------------------------+
+double GetLastGridALevel() {
+    double spacing = (currentSpacing_Pips > 0) ? currentSpacing_Pips : Fixed_Spacing_Pips;
+    double spacingPoints = PipsToPoints(spacing);
+    return NormalizeDouble(entryPoint - (spacingPoints * GridLevelsPerSide), symbolDigits);
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Breakout Levels from Grid Edges (replaces RangeBox)     |
+//+------------------------------------------------------------------+
+bool CalculateBreakoutLevels() {
+    if(entryPoint <= 0) {
+        Print("[GridHelpers] ERROR: Entry point not set");
+        return false;
+    }
+
+    double spacing = (currentSpacing_Pips > 0) ? currentSpacing_Pips : Fixed_Spacing_Pips;
+    double spacingPoints = PipsToPoints(spacing);
+
+    // Set rangeBox values using grid edges
+    rangeBox.resistance = GetLastGridBLevel();  // Upper Grid B last level
+    rangeBox.support = GetLastGridALevel();     // Lower Grid A last level
+
+    // Warning zones at N-0.5 levels
+    double warningOffset = spacingPoints * (GridLevelsPerSide - 0.5);
+    rangeBox.warningZoneUp = NormalizeDouble(entryPoint + warningOffset, symbolDigits);
+    rangeBox.warningZoneDown = NormalizeDouble(entryPoint - warningOffset, symbolDigits);
+
+    // Breakout zones at N+0.5 levels (beyond grid edges)
+    double breakoutOffset = spacingPoints * (GridLevelsPerSide + 0.5);
+    upperBreakoutLevel = NormalizeDouble(entryPoint + breakoutOffset, symbolDigits);
+    lowerBreakoutLevel = NormalizeDouble(entryPoint - breakoutOffset, symbolDigits);
+
+    // Reentry zones (same as support/resistance)
+    upperReentryLevel = rangeBox.resistance;
+    lowerReentryLevel = rangeBox.support;
+
+    rangeBox.isValid = true;
+
+    PrintFormat("[GridHelpers] Breakout levels set from grid edges:");
+    PrintFormat("  Support: %.5f | Resistance: %.5f", rangeBox.support, rangeBox.resistance);
+    PrintFormat("  Warning Down: %.5f | Warning Up: %.5f", rangeBox.warningZoneDown, rangeBox.warningZoneUp);
+
+    return true;
+}
+
+//+------------------------------------------------------------------+
+//| Get Price Position in Range (for Shield 3 Phases)                 |
+//+------------------------------------------------------------------+
+ENUM_SYSTEM_STATE GetPricePositionInRange(double currentPrice) {
+    if(!rangeBox.isValid) {
+        return STATE_INSIDE_RANGE;
+    }
+
+    // Check if price is in warning zone (approaching edges)
+    if(currentPrice >= rangeBox.warningZoneUp) {
+        return STATE_WARNING_UP;
+    }
+    if(currentPrice <= rangeBox.warningZoneDown) {
+        return STATE_WARNING_DOWN;
+    }
+
+    return STATE_INSIDE_RANGE;
+}
+
+//+------------------------------------------------------------------+
+//| Check Breakout Condition for Shield                               |
+//+------------------------------------------------------------------+
+bool CheckBreakoutConditionShield(double currentPrice, ENUM_BREAKOUT_DIRECTION &direction) {
+    if(!rangeBox.isValid) {
+        direction = BREAKOUT_NONE;
+        return false;
+    }
+
+    // Breakout UP: price above resistance
+    if(currentPrice > rangeBox.resistance) {
+        direction = BREAKOUT_UP;
+        return true;
+    }
+
+    // Breakout DOWN: price below support
+    if(currentPrice < rangeBox.support) {
+        direction = BREAKOUT_DOWN;
+        return true;
+    }
+
+    direction = BREAKOUT_NONE;
+    return false;
+}
+
+//+------------------------------------------------------------------+
+//| Check Reentry Condition for Shield (price back in range)          |
+//+------------------------------------------------------------------+
+bool CheckReentryConditionShield(double currentPrice) {
+    if(!rangeBox.isValid) {
+        return false;
+    }
+
+    // Price is back inside range (between support and resistance)
+    return (currentPrice > rangeBox.support && currentPrice < rangeBox.resistance);
 }
 
