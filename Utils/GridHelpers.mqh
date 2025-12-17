@@ -229,7 +229,7 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
 
     double spacingPrice = PipsToPoints(spacingPips);
     bool isBuy = IsGridOrderBuy(side, zone);
-    double orderEntryPrice = CalculateGridLevelPrice(entryPointPrice, zone, level, spacingPips);
+    double orderEntryPrice = CalculateGridLevelPrice(entryPointPrice, zone, level, spacingPips, side);
 
     //=================================================================
     // NEUTRAL_PURE: TP FISSO (Spacing × Ratio)
@@ -372,10 +372,10 @@ double CalculateGridSL(double baseEntryPoint, ENUM_GRID_SIDE side, ENUM_GRID_ZON
 
         if(zone == ZONE_UPPER) {
             // Upper zone: SL above the range
-            return NormalizeDouble(entryPoint + PipsToPoints(totalRange) + slDistance, symbolDigits);
+            return NormalizeDouble(baseEntryPoint + PipsToPoints(totalRange) + slDistance, symbolDigits);
         } else {
             // Lower zone: SL below the range
-            return NormalizeDouble(entryPoint - PipsToPoints(totalRange) - slDistance, symbolDigits);
+            return NormalizeDouble(baseEntryPoint - PipsToPoints(totalRange) - slDistance, symbolDigits);
         }
     }
 
