@@ -129,8 +129,18 @@ double GetHedgeOffset() {
 
 //+------------------------------------------------------------------+
 //| Get Position Type When Order Fills                               |
+//| v5.1 FIX: Aggiunto supporto CASCADE_OVERLAP                      |
 //+------------------------------------------------------------------+
 ENUM_POSITION_TYPE GetGridPositionType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
+    // ═══════════════════════════════════════════════════════════════
+    // CASCADE_OVERLAP: Grid A = sempre BUY, Grid B = sempre SELL
+    // Questo fix corregge il calcolo TP per ordini Lower Zone
+    // ═══════════════════════════════════════════════════════════════
+    if(IsCascadeOverlapMode()) {
+        return (side == GRID_A) ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
+    }
+
+    // Codice esistente per altri modi (NEUTRAL_PURE, CASCADE_PERFECT, etc.)
     if(side == GRID_A) {
         if(zone == ZONE_UPPER) {
             return POSITION_TYPE_BUY;   // Buy Limit fills to Buy
