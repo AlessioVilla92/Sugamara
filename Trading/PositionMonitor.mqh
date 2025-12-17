@@ -500,12 +500,97 @@ void ProcessDealEvent(ulong dealTicket) {
     UpdateSessionStatistics(profit, isWin);
     UpdateDailyStatistics(profit, isWin);
 
+    // v5.1: Record trade for COP (Close On Profit)
+    double lots = HistoryDealGetDouble(dealTicket, DEAL_VOLUME);
+    COP_RecordTrade(profit, lots);
+
     // Log
     string symbol = HistoryDealGetString(dealTicket, DEAL_SYMBOL);
     ENUM_GRID_SIDE side = GetGridSideFromMagic((int)magic);
 
     LogMessage(isWin ? LOG_SUCCESS : LOG_WARNING,
                GetGridSideName(side) + " position closed: " + FormatMoney(profit));
+}
+
+//+------------------------------------------------------------------+
+//| BREAK ON PROFIT (BOP) v5.1                                       |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Check Break On Profit for All Positions                          |
+//| Sposta SL a X% del profit quando raggiunge Y% verso TP           |
+//+------------------------------------------------------------------+
+void CheckBreakOnProfit() {
+    if(!Enable_BreakOnProfit) return;
+
+    for(int i = PositionsTotal() - 1; i >= 0; i--) {
+        ulong ticket = PositionGetTicket(i);
+        if(!PositionSelectByTicket(ticket)) continue;
+
+        // Check symbol
+        if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
+
+        // Check magic number (Grid A, Grid B, Shield)
+        long magic = PositionGetInteger(POSITION_MAGIC);
+        if(magic < MagicNumber || magic > MagicNumber + MAGIC_OFFSET_GRID_B + 1000) continue;
+
+        double entry = PositionGetDouble(POSITION_PRICE_OPEN);
+        double tp = PositionGetDouble(POSITION_TP);
+        double currentSL = PositionGetDouble(POSITION_SL);
+        double currentPrice = PositionGetDouble(POSITION_PRICE_CURRENT);
+        ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
+
+        // Skip if no TP set
+        if(tp == 0) continue;
+
+        // Calculate distances
+        double totalDistance = MathAbs(tp - entry);
+        double currentDistance = 0;
+
+        if(posType == POSITION_TYPE_BUY) {
+            currentDistance = currentPrice - entry;
+        } else {
+            currentDistance = entry - currentPrice;
+        }
+
+        // Skip if in loss
+        if(currentDistance <= 0) continue;
+
+        // Calculate progress percentage
+        double progressPercent = (currentDistance / totalDistance) * 100.0;
+
+        // Check if trigger reached
+        if(progressPercent >= BOP_TriggerPercent) {
+            // Calculate new SL at lock percentage of current profit
+            double lockDistance = currentDistance * BOP_LockPercent / 100.0;
+            double newSL = 0;
+
+            if(posType == POSITION_TYPE_BUY) {
+                newSL = entry + lockDistance;
+            } else {
+                newSL = entry - lockDistance;
+            }
+
+            newSL = NormalizeDouble(newSL, _Digits);
+
+            // Only modify if new SL is better
+            bool shouldModify = false;
+            if(posType == POSITION_TYPE_BUY) {
+                if(currentSL == 0 || newSL > currentSL) shouldModify = true;
+            } else {
+                if(currentSL == 0 || newSL < currentSL) shouldModify = true;
+            }
+
+            if(shouldModify) {
+                if(trade.PositionModify(ticket, newSL, tp)) {
+                    Print("[BOP] ✅ Ticket #", ticket, " | SL moved to ", DoubleToString(newSL, _Digits),
+                          " | Locked ", DoubleToString(BOP_LockPercent, 0), "% of ", DoubleToString(currentDistance / symbolPoint * 10, 1), " pips profit");
+                } else {
+                    Print("[BOP] ❌ Failed to modify ticket #", ticket, " | Error: ", GetLastError());
+                }
+            }
+        }
+    }
 }
 
 //+------------------------------------------------------------------+

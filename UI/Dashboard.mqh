@@ -272,6 +272,7 @@ bool InitializeDashboard() {
     CreateVolatilityPanel();
     CreateShieldPanel();
     CreateGridLegendPanel();
+    CreateCOPPanel();  // v5.1: Close On Profit Panel
 
     // Mark dashboard as initialized
     g_dashboardInitialized = true;
@@ -342,6 +343,7 @@ void RecreateEntireDashboard() {
     CreateVolatilityPanel();
     CreateShieldPanel();
     CreateGridLegendPanel();
+    CreateCOPPanel();  // v5.1: Close On Profit Panel
 
     // v4.4: Control buttons ALWAYS active
     // FIX v4.5: Corrected parameter order (startX, startY, panelWidth)
@@ -680,6 +682,43 @@ void CreateGridLegendPanel() {
 }
 
 //+------------------------------------------------------------------+
+//| Create COP Panel (v5.1 - Close On Profit)                        |
+//+------------------------------------------------------------------+
+void CreateCOPPanel() {
+    if(!Enable_CloseOnProfit) return;
+
+    int copX = Dashboard_X + TOTAL_WIDTH + 10;
+    int copY = Dashboard_Y + 588;  // Sotto GRID_LEGEND_PANEL
+    int copWidth = 175;
+    int copHeight = 120;
+
+    DashRectangle("COP_PANEL", copX, copY, copWidth, copHeight, C'28,35,28');
+
+    int ly = copY + 8;
+    DashLabel("COP_TITLE", copX + 10, ly, "💵 CLOSE ON PROFIT", CLR_GOLD, 9, "Arial Bold");
+    ly += 20;
+    DashLabel("COP_SEPARATOR", copX + 10, ly, "------------------------", clrGray, 7);
+    ly += 15;
+
+    // Net Profit
+    DashLabel("COP_NET", copX + 10, ly, "Net: $0.00 / $20.00", CLR_AZURE_1, 8);
+    ly += 16;
+
+    // Progress Bar (text-based)
+    DashLabel("COP_PROGRESS", copX + 10, ly, "░░░░░░░░░░░░░░░░ 0%", clrGray, 8);
+    ly += 18;
+
+    // Details
+    DashLabel("COP_REAL", copX + 10, ly, "Real: $0.00", clrGray, 8);
+    ly += 16;
+    DashLabel("COP_FLOAT", copX + 10, ly, "Float: $0.00", clrGray, 8);
+    ly += 16;
+    DashLabel("COP_COMM", copX + 10, ly, "Comm: -$0.00", clrGray, 8);
+
+    Print("SUCCESS: COP Panel created");
+}
+
+//+------------------------------------------------------------------+
 //| Update All Dashboard Values                                      |
 //+------------------------------------------------------------------+
 void UpdateDashboard() {
@@ -698,6 +737,7 @@ void UpdateDashboard() {
     UpdatePerformanceSection();
     UpdateVolatilityPanel();
     UpdateShieldSection();
+    UpdateCOPSection();  // v5.1: Close On Profit Section
 
     ChartRedraw(0);
 }
@@ -1053,6 +1093,63 @@ void UpdateShieldSection() {
 }
 
 //+------------------------------------------------------------------+
+//| Update COP Section (v5.1)                                         |
+//+------------------------------------------------------------------+
+void UpdateCOPSection() {
+    if(!Enable_CloseOnProfit) return;
+
+    // Net Profit
+    double netProfit = COP_GetNetProfit();
+    color netColor = netProfit >= 0 ? CLR_PROFIT : CLR_LOSS;
+    ObjectSetString(0, "COP_NET", OBJPROP_TEXT,
+                    StringFormat("Net: $%.2f / $%.2f", netProfit, COP_DailyTarget_USD));
+    ObjectSetInteger(0, "COP_NET", OBJPROP_COLOR, netColor);
+
+    // Progress Bar
+    double progress = COP_GetProgressPercent();
+    int filledBars = (int)(progress / 6.25);  // 16 bars total
+    if(filledBars > 16) filledBars = 16;
+
+    string progressBar = "";
+    for(int i = 0; i < 16; i++) {
+        progressBar += (i < filledBars) ? "█" : "░";
+    }
+
+    color progressColor = clrGray;
+    if(progress >= 100) progressColor = CLR_PROFIT;
+    else if(progress >= 75) progressColor = CLR_GOLD;
+    else if(progress >= 50) progressColor = CLR_NEUTRAL;
+
+    ObjectSetString(0, "COP_PROGRESS", OBJPROP_TEXT,
+                    StringFormat("%s %.0f%%", progressBar, progress));
+    ObjectSetInteger(0, "COP_PROGRESS", OBJPROP_COLOR, progressColor);
+
+    // Details
+    ObjectSetString(0, "COP_REAL", OBJPROP_TEXT,
+                    StringFormat("Real: $%.2f", cop_RealizedProfit));
+    ObjectSetInteger(0, "COP_REAL", OBJPROP_COLOR,
+                    cop_RealizedProfit >= 0 ? CLR_PROFIT : CLR_LOSS);
+
+    ObjectSetString(0, "COP_FLOAT", OBJPROP_TEXT,
+                    StringFormat("Float: $%.2f", cop_FloatingProfit));
+    ObjectSetInteger(0, "COP_FLOAT", OBJPROP_COLOR,
+                    cop_FloatingProfit >= 0 ? CLR_PROFIT : CLR_LOSS);
+
+    ObjectSetString(0, "COP_COMM", OBJPROP_TEXT,
+                    StringFormat("Comm: -$%.2f", cop_TotalCommissions));
+    ObjectSetInteger(0, "COP_COMM", OBJPROP_COLOR, clrGray);
+
+    // Status (if target reached)
+    if(COP_IsTargetReached()) {
+        ObjectSetString(0, "COP_TITLE", OBJPROP_TEXT, "✅ TARGET REACHED!");
+        ObjectSetInteger(0, "COP_TITLE", OBJPROP_COLOR, CLR_PROFIT);
+    } else {
+        ObjectSetString(0, "COP_TITLE", OBJPROP_TEXT, "💵 CLOSE ON PROFIT");
+        ObjectSetInteger(0, "COP_TITLE", OBJPROP_COLOR, CLR_GOLD);
+    }
+}
+
+//+------------------------------------------------------------------+
 //| Helper: Get ATR Value for Timeframe                              |
 //+------------------------------------------------------------------+
 double GetATRValue(ENUM_TIMEFRAMES tf) {
@@ -1162,6 +1259,7 @@ void RemoveDashboard() {
     DeleteObjectsByPrefix("LEGEND_");
     DeleteObjectsByPrefix("GRID_LEGEND_");
     DeleteObjectsByPrefix("SHIELD_");
+    DeleteObjectsByPrefix("COP_");  // v5.1: Close On Profit Panel
     ChartRedraw(0);
 }
 

@@ -324,6 +324,18 @@ int dailyWins = 0;                          // Wins giornalieri
 int dailyLosses = 0;                        // Losses giornalieri
 
 //+------------------------------------------------------------------+
+//| 💵 CLOSE ON PROFIT (COP) v5.1                                    |
+//+------------------------------------------------------------------+
+double cop_RealizedProfit = 0.0;            // Profitto realizzato oggi (COP)
+double cop_FloatingProfit = 0.0;            // Floating P/L corrente (COP)
+double cop_TotalCommissions = 0.0;          // Commissioni totali oggi (COP)
+double cop_NetProfit = 0.0;                 // Net Profit = Realized + Floating - Commissions
+bool   cop_TargetReached = false;           // Flag: target giornaliero raggiunto
+datetime cop_LastResetDate = 0;             // Data ultimo reset (per daily reset)
+int    cop_TradesToday = 0;                 // Numero trades oggi (per commissioni)
+double cop_TotalLotsToday = 0.0;            // Lotti totali tradati oggi (per commissioni)
+
+//+------------------------------------------------------------------+
 //| Initialize All Arrays                                            |
 //| Call in OnInit() after variable declarations                     |
 //+------------------------------------------------------------------+

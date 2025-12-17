@@ -55,6 +55,48 @@ input double    PartialTP_Level2_Close = 25.0;              // 📉 Chiudi % pos
 input bool      PartialTP_OnShield = true;                  // 🛡️ Applica anche a Shield
 
 //+------------------------------------------------------------------+
+//| 🔒 BREAK ON PROFIT (BOP) v5.1                                    |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🔒 BREAK ON PROFIT (BOP) v5.1                           ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input bool      Enable_BreakOnProfit = true;                // ✅ Abilita Break On Profit
+// Quando posizione raggiunge X% del TP, sposta SL a Y% del profit
+
+input group "    📊 BOP PARAMETERS"
+input double    BOP_TriggerPercent = 75.0;                  // 📊 Trigger: % progress verso TP (es: 75%)
+input double    BOP_LockPercent = 50.0;                     // 🔒 Lock: % profit da proteggere (es: 50%)
+// Esempio: TP=10 pips, prezzo a 7.5 pips (75%), SL va a 3.75 pips (50% di 7.5)
+
+//+------------------------------------------------------------------+
+//| 💵 CLOSE ON PROFIT (COP) v5.1                                    |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  💵 CLOSE ON PROFIT (COP) v5.1                           ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input bool      Enable_CloseOnProfit = true;                // ✅ Abilita Close On Profit
+// Chiude tutto quando raggiunge il target giornaliero
+
+input group "    💰 COP TARGET"
+input double    COP_DailyTarget_USD = 20.0;                 // 💰 Target Giornaliero ($)
+input bool      COP_IncludeFloating = true;                 // 📊 Includi Floating P/L nel calcolo
+
+input group "    💳 COMMISSIONI"
+input bool      COP_DeductCommissions = true;               // 💳 Sottrai Commissioni
+input double    COP_CommissionPerLot = 3.50;                // 💳 Commissione per Lot ($)
+
+input group "    🎯 AZIONI AL TARGET"
+input bool      COP_ClosePositions = true;                  // ❌ Chiudi tutte le Posizioni
+input bool      COP_DeletePending = true;                   // 🗑️ Cancella tutti i Pending
+input bool      COP_PauseTrading = true;                    // ⏸️ Pausa Trading dopo Target
+
+//+------------------------------------------------------------------+
 //| 📈 TRAILING STOP ASIMMETRICO SETTINGS                            |
 //+------------------------------------------------------------------+
 

@@ -68,6 +68,9 @@
 // v3.0 NEW Trading Modules
 #include "Trading/PartialTPManager.mqh"
 
+// v5.1 NEW Trading Modules
+#include "Trading/CloseOnProfitManager.mqh"
+
 // v4.0 NEW Modules
 #include "Utils/DynamicATRAdapter.mqh"
 #include "Indicators/CenterCalculator.mqh"
@@ -219,6 +222,9 @@ int OnInit() {
         Print("WARNING: Failed to initialize Partial TP Manager");
     }
 
+    //--- STEP 13.8b: Initialize Close On Profit (v5.1) ---
+    InitializeCloseOnProfit();
+
     //--- STEP 13.9: Initialize Trailing Manager (REMOVED - CASCADE_OVERLAP puro) ---
     // GridTrailingManager eliminato - non necessario per CASCADE SOVRAPPOSTO
 
@@ -327,6 +333,8 @@ int OnInit() {
     Print("  ✅ ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
     Print("  ✅ Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
     Print("  ✅ Control Buttons: ALWAYS ACTIVE");
+    Print("  ✅ Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
+    Print("  ✅ Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
     Print("───────────────────────────────────────────────────────────────────");
     Print("  ATR/SPACING FEATURES:");
     Print("  ✅ Dynamic ATR Spacing: ", (EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) ? "ENABLED" : "DISABLED");
@@ -424,6 +432,9 @@ void OnDeinit(const int reason) {
     DeinitializePartialTPManager();
     // DeinitializeTrailingManager(); // REMOVED - GridTrailingManager eliminato
     DeinitializeManualSR();
+
+    // v5.1: Deinitialize COP
+    DeinitializeCloseOnProfit();
 
     // v4.0: Deinitialize new modules
     if(ShowCenterIndicators || EnableAutoRecenter) {
@@ -574,6 +585,15 @@ void OnTick() {
 
     //--- v3.0: PROCESS PARTIAL TAKE PROFIT ---
     ProcessPartialTPs();
+
+    //--- v5.1: BREAK ON PROFIT (BOP) ---
+    CheckBreakOnProfit();
+
+    //--- v5.1: CLOSE ON PROFIT (COP) - Check Daily Target ---
+    if(COP_CheckTarget()) {
+        // Target reached - system will be paused if COP_PauseTrading is enabled
+        return;
+    }
 
     //--- v3.0: PROCESS TRAILING STOPS (REMOVED - CASCADE_OVERLAP puro) ---
     // ProcessTrailingStops(); // GridTrailingManager eliminato
