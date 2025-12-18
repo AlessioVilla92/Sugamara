@@ -84,7 +84,7 @@ input bool      Enable_CloseOnProfit = true;                // ✅ Abilita Close
 // Chiude tutto quando raggiunge il target giornaliero
 
 input group "    💰 COP TARGET"
-input double    COP_DailyTarget_USD = 20.0;                 // 💰 Target Giornaliero ($)
+input double    COP_DailyTarget_USD = 50.0;                 // 💰 Target Giornaliero ($)
 input bool      COP_IncludeFloating = true;                 // 📊 Includi Floating P/L nel calcolo
 
 input group "    💳 COMMISSIONI"

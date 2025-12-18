@@ -155,6 +155,9 @@ void HandleControlButtonClick(string objectName) {
 
         CloseAllSugamaraOrders();
 
+        // Reset COP counter on CLOSE ALL
+        COP_ResetDaily();
+
         currentEntryMode = ENTRY_MARKET;
         buttonState = BTN_STATE_IDLE;
         waitingForActivation = false;
@@ -177,6 +180,9 @@ void HandleControlButtonClick(string objectName) {
 //| Start Grid System                                                |
 //+------------------------------------------------------------------+
 void StartGridSystem() {
+    // Reset COP counter on every START
+    COP_ResetDaily();
+
     systemState = STATE_ACTIVE;
 
     // Initialize entry point at current price

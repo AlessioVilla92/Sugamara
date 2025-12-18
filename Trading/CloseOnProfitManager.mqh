@@ -154,6 +154,10 @@ void COP_ExecuteTargetActions() {
         systemState = STATE_PAUSED;
         Print("[COP] ⏸️ Trading PAUSED until next day");
     }
+
+    // Reset COP counter after target reached (ready for next cycle)
+    COP_ResetDaily();
+    Print("[COP] 🔄 Counter reset - ready for next cycle");
 }
 
 //+------------------------------------------------------------------+

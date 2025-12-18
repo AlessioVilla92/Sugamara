@@ -224,6 +224,8 @@ void HandleButtonClick(string clickedObject) {
     if(clickedObject == "BTN_CLOSE_ALL") {
         Print("WARNING: CLOSE ALL requested");
         CloseAllSugamaraOrders();
+        // Reset COP counter on CLOSE ALL
+        COP_ResetDaily();
         systemState = STATE_IDLE;
         if(EnableAlerts) Alert("Sugamara: ALL POSITIONS CLOSED");
         return;
@@ -690,7 +692,7 @@ void CreateCOPPanel() {
     int copX = Dashboard_X + TOTAL_WIDTH + 10;
     int copY = Dashboard_Y + 588;  // Sotto GRID_LEGEND_PANEL
     int copWidth = 175;
-    int copHeight = 120;
+    int copHeight = 155;  // Increased for new fields
 
     DashRectangle("COP_PANEL", copX, copY, copWidth, copHeight, C'28,35,28');
 
@@ -701,11 +703,17 @@ void CreateCOPPanel() {
     ly += 15;
 
     // Net Profit
-    DashLabel("COP_NET", copX + 10, ly, "Net: $0.00 / $20.00", CLR_AZURE_1, 8);
+    DashLabel("COP_NET", copX + 10, ly, "Net: $0.00 / $50.00", CLR_AZURE_1, 8);
     ly += 16;
 
     // Progress Bar (text-based)
     DashLabel("COP_PROGRESS", copX + 10, ly, "░░░░░░░░░░░░░░░░ 0%", clrGray, 8);
+    ly += 16;
+
+    // Status and Remaining (NEW)
+    DashLabel("COP_STATUS", copX + 10, ly, "Status: ACTIVE", CLR_PROFIT, 8);
+    ly += 16;
+    DashLabel("COP_MISSING", copX + 10, ly, "Manca: $50.00", CLR_AZURE_1, 8);
     ly += 18;
 
     // Details
@@ -715,7 +723,7 @@ void CreateCOPPanel() {
     ly += 16;
     DashLabel("COP_COMM", copX + 10, ly, "Comm: -$0.00", clrGray, 8);
 
-    Print("SUCCESS: COP Panel created");
+    Print("SUCCESS: COP Panel created (enhanced v5.2)");
 }
 
 //+------------------------------------------------------------------+
@@ -1123,6 +1131,30 @@ void UpdateCOPSection() {
     ObjectSetString(0, "COP_PROGRESS", OBJPROP_TEXT,
                     StringFormat("%s %.0f%%", progressBar, progress));
     ObjectSetInteger(0, "COP_PROGRESS", OBJPROP_COLOR, progressColor);
+
+    // Status (NEW v5.2)
+    string statusText = "ACTIVE";
+    color statusColor = CLR_PROFIT;
+    if(COP_IsTargetReached()) {
+        statusText = "TARGET REACHED";
+        statusColor = CLR_GOLD;
+    } else if(systemState == STATE_PAUSED) {
+        statusText = "PAUSED";
+        statusColor = CLR_NEUTRAL;
+    } else if(systemState == STATE_IDLE) {
+        statusText = "IDLE";
+        statusColor = clrGray;
+    }
+    ObjectSetString(0, "COP_STATUS", OBJPROP_TEXT, "Status: " + statusText);
+    ObjectSetInteger(0, "COP_STATUS", OBJPROP_COLOR, statusColor);
+
+    // Missing amount (NEW v5.2)
+    double missingAmount = COP_DailyTarget_USD - netProfit;
+    if(missingAmount < 0) missingAmount = 0;
+    ObjectSetString(0, "COP_MISSING", OBJPROP_TEXT,
+                    StringFormat("Manca: $%.2f", missingAmount));
+    ObjectSetInteger(0, "COP_MISSING", OBJPROP_COLOR,
+                    missingAmount > 0 ? CLR_AZURE_1 : CLR_PROFIT);
 
     // Details
     ObjectSetString(0, "COP_REAL", OBJPROP_TEXT,

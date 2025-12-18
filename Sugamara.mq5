@@ -433,7 +433,8 @@ void OnDeinit(const int reason) {
     // DeinitializeTrailingManager(); // REMOVED - GridTrailingManager eliminato
     DeinitializeManualSR();
 
-    // v5.1: Deinitialize COP
+    // v5.1: Reset and Deinitialize COP
+    COP_ResetDaily();  // Reset COP counter on EA removal/chart close
     DeinitializeCloseOnProfit();
 
     // v4.0: Deinitialize new modules
