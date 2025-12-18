@@ -15,7 +15,12 @@
       "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Trading\\HedgingManager.mqh\")",
       "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Trading\\GridTrailingManager.mqh\")",
       "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Trading\\GridRecenterManager.mqh\")",
-      "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Trading\\RangeBoxManager.mqh\")"
+      "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\Trading\\RangeBoxManager.mqh\")",
+      "Bash(grep:*)",
+      "Bash(while read f)",
+      "Bash(do basename \"$f\")",
+      "Bash(done)",
+      "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\temp_old.txt\")"
     ],
     "deny": [],
     "ask": []

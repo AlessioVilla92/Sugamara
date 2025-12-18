@@ -89,15 +89,6 @@ enum ENUM_BREAKOUT_DIRECTION {
 };
 
 //+------------------------------------------------------------------+
-//| 🛡️ HEDGE DIRECTION - (Legacy - per compatibilita)                |
-//+------------------------------------------------------------------+
-enum ENUM_HEDGE_DIRECTION {
-    HEDGE_NONE = 0,             // Nessun hedge attivo
-    HEDGE_LONG = 1,             // Hedge LONG (breakout sotto Support)
-    HEDGE_SHORT = 2             // Hedge SHORT (breakout sopra Resistance)
-};
-
-//+------------------------------------------------------------------+
 //| 📏 SPACING MODE - Modalità calcolo spacing griglia               |
 //+------------------------------------------------------------------+
 enum ENUM_SPACING_MODE {
@@ -260,15 +251,6 @@ enum ENUM_PARTIAL_TP_STATUS {
 };
 
 //+------------------------------------------------------------------+
-//| 📈 TRAILING TYPE - Tipo Trailing v3.0                            |
-//+------------------------------------------------------------------+
-enum ENUM_TRAILING_TYPE {
-    TRAILING_NONE = 0,          // Nessun trailing
-    TRAILING_AGGRESSIVE = 1,    // Trailing aggressivo (verso breakout)
-    TRAILING_CONSERVATIVE = 2   // Trailing conservativo (contro breakout)
-};
-
-//+------------------------------------------------------------------+
 //| 📍 MANUAL SR LINE TYPE - Tipo linea S/R manuale v3.0             |
 //+------------------------------------------------------------------+
 enum ENUM_SR_LINE_TYPE {
@@ -309,8 +291,4 @@ const int MAGIC_OFFSET_GRID_B = 10000;    // Grid B: MagicNumber + 10000
 // Shield Magic Numbers (nuovo sistema)
 const int MAGIC_SHIELD_LONG = 9001;       // Shield LONG
 const int MAGIC_SHIELD_SHORT = 9002;      // Shield SHORT
-
-// Legacy Hedge (per compatibilita)
-const int MAGIC_HEDGE_LONG = 9001;        // Hedge LONG (alias Shield)
-const int MAGIC_HEDGE_SHORT = 9002;       // Hedge SHORT (alias Shield)
 

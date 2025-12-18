@@ -7,7 +7,7 @@
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
 
-#include <Trade\Trade.mqh>
+#include <Trade/Trade.mqh>
 
 //+------------------------------------------------------------------+
 //| TRADE OBJECT                                                     |
@@ -218,16 +218,6 @@ datetime rangeBox_LastCalc = 0;             // Ultimo calcolo Range Box
 bool isBreakoutUp = false;                  // Flag breakout sopra resistance
 bool isBreakoutDown = false;                // Flag breakout sotto support
 bool isInsideRange = true;                  // Flag prezzo dentro range
-
-//+------------------------------------------------------------------+
-//| HEDGING VARIABLES (Legacy - Solo per NEUTRAL_RANGEBOX)           |
-//+------------------------------------------------------------------+
-ENUM_HEDGE_DIRECTION currentHedgeDirection = HEDGE_NONE;  // Direzione hedge attivo
-ulong hedgeLongTicket = 0;                  // Ticket ordine hedge LONG
-ulong hedgeShortTicket = 0;                 // Ticket ordine hedge SHORT
-double hedgeLotSize = 0;                    // Lot size hedge corrente
-datetime hedgeOpenTime = 0;                 // Tempo apertura hedge
-double hedgeEntryPrice = 0;                 // Prezzo entry hedge
 
 //+------------------------------------------------------------------+
 //| 🛡️ SHIELD INTELLIGENTE STRUCTURE                                 |

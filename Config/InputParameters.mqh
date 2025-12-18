@@ -97,23 +97,6 @@ input bool      COP_DeletePending = true;                   // 🗑️ Cancella 
 input bool      COP_PauseTrading = true;                    // ⏸️ Pausa Trading dopo Target
 
 //+------------------------------------------------------------------+
-//| 📈 TRAILING STOP ASIMMETRICO SETTINGS                            |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  📈 TRAILING STOP ASIMMETRICO (v3.0)                      ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input bool      Enable_TrailingAsymmetric = false;          // ✅ Abilita Trailing Stop Asimmetrico ( Disattivato 12dic )
-
-input group "    🎯 TRAILING PARAMETERS"
-input double    Trailing_Aggressive_Pips = 5.0;             // ⚡ Trailing Aggressivo (pips) - verso breakout
-input double    Trailing_Conservative_Pips = 15.0;          // 🛡️ Trailing Conservativo (pips) - contro breakout
-input double    Trailing_Activation_Pips = 10.0;            // 📏 Attivazione Trailing (pips profit)
-input double    Trailing_Step_Pips = 2.0;                   // 📐 Step Trailing (pips)
-
-//+------------------------------------------------------------------+
 //| 📊 ATR MULTI-TIMEFRAME SETTINGS                                  |
 //+------------------------------------------------------------------+
 
@@ -440,9 +423,6 @@ input uchar     ProfitZone_Transparency = 220;               // 🔍 Trasparenza
 
 input group "    🔧 LEGACY HEDGE (Backward Compatibility)"
 input bool      EnableHedging = true;                        // ✅ Abilita hedging (maps to Shield)
-input double    Hedge_Multiplier = 1.0;                      // 📈 Moltiplicatore (legacy, ignored)
-input double    Hedge_TP_Pips = 20.0;                        // 🎯 TP hedge (legacy, ignored)
-input double    Hedge_SL_Pips = 10.0;                        // 🛑 SL hedge (legacy, ignored)
 
 //+------------------------------------------------------------------+
 //| 9️⃣ 💰 LOT SIZING                                                 |
@@ -672,25 +652,11 @@ input group "╚═════════════════════�
 
 input group "    ⚙️ ATTIVAZIONE"
 input bool      EnableAutoRecenter = false;                  // ✅ Abilita Auto-Recenter ( Disattivato 12dic )
-input bool      RequireUserConfirm = false;                  // ⚠️ Richiedi conferma utente prima di recenter
 
 input group "    📏 CONDIZIONI TRIGGER"
 input double    Recenter_PriceProximity_Pips = 10.0;         // 📏 Prezzo deve essere entro X pips dal centro
 input double    Recenter_EntryDistance_Pips = 40.0;          // 📏 Entry deve essere lontano almeno X pips dal centro
 input double    Recenter_MinConfidence = 60.0;               // 📊 Confidence minima indicatori (%)
-
-input group "    💰 CONDIZIONI SICUREZZA"
-input double    Recenter_MaxFloatingLoss_USD = 50.0;         // 💰 Max floating loss per reset ($)
-input double    Recenter_MaxFloatingLoss_Pct = 2.0;          // 💰 Max floating loss per reset (% equity)
-input int       Recenter_MinFilledPositions = 0;             // 🔢 Min posizioni filled per bloccare (0=ignora)
-
-input group "    ⏱️ TIMING"
-input int       Recenter_MinInterval_Minutes = 240;          // ⏱️ Intervallo minimo tra recenter (minuti)
-input bool      Recenter_OnlyOnNewBar = true;                // ⏱️ Recenter solo su nuova barra M15
-
-input group "    🛡️ ECCEZIONI (Blocca Recenter se...)"
-input bool      BlockRecenterNearShield = true;              // 🛡️ Blocca recenter vicino a Shield
-input bool      BlockRecenterHighVolatility = true;          // 🛡️ Blocca recenter su ATR EXTREME
 
 //+------------------------------------------------------------------+
 //| 1️⃣8️⃣ ⚙️ ADVANCED SETTINGS                                        |
