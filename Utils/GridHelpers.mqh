@@ -1013,7 +1013,7 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     // ═══════════════════════════════════════════════════════════════════
     // v4.0 SAFETY CHECK 1: Block near Shield activation
     // ═══════════════════════════════════════════════════════════════════
-    if(PauseReopenNearShield && IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
+    if(PauseReopenNearShield && IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED) {
         double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
         double proximityPoints = PipsToPoints(ShieldProximity_Pips);
 
@@ -1360,14 +1360,14 @@ bool CalculateBreakoutLevels() {
     double spacing = (currentSpacing_Pips > 0) ? currentSpacing_Pips : Fixed_Spacing_Pips;
     double spacingPoints = PipsToPoints(spacing);
 
-    // Set rangeBox values using grid edges
-    rangeBox.resistance = GetLastGridBLevel();  // Upper Grid B last level
-    rangeBox.support = GetLastGridALevel();     // Lower Grid A last level
+    // Set shieldZone values using grid edges
+    shieldZone.resistance = GetLastGridBLevel();  // Upper Grid B last level
+    shieldZone.support = GetLastGridALevel();     // Lower Grid A last level
 
     // Warning zones at N-0.5 levels
     double warningOffset = spacingPoints * (GridLevelsPerSide - 0.5);
-    rangeBox.warningZoneUp = NormalizeDouble(entryPoint + warningOffset, symbolDigits);
-    rangeBox.warningZoneDown = NormalizeDouble(entryPoint - warningOffset, symbolDigits);
+    shieldZone.warningZoneUp = NormalizeDouble(entryPoint + warningOffset, symbolDigits);
+    shieldZone.warningZoneDown = NormalizeDouble(entryPoint - warningOffset, symbolDigits);
 
     // Breakout zones at N+0.5 levels (beyond grid edges)
     double breakoutOffset = spacingPoints * (GridLevelsPerSide + 0.5);
@@ -1375,14 +1375,14 @@ bool CalculateBreakoutLevels() {
     lowerBreakoutLevel = NormalizeDouble(entryPoint - breakoutOffset, symbolDigits);
 
     // Reentry zones (same as support/resistance)
-    upperReentryLevel = rangeBox.resistance;
-    lowerReentryLevel = rangeBox.support;
+    upperReentryLevel = shieldZone.resistance;
+    lowerReentryLevel = shieldZone.support;
 
-    rangeBox.isValid = true;
+    shieldZone.isValid = true;
 
     PrintFormat("[GridHelpers] Breakout levels set from grid edges:");
-    PrintFormat("  Support: %.5f | Resistance: %.5f", rangeBox.support, rangeBox.resistance);
-    PrintFormat("  Warning Down: %.5f | Warning Up: %.5f", rangeBox.warningZoneDown, rangeBox.warningZoneUp);
+    PrintFormat("  Support: %.5f | Resistance: %.5f", shieldZone.support, shieldZone.resistance);
+    PrintFormat("  Warning Down: %.5f | Warning Up: %.5f", shieldZone.warningZoneDown, shieldZone.warningZoneUp);
 
     return true;
 }
@@ -1391,15 +1391,15 @@ bool CalculateBreakoutLevels() {
 //| Get Price Position in Range (for Shield 3 Phases)                 |
 //+------------------------------------------------------------------+
 ENUM_SYSTEM_STATE GetPricePositionInRange(double currentPrice) {
-    if(!rangeBox.isValid) {
+    if(!shieldZone.isValid) {
         return STATE_INSIDE_RANGE;
     }
 
     // Check if price is in warning zone (approaching edges)
-    if(currentPrice >= rangeBox.warningZoneUp) {
+    if(currentPrice >= shieldZone.warningZoneUp) {
         return STATE_WARNING_UP;
     }
-    if(currentPrice <= rangeBox.warningZoneDown) {
+    if(currentPrice <= shieldZone.warningZoneDown) {
         return STATE_WARNING_DOWN;
     }
 
@@ -1410,19 +1410,19 @@ ENUM_SYSTEM_STATE GetPricePositionInRange(double currentPrice) {
 //| Check Breakout Condition for Shield                               |
 //+------------------------------------------------------------------+
 bool CheckBreakoutConditionShield(double currentPrice, ENUM_BREAKOUT_DIRECTION &direction) {
-    if(!rangeBox.isValid) {
+    if(!shieldZone.isValid) {
         direction = BREAKOUT_NONE;
         return false;
     }
 
     // Breakout UP: price above resistance
-    if(currentPrice > rangeBox.resistance) {
+    if(currentPrice > shieldZone.resistance) {
         direction = BREAKOUT_UP;
         return true;
     }
 
     // Breakout DOWN: price below support
-    if(currentPrice < rangeBox.support) {
+    if(currentPrice < shieldZone.support) {
         direction = BREAKOUT_DOWN;
         return true;
     }
@@ -1435,11 +1435,11 @@ bool CheckBreakoutConditionShield(double currentPrice, ENUM_BREAKOUT_DIRECTION &
 //| Check Reentry Condition for Shield (price back in range)          |
 //+------------------------------------------------------------------+
 bool CheckReentryConditionShield(double currentPrice) {
-    if(!rangeBox.isValid) {
+    if(!shieldZone.isValid) {
         return false;
     }
 
     // Price is back inside range (between support and resistance)
-    return (currentPrice > rangeBox.support && currentPrice < rangeBox.resistance);
+    return (currentPrice > shieldZone.support && currentPrice < shieldZone.resistance);
 }
 

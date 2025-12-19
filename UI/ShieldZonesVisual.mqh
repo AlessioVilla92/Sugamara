@@ -52,8 +52,9 @@ bool InitializeShieldZonesVisual()
       return true;
    }
 
-   if(NeutralMode != NEUTRAL_RANGEBOX) {
-      Print("[ShieldZones] Visual zones only available in RANGEBOX mode");
+   // v5.2: Shield zones available for CASCADE_OVERLAP mode
+   if(!IsCascadeOverlapMode()) {
+      Print("[ShieldZones] Visual zones only available in CASCADE_OVERLAP mode");
       return true;
    }
 
@@ -95,28 +96,28 @@ bool InitializeShieldZonesVisual()
 bool CalculateShieldZoneLevels()
 {
    // Get range box levels
-   if(rangeBox.resistance == 0 || rangeBox.support == 0) {
-      Print("[ShieldZones] ERROR: RangeBox not initialized");
+   if(shieldZone.resistance == 0 || shieldZone.support == 0) {
+      Print("[ShieldZones] ERROR: ShieldZone not initialized");
       return false;
    }
 
-   double rangeSize = rangeBox.resistance - rangeBox.support;
+   double rangeSize = shieldZone.resistance - shieldZone.support;
    double warningBuffer = rangeSize * (Warning_Zone_Percent / 100.0);
 
    // Warning Zone levels (Phase 1)
-   szWarningZoneUp = rangeBox.resistance - warningBuffer;
-   szWarningZoneDown = rangeBox.support + warningBuffer;
+   szWarningZoneUp = shieldZone.resistance - warningBuffer;
+   szWarningZoneDown = shieldZone.support + warningBuffer;
 
    // Last Grid levels (Phase 2 boundary)
    // Grid B Upper = ultimo livello sopra
    // Grid A Lower = ultimo livello sotto
-   szLastGridUp = rangeBox.resistance;    // Approximately at resistance
-   szLastGridDown = rangeBox.support;     // Approximately at support
+   szLastGridUp = shieldZone.resistance;    // Approximately at resistance
+   szLastGridDown = shieldZone.support;     // Approximately at support
 
    // Breakout levels (Phase 3 boundary)
    double breakoutBuffer = Breakout_Buffer_Pips * symbolPoint * 10;
-   szBreakoutUp = rangeBox.resistance + breakoutBuffer;
-   szBreakoutDown = rangeBox.support - breakoutBuffer;
+   szBreakoutUp = shieldZone.resistance + breakoutBuffer;
+   szBreakoutDown = shieldZone.support - breakoutBuffer;
 
    // Shield Entry levels (where market order would execute)
    // Typically at breakout level or slightly beyond

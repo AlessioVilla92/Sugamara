@@ -69,7 +69,7 @@ color GetThemeDashboardAccent() { return Theme_DashboardAccent; }
 // Mode Colors (Arrakis Modes)
 #define CLR_MODE_PURE     C'180,160,120'     // Sandstone for PURE
 #define CLR_MODE_CASCADE  C'255,160,60'      // Spice Orange for CASCADE
-#define CLR_MODE_RANGEBOX C'140,180,160'     // Sietch green for RANGEBOX
+// CLR_MODE_RANGEBOX removed in v5.2 (RANGEBOX mode deprecated)
 
 // Panel Background Colors (Desert Night Theme)
 #define CLR_PANEL_GRIDA   C'45,38,28'        // Grid A panel (warm brown - BUY)
@@ -506,20 +506,7 @@ void CreateUnifiedDashboard() {
 
     rightY += gridBHeight;
 
-    //--- RANGEBOX PANEL (if enabled) ---
-    int rangeboxHeight = 100;
-    DashRectangle("RIGHT_RANGEBOX_PANEL", rightX, rightY, colWidth, rangeboxHeight, CLR_BG_MEDIUM);
-
-    int ry = rightY + 8;
-    DashLabel("RIGHT_RANGEBOX_TITLE", rightX + 10, ry, "RANGEBOX STATUS", CLR_MODE_RANGEBOX, 11, "Arial Bold");
-    ry += 22;
-    DashLabel("RIGHT_RANGEBOX_RES", rightX + 10, ry, "Resistance: ---", CLR_LOSS, 9);
-    ry += 18;
-    DashLabel("RIGHT_RANGEBOX_SUP", rightX + 10, ry, "Support: ---", CLR_PROFIT, 9);
-    ry += 18;
-    DashLabel("RIGHT_RANGEBOX_STATUS", rightX + 10, ry, "Status: N/A", CLR_SILVER, 9);
-
-    rightY += rangeboxHeight;
+    // v5.2: RANGEBOX panel removed (mode deprecated)
 
     //--- PERFORMANCE PANEL ---
     int perfHeight = 190;  // Increased for Risk line
@@ -741,7 +728,7 @@ void UpdateDashboard() {
     UpdateGridASection();
     UpdateGridBSection();
     UpdateExposureSection();
-    UpdateRangeBoxSection();
+    // v5.2: UpdateRangeBoxSection removed (mode deprecated)
     UpdatePerformanceSection();
     UpdateVolatilityPanel();
     UpdateShieldSection();
@@ -890,40 +877,7 @@ void UpdateExposureSection() {
     ObjectSetInteger(0, "LEFT_EXPOSURE_NET", OBJPROP_COLOR, netColor);
 }
 
-//+------------------------------------------------------------------+
-//| Update RangeBox Section                                          |
-//+------------------------------------------------------------------+
-void UpdateRangeBoxSection() {
-    if(!IsRangeBoxAvailable()) {
-        ObjectSetString(0, "RIGHT_RANGEBOX_STATUS", OBJPROP_TEXT, "Status: N/A");
-        ObjectSetInteger(0, "RIGHT_RANGEBOX_STATUS", OBJPROP_COLOR, clrGray);
-        return;
-    }
-
-    ObjectSetString(0, "RIGHT_RANGEBOX_RES", OBJPROP_TEXT,
-                    StringFormat("Resistance: %.5f", rangeBox_Resistance));
-    ObjectSetString(0, "RIGHT_RANGEBOX_SUP", OBJPROP_TEXT,
-                    StringFormat("Support: %.5f", rangeBox_Support));
-
-    string statusText = "Status: ";
-    color statusColor = CLR_WHITE;
-
-    if(isBreakoutUp) {
-        statusText += "BREAKOUT UP";
-        statusColor = CLR_LOSS;
-    } else if(isBreakoutDown) {
-        statusText += "BREAKOUT DOWN";
-        statusColor = CLR_LOSS;
-    } else if(isInsideRange) {
-        statusText += "Inside Range";
-        statusColor = CLR_ACTIVE;
-    } else {
-        statusText += "Unknown";
-    }
-
-    ObjectSetString(0, "RIGHT_RANGEBOX_STATUS", OBJPROP_TEXT, statusText);
-    ObjectSetInteger(0, "RIGHT_RANGEBOX_STATUS", OBJPROP_COLOR, statusColor);
-}
+// v5.2: UpdateRangeBoxSection() removed (RANGEBOX mode deprecated)
 
 //+------------------------------------------------------------------+
 //| Update Performance Section                                       |
@@ -1003,7 +957,8 @@ void UpdateVolatilityPanel() {
 void UpdateShieldSection() {
     // Shield Mode
     string modeText = "Mode: ";
-    if(NeutralMode != NEUTRAL_RANGEBOX) {
+    // v5.2: Shield available for CASCADE_OVERLAP mode
+    if(!IsCascadeOverlapMode()) {
         modeText += "N/A";
         ObjectSetString(0, "SHIELD_MODE", OBJPROP_TEXT, modeText);
         ObjectSetInteger(0, "SHIELD_MODE", OBJPROP_COLOR, clrGray);
@@ -1223,7 +1178,6 @@ color GetModeColor() {
     switch(NeutralMode) {
         case NEUTRAL_PURE:     return CLR_MODE_PURE;
         case NEUTRAL_CASCADE:  return CLR_MODE_CASCADE;
-        case NEUTRAL_RANGEBOX: return CLR_MODE_RANGEBOX;
     }
     return CLR_WHITE;
 }

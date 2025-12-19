@@ -13,8 +13,7 @@
 //+------------------------------------------------------------------+
 enum ENUM_NEUTRAL_MODE {
     NEUTRAL_PURE = 0,           // 1. PURE - Spacing fisso, TP fisso, NO ATR (Learning)
-    NEUTRAL_CASCADE = 1,        // 2. CASCADE - TP=Entry precedente, ATR opzionale (CONSIGLIATO)
-    NEUTRAL_RANGEBOX = 2        // 3. RANGEBOX - Range Box + Hedge, ATR opzionale (Produzione)
+    NEUTRAL_CASCADE = 1         // 2. CASCADE - TP=Entry precedente, ATR opzionale (CONSIGLIATO)
 };
 
 //+------------------------------------------------------------------+
@@ -35,16 +34,7 @@ enum ENUM_FOREX_PAIR {
 };
 
 //+------------------------------------------------------------------+
-//| 📦 RANGEBOX MODE - Calcolo Range Box (solo RANGEBOX)             |
-//+------------------------------------------------------------------+
-enum ENUM_RANGEBOX_MODE {
-    RANGEBOX_MANUAL = 0,        // Manuale - Resistance/Support inseriti
-    RANGEBOX_DAILY_HL = 1,      // Daily High/Low - Ultimi N giorni (CONSIGLIATO)
-    RANGEBOX_ATR_BASED = 2      // ATR Based - Centro ± (ATR × Multiplier)
-};
-
-//+------------------------------------------------------------------+
-//| 🛡️ SHIELD MODE - Modalità Shield Intelligente (solo RANGEBOX)    |
+//| 🛡️ SHIELD MODE - Modalità Shield Intelligente                    |
 //+------------------------------------------------------------------+
 enum ENUM_SHIELD_MODE {
     SHIELD_DISABLED = 0,        // Shield Disabilitato
@@ -138,7 +128,7 @@ enum ENUM_SYSTEM_STATE {
     STATE_INITIALIZING = 4,     // Inizializzazione in corso
     STATE_CLOSING = 5,          // Chiusura posizioni in corso
 
-    // Stati Range (RANGEBOX mode)
+    // Stati Range (usati da Shield per breakout detection)
     STATE_INSIDE_RANGE = 10,    // Dentro il range (normale)
     STATE_WARNING_UP = 11,      // Warning zona superiore
     STATE_WARNING_DOWN = 12,    // Warning zona inferiore

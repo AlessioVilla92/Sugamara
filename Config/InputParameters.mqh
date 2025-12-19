@@ -3,7 +3,7 @@
 //|                        Sugamara - Input Parameters               |
 //|                                                                  |
 //|  User-configurable parameters for Double Grid Neutral            |
-//|  v3.0 MULTIMODE - PURE / CASCADE / RANGEBOX                      |
+//|  v5.2 MULTIMODE - PURE / CASCADE                                 |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
@@ -199,7 +199,6 @@ input group "    ╔═ SELEZIONA MODALITÀ ════════════
 input ENUM_NEUTRAL_MODE NeutralMode = NEUTRAL_CASCADE;       // 📊 Modalità GridBot ▼
 // NEUTRAL_PURE     = Spacing fisso, TP fisso, NO ATR (learning)
 // NEUTRAL_CASCADE  = TP=Entry precedente, ATR opzionale (CONSIGLIATO)
-// NEUTRAL_RANGEBOX = Range Box + Hedge, ATR opzionale (produzione)
 
 //+------------------------------------------------------------------+
 //| 3️⃣ 📊 ATR SETTINGS                                               |
@@ -207,7 +206,7 @@ input ENUM_NEUTRAL_MODE NeutralMode = NEUTRAL_CASCADE;       // 📊 Modalità G
 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  3️⃣  📊 ATR SETTINGS (CASCADE/RANGEBOX)                   ║"
+input group "║  3️⃣  📊 ATR SETTINGS (CASCADE Mode)                       ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ⚡ ATR ACTIVATION"
@@ -358,31 +357,12 @@ input double    TP_Ratio_Pure = 1.2;                         // 🎯 Ratio TP pe
 // TP = Spacing × Ratio | 1.2 = TP 20% maggiore di spacing
 
 //+------------------------------------------------------------------+
-//| 7️⃣ 📦 RANGEBOX SETTINGS (Solo RANGEBOX)                          |
+//| 7️⃣ 🛡️ SHIELD INTELLIGENTE (CASCADE_OVERLAP)                      |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  7️⃣  📦 RANGEBOX SETTINGS (Solo RANGEBOX Mode)            ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ╔═ SELEZIONA RANGEBOX MODE ═══════════════════════════════🔽🔽🔽"
-input ENUM_RANGEBOX_MODE RangeBoxMode = RANGEBOX_DAILY_HL;   // 📊 Modalità Range Box ▼
-
-input group "    📐 RANGEBOX LEVELS"
-input double    RangeBox_Resistance = 0.0;                   // 🔺 Resistance manuale (0=auto)
-input double    RangeBox_Support = 0.0;                      // 🔻 Support manuale (0=auto)
-input double    RangeBox_Buffer_Pips = 10.0;                 // 📏 Buffer per breakout (pips)
-input int       RangeBox_PeriodBars = 20;                    // 📅 Periodo calcolo auto (barre D1)
-input double    RangeBox_ATR_Mult = 3.0;                     // 📈 Moltiplicatore ATR per range
-
-//+------------------------------------------------------------------+
-//| 8️⃣ 🛡️ SHIELD INTELLIGENTE (Solo RANGEBOX)                        |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  8️⃣  🛡️ SHIELD INTELLIGENTE (Solo RANGEBOX Mode)          ║"
+input group "║  7️⃣  🛡️ SHIELD INTELLIGENTE (CASCADE_OVERLAP Mode)        ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ╔═ SELEZIONA SHIELD MODE ═══════════════════════════════🔽🔽🔽"
@@ -576,7 +556,7 @@ input bool      ShowDashboard = true;                        // ✅ Mostra Dashb
 input int       Dashboard_X = 20;                            // 📍 Posizione X Dashboard
 input int       Dashboard_Y = 30;                            // 📍 Posizione Y Dashboard
 input bool      ShowGridLines = true;                        // ✅ Mostra Linee Grid su Chart
-input bool      ShowRangeBox = true;                         // ✅ Mostra Box Range (solo RANGEBOX)
+input bool      ShowRangeBox = false;                        // DEPRECATED - Non usato (mantenuto per compatibilità)
 
 //+------------------------------------------------------------------+
 //| 1️⃣6️⃣ 📊 VOLATILITY MONITOR                                       |

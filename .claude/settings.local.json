@@ -20,7 +20,8 @@
       "Bash(while read f)",
       "Bash(do basename \"$f\")",
       "Bash(done)",
-      "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\temp_old.txt\")"
+      "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\temp_old.txt\")",
+      "Bash(git grep:*)"
     ],
     "deny": [],
     "ask": []

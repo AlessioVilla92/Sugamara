@@ -292,16 +292,16 @@ void EnterWarningPhase(ENUM_BREAKOUT_DIRECTION direction)
    PrintFormat("  Direction: %s", (direction == BREAKOUT_UP ? "UP (approaching RESISTANCE)" : "DOWN (approaching SUPPORT)"));
    PrintFormat("  Current Price: %.5f", currentPrice);
    Print("───────────────────────────────────────────────────────────────────");
-   PrintFormat("  Resistance: %.5f", rangeBox.resistance);
-   PrintFormat("  Support: %.5f", rangeBox.support);
-   PrintFormat("  Warning Zone Up: %.5f", rangeBox.warningZoneUp);
-   PrintFormat("  Warning Zone Down: %.5f", rangeBox.warningZoneDown);
+   PrintFormat("  Resistance: %.5f", shieldZone.resistance);
+   PrintFormat("  Support: %.5f", shieldZone.support);
+   PrintFormat("  Warning Zone Up: %.5f", shieldZone.warningZoneUp);
+   PrintFormat("  Warning Zone Down: %.5f", shieldZone.warningZoneDown);
    Print("───────────────────────────────────────────────────────────────────");
    if(direction == BREAKOUT_UP) {
-      PrintFormat("  Distance to Resistance: %.1f pips", PointsToPips(rangeBox.resistance - currentPrice));
+      PrintFormat("  Distance to Resistance: %.1f pips", PointsToPips(shieldZone.resistance - currentPrice));
       PrintFormat("  Next Level: Grid B Upper[last] = %.5f", GetLastGridBLevel());
    } else {
-      PrintFormat("  Distance to Support: %.1f pips", PointsToPips(currentPrice - rangeBox.support));
+      PrintFormat("  Distance to Support: %.1f pips", PointsToPips(currentPrice - shieldZone.support));
       PrintFormat("  Next Level: Grid A Lower[last] = %.5f", GetLastGridALevel());
    }
    Print("═══════════════════════════════════════════════════════════════════");
@@ -327,8 +327,8 @@ void ExitWarningPhase()
    Print("═══════════════════════════════════════════════════════════════════");
    PrintFormat("  Reason: Price returned inside safe zone");
    PrintFormat("  Current Price: %.5f", currentPrice);
-   PrintFormat("  Warning Zone Up: %.5f", rangeBox.warningZoneUp);
-   PrintFormat("  Warning Zone Down: %.5f", rangeBox.warningZoneDown);
+   PrintFormat("  Warning Zone Up: %.5f", shieldZone.warningZoneUp);
+   PrintFormat("  Warning Zone Down: %.5f", shieldZone.warningZoneDown);
    Print("═══════════════════════════════════════════════════════════════════");
 
    shield.phase = PHASE_NORMAL;
@@ -352,8 +352,8 @@ void EnterPreShieldPhase(ENUM_BREAKOUT_DIRECTION direction)
    PrintFormat("  Direction: %s", (direction == BREAKOUT_UP ? "UP (BREAKOUT IMMINENT)" : "DOWN (BREAKOUT IMMINENT)"));
    PrintFormat("  Current Price: %.5f", currentPrice);
    Print("───────────────────────────────────────────────────────────────────");
-   PrintFormat("  Resistance: %.5f", rangeBox.resistance);
-   PrintFormat("  Support: %.5f", rangeBox.support);
+   PrintFormat("  Resistance: %.5f", shieldZone.resistance);
+   PrintFormat("  Support: %.5f", shieldZone.support);
    Print("───────────────────────────────────────────────────────────────────");
    if(direction == BREAKOUT_UP) {
       PrintFormat("  Upper Breakout Level: %.5f", upperBreakoutLevel);
@@ -386,8 +386,8 @@ void CancelPreShield()
    Print("═══════════════════════════════════════════════════════════════════");
    PrintFormat("  Reason: Price returned inside range before breakout");
    PrintFormat("  Current Price: %.5f", currentPrice);
-   PrintFormat("  Resistance: %.5f", rangeBox.resistance);
-   PrintFormat("  Support: %.5f", rangeBox.support);
+   PrintFormat("  Resistance: %.5f", shieldZone.resistance);
+   PrintFormat("  Support: %.5f", shieldZone.support);
    Print("───────────────────────────────────────────────────────────────────");
 
    // Cancel pending STOP order if exists
@@ -911,10 +911,10 @@ void ProcessShield()
       return;
    }
 
-   // Shield funziona con RANGEBOX mode O con CASCADE_OVERLAP mode
-   if(NeutralMode != NEUTRAL_RANGEBOX && !IsCascadeOverlapMode()) {
+   // Shield funziona solo con CASCADE_OVERLAP mode
+   if(!IsCascadeOverlapMode()) {
       if(DetailedLogging) {
-         Print("[Shield] ProcessShield() skipped - Not in RANGEBOX/CASCADE_OVERLAP mode");
+         Print("[Shield] ProcessShield() skipped - Not in CASCADE_OVERLAP mode");
       }
       return;
    }
@@ -1080,7 +1080,8 @@ void DeinitializeShield()
 //+------------------------------------------------------------------+
 bool IsShieldAvailable()
 {
-   return (NeutralMode == NEUTRAL_RANGEBOX && ShieldMode != SHIELD_DISABLED);
+   // v5.2: Shield now available for CASCADE_OVERLAP mode (RANGEBOX removed)
+   return (IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED);
 }
 
 //+------------------------------------------------------------------+

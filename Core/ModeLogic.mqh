@@ -1,18 +1,17 @@
 //+------------------------------------------------------------------+
 //|                                                 ModeLogic.mqh    |
-//|                        Sugamara v2.0 - Mode Logic                |
+//|                        Sugamara v5.2 - Mode Logic                |
 //|                                                                  |
-//|  Logica condizionale per le 3 modalità:                         |
+//|  Logica condizionale per le 2 modalità:                         |
 //|  - NEUTRAL_PURE: Spacing fisso, TP fisso, NO ATR                |
 //|  - NEUTRAL_CASCADE: TP=Entry precedente, ATR opzionale          |
-//|  - NEUTRAL_RANGEBOX: Range Box + Hedge, ATR opzionale           |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
 
 //+------------------------------------------------------------------+
 //| Verifica se ATR è disponibile per la modalità corrente           |
-//| ATR è disponibile SOLO per CASCADE e RANGEBOX                    |
+//| ATR è disponibile SOLO per CASCADE mode                          |
 //+------------------------------------------------------------------+
 bool IsATRAvailable()
 {
@@ -20,7 +19,7 @@ bool IsATRAvailable()
    if(NeutralMode == NEUTRAL_PURE)
       return false;
 
-   // CASCADE e RANGEBOX supportano ATR opzionale
+   // CASCADE supporta ATR opzionale
    return true;
 }
 
@@ -37,29 +36,22 @@ bool IsATREnabled()
 }
 
 //+------------------------------------------------------------------+
-//| Verifica se Range Box è disponibile (solo RANGEBOX)              |
-//+------------------------------------------------------------------+
-bool IsRangeBoxAvailable()
-{
-   return (NeutralMode == NEUTRAL_RANGEBOX);
-}
-
-//+------------------------------------------------------------------+
-//| Verifica se Hedging è disponibile (solo RANGEBOX con EnableHedging)|
+//| Verifica se Hedging è disponibile (CASCADE_OVERLAP con EnableHedging)|
 //+------------------------------------------------------------------+
 bool IsHedgingAvailable()
 {
-   return (NeutralMode == NEUTRAL_RANGEBOX && EnableHedging);
+   // v5.2: Hedging available for CASCADE_OVERLAP mode
+   return (IsCascadeOverlapMode() && EnableHedging);
 }
 
 //+------------------------------------------------------------------+
-//| Verifica se usa TP CASCADE (CASCADE e RANGEBOX)                  |
+//| Verifica se usa TP CASCADE                                       |
 //+------------------------------------------------------------------+
 bool UsesCascadeTP()
 {
-   // CASCADE e RANGEBOX usano TP cascade (TP = Entry livello precedente)
+   // CASCADE usa TP cascade (TP = Entry livello precedente)
    // PURE usa TP fisso (spacing × ratio)
-   return (NeutralMode == NEUTRAL_CASCADE || NeutralMode == NEUTRAL_RANGEBOX);
+   return (NeutralMode == NEUTRAL_CASCADE);
 }
 
 //+------------------------------------------------------------------+
@@ -175,7 +167,6 @@ double CalculateTPForMode(int level, double orderEntryPrice, double prevEntryPri
 
       //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       case NEUTRAL_CASCADE:
-      case NEUTRAL_RANGEBOX:
       //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          // TP CASCADE = Entry del livello precedente
          if(level == 1)
@@ -189,138 +180,17 @@ double CalculateTPForMode(int level, double orderEntryPrice, double prevEntryPri
             tpPrice = prevEntryPrice;
          }
          break;
+
+      default:
+         // Fallback to PURE mode
+         if(isLong)
+            tpPrice = orderEntryPrice + (spacingPoints * TP_Ratio_Pure);
+         else
+            tpPrice = orderEntryPrice - (spacingPoints * TP_Ratio_Pure);
+         break;
    }
 
    return NormalizeDouble(tpPrice, symbolDigits);
-}
-
-//+------------------------------------------------------------------+
-//| Calcola Range Box (solo per NEUTRAL_RANGEBOX)                    |
-//| Restituisce true se calcolo riuscito                             |
-//+------------------------------------------------------------------+
-bool CalculateRangeBoxLevels(double &resistance, double &support)
-{
-   if(!IsRangeBoxAvailable())
-   {
-      resistance = 0;
-      support = 0;
-      return false;
-   }
-
-   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-
-   switch(RangeBoxMode)
-   {
-      //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      case RANGEBOX_MANUAL:
-      //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         // Usa valori inseriti dall'utente
-         if(RangeBox_Resistance <= 0 || RangeBox_Support <= 0)
-         {
-            Print("[ModeLogic] ERROR: RANGEBOX_MANUAL richiede Resistance e Support > 0!");
-            return false;
-         }
-         resistance = RangeBox_Resistance;
-         support = RangeBox_Support;
-         break;
-
-      //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      case RANGEBOX_DAILY_HL:
-      //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         {
-            // Usa High/Low delle ultime N barre giornaliere
-            double highestHigh = 0;
-            double lowestLow = DBL_MAX;
-
-            for(int i = 0; i < RangeBox_PeriodBars; i++)
-            {
-               double h = iHigh(_Symbol, PERIOD_D1, i);
-               double l = iLow(_Symbol, PERIOD_D1, i);
-
-               if(h > highestHigh) highestHigh = h;
-               if(l < lowestLow) lowestLow = l;
-            }
-
-            resistance = highestHigh;
-            support = lowestLow;
-         }
-         break;
-
-      //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      case RANGEBOX_ATR_BASED:
-      //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         {
-            // Range = Prezzo corrente ± (ATR × Multiplier)
-            double atrPips = GetATRPips();
-            double rangeHalfPoints = atrPips * RangeBox_ATR_Mult * symbolPoint;
-
-            if(symbolDigits == 5 || symbolDigits == 3)
-               rangeHalfPoints *= 10;
-
-            resistance = currentPrice + rangeHalfPoints;
-            support = currentPrice - rangeHalfPoints;
-
-            if(DetailedLogging)
-               PrintFormat("[ModeLogic] RangeBox ATR: ATR=%.1f, Range=±%.1f pips",
-                           atrPips, atrPips * RangeBox_ATR_Mult);
-         }
-         break;
-   }
-
-   // Validazione finale
-   if(resistance <= support)
-   {
-      Print("[ModeLogic] ERROR: Resistance deve essere > Support!");
-      return false;
-   }
-
-   return true;
-}
-
-//+------------------------------------------------------------------+
-//| Verifica se prezzo è dentro il Range Box                         |
-//+------------------------------------------------------------------+
-bool IsPriceInsideRange(double price)
-{
-   if(!IsRangeBoxAvailable())
-      return true;  // Se non c'è Range Box, sempre "dentro"
-
-   double bufferPoints = RangeBox_Buffer_Pips * symbolPoint;
-   if(symbolDigits == 5 || symbolDigits == 3)
-      bufferPoints *= 10;
-
-   return (price < (rangeBox_Resistance - bufferPoints) &&
-           price > (rangeBox_Support + bufferPoints));
-}
-
-//+------------------------------------------------------------------+
-//| Verifica breakout sopra Resistance                               |
-//+------------------------------------------------------------------+
-bool IsBreakoutUp(double price)
-{
-   if(!IsRangeBoxAvailable())
-      return false;
-
-   double bufferPoints = RangeBox_Buffer_Pips * symbolPoint;
-   if(symbolDigits == 5 || symbolDigits == 3)
-      bufferPoints *= 10;
-
-   return (price >= rangeBox_Resistance + bufferPoints);
-}
-
-//+------------------------------------------------------------------+
-//| Verifica breakout sotto Support                                  |
-//+------------------------------------------------------------------+
-bool IsBreakoutDown(double price)
-{
-   if(!IsRangeBoxAvailable())
-      return false;
-
-   double bufferPoints = RangeBox_Buffer_Pips * symbolPoint;
-   if(symbolDigits == 5 || symbolDigits == 3)
-      bufferPoints *= 10;
-
-   return (price <= rangeBox_Support - bufferPoints);
 }
 
 //+------------------------------------------------------------------+
@@ -334,7 +204,7 @@ string GetModeName()
    {
       case NEUTRAL_PURE:     name = "PURE";     break;
       case NEUTRAL_CASCADE:  name = "CASCADE";  break;
-      case NEUTRAL_RANGEBOX: name = "RANGEBOX"; break;
+      default:               name = "UNKNOWN";  break;
    }
 
    if(IsATREnabled())
@@ -362,10 +232,8 @@ string GetModeDescription()
          else
             desc += " + Spacing Fisso";
          break;
-      case NEUTRAL_RANGEBOX:
-         desc = "Range Box + Hedge + CASCADE";
-         if(IsATREnabled())
-            desc += " + ATR Adattivo";
+      default:
+         desc = "Unknown Mode";
          break;
    }
 
@@ -403,27 +271,8 @@ bool ValidateModeParameters()
          // CASCADE non ha parametri specifici aggiuntivi
          break;
 
-      case NEUTRAL_RANGEBOX:
-         // RANGEBOX richiede parametri Range Box
-         if(RangeBoxMode == RANGEBOX_MANUAL)
-         {
-            if(RangeBox_Resistance <= 0 || RangeBox_Support <= 0)
-            {
-               Print("[ModeLogic] ERROR: RANGEBOX_MANUAL richiede Resistance e Support!");
-               isValid = false;
-            }
-            if(RangeBox_Resistance <= RangeBox_Support)
-            {
-               Print("[ModeLogic] ERROR: Resistance deve essere > Support!");
-               isValid = false;
-            }
-         }
-
-         if(RangeBox_Buffer_Pips < 5 || RangeBox_Buffer_Pips > 50)
-         {
-            Print("[ModeLogic] ERROR: RangeBox_Buffer_Pips deve essere tra 5 e 50");
-            isValid = false;
-         }
+      default:
+         Print("[ModeLogic] WARNING: Unknown NeutralMode, using defaults");
          break;
    }
 
@@ -446,16 +295,15 @@ bool ValidateModeParameters()
 void PrintModeConfiguration()
 {
    Print("═══════════════════════════════════════════════════════════════════");
-   Print("  SUGAMARA v2.0 - CONFIGURAZIONE MODALITÀ");
+   Print("  SUGAMARA v5.2 - CONFIGURAZIONE MODALITÀ");
    Print("═══════════════════════════════════════════════════════════════════");
    PrintFormat("  Modalità: %s", GetModeName());
    PrintFormat("  Descrizione: %s", GetModeDescription());
    Print("───────────────────────────────────────────────────────────────────");
    PrintFormat("  ATR Disponibile: %s", IsATRAvailable() ? "Sì" : "No");
    PrintFormat("  ATR Abilitato: %s", IsATREnabled() ? "Sì" : "No");
-   PrintFormat("  Range Box: %s", IsRangeBoxAvailable() ? "Sì" : "No");
    PrintFormat("  Shield Mode: %s", GetShieldModeNameLogic());
-   PrintFormat("  Hedging (Legacy): %s", IsHedgingAvailable() ? "Sì" : "No");
+   PrintFormat("  Hedging (CASCADE_OVERLAP): %s", IsHedgingAvailable() ? "Sì" : "No");
    PrintFormat("  TP Mode: %s", UsesCascadeTP() ? "CASCADE" : "FISSO");
    Print("───────────────────────────────────────────────────────────────────");
    PrintFormat("  Spacing Corrente: %.1f pips", CalculateCurrentSpacing());
@@ -473,7 +321,8 @@ void PrintModeConfiguration()
 //+------------------------------------------------------------------+
 bool IsShieldAvailableLogic()
 {
-   return (NeutralMode == NEUTRAL_RANGEBOX && ShieldMode != SHIELD_DISABLED);
+   // v5.2: Shield now available for CASCADE_OVERLAP mode (RANGEBOX removed)
+   return (IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED);
 }
 
 //+------------------------------------------------------------------+
@@ -481,7 +330,8 @@ bool IsShieldAvailableLogic()
 //+------------------------------------------------------------------+
 string GetShieldModeNameLogic()
 {
-   if(NeutralMode != NEUTRAL_RANGEBOX) {
+   // v5.2: Shield available for CASCADE_OVERLAP mode
+   if(!IsCascadeOverlapMode()) {
       return "N/A";
    }
 
@@ -522,16 +372,9 @@ bool InitializeMode()
          Print("  CASCADE Mode: Spacing ", currentSpacing_Pips, " pips");
          break;
 
-      case NEUTRAL_RANGEBOX:
-         // RANGEBOX MODE RIMOSSO - CASCADE_OVERLAP puro non lo richiede
-         Print("WARNING: NEUTRAL_RANGEBOX mode not available - use CASCADE_OVERLAP");
-         Print("  Fallback to CASCADE spacing...");
-         if(IsATREnabled() && currentATR_Pips > 0) {
-            currentSpacing_Pips = CalculateCurrentSpacing();
-         } else {
-            currentSpacing_Pips = Fixed_Spacing_Pips;
-         }
-         // RangeBoxManager e funzioni eliminate
+      default:
+         currentSpacing_Pips = Fixed_Spacing_Pips;
+         Print("  Default: Fixed spacing ", Fixed_Spacing_Pips, " pips");
          break;
    }
 
@@ -556,14 +399,9 @@ void ProcessModeOnTick()
          }
          break;
 
-      case NEUTRAL_RANGEBOX: {
-         // RANGEBOX MODE RIMOSSO - usa CASCADE behavior
-         if(IsATREnabled()) {
-            CheckATRRecalculation();
-         }
-         // RangeBoxManager funzioni eliminate
+      default:
+         // Unknown mode: nothing special
          break;
-      }
    }
 }
 
@@ -606,8 +444,7 @@ void DeinitializeMode()
 {
    Print("[ModeLogic] Deinitializing mode: ", GetModeName());
 
-   // RANGEBOX MODE REMOVED - CASCADE_OVERLAP puro
-   // Solo Shield rimane attivo (se abilitato)
+   // Deinitialize Shield if enabled
    if(ShieldMode != SHIELD_DISABLED) {
       DeinitializeShield();
    }

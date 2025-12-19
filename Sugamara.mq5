@@ -177,8 +177,8 @@ int OnInit() {
     //--- STEP 10.6: Initialize Hedging (REMOVED - hedge integrato in CASCADE_OVERLAP) ---
     // HedgingManager eliminato - l'hedge è integrato nei LIMIT orders
 
-    //--- STEP 10.7: Initialize Shield Intelligente (only NEUTRAL_RANGEBOX) ---
-    if(IsRangeBoxAvailable() && ShieldMode != SHIELD_DISABLED) {
+    //--- STEP 10.7: Initialize Shield Intelligente (CASCADE_OVERLAP mode) ---
+    if(IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED) {
         if(!InitializeShield()) {
             Print("WARNING: Failed to initialize Shield Intelligente");
         }
@@ -186,7 +186,7 @@ int OnInit() {
     }
 
     //--- STEP 10.8: Initialize Shield Zones Visual (v3.0) ---
-    if(IsRangeBoxAvailable() && Enable_ShieldZonesVisual) {
+    if(IsCascadeOverlapMode() && Enable_ShieldZonesVisual) {
         if(!InitializeShieldZonesVisual()) {
             Print("WARNING: Failed to initialize Shield Zones Visual");
         }
@@ -314,14 +314,10 @@ int OnInit() {
     Print("  System State: IDLE (Click START)");
     Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions(), IsCascadeOverlapMode() ? " [SOLO BUY]" : "");
     Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions(), IsCascadeOverlapMode() ? " [SOLO SELL]" : "");
-    if(IsRangeBoxAvailable()) {
-        Print("  RangeBox: R=", DoubleToString(rangeBox_Resistance, symbolDigits),
-              " S=", DoubleToString(rangeBox_Support, symbolDigits));
+    if(IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED) {
         Print("  Shield Mode: ", GetShieldModeName());
-        if(ShieldMode != SHIELD_DISABLED) {
-            Print("  Upper Breakout: ", DoubleToString(upperBreakoutLevel, symbolDigits));
-            Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
-        }
+        Print("  Upper Breakout: ", DoubleToString(upperBreakoutLevel, symbolDigits));
+        Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("───────────────────────────────────────────────────────────────────");
     Print("  v5.0 FEATURES:");

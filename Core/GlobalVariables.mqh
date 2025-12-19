@@ -209,15 +209,7 @@ double rangeUpperBound = 0;                 // Limite superiore range
 double rangeLowerBound = 0;                 // Limite inferiore range
 double totalRangePips = 0;                  // Range totale in pips
 
-//+------------------------------------------------------------------+
-//| RANGEBOX VARIABLES (Solo per NEUTRAL_RANGEBOX)                   |
-//+------------------------------------------------------------------+
-double rangeBox_Resistance = 0;             // Resistance calcolata/manuale
-double rangeBox_Support = 0;                // Support calcolata/manuale
-datetime rangeBox_LastCalc = 0;             // Ultimo calcolo Range Box
-bool isBreakoutUp = false;                  // Flag breakout sopra resistance
-bool isBreakoutDown = false;                // Flag breakout sotto support
-bool isInsideRange = true;                  // Flag prezzo dentro range
+// v5.2: RangeBox variables removed - now using ShieldZoneData struct below for Shield
 
 //+------------------------------------------------------------------+
 //| 🛡️ SHIELD INTELLIGENTE STRUCTURE                                 |
@@ -243,9 +235,9 @@ double totalShieldPL = 0;
 datetime lastShieldClosure = 0;
 
 //+------------------------------------------------------------------+
-//| 📦 RANGEBOX DATA STRUCTURE                                       |
+//| 🛡️ SHIELD ZONE DATA STRUCTURE (Used by Shield for breakout zones)|
 //+------------------------------------------------------------------+
-struct RangeBoxData {
+struct ShieldZoneData {
     double resistance;                      // Livello Resistance
     double support;                         // Livello Support
     double center;                          // Centro range
@@ -256,7 +248,7 @@ struct RangeBoxData {
     datetime lastCalc;                      // Ultimo calcolo
 };
 
-RangeBoxData rangeBox;
+ShieldZoneData shieldZone;
 
 // Breakout Levels (calcolati da ultimo livello grid)
 double upperBreakoutLevel = 0;
@@ -384,15 +376,15 @@ void InitializeArrays() {
     shield.activation_count = 0;
 
     // Initialize RangeBox Structure
-    ZeroMemory(rangeBox);
-    rangeBox.resistance = 0;
-    rangeBox.support = 0;
-    rangeBox.center = 0;
-    rangeBox.rangeHeight = 0;
-    rangeBox.warningZoneUp = 0;
-    rangeBox.warningZoneDown = 0;
-    rangeBox.isValid = false;
-    rangeBox.lastCalc = 0;
+    ZeroMemory(shieldZone);
+    shieldZone.resistance = 0;
+    shieldZone.support = 0;
+    shieldZone.center = 0;
+    shieldZone.rangeHeight = 0;
+    shieldZone.warningZoneUp = 0;
+    shieldZone.warningZoneDown = 0;
+    shieldZone.isValid = false;
+    shieldZone.lastCalc = 0;
 
     // Reset breakout levels
     upperBreakoutLevel = 0;

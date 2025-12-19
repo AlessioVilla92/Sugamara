@@ -83,8 +83,7 @@ bool InitializeManualSR() {
     Print("  Spacing: ", DoubleToString(spacing / symbolPoint / ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1), 1), " pips");
 
     // Use manual values if provided in inputs
-    if(RangeBox_Resistance > 0) manualSR_Resistance = RangeBox_Resistance;
-    if(RangeBox_Support > 0) manualSR_Support = RangeBox_Support;
+    // v5.2: RangeBox removed, only use activation price if provided
     if(LimitActivation_Price > 0) manualSR_Activation = LimitActivation_Price;
 
     // Create lines
@@ -229,9 +228,8 @@ void OnManualSRDrag(string objectName) {
 
             Print("Manual S/R: Resistance moved to ", DoubleToString(newPrice, _Digits));
 
-            // Update RangeBox if using manual mode
-            if(RangeBoxMode == RANGEBOX_MANUAL) {
-                rangeBox_Resistance = newPrice;
+            // v5.2: Update breakout levels for Shield if in CASCADE_OVERLAP mode
+            if(IsCascadeOverlapMode()) {
                 upperBreakoutLevel = newPrice + Breakout_Buffer_Pips * symbolPoint * 10;
             }
         }
@@ -244,9 +242,8 @@ void OnManualSRDrag(string objectName) {
 
             Print("Manual S/R: Support moved to ", DoubleToString(newPrice, _Digits));
 
-            // Update RangeBox if using manual mode
-            if(RangeBoxMode == RANGEBOX_MANUAL) {
-                rangeBox_Support = newPrice;
+            // v5.2: Update breakout levels for Shield if in CASCADE_OVERLAP mode
+            if(IsCascadeOverlapMode()) {
                 lowerBreakoutLevel = newPrice - Breakout_Buffer_Pips * symbolPoint * 10;
             }
         }
