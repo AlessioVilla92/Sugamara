@@ -30,6 +30,9 @@ enum ENUM_FOREX_PAIR {
     PAIR_GBPUSD,    // 🇬🇧🇺🇸 GBP/USD (Spread: 1-2, Range: 80-120 pips) - Mean Reverting
     PAIR_USDCHF,    // 🇺🇸🇨🇭 USD/CHF (Spread: 1-2, Range: 50-70 pips) - Safe Haven
     PAIR_USDJPY,    // 🇺🇸🇯🇵 USD/JPY - Test Breakout (Spread: 0.8-1.5, Range: 70-120 pips)
+    PAIR_EURJPY,    // 🇪🇺🇯🇵 EUR/JPY (Spread: 1.0-1.8, Range: 80-120 pips) - Cross Major
+    PAIR_AUDUSD,    // 🇦🇺🇺🇸 AUD/USD (Spread: 0.8-1.5, Range: 60-90 pips) - Commodity Major
+    PAIR_NZDUSD,    // 🇳🇿🇺🇸 NZD/USD (Spread: 1.2-2.0, Range: 50-80 pips) - Commodity Pair
     PAIR_CUSTOM     // ⚙️ Custom (Impostazioni Manuali)
 };
 

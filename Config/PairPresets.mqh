@@ -292,6 +292,81 @@ void ApplyPairPresets() {
             break;
 
         //==============================================================
+        // EUR/JPY - Cross Major (Added v5.2)
+        //==============================================================
+        case PAIR_EURJPY:
+            // Characteristics
+            activePair_Spread = EURJPY_EstimatedSpread;
+            activePair_DailyRange = EURJPY_DailyRange;
+            activePair_ATR_Typical = EURJPY_ATR_Typical;
+            activePair_MinBrokerDistance = 10.0;
+
+            // Recommended Settings
+            activePair_RecommendedSpacing = EURJPY_DefaultSpacing;
+            activePair_RecommendedLevels = 7;
+            activePair_RecommendedBaseLot = 0.01;
+
+            // Performance Targets
+            activePair_TargetROI = 12.0;
+            activePair_MaxDrawdown = 12.0;
+
+            // Sessions - London and Tokyo overlap
+            activePair_BestSessions = "Tokyo-London Overlap (07:00-09:00 GMT), London (08:00-16:00 GMT)";
+
+            Print("PRESET LOADED: EUR/JPY - Cross Major Configuration");
+            break;
+
+        //==============================================================
+        // AUD/USD - Commodity Major (Added v5.2)
+        //==============================================================
+        case PAIR_AUDUSD:
+            // Characteristics
+            activePair_Spread = AUDUSD_EstimatedSpread;
+            activePair_DailyRange = AUDUSD_DailyRange;
+            activePair_ATR_Typical = AUDUSD_ATR_Typical;
+            activePair_MinBrokerDistance = 10.0;
+
+            // Recommended Settings
+            activePair_RecommendedSpacing = AUDUSD_DefaultSpacing;
+            activePair_RecommendedLevels = 7;
+            activePair_RecommendedBaseLot = 0.01;
+
+            // Performance Targets
+            activePair_TargetROI = 11.0;
+            activePair_MaxDrawdown = 10.0;
+
+            // Sessions - Sydney and London
+            activePair_BestSessions = "Sydney (22:00-07:00 GMT), London (08:00-16:00 GMT)";
+
+            Print("PRESET LOADED: AUD/USD - Commodity Major Configuration");
+            break;
+
+        //==============================================================
+        // NZD/USD - Commodity Pair (Added v5.2)
+        //==============================================================
+        case PAIR_NZDUSD:
+            // Characteristics
+            activePair_Spread = NZDUSD_EstimatedSpread;
+            activePair_DailyRange = NZDUSD_DailyRange;
+            activePair_ATR_Typical = NZDUSD_ATR_Typical;
+            activePair_MinBrokerDistance = 10.0;
+
+            // Recommended Settings
+            activePair_RecommendedSpacing = NZDUSD_DefaultSpacing;
+            activePair_RecommendedLevels = 7;
+            activePair_RecommendedBaseLot = 0.01;
+
+            // Performance Targets
+            activePair_TargetROI = 10.0;
+            activePair_MaxDrawdown = 10.0;
+
+            // Sessions - Asian session
+            activePair_BestSessions = "Wellington-Sydney (21:00-07:00 GMT), London (08:00-16:00 GMT)";
+
+            Print("PRESET LOADED: NZD/USD - Commodity Pair Configuration");
+            break;
+
+        //==============================================================
         // CUSTOM - User Manual Settings
         //==============================================================
         case PAIR_CUSTOM:
@@ -372,6 +447,15 @@ bool ValidatePairSymbolMatch() {
         case PAIR_USDJPY:
             expectedSymbol = "USDJPY";
             break;
+        case PAIR_EURJPY:
+            expectedSymbol = "EURJPY";
+            break;
+        case PAIR_AUDUSD:
+            expectedSymbol = "AUDUSD";
+            break;
+        case PAIR_NZDUSD:
+            expectedSymbol = "NZDUSD";
+            break;
         case PAIR_CUSTOM:
             // Custom pair - no validation
             return true;
@@ -419,6 +503,9 @@ string GetPairDisplayName(ENUM_FOREX_PAIR pair) {
         case PAIR_GBPUSD: return "GBP/USD";
         case PAIR_USDCHF: return "USD/CHF";
         case PAIR_USDJPY: return "USD/JPY";
+        case PAIR_EURJPY: return "EUR/JPY";
+        case PAIR_AUDUSD: return "AUD/USD";
+        case PAIR_NZDUSD: return "NZD/USD";
         case PAIR_CUSTOM: return "CUSTOM";
         default: return "UNKNOWN";
     }
@@ -439,6 +526,9 @@ string GetPairRiskLevel(ENUM_FOREX_PAIR pair) {
         case PAIR_GBPUSD: return "MEDIUM-HIGH";  // Higher volatility
         case PAIR_USDCHF: return "LOW-MEDIUM";   // Safe haven
         case PAIR_USDJPY: return "MEDIUM-HIGH"; // Breakout volatility
+        case PAIR_EURJPY: return "MEDIUM-HIGH"; // Cross major, moderate volatility
+        case PAIR_AUDUSD: return "MEDIUM";       // Commodity major, stable
+        case PAIR_NZDUSD: return "MEDIUM";       // Commodity pair, range-bound
         case PAIR_CUSTOM: return "VARIABLE";
         default: return "UNKNOWN";
     }
@@ -469,6 +559,12 @@ string GetPairRecommendation(ENUM_FOREX_PAIR pair) {
             return "Good for RANGEBOX. Safe haven - stable, beware risk-off events.";
         case PAIR_USDJPY:
             return "TEST BREAKOUT pair. High volatility - ideal for candle breakout tests.";
+        case PAIR_EURJPY:
+            return "Good for CASCADE. Cross major with good liquidity and mean-reverting behavior.";
+        case PAIR_AUDUSD:
+            return "Good for all modes. Commodity major - correlated with AUD/NZD pairs.";
+        case PAIR_NZDUSD:
+            return "Good for CASCADE. Commodity pair - ranges well during Asian session.";
         case PAIR_CUSTOM:
             return "Verify all parameters manually before live trading.";
         default:

@@ -833,12 +833,63 @@ input double    USDJPY_DailyRange = 95.0;                    // 📈 Range Giorn
 input double    USDJPY_ATR_Typical = 28.0;                   // 📊 ATR Tipico (pips)
 
 //+------------------------------------------------------------------+
-//| 2️⃣9️⃣ ⚙️ CUSTOM PAIR SETTINGS                                     |
+//| 2️⃣9️⃣ 🇪🇺🇯🇵 EUR/JPY SETTINGS                                      |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  2️⃣9️⃣  ⚙️ CUSTOM PAIR SETTINGS (if CUSTOM selected)       ║"
+input group "║  2️⃣9️⃣  🇪🇺🇯🇵 SOTTOSTANTI - EUR/JPY (CROSS MAJOR)          ║"
+input group "║      Spread: 1.0-1.8 pips | Range: 80-120 pips/day       ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 EUR/JPY GRID SETTINGS"
+input double    EURJPY_DefaultSpacing = 12.0;                // 📏 Spacing Default (pips)
+input double    EURJPY_TP_Pips = 18.0;                       // 🎯 TP per livello (pips)
+input double    EURJPY_EstimatedSpread = 1.4;                // 📊 Spread Stimato (pips)
+input double    EURJPY_DailyRange = 100.0;                   // 📈 Range Giornaliero (pips)
+input double    EURJPY_ATR_Typical = 30.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 3️⃣0️⃣ 🇦🇺🇺🇸 AUD/USD SETTINGS                                      |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣0️⃣  🇦🇺🇺🇸 SOTTOSTANTI - AUD/USD (COMMODITY MAJOR)      ║"
+input group "║      Spread: 0.8-1.5 pips | Range: 60-90 pips/day        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 AUD/USD GRID SETTINGS"
+input double    AUDUSD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
+input double    AUDUSD_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
+input double    AUDUSD_EstimatedSpread = 1.0;                // 📊 Spread Stimato (pips)
+input double    AUDUSD_DailyRange = 75.0;                    // 📈 Range Giornaliero (pips)
+input double    AUDUSD_ATR_Typical = 22.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 3️⃣1️⃣ 🇳🇿🇺🇸 NZD/USD SETTINGS                                      |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣1️⃣  🇳🇿🇺🇸 SOTTOSTANTI - NZD/USD (COMMODITY PAIR)       ║"
+input group "║      Spread: 1.2-2.0 pips | Range: 50-80 pips/day        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📐 NZD/USD GRID SETTINGS"
+input double    NZDUSD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
+input double    NZDUSD_TP_Pips = 14.0;                       // 🎯 TP per livello (pips)
+input double    NZDUSD_EstimatedSpread = 1.5;                // 📊 Spread Stimato (pips)
+input double    NZDUSD_DailyRange = 65.0;                    // 📈 Range Giornaliero (pips)
+input double    NZDUSD_ATR_Typical = 20.0;                   // 📊 ATR Tipico (pips)
+
+//+------------------------------------------------------------------+
+//| 3️⃣2️⃣ ⚙️ CUSTOM PAIR SETTINGS                                     |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣2️⃣  ⚙️ CUSTOM PAIR SETTINGS (if CUSTOM selected)       ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 CUSTOM PAIR PARAMETERS"
