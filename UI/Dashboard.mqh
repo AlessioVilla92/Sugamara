@@ -50,16 +50,16 @@ color GetThemeDashboardAccent() { return Theme_DashboardAccent; }
 #define CLR_SAND_4        C'140,115,80'      // Darkest sand (inactive)
 
 // Accent Colors (Spice & Fremen)
-#define CLR_SPICE         C'255,140,50'      // Spice melange orange
+#define CLR_SPICE         C'255,165,0'       // Spice melange orange (v5.4b: più acceso)
 #define CLR_FREMEN_BLUE   C'80,140,200'      // Fremen blue eyes
 #define CLR_WHITE         clrWhite           // White text
 #define CLR_SILVER        C'200,190,170'     // Desert silver (warm gray)
-#define CLR_GOLD          C'255,200,80'      // Sandworm gold
+#define CLR_GOLD          C'255,215,0'       // Sandworm gold (v5.4b: più luminoso)
 
 // Status Colors (Desert Palette)
 #define CLR_PROFIT        C'120,200,80'      // Oasis green (muted)
 #define CLR_LOSS          C'220,80,60'       // Desert sun red
-#define CLR_NEUTRAL       C'255,200,80'      // Warning gold
+#define CLR_NEUTRAL       C'255,215,0'       // Warning gold (v5.4b: più luminoso)
 #define CLR_ACTIVE        C'100,180,220'     // Active Fremen blue
 
 // Grid Colors (Desert Variants - BUY=Gold, SELL=Bronze)
@@ -256,7 +256,14 @@ bool InitializeDashboard() {
 
     // Check if dashboard already exists and is complete
     if(VerifyDashboardExists()) {
-        Print("Dashboard already exists - skipping recreation, updating values only");
+        Print("Dashboard already exists - verifying control buttons...");
+
+        // v5.4: Verify and recreate control buttons if missing
+        if(!VerifyControlButtonsExist()) {
+            Print("Control buttons missing - recreating...");
+            InitializeControlButtons(g_leftX, g_btnY, g_colWidth);
+        }
+
         g_dashboardInitialized = true;
         g_lastDashboardCheck = TimeCurrent();
         UpdateDashboard();
@@ -323,6 +330,24 @@ bool VerifyDashboardExists() {
         return false;
     }
 
+    return true;
+}
+
+//+------------------------------------------------------------------+
+//| Verify Control Buttons Exist (v5.4)                               |
+//| Fix for buttons disappearing after parameter changes              |
+//+------------------------------------------------------------------+
+bool VerifyControlButtonsExist() {
+    // Check for START and CLOSE buttons
+    bool startExists = ObjectFind(0, "SUGAMARA_BTN_START") >= 0;
+    bool closeExists = ObjectFind(0, "SUGAMARA_BTN_CLOSEALL") >= 0;
+
+    if(!startExists || !closeExists) {
+        PrintFormat("Button verification: START=%s, CLOSE=%s",
+                    startExists ? "OK" : "MISSING",
+                    closeExists ? "OK" : "MISSING");
+        return false;
+    }
     return true;
 }
 
@@ -409,7 +434,7 @@ void CreateUnifiedDashboard() {
     //═══════════════════════════════════════════════════════════════
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 100, y + 15, "SUGAMARA RIBELLE", CLR_GOLD, 16, "Arial Black");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 115, y + 12, "SUGAMARA RIBELLE", CLR_GOLD, 20, "Arial Black");  // v5.4b: font 20px
     DashLabel("TITLE_SUB", x + totalWidth/2 - 85, y + 42, "CASCADE SOVRAPPOSTO - The Spice Must Flow", CLR_SAND_1, 10, "Arial Bold");
     y += titleHeight;
 
@@ -607,7 +632,7 @@ void CreateVolatilityPanel() {
 //+------------------------------------------------------------------+
 void CreateShieldPanel() {
     int shieldX = Dashboard_X + TOTAL_WIDTH + 10;
-    int shieldY = Dashboard_Y + 328;
+    int shieldY = Dashboard_Y + 165;  // v5.3: Subito sotto ATR Monitor (160 + 5 gap)
     int shieldWidth = 175;
     int shieldHeight = 140;
 
@@ -646,7 +671,7 @@ void CreateShieldPanel() {
 //+------------------------------------------------------------------+
 void CreateGridLegendPanel() {
     int legendX = Dashboard_X + TOTAL_WIDTH + 10;
-    int legendY = Dashboard_Y + 478;  // Sotto SHIELD_PANEL
+    int legendY = Dashboard_Y + 470;  // v5.3: Spostato in fondo, sotto COP (310 + 155 + 5 gap)
     int legendWidth = 175;
     int legendHeight = 100;
 
@@ -677,7 +702,7 @@ void CreateCOPPanel() {
     if(!Enable_CloseOnProfit) return;
 
     int copX = Dashboard_X + TOTAL_WIDTH + 10;
-    int copY = Dashboard_Y + 588;  // Sotto GRID_LEGEND_PANEL
+    int copY = Dashboard_Y + 310;  // v5.3: Subito sotto Shield (165 + 140 + 5 gap)
     int copWidth = 175;
     int copHeight = 155;  // Increased for new fields
 
@@ -883,12 +908,17 @@ void UpdateExposureSection() {
 //| Update Performance Section                                       |
 //+------------------------------------------------------------------+
 void UpdatePerformanceSection() {
-    double totalPL = sessionRealizedProfit + GetTotalOpenProfit();
+    // v5.3: P/L per singola pair, non globale
+    double totalPL = GetCurrentPairRealizedProfit() + GetTotalOpenProfit();
     double equity = GetEquity();
     double balance = GetBalance();
     double dd = GetCurrentDrawdown();
-    double winRate = GetWinRate();
-    int trades = sessionWins + sessionLosses;
+
+    // v5.3: Win rate e trades per singola pair
+    int pairWins = GetCurrentPairWins();
+    int pairLosses = GetCurrentPairLosses();
+    int trades = pairWins + pairLosses;
+    double winRate = trades > 0 ? (pairWins * 100.0 / trades) : 0;
 
     color plColor = totalPL >= 0 ? CLR_PROFIT : CLR_LOSS;
     ObjectSetString(0, "RIGHT_PERF_TOTAL", OBJPROP_TEXT, StringFormat("Total P/L: $%.2f", totalPL));

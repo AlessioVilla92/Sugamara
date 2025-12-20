@@ -89,6 +89,33 @@ bool InitializeDebugMode() {
 //| Check and Trigger Debug Entry                                    |
 //+------------------------------------------------------------------+
 void CheckDebugModeEntry() {
+    // ========== DIAGNOSTIC LOG (v5.2) ==========
+    // Questo log viene stampato UNA SOLA VOLTA al primo tick
+    // per mostrare esattamente quale condizione blocca il Debug Mode
+    static bool diagnosticLoggedOnce = false;
+    if(!diagnosticLoggedOnce) {
+        Print("═══════════════════════════════════════════════════════════════════");
+        Print("  [DEBUG DIAGNOSTIC] CheckDebugModeEntry() - First Tick Analysis");
+        Print("═══════════════════════════════════════════════════════════════════");
+        PrintFormat("  EnableDebugMode: %s", EnableDebugMode ? "TRUE ✓" : "FALSE ✗ (BLOCKING!)");
+        PrintFormat("  DebugImmediateEntry: %s", DebugImmediateEntry ? "TRUE" : "FALSE");
+        PrintFormat("  debugEntryTriggered: %s", debugEntryTriggered ? "TRUE ✗ (already triggered)" : "FALSE ✓");
+        PrintFormat("  systemState: %d (%s)", systemState,
+                    systemState == STATE_IDLE ? "IDLE ✓" :
+                    systemState == STATE_ACTIVE ? "ACTIVE ✗" :
+                    systemState == STATE_ERROR ? "ERROR ✗" : "OTHER ✗");
+        Print("───────────────────────────────────────────────────────────────────");
+        if(!EnableDebugMode) {
+            Print("  ⚠️ FIX: Set EnableDebugMode = true in EA parameters");
+        }
+        if(systemState != STATE_IDLE) {
+            Print("  ⚠️ FIX: Check OnInit() completed successfully (look for CRITICAL errors)");
+        }
+        Print("═══════════════════════════════════════════════════════════════════");
+        diagnosticLoggedOnce = true;
+    }
+    // ============================================
+
     // Solo se: debug abilitato, non ancora triggered, sistema idle
     if(!EnableDebugMode || debugEntryTriggered || systemState != STATE_IDLE) {
         return;

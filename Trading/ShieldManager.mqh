@@ -15,6 +15,21 @@ double shieldPendingPrice = 0;           // Prezzo ordine pending
 double shieldPendingLot = 0;             // Lot ordine pending
 
 //+------------------------------------------------------------------+
+//| v5.5: HYSTERESIS VARIABLES FOR PRE-SHIELD CANCELLATION           |
+//+------------------------------------------------------------------+
+datetime g_preShieldInsideRangeStart = 0;  // When price entered INSIDE_RANGE from PRE-SHIELD
+int g_shieldTransitionLogCount = 0;        // Counter for log throttling
+
+//+------------------------------------------------------------------+
+//| v5.5b: FLAGS FOR "FIRST OCCURRENCE ONLY" LOGGING                  |
+//+------------------------------------------------------------------+
+bool g_loggedWarningPhase = false;     // NORMAL->WARNING logged?
+bool g_loggedExitWarning = false;      // WARNING->NORMAL logged?
+bool g_loggedPreShieldPhase = false;   // WARNING->PRE-SHIELD logged?
+bool g_loggedCancelPreShield = false;  // PRE-SHIELD->NORMAL logged?
+bool g_loggedShieldActive = false;     // PRE-SHIELD->ACTIVE logged?
+
+//+------------------------------------------------------------------+
 //| Get Shield Order Type Name                                        |
 //+------------------------------------------------------------------+
 string GetShieldOrderTypeName()
@@ -239,20 +254,35 @@ void ProcessShield3Phases(double currentPrice)
 
       //-------------------------------------------------------------
       // PHASE 2: PRE-SHIELD - Pending order ready
+      // v5.5 FIX: Only cancel if FULLY inside range, NOT if still in warning zone!
+      // WARNING zone is still a danger zone - don't cancel PRE-SHIELD there
       //-------------------------------------------------------------
       case PHASE_PRE_SHIELD:
-         // If back inside, cancel pending and return to normal
-         if(priceState == STATE_INSIDE_RANGE ||
-            priceState == STATE_WARNING_UP ||
-            priceState == STATE_WARNING_DOWN) {
-            Print("[Shield] Phase transition: PRE-SHIELD -> NORMAL (cancelled)");
-            CancelPreShield();
+         // v5.5: Cancel ONLY if back FULLY inside safe range
+         // WARNING zones are still danger zones - keep PRE-SHIELD active!
+         if(priceState == STATE_INSIDE_RANGE) {
+            // v5.5: Track when price first entered INSIDE_RANGE
+            if(g_preShieldInsideRangeStart == 0) {
+               g_preShieldInsideRangeStart = TimeCurrent();
+            }
+
+            // v5.5: Hysteresis - require 30 seconds CONTINUOUSLY inside range before cancelling
+            datetime timeSinceInsideRange = TimeCurrent() - g_preShieldInsideRangeStart;
+            if(timeSinceInsideRange >= 30) {  // 30 second cooldown
+               PrintFormat("[Shield] PRE-SHIELD -> NORMAL (inside range for %d sec)", (int)timeSinceInsideRange);
+               CancelPreShield();
+               g_preShieldInsideRangeStart = 0;  // Reset for next time
+            }
+            // Else: still inside range but cooldown not elapsed - keep PRE-SHIELD active
          }
-         // If breakout confirmed, activate shield
          else {
+            // Price left INSIDE_RANGE (still in WARNING or beyond) - reset timer
+            g_preShieldInsideRangeStart = 0;
+
+            // Check for breakout confirmation
             ENUM_BREAKOUT_DIRECTION direction;
             if(CheckBreakoutConditionShield(currentPrice, direction)) {
-               Print("[Shield] Phase transition: PRE-SHIELD -> SHIELD_ACTIVE (breakout confirmed)");
+               Print("[Shield] PRE-SHIELD -> SHIELD_ACTIVE (breakout confirmed)");
                if(direction == BREAKOUT_UP) {
                   ActivateShieldShort("3_PHASES");
                }
@@ -277,36 +307,27 @@ void ProcessShield3Phases(double currentPrice)
 
 //+------------------------------------------------------------------+
 //| Enter Warning Phase (Phase 1)                                     |
+//| v5.5b: Log ONLY first occurrence, never again                     |
 //+------------------------------------------------------------------+
 void EnterWarningPhase(ENUM_BREAKOUT_DIRECTION direction)
 {
-   ENUM_SHIELD_PHASE oldPhase = shield.phase;
    shield.phase = PHASE_WARNING;
    lastBreakoutDirection = direction;
+   g_shieldTransitionLogCount++;
 
-   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  SHIELD PHASE TRANSITION: NORMAL -> WARNING");
-   Print("═══════════════════════════════════════════════════════════════════");
-   PrintFormat("  Direction: %s", (direction == BREAKOUT_UP ? "UP (approaching RESISTANCE)" : "DOWN (approaching SUPPORT)"));
-   PrintFormat("  Current Price: %.5f", currentPrice);
-   Print("───────────────────────────────────────────────────────────────────");
-   PrintFormat("  Resistance: %.5f", shieldZone.resistance);
-   PrintFormat("  Support: %.5f", shieldZone.support);
-   PrintFormat("  Warning Zone Up: %.5f", shieldZone.warningZoneUp);
-   PrintFormat("  Warning Zone Down: %.5f", shieldZone.warningZoneDown);
-   Print("───────────────────────────────────────────────────────────────────");
-   if(direction == BREAKOUT_UP) {
-      PrintFormat("  Distance to Resistance: %.1f pips", PointsToPips(shieldZone.resistance - currentPrice));
-      PrintFormat("  Next Level: Grid B Upper[last] = %.5f", GetLastGridBLevel());
-   } else {
-      PrintFormat("  Distance to Support: %.1f pips", PointsToPips(currentPrice - shieldZone.support));
-      PrintFormat("  Next Level: Grid A Lower[last] = %.5f", GetLastGridALevel());
+   // v5.5b: Log ONLY first occurrence, never again
+   if(!g_loggedWarningPhase) {
+      double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double dist = (direction == BREAKOUT_UP) ?
+                    PointsToPips(shieldZone.resistance - currentPrice) :
+                    PointsToPips(currentPrice - shieldZone.support);
+      PrintFormat("[Shield] NORMAL->WARNING | %s | Price:%.5f | Dist:%.1f pips",
+                  (direction == BREAKOUT_UP ? "UP" : "DOWN"),
+                  currentPrice, dist);
+      g_loggedWarningPhase = true;  // Never log again
    }
-   Print("═══════════════════════════════════════════════════════════════════");
 
-   // Alert
+   // Alert (keep this - alerts are important)
    if(EnableAlerts) {
       Alert("SUGAMARA: Warning Zone - Price near range edge");
    }
@@ -317,19 +338,18 @@ void EnterWarningPhase(ENUM_BREAKOUT_DIRECTION direction)
 
 //+------------------------------------------------------------------+
 //| Exit Warning Phase (return to normal)                             |
+//| v5.5b: Log ONLY first occurrence, never again                     |
 //+------------------------------------------------------------------+
 void ExitWarningPhase()
 {
-   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   g_shieldTransitionLogCount++;
 
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  SHIELD PHASE TRANSITION: WARNING -> NORMAL");
-   Print("═══════════════════════════════════════════════════════════════════");
-   PrintFormat("  Reason: Price returned inside safe zone");
-   PrintFormat("  Current Price: %.5f", currentPrice);
-   PrintFormat("  Warning Zone Up: %.5f", shieldZone.warningZoneUp);
-   PrintFormat("  Warning Zone Down: %.5f", shieldZone.warningZoneDown);
-   Print("═══════════════════════════════════════════════════════════════════");
+   // v5.5b: Log ONLY first occurrence, never again
+   if(!g_loggedExitWarning) {
+      double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      PrintFormat("[Shield] WARNING->NORMAL | Price:%.5f", currentPrice);
+      g_loggedExitWarning = true;  // Never log again
+   }
 
    shield.phase = PHASE_NORMAL;
    lastBreakoutDirection = BREAKOUT_NONE;
@@ -338,35 +358,29 @@ void ExitWarningPhase()
 
 //+------------------------------------------------------------------+
 //| Enter Pre-Shield Phase (Phase 2)                                  |
+//| v5.5b: Log ONLY first occurrence, never again                     |
 //+------------------------------------------------------------------+
 void EnterPreShieldPhase(ENUM_BREAKOUT_DIRECTION direction)
 {
    shield.phase = PHASE_PRE_SHIELD;
    lastBreakoutDirection = direction;
+   g_shieldTransitionLogCount++;
+   g_preShieldInsideRangeStart = 0;  // v5.5: Reset hysteresis timer
 
-   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  SHIELD PHASE TRANSITION: WARNING -> PRE-SHIELD");
-   Print("═══════════════════════════════════════════════════════════════════");
-   PrintFormat("  Direction: %s", (direction == BREAKOUT_UP ? "UP (BREAKOUT IMMINENT)" : "DOWN (BREAKOUT IMMINENT)"));
-   PrintFormat("  Current Price: %.5f", currentPrice);
-   Print("───────────────────────────────────────────────────────────────────");
-   PrintFormat("  Resistance: %.5f", shieldZone.resistance);
-   PrintFormat("  Support: %.5f", shieldZone.support);
-   Print("───────────────────────────────────────────────────────────────────");
-   if(direction == BREAKOUT_UP) {
-      PrintFormat("  Upper Breakout Level: %.5f", upperBreakoutLevel);
-      PrintFormat("  Distance to Breakout: %.1f pips", PointsToPips(upperBreakoutLevel - currentPrice));
-   } else {
-      PrintFormat("  Lower Breakout Level: %.5f", lowerBreakoutLevel);
-      PrintFormat("  Distance to Breakout: %.1f pips", PointsToPips(currentPrice - lowerBreakoutLevel));
+   // v5.5b: Log ONLY first occurrence, never again
+   if(!g_loggedPreShieldPhase) {
+      double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double breakoutLevel = (direction == BREAKOUT_UP) ? upperBreakoutLevel : lowerBreakoutLevel;
+      double dist = (direction == BREAKOUT_UP) ?
+                    PointsToPips(breakoutLevel - currentPrice) :
+                    PointsToPips(currentPrice - breakoutLevel);
+      PrintFormat("[Shield] WARNING->PRE-SHIELD | %s | Price:%.5f | Dist:%.1f pips | Type:%s",
+                  (direction == BREAKOUT_UP ? "UP" : "DOWN"),
+                  currentPrice, dist, GetShieldOrderTypeName());
+      g_loggedPreShieldPhase = true;  // Never log again
    }
-   PrintFormat("  Shield Order Type: %s", GetShieldOrderTypeName());
-   Print("  Shield PENDING - Ready for immediate activation!");
-   Print("═══════════════════════════════════════════════════════════════════");
 
-   // Alert
+   // Alert (keep this - this is important for imminent breakout)
    if(EnableAlerts) {
       Alert("SUGAMARA: Pre-Shield - Breakout imminent, Shield ready!");
    }
@@ -376,33 +390,27 @@ void EnterPreShieldPhase(ENUM_BREAKOUT_DIRECTION direction)
 
 //+------------------------------------------------------------------+
 //| Cancel Pre-Shield (returned to range)                             |
+//| v5.5b: Log ONLY first occurrence, never again                     |
 //+------------------------------------------------------------------+
 void CancelPreShield()
 {
-   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   g_shieldTransitionLogCount++;
 
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  SHIELD PHASE TRANSITION: PRE-SHIELD -> NORMAL (CANCELLED)");
-   Print("═══════════════════════════════════════════════════════════════════");
-   PrintFormat("  Reason: Price returned inside range before breakout");
-   PrintFormat("  Current Price: %.5f", currentPrice);
-   PrintFormat("  Resistance: %.5f", shieldZone.resistance);
-   PrintFormat("  Support: %.5f", shieldZone.support);
-   Print("───────────────────────────────────────────────────────────────────");
+   // v5.5b: Log ONLY first occurrence, never again
+   if(!g_loggedCancelPreShield) {
+      double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      PrintFormat("[Shield] PRE-SHIELD->NORMAL (cancelled) | Price:%.5f", currentPrice);
+      g_loggedCancelPreShield = true;  // Never log again
+   }
 
-   // Cancel pending STOP order if exists
+   // Cancel pending STOP order if exists (keep this logging - order operations are important)
    if(ShieldOrderType == SHIELD_ORDER_STOP && shieldPendingTicket > 0) {
-      Print("  [STOP] Cancelling pending Shield order...");
-      PrintFormat("  [STOP]   Ticket: %d", shieldPendingTicket);
-      PrintFormat("  [STOP]   Type: %s", (shieldPendingType == SHIELD_LONG ? "BUY STOP" : "SELL STOP"));
-      PrintFormat("  [STOP]   Price: %.5f", shieldPendingPrice);
-
       if(trade.OrderDelete(shieldPendingTicket)) {
-         Print("  ✅ [STOP] Pending order CANCELLED successfully");
+         PrintFormat("[Shield] Pending order #%d cancelled", shieldPendingTicket);
       }
       else {
-         Print("  ⚠️ [STOP] Failed to cancel pending order");
-         PrintFormat("     Error: %d - %s", trade.ResultRetcode(), trade.ResultRetcodeDescription());
+         PrintFormat("[Shield] WARN: Failed to cancel order #%d: %d",
+                     shieldPendingTicket, trade.ResultRetcode());
       }
 
       // Reset pending variables
@@ -415,9 +423,7 @@ void CancelPreShield()
    shield.phase = PHASE_NORMAL;
    lastBreakoutDirection = BREAKOUT_NONE;
    currentSystemState = STATE_INSIDE_RANGE;
-
-   Print("  [Shield] Pre-Shield cancelled - Price returned to range");
-   Print("═══════════════════════════════════════════════════════════════════");
+   g_preShieldInsideRangeStart = 0;  // v5.5: Reset hysteresis timer
 }
 
 //+------------------------------------------------------------------+

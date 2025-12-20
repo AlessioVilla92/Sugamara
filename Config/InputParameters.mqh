@@ -166,7 +166,7 @@ input color     GridLine_BuyLimit = clrDarkGreen;           // 🟢 BUY LIMIT: V
 input color     GridLine_BuyStop = clrBlue;                 // 🔵 BUY STOP: Blu
 input color     GridLine_SellLimit = clrOrange;             // 🟠 SELL LIMIT: Arancione
 input color     GridLine_SellStop = clrPlum;                // 🟣 SELL STOP: Viola Chiaro
-input int       GridLine_Width = 2;                         // 📏 Spessore Linee Grid
+input int       GridLine_Width = 3;                         // 📏 Spessore Linee Grid (v5.4: Increased)
 
 //+------------------------------------------------------------------+
 //| 1️⃣ ⚙️ SYSTEM CONFIGURATION                                      |
@@ -393,7 +393,7 @@ input bool      Enable_ShieldZonesVisual = true;             // ✅ Mostra Fasce
 input uchar     ShieldZones_Transparency = 210;              // 🔍 Trasparenza Fasce Pericolo (0=opaco, 255=invisibile)
 input color     ShieldZone_Phase1_Color = clrYellow;         // 🟡 Fase 1 (Warning) - Giallo
 input color     ShieldZone_Phase2_Color = clrOrange;         // 🟠 Fase 2 (Pre-Shield) - Arancione
-input color     ShieldZone_Phase3_Color = clrRed;            // 🔴 Fase 3 (Breakout) - Rosso
+input color     ShieldZone_Phase3_Color = C'160,40,40';      // 🔴 Fase 3 (Breakout) - Rosso Scuro (v5.4)
 input color     ShieldEntry_Line_Color = C'139,0,0';         // 🔴 Linea Entry Shield - Rosso Scuro
 input int       ShieldEntry_Line_Width = 2;                  // 📏 Spessore Linea Entry Shield
 input ENUM_LINE_STYLE ShieldEntry_Line_Style = STYLE_DASH;   // 📐 Stile Linea Entry Shield

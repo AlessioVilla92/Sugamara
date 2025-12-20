@@ -112,6 +112,116 @@ double GetSessionRealizedProfit() {
 }
 
 //+------------------------------------------------------------------+
+//| Get Realized Profit for Current Symbol Only (v5.3)               |
+//| Calculates P/L only for the current pair, not global             |
+//+------------------------------------------------------------------+
+double GetCurrentPairRealizedProfit() {
+    double profit = 0;
+
+    // Scan deal history for current symbol only (today)
+    datetime startOfDay = StringToTime(TimeToString(TimeCurrent(), TIME_DATE));
+    HistorySelect(startOfDay, TimeCurrent());
+
+    int totalDeals = HistoryDealsTotal();
+    for(int i = 0; i < totalDeals; i++) {
+        ulong ticket = HistoryDealGetTicket(i);
+        if(ticket > 0) {
+            string symbol = HistoryDealGetString(ticket, DEAL_SYMBOL);
+            long magic = HistoryDealGetInteger(ticket, DEAL_MAGIC);
+
+            // Solo questa pair e solo ordini Sugamara
+            if(symbol == _Symbol && IsSugamaraMagic(magic)) {
+                // Only count exit deals (not entry)
+                ENUM_DEAL_ENTRY entry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(ticket, DEAL_ENTRY);
+                if(entry == DEAL_ENTRY_OUT || entry == DEAL_ENTRY_OUT_BY) {
+                    profit += HistoryDealGetDouble(ticket, DEAL_PROFIT);
+                    profit += HistoryDealGetDouble(ticket, DEAL_SWAP);
+                    profit += HistoryDealGetDouble(ticket, DEAL_COMMISSION);
+                }
+            }
+        }
+    }
+
+    return profit;
+}
+
+//+------------------------------------------------------------------+
+//| Check if Magic Number belongs to Sugamara (v5.3)                 |
+//+------------------------------------------------------------------+
+bool IsSugamaraMagic(long magic) {
+    // Grid A: MagicNumber + 0 to +999
+    // Grid B: MagicNumber + 10000 to +10999
+    // Shield: MagicNumber + 9001, MagicNumber + 9002
+    long baseMagic = MagicNumber;
+
+    if(magic >= baseMagic && magic < baseMagic + 1000) return true;  // Grid A
+    if(magic >= baseMagic + 10000 && magic < baseMagic + 11000) return true;  // Grid B
+    if(magic == baseMagic + MAGIC_SHIELD_LONG || magic == baseMagic + MAGIC_SHIELD_SHORT) return true;  // Shield
+
+    return false;
+}
+
+//+------------------------------------------------------------------+
+//| Get Wins for Current Pair Only (v5.3)                            |
+//+------------------------------------------------------------------+
+int GetCurrentPairWins() {
+    int wins = 0;
+
+    datetime startOfDay = StringToTime(TimeToString(TimeCurrent(), TIME_DATE));
+    HistorySelect(startOfDay, TimeCurrent());
+
+    int totalDeals = HistoryDealsTotal();
+    for(int i = 0; i < totalDeals; i++) {
+        ulong ticket = HistoryDealGetTicket(i);
+        if(ticket > 0) {
+            string symbol = HistoryDealGetString(ticket, DEAL_SYMBOL);
+            long magic = HistoryDealGetInteger(ticket, DEAL_MAGIC);
+            ENUM_DEAL_ENTRY entry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(ticket, DEAL_ENTRY);
+
+            if(symbol == _Symbol && IsSugamaraMagic(magic) &&
+               (entry == DEAL_ENTRY_OUT || entry == DEAL_ENTRY_OUT_BY)) {
+                double profit = HistoryDealGetDouble(ticket, DEAL_PROFIT);
+                profit += HistoryDealGetDouble(ticket, DEAL_SWAP);
+                profit += HistoryDealGetDouble(ticket, DEAL_COMMISSION);
+                if(profit >= 0) wins++;
+            }
+        }
+    }
+
+    return wins;
+}
+
+//+------------------------------------------------------------------+
+//| Get Losses for Current Pair Only (v5.3)                          |
+//+------------------------------------------------------------------+
+int GetCurrentPairLosses() {
+    int losses = 0;
+
+    datetime startOfDay = StringToTime(TimeToString(TimeCurrent(), TIME_DATE));
+    HistorySelect(startOfDay, TimeCurrent());
+
+    int totalDeals = HistoryDealsTotal();
+    for(int i = 0; i < totalDeals; i++) {
+        ulong ticket = HistoryDealGetTicket(i);
+        if(ticket > 0) {
+            string symbol = HistoryDealGetString(ticket, DEAL_SYMBOL);
+            long magic = HistoryDealGetInteger(ticket, DEAL_MAGIC);
+            ENUM_DEAL_ENTRY entry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(ticket, DEAL_ENTRY);
+
+            if(symbol == _Symbol && IsSugamaraMagic(magic) &&
+               (entry == DEAL_ENTRY_OUT || entry == DEAL_ENTRY_OUT_BY)) {
+                double profit = HistoryDealGetDouble(ticket, DEAL_PROFIT);
+                profit += HistoryDealGetDouble(ticket, DEAL_SWAP);
+                profit += HistoryDealGetDouble(ticket, DEAL_COMMISSION);
+                if(profit < 0) losses++;
+            }
+        }
+    }
+
+    return losses;
+}
+
+//+------------------------------------------------------------------+
 //| Update Session Statistics                                        |
 //+------------------------------------------------------------------+
 void UpdateSessionStatistics(double profit, bool isWin) {

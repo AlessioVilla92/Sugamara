@@ -900,7 +900,10 @@ void ApplyVisualTheme() {
     ChartSetInteger(0, CHART_COLOR_FOREGROUND, clrWhite);     // Sand text
     ChartSetInteger(0, CHART_COLOR_CHART_LINE, clrCyan);      // Fremen blue line
 
-    // Apply volume colors
+    // v5.3: Hide volume bars (user requested removal of blue bars at bottom)
+    ChartSetInteger(0, CHART_SHOW_VOLUMES, CHART_VOLUME_HIDE);
+
+    // Apply volume colors (kept for if user re-enables volumes)
     ChartSetInteger(0, CHART_COLOR_VOLUME, clrDodgerBlue);
     ChartSetInteger(0, CHART_COLOR_ASK, clrRed);
     ChartSetInteger(0, CHART_COLOR_BID, clrLime);

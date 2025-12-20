@@ -21,7 +21,9 @@
       "Bash(do basename \"$f\")",
       "Bash(done)",
       "Bash(del \"c:\\Users\\Admin\\Documents\\GitHub\\Sugamara\\temp_old.txt\")",
-      "Bash(git grep:*)"
+      "Bash(git grep:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(\"C:\\\\Program Files\\\\MetaTrader 5\\\\metaeditor64.exe\" /compile:\"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Sugamara.mq5\" /log:\"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\compile.log\" /inc:\"C:\\\\Users\\\\Admin\\\\AppData\\\\Roaming\\\\MetaQuotes\\\\Terminal\\\\73B7A2420D6397DFF9014A20F1201F97\\\\MQL5\")"
     ],
     "deny": [],
     "ask": []
