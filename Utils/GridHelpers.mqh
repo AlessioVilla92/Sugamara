@@ -1407,39 +1407,154 @@ ENUM_SYSTEM_STATE GetPricePositionInRange(double currentPrice) {
 }
 
 //+------------------------------------------------------------------+
-//| Check Breakout Condition for Shield                               |
+//| Check Breakout Condition for Shield (v5.6: con conferma candele) |
+//| Usa Breakout_Confirm_Candles e Use_Candle_Close per confermare   |
 //+------------------------------------------------------------------+
 bool CheckBreakoutConditionShield(double currentPrice, ENUM_BREAKOUT_DIRECTION &direction) {
     if(!shieldZone.isValid) {
         direction = BREAKOUT_NONE;
+        g_breakoutConfirmCounter = 0;
+        g_breakoutPendingDirection = BREAKOUT_NONE;
         return false;
     }
 
-    // Breakout UP: price above resistance
+    // Determina direzione breakout
+    ENUM_BREAKOUT_DIRECTION currentDirection = BREAKOUT_NONE;
+
     if(currentPrice > shieldZone.resistance) {
-        direction = BREAKOUT_UP;
+        currentDirection = BREAKOUT_UP;
+    }
+    else if(currentPrice < shieldZone.support) {
+        currentDirection = BREAKOUT_DOWN;
+    }
+
+    // Se nessun breakout o direzione cambiata, reset
+    if(currentDirection == BREAKOUT_NONE ||
+       (g_breakoutPendingDirection != BREAKOUT_NONE && currentDirection != g_breakoutPendingDirection)) {
+        g_breakoutConfirmCounter = 0;
+        g_breakoutPendingDirection = BREAKOUT_NONE;
+        direction = BREAKOUT_NONE;
+        return false;
+    }
+
+    // Breakout rilevato - inizia/continua conferma
+    g_breakoutPendingDirection = currentDirection;
+    direction = currentDirection;
+
+    // Se Breakout_Confirm_Candles <= 0, conferma immediata (backward compatible)
+    if(Breakout_Confirm_Candles <= 0) {
         return true;
     }
 
-    // Breakout DOWN: price below support
-    if(currentPrice < shieldZone.support) {
-        direction = BREAKOUT_DOWN;
-        return true;
+    // Conferma candele
+    datetime currentBar = iTime(_Symbol, PERIOD_CURRENT, 0);
+
+    if(currentBar != g_breakoutLastBarTime) {
+        g_breakoutLastBarTime = currentBar;
+
+        if(Use_Candle_Close) {
+            // Verifica che la candela PRECEDENTE abbia CHIUSO oltre il livello
+            double prevClose = iClose(_Symbol, PERIOD_CURRENT, 1);
+            bool confirmValid = false;
+
+            if(currentDirection == BREAKOUT_UP && prevClose > shieldZone.resistance) {
+                confirmValid = true;
+            }
+            else if(currentDirection == BREAKOUT_DOWN && prevClose < shieldZone.support) {
+                confirmValid = true;
+            }
+
+            if(confirmValid) {
+                g_breakoutConfirmCounter++;
+                if(DetailedLogging) {
+                    PrintFormat("[Shield] Breakout confirm %d/%d (candle close: %.5f)",
+                                g_breakoutConfirmCounter, Breakout_Confirm_Candles, prevClose);
+                }
+            }
+        }
+        else {
+            // Conta semplicemente le nuove barre
+            g_breakoutConfirmCounter++;
+            if(DetailedLogging) {
+                PrintFormat("[Shield] Breakout confirm %d/%d (new bar)",
+                            g_breakoutConfirmCounter, Breakout_Confirm_Candles);
+            }
+        }
     }
 
-    direction = BREAKOUT_NONE;
-    return false;
+    // Non ancora confermato
+    if(g_breakoutConfirmCounter < Breakout_Confirm_Candles) {
+        return false;
+    }
+
+    // Breakout confermato!
+    if(DetailedLogging) {
+        PrintFormat("[Shield] BREAKOUT CONFIRMED! Direction: %s, Counter: %d",
+                    (direction == BREAKOUT_UP ? "UP" : "DOWN"), g_breakoutConfirmCounter);
+    }
+
+    // Reset per prossimo breakout
+    g_breakoutConfirmCounter = 0;
+    g_breakoutPendingDirection = BREAKOUT_NONE;
+
+    return true;
 }
 
 //+------------------------------------------------------------------+
-//| Check Reentry Condition for Shield (price back in range)          |
+//| Check Reentry Condition for Shield (v5.6: con hysteresis)         |
+//| Il prezzo deve restare dentro il range per X secondi              |
+//| Usa Reentry_Confirm_Seconds (0 = disabilitato)                    |
 //+------------------------------------------------------------------+
 bool CheckReentryConditionShield(double currentPrice) {
     if(!shieldZone.isValid) {
+        g_shieldReentryStart = 0;
         return false;
     }
 
-    // Price is back inside range (between support and resistance)
-    return (currentPrice > shieldZone.support && currentPrice < shieldZone.resistance);
+    bool isInsideRange = (currentPrice > shieldZone.support &&
+                          currentPrice < shieldZone.resistance);
+
+    // Se fuori dal range, reset timer
+    if(!isInsideRange) {
+        if(g_shieldReentryStart != 0 && DetailedLogging) {
+            Print("[Shield] Reentry cancelled - price exited range");
+        }
+        g_shieldReentryStart = 0;
+        return false;
+    }
+
+    // Se hysteresis disabilitata (0), conferma immediata (backward compatible)
+    if(Reentry_Confirm_Seconds <= 0) {
+        return true;
+    }
+
+    // Prima volta dentro il range - avvia timer
+    if(g_shieldReentryStart == 0) {
+        g_shieldReentryStart = TimeCurrent();
+        if(DetailedLogging) {
+            PrintFormat("[Shield] Reentry timer started - need %d seconds inside range",
+                        Reentry_Confirm_Seconds);
+        }
+        return false;
+    }
+
+    // Calcola tempo trascorso dentro il range
+    int timeSinceReentry = (int)(TimeCurrent() - g_shieldReentryStart);
+
+    // Log ogni 10 secondi
+    if(DetailedLogging && timeSinceReentry > 0 && timeSinceReentry % 10 == 0) {
+        PrintFormat("[Shield] Reentry timer: %d/%d seconds",
+                    timeSinceReentry, Reentry_Confirm_Seconds);
+    }
+
+    // Conferma dopo X secondi
+    if(timeSinceReentry >= Reentry_Confirm_Seconds) {
+        PrintFormat("[Shield] Reentry CONFIRMED after %d seconds inside range",
+                    timeSinceReentry);
+        g_shieldReentryStart = 0;
+        return true;
+    }
+
+    return false;  // Ancora in attesa conferma
 }
 

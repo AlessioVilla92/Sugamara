@@ -381,6 +381,7 @@ input double    Breakout_Buffer_Pips = 20.0;                 // 📏 Buffer Brea
 input double    Reentry_Buffer_Pips = 30.0;                  // 📏 Buffer Rientro nel range (pips)
 input int       Breakout_Confirm_Candles = 2;                // 🔢 Candele Conferma Breakout
 input bool      Use_Candle_Close = true;                     // ✅ Usa Chiusura Candela per Conferma
+input int       Reentry_Confirm_Seconds = 30;                // ⏱️ Secondi conferma Reentry (0=disabilitato)
 
 input group "    ⚠️ SHIELD 3 FASI PARAMETERS"
 input double    Warning_Zone_Percent = 10.0;                 // 📊 Warning Zone (% dal bordo)

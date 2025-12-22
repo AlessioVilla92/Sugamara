@@ -76,6 +76,9 @@ bool InitializeShield()
 
 //+------------------------------------------------------------------+
 //| Calculate Shield Lot Size = Sum of exposed grid lots              |
+//| v5.6 FIX: Corretto per CASCADE_OVERLAP mode                       |
+//|   SHIELD_LONG protegge SHORT = Grid B (Upper + Lower)             |
+//|   SHIELD_SHORT protegge LONG = Grid A (Upper + Lower)             |
 //+------------------------------------------------------------------+
 double CalculateShieldLotSize(ENUM_SHIELD_TYPE shieldType)
 {
@@ -88,39 +91,41 @@ double CalculateShieldLotSize(ENUM_SHIELD_TYPE shieldType)
    }
 
    if(shieldType == SHIELD_LONG) {
-      // Shield LONG protects all open SHORT positions (Grid B Upper + Grid A Lower)
+      // v5.6 FIX: Shield LONG protegge SHORT = SOLO Grid B (entrambe le zone)
+      // In CASCADE_OVERLAP: Grid B Upper = SELL LIMIT, Grid B Lower = SELL STOP
       for(int i = 0; i < GridLevelsPerSide; i++) {
          if(gridB_Upper_Status[i] == ORDER_FILLED) {
-            totalLots += gridB_Upper_Lots[i];
+            totalLots += gridB_Upper_Lots[i];  // SELL LIMIT = SHORT
             shortPositions++;
             if(DetailedLogging) {
-               PrintFormat("[Shield]   Grid B Upper[%d]: %.2f lots", i, gridB_Upper_Lots[i]);
+               PrintFormat("[Shield]   Grid B Upper[%d]: %.2f lots (SELL LIMIT)", i, gridB_Upper_Lots[i]);
             }
          }
-         if(gridA_Lower_Status[i] == ORDER_FILLED) {
-            totalLots += gridA_Lower_Lots[i];
+         if(gridB_Lower_Status[i] == ORDER_FILLED) {
+            totalLots += gridB_Lower_Lots[i];  // SELL STOP = SHORT
             shortPositions++;
             if(DetailedLogging) {
-               PrintFormat("[Shield]   Grid A Lower[%d]: %.2f lots", i, gridA_Lower_Lots[i]);
+               PrintFormat("[Shield]   Grid B Lower[%d]: %.2f lots (SELL STOP)", i, gridB_Lower_Lots[i]);
             }
          }
       }
    }
    else if(shieldType == SHIELD_SHORT) {
-      // Shield SHORT protects all open LONG positions (Grid A Upper + Grid B Lower)
+      // v5.6 FIX: Shield SHORT protegge LONG = SOLO Grid A (entrambe le zone)
+      // In CASCADE_OVERLAP: Grid A Upper = BUY STOP, Grid A Lower = BUY LIMIT
       for(int i = 0; i < GridLevelsPerSide; i++) {
          if(gridA_Upper_Status[i] == ORDER_FILLED) {
-            totalLots += gridA_Upper_Lots[i];
+            totalLots += gridA_Upper_Lots[i];  // BUY STOP = LONG
             longPositions++;
             if(DetailedLogging) {
-               PrintFormat("[Shield]   Grid A Upper[%d]: %.2f lots", i, gridA_Upper_Lots[i]);
+               PrintFormat("[Shield]   Grid A Upper[%d]: %.2f lots (BUY STOP)", i, gridA_Upper_Lots[i]);
             }
          }
-         if(gridB_Lower_Status[i] == ORDER_FILLED) {
-            totalLots += gridB_Lower_Lots[i];
+         if(gridA_Lower_Status[i] == ORDER_FILLED) {
+            totalLots += gridA_Lower_Lots[i];  // BUY LIMIT = LONG
             longPositions++;
             if(DetailedLogging) {
-               PrintFormat("[Shield]   Grid B Lower[%d]: %.2f lots", i, gridB_Lower_Lots[i]);
+               PrintFormat("[Shield]   Grid A Lower[%d]: %.2f lots (BUY LIMIT)", i, gridA_Lower_Lots[i]);
             }
          }
       }
@@ -327,10 +332,7 @@ void EnterWarningPhase(ENUM_BREAKOUT_DIRECTION direction)
       g_loggedWarningPhase = true;  // Never log again
    }
 
-   // Alert (keep this - alerts are important)
-   if(EnableAlerts) {
-      Alert("SUGAMARA: Warning Zone - Price near range edge");
-   }
+   // v5.6: Alert rimosso per Warning Zone - solo log (riduzione alert a 2 essenziali)
 
    // Update system state
    currentSystemState = (direction == BREAKOUT_UP ? STATE_WARNING_UP : STATE_WARNING_DOWN);
@@ -380,9 +382,10 @@ void EnterPreShieldPhase(ENUM_BREAKOUT_DIRECTION direction)
       g_loggedPreShieldPhase = true;  // Never log again
    }
 
-   // Alert (keep this - this is important for imminent breakout)
+   // v5.6: ALERT 1 - Pre-Shield (breakout imminente)
    if(EnableAlerts) {
-      Alert("SUGAMARA: Pre-Shield - Breakout imminent, Shield ready!");
+      Alert("SUGAMARA: ⚠️ Shield sta per attivarsi! Breakout ",
+            (direction == BREAKOUT_UP ? "UP" : "DOWN"), " imminente");
    }
 
    currentSystemState = STATE_SHIELD_PENDING;
@@ -463,8 +466,10 @@ void MonitorPendingShieldOrders()
          PrintFormat("     Lot: %.2f", shield.lot_size);
          Print("═══════════════════════════════════════════════════════════════════");
 
+         // v5.6: ALERT 2 - Shield ATTIVO (ordine STOP eseguito)
          if(EnableAlerts) {
-            Alert("SUGAMARA: Shield STOP order executed! Protection now active");
+            Alert("SUGAMARA: ✅ Shield ", (shieldPendingType == SHIELD_LONG ? "LONG" : "SHORT"),
+                  " ATTIVO - Ordine STOP eseguito a ", DoubleToString(shield.entry_price, symbolDigits));
          }
 
          // Reset pending variables
@@ -548,6 +553,12 @@ void ActivateShieldLong(string source)
          PrintFormat("     Slippage: %.1f pips", MathAbs(shield.entry_price - currentPrice) / symbolPoint / 10);
          PrintFormat("     Lot: %.2f", shieldLot);
          PrintFormat("     Covering Short exposure: %.2f lots", totalShortLots);
+
+         // v5.6: ALERT 2 - Shield ATTIVO (ordine MARKET eseguito)
+         if(EnableAlerts) {
+            Alert("SUGAMARA: ✅ Shield LONG ATTIVO - Posizione BUY eseguita a ",
+                  DoubleToString(shield.entry_price, symbolDigits));
+         }
       }
       else {
          Print("  ❌ [MARKET] Order FAILED");
@@ -595,11 +606,9 @@ void ActivateShieldLong(string source)
 
    Print("═══════════════════════════════════════════════════════════════════");
 
-   if(success && EnableAlerts) {
-      string orderTypeStr = (ShieldOrderType == SHIELD_ORDER_MARKET ? "MARKET" : "STOP PENDING");
-      Alert("SUGAMARA: Shield LONG ", orderTypeStr, "! Breakout DOWN - Protection ",
-            (ShieldOrderType == SHIELD_ORDER_MARKET ? "active" : "pending"));
-   }
+   // v5.6: Alert rimosso qui - già gestito:
+   // - MARKET: alert dopo esecuzione (linee 557-561)
+   // - STOP: alert in MonitorPendingShieldOrders quando eseguito
 }
 
 //+------------------------------------------------------------------+
@@ -653,6 +662,12 @@ void ActivateShieldShort(string source)
          PrintFormat("     Slippage: %.1f pips", MathAbs(shield.entry_price - currentPrice) / symbolPoint / 10);
          PrintFormat("     Lot: %.2f", shieldLot);
          PrintFormat("     Covering Long exposure: %.2f lots", totalLongLots);
+
+         // v5.6: ALERT 2 - Shield ATTIVO (ordine MARKET eseguito)
+         if(EnableAlerts) {
+            Alert("SUGAMARA: ✅ Shield SHORT ATTIVO - Posizione SELL eseguita a ",
+                  DoubleToString(shield.entry_price, symbolDigits));
+         }
       }
       else {
          Print("  ❌ [MARKET] Order FAILED");
@@ -700,11 +715,9 @@ void ActivateShieldShort(string source)
 
    Print("═══════════════════════════════════════════════════════════════════");
 
-   if(success && EnableAlerts) {
-      string orderTypeStr = (ShieldOrderType == SHIELD_ORDER_MARKET ? "MARKET" : "STOP PENDING");
-      Alert("SUGAMARA: Shield SHORT ", orderTypeStr, "! Breakout UP - Protection ",
-            (ShieldOrderType == SHIELD_ORDER_MARKET ? "active" : "pending"));
-   }
+   // v5.6: Alert rimosso qui - già gestito:
+   // - MARKET: alert dopo esecuzione (linee 666-670)
+   // - STOP: alert in MonitorPendingShieldOrders quando eseguito
 }
 
 //+------------------------------------------------------------------+
@@ -861,9 +874,9 @@ void CloseShield(string reason)
          Print("  Total Shield P/L: ", totalShieldPL);
          Print("  Duration: ", (int)(TimeCurrent() - shield.activation_time), " seconds");
 
-         if(EnableAlerts) {
-            Alert("SUGAMARA: Shield closed - ", reason, " - P/L: ", DoubleToString(pl, 2));
-         }
+         // v5.6: Alert rimosso per CloseShield - solo log dettagliato
+         PrintFormat("[Shield] Closed - Reason: %s - P/L: %.2f - Duration: %d sec",
+                     reason, pl, (int)(TimeCurrent() - shield.activation_time));
       }
       else {
          Print("  [ERROR] Closing Shield: ", trade.ResultRetcode());

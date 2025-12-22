@@ -262,6 +262,18 @@ datetime breakoutDetectionTime = 0;
 ENUM_BREAKOUT_DIRECTION lastBreakoutDirection = BREAKOUT_NONE;
 
 //+------------------------------------------------------------------+
+//| v5.6: BREAKOUT CONFIRMATION VARIABLES                            |
+//+------------------------------------------------------------------+
+int g_breakoutConfirmCounter = 0;
+datetime g_breakoutLastBarTime = 0;
+ENUM_BREAKOUT_DIRECTION g_breakoutPendingDirection = BREAKOUT_NONE;
+
+//+------------------------------------------------------------------+
+//| v5.6: REENTRY CONFIRMATION VARIABLES                             |
+//+------------------------------------------------------------------+
+datetime g_shieldReentryStart = 0;
+
+//+------------------------------------------------------------------+
 //| CURRENT SYSTEM STATE (Extended)                                  |
 //+------------------------------------------------------------------+
 ENUM_SYSTEM_STATE currentSystemState = STATE_INIT;
