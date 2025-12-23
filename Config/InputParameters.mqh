@@ -37,22 +37,9 @@ input string    DebugEntryTime = "09:30";                    // Entry Time (HH:M
 input string    DebugCloseTime = "";                         // Close Time (HH:MM) - vuoto = no close
 
 //+------------------------------------------------------------------+
-//| 💰 PARTIAL TAKE PROFIT SETTINGS                                  |
+//| 💰 PARTIAL TAKE PROFIT - REMOVED (v5.x cleanup)                  |
+//| Dannoso per Cyclic Reopen - riduce profit del 37%                |
 //+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  💰 PARTIAL TAKE PROFIT (v3.0)                            ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input bool      Enable_PartialTP = true;                    // ✅ Abilita Partial Take Profit
-
-input group "    📊 PARTIAL TP LEVELS"
-input double    PartialTP_Level1_Percent = 50.0;            // 📊 Level 1: % verso TP
-input double    PartialTP_Level1_Close = 50.0;              // 📉 Chiudi % posizione a Level 1
-input double    PartialTP_Level2_Percent = 75.0;            // 📊 Level 2: % verso TP
-input double    PartialTP_Level2_Close = 25.0;              // 📉 Chiudi % posizione a Level 2
-input bool      PartialTP_OnShield = true;                  // 🛡️ Applica anche a Shield
 
 //+------------------------------------------------------------------+
 //| 🔒 BREAK ON PROFIT (BOP) v5.1                                    |
@@ -278,19 +265,9 @@ input bool      EnableRateLimiting = true;                   // ✅ Limita cambi
 input double    MaxSpacingChangePerCycle = 3.0;              // 📏 Max cambio per ciclo (pips) - anti spike
 
 //+------------------------------------------------------------------+
-//| 3️⃣.6️⃣ ⚠️ ATR EXTREME WARNING v4.1                                |
+//| 3️⃣.6️⃣ ATR EXTREME WARNING - REMOVED (v5.x cleanup)               |
+//| Ridondante con Shield + Max Net Exposure                         |
 //+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  3️⃣.6️⃣  ⚠️ ATR EXTREME WARNING v4.1                       ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ⚠️ EXTREME WARNING"
-input bool      ATR_EnableExtremeWarning = false;            // ✅ Abilita Warning Veloce su ATR Extreme ( Disattivato 12dic )
-input double    ATR_ExtremeThreshold_Pips = 50.0;            // ⚠️ Soglia ATR Extreme (pips) - Warning se >
-input int       ATR_ExtremeCheck_Seconds = 10;               // ⏱️ Intervallo Check Extreme (secondi)
-input bool      ATR_PauseOnExtreme = false;                  // 🛑 Pausa nuovi ordini su Extreme
 
 //+------------------------------------------------------------------+
 //| 3️⃣.7️⃣ 📝 ATR LOGGING v4.2                                        |

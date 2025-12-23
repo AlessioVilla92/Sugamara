@@ -78,10 +78,9 @@ struct ATRCacheStruct {
 ATRCacheStruct g_atrCache;
 
 //+------------------------------------------------------------------+
-//| ⚠️ ATR EXTREME WARNING v4.1                                      |
+//| ⚠️ ATR EXTREME WARNING - REMOVED (v5.x cleanup)                  |
+//| Ridondante con Shield + Max Net Exposure                         |
 //+------------------------------------------------------------------+
-bool            g_extremePauseActive = false;           // Flag: pausa per ATR extreme attiva
-datetime        g_lastExtremeCheck = 0;                 // Ultimo check extreme
 
 //+------------------------------------------------------------------+
 //| 📝 ATR LOGGING STATE v4.2                                        |
@@ -428,9 +427,7 @@ void InitializeArrays() {
     g_atrCache.lastBarTime = 0;
     g_atrCache.isValid = false;
 
-    // v4.1: Extreme Warning
-    g_extremePauseActive = false;
-    g_lastExtremeCheck = 0;
+    // v4.1: Extreme Warning REMOVED (v5.x cleanup)
 
     // ═══════════════════════════════════════════════════════════════════
     // v4.2: Initialize ATR Logging State

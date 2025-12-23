@@ -66,7 +66,7 @@
 #include "Trading/ShieldManager.mqh"
 
 // v3.0 NEW Trading Modules
-#include "Trading/PartialTPManager.mqh"
+// PartialTPManager.mqh REMOVED - Dannoso per Cyclic Reopen (v5.x cleanup)
 
 // v5.1 NEW Trading Modules
 #include "Trading/CloseOnProfitManager.mqh"
@@ -217,10 +217,8 @@ int OnInit() {
         Print("WARNING: Failed to initialize ATR Multi-TF");
     }
 
-    //--- STEP 13.8: Initialize Partial TP Manager (v3.0) ---
-    if(!InitializePartialTPManager()) {
-        Print("WARNING: Failed to initialize Partial TP Manager");
-    }
+    //--- STEP 13.8: Partial TP Manager REMOVED (v5.x cleanup) ---
+    // Dannoso per Cyclic Reopen - riduce profit del 37%
 
     //--- STEP 13.8b: Initialize Close On Profit (v5.1) ---
     InitializeCloseOnProfit();
@@ -325,7 +323,7 @@ int OnInit() {
         Print("  ✅ CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
         Print("  ✅ Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
     }
-    Print("  ✅ Partial TP: ", Enable_PartialTP ? "ENABLED" : "DISABLED");
+    // Partial TP REMOVED - v5.x cleanup
     Print("  ✅ ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
     Print("  ✅ Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
     Print("  ✅ Control Buttons: ALWAYS ACTIVE");
@@ -340,7 +338,7 @@ int OnInit() {
     }
     Print("  ✅ Center Indicators: ", ShowCenterIndicators ? "ENABLED" : "DISABLED");
     Print("  ✅ Auto-Recenter: ", EnableAutoRecenter ? "ENABLED" : "DISABLED");
-    Print("  ✅ ATR Extreme Warning: ", ATR_EnableExtremeWarning ? "ENABLED" : "DISABLED");
+    // ATR Extreme Warning REMOVED - v5.x cleanup (ridondante con Shield)
     Print("  ✅ ATR Alert on Spacing: ", ATR_AlertOnSpacingChange ? "ENABLED" : "DISABLED");
     Print("═══════════════════════════════════════════════════════════════════");
 
@@ -425,7 +423,7 @@ void OnDeinit(const int reason) {
 
     // v3.0: Deinitialize new modules
     DeinitializeATRMultiTF();
-    DeinitializePartialTPManager();
+    // DeinitializePartialTPManager(); // REMOVED - v5.x cleanup
     // DeinitializeTrailingManager(); // REMOVED - GridTrailingManager eliminato
     DeinitializeManualSR();
 
@@ -509,33 +507,8 @@ void OnTick() {
         return;
     }
 
-    //--- v4.1: ATR EXTREME WARNING (fast check every 10 seconds) ---
-    if(ATR_EnableExtremeWarning) {
-        datetime now = TimeCurrent();
-        if(now - g_lastExtremeCheck >= ATR_ExtremeCheck_Seconds) {
-            g_lastExtremeCheck = now;
-
-            double atrNow = GetATRPipsUnified(0);  // Cache only - fast
-            if(atrNow >= ATR_ExtremeThreshold_Pips) {
-                if(!g_extremePauseActive) {
-                    g_extremePauseActive = true;
-                    Print("WARNING: ATR EXTREME: ", DoubleToString(atrNow, 1), " pips (threshold: ",
-                          DoubleToString(ATR_ExtremeThreshold_Pips, 1), ")");
-                    if(ATR_PauseOnExtreme) {
-                        Print("   New orders PAUSED due to extreme volatility");
-                    }
-                    if(ATR_AlertOnSpacingChange) {
-                        Alert("SUGAMARA [", _Symbol, "] ATR EXTREME: ", DoubleToString(atrNow, 1), " pips!");
-                    }
-                }
-            } else {
-                if(g_extremePauseActive) {
-                    g_extremePauseActive = false;
-                    Print("INFO: ATR returned to normal: ", DoubleToString(atrNow, 1), " pips");
-                }
-            }
-        }
-    }
+    //--- v4.1: ATR EXTREME WARNING REMOVED (v5.x cleanup) ---
+    // Ridondante con Shield + Max Net Exposure
 
     //--- UPDATE POSITION STATUSES ---
     MonitorPositions();
@@ -580,8 +553,8 @@ void OnTick() {
     //--- v3.0: UPDATE ATR MULTI-TF ---
     UpdateATRMultiTF();
 
-    //--- v3.0: PROCESS PARTIAL TAKE PROFIT ---
-    ProcessPartialTPs();
+    //--- v3.0: PARTIAL TAKE PROFIT REMOVED (v5.x cleanup) ---
+    // ProcessPartialTPs(); // Dannoso per Cyclic Reopen
 
     //--- v5.1: BREAK ON PROFIT (BOP) ---
     CheckBreakOnProfit();

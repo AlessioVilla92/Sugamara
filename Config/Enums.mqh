@@ -234,14 +234,9 @@ enum ENUM_ENTRY_MODE {
 };
 
 //+------------------------------------------------------------------+
-//| 💰 PARTIAL TP STATUS - Stato Partial Take Profit v3.0            |
+//| 💰 PARTIAL TP STATUS - REMOVED (v5.x cleanup)                    |
+//| Dannoso per Cyclic Reopen                                        |
 //+------------------------------------------------------------------+
-enum ENUM_PARTIAL_TP_STATUS {
-    PARTIAL_NONE = 0,           // Nessun partial TP eseguito
-    PARTIAL_LEVEL1 = 1,         // Level 1 (50%) eseguito
-    PARTIAL_LEVEL2 = 2,         // Level 2 (75%) eseguito
-    PARTIAL_COMPLETE = 3        // TP completo (100%)
-};
 
 //+------------------------------------------------------------------+
 //| 📍 MANUAL SR LINE TYPE - Tipo linea S/R manuale v3.0             |
