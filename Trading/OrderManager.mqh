@@ -50,6 +50,19 @@ ulong PlacePendingOrder(ENUM_ORDER_TYPE orderType, double lot, double price,
     tp = NormalizeDouble(tp, symbolDigits);
     lot = NormalizeLotSize(lot);
 
+    // ═══════════════════════════════════════════════════════════════════
+    // v5.10 FIX: Check price validity BEFORE attempting order
+    // This prevents error 10015 from flooding the log
+    // Cyclic reopen will automatically retry when price moves
+    // ═══════════════════════════════════════════════════════════════════
+    if(!IsValidPendingPrice(price, orderType)) {
+        if(DetailedLogging) {
+            Print("[OrderManager] Skipping ", GetOrderTypeString(orderType),
+                  " @ ", FormatPrice(price), " - price not yet valid (cyclic reopen will retry)");
+        }
+        return 0;
+    }
+
     // Set magic for this order
     trade.SetExpertMagicNumber(magic);
 

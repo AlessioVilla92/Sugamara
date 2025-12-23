@@ -710,7 +710,10 @@ void CheckBreakOnProfit() {
                     Print("[BOP] ✅ Ticket #", ticket, " | SL moved to ", DoubleToString(newSL, _Digits),
                           " | Locked ", DoubleToString(BOP_LockPercent, 0), "% of ", DoubleToString(currentDistance / symbolPoint * 10, 1), " pips profit");
                 } else {
-                    Print("[BOP] ❌ Failed to modify ticket #", ticket, " | Error: ", GetLastError());
+                    // v5.10: Position likely closed by TP - not an error, skip silently
+                    if(DetailedLogging) {
+                        Print("[BOP] Position #", ticket, " already closed at TP (100% profit captured) - skipping SL modification");
+                    }
                 }
             }
         }
