@@ -8,6 +8,13 @@
 #property link      "https://sugamara.com"
 
 //+------------------------------------------------------------------+
+//| v5.7: THROTTLING VARIABLES FOR LOG OPTIMIZATION                   |
+//+------------------------------------------------------------------+
+datetime g_lastExposureWarning = 0;      // Last exposure warning log time
+datetime g_lastVolatilityPMWarning = 0;  // Last volatility warning log time
+int      g_pmWarningThrottleSec = 300;   // Warning throttle: 5 minutes
+
+//+------------------------------------------------------------------+
 //| POSITION MONITORING FUNCTIONS                                    |
 //+------------------------------------------------------------------+
 
@@ -352,13 +359,16 @@ void CheckExposureLimits() {
     CalculateTotalExposure();
 
     if(!isNeutral) {
-        double absExposure = MathAbs(netExposure);
-        string direction = (netExposure > 0) ? "LONG" : "SHORT";
+        // v5.7: Throttled logging - 1x every 5 minutes if condition persists
+        if(TimeCurrent() - g_lastExposureWarning >= g_pmWarningThrottleSec) {
+            double absExposure = MathAbs(netExposure);
+            string direction = (netExposure > 0) ? "LONG" : "SHORT";
 
-        LogMessage(LOG_WARNING, "Exposure imbalance: " + direction + " " +
-                   DoubleToString(absExposure, 2) + " lot (limit: " +
-                   DoubleToString(NetExposure_MaxLot, 2) + ")");
-
+            LogMessage(LOG_WARNING, "Exposure imbalance: " + direction + " " +
+                       DoubleToString(absExposure, 2) + " lot (limit: " +
+                       DoubleToString(NetExposure_MaxLot, 2) + ")");
+            g_lastExposureWarning = TimeCurrent();
+        }
         // Could trigger rebalancing here if implemented
     }
 }
@@ -369,7 +379,11 @@ void CheckExposureLimits() {
 void CheckVolatilityLimits() {
     if(IsMarketTooVolatile()) {
         if(systemState == STATE_ACTIVE) {
-            LogMessage(LOG_WARNING, "High volatility detected - New orders paused");
+            // v5.7: Throttled logging - 1x every 5 minutes if condition persists
+            if(TimeCurrent() - g_lastVolatilityPMWarning >= g_pmWarningThrottleSec) {
+                LogMessage(LOG_WARNING, "High volatility detected - New orders paused");
+                g_lastVolatilityPMWarning = TimeCurrent();
+            }
             // Don't change state, just prevent new orders
             // systemState = STATE_PAUSED;
         }

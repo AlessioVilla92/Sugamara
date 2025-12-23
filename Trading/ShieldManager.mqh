@@ -30,6 +30,13 @@ bool g_loggedCancelPreShield = false;  // PRE-SHIELD->NORMAL logged?
 bool g_loggedShieldActive = false;     // PRE-SHIELD->ACTIVE logged?
 
 //+------------------------------------------------------------------+
+//| v5.7: HEARTBEAT THROTTLING FOR LOG OPTIMIZATION                   |
+//+------------------------------------------------------------------+
+datetime g_lastShieldHeartbeat = 0;    // Last heartbeat log time
+string   g_lastShieldState = "";       // Last logged state
+int      g_shieldHeartbeatSec = 3600;  // Heartbeat every 1 hour when INSIDE_RANGE
+
+//+------------------------------------------------------------------+
 //| Get Shield Order Type Name                                        |
 //+------------------------------------------------------------------+
 string GetShieldOrderTypeName()
@@ -208,6 +215,7 @@ void ProcessShield3Phases(double currentPrice)
    // Get price position in range
    ENUM_SYSTEM_STATE priceState = GetPricePositionInRange(currentPrice);
 
+   // v5.7: Throttled logging - heartbeat 1x/hour when INSIDE_RANGE, immediate on state change
    if(DetailedLogging) {
       string phaseStr = GetShieldPhaseString();
       string stateStr = "";
@@ -217,8 +225,30 @@ void ProcessShield3Phases(double currentPrice)
          case STATE_WARNING_DOWN: stateStr = "WARNING_DOWN"; break;
          default: stateStr = "OTHER"; break;
       }
-      PrintFormat("[Shield] ProcessShield3Phases() - Price: %.5f, Phase: %s, State: %s",
-                  currentPrice, phaseStr, stateStr);
+
+      string currentState = phaseStr + "_" + stateStr;
+      bool shouldLog = false;
+      string logReason = "";
+
+      // State change - ALWAYS log immediately
+      if(currentState != g_lastShieldState) {
+         shouldLog = true;
+         logReason = "STATE_CHANGE";
+         g_lastShieldState = currentState;
+         g_lastShieldHeartbeat = TimeCurrent();
+      }
+      // Heartbeat - log 1x/hour when INSIDE_RANGE (normal operation)
+      else if(priceState == STATE_INSIDE_RANGE && shield.phase == PHASE_NORMAL &&
+              TimeCurrent() - g_lastShieldHeartbeat >= g_shieldHeartbeatSec) {
+         shouldLog = true;
+         logReason = "HEARTBEAT_1H";
+         g_lastShieldHeartbeat = TimeCurrent();
+      }
+
+      if(shouldLog) {
+         PrintFormat("[Shield] %s | Phase: %s | State: %s | Price: %.5f",
+                     logReason, phaseStr, stateStr, currentPrice);
+      }
    }
 
    switch(shield.phase) {

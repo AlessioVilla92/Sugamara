@@ -241,7 +241,7 @@ input group "║  3️⃣.5️⃣  🔄 ATR DYNAMIC SPACING v4.0                
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ⚡ ATTIVAZIONE"
-input bool      EnableDynamicATRSpacing = true;              // ✅ Abilita Spacing Dinamico ATR
+input bool      EnableDynamicATRSpacing = false;             // ❌ Disabilitato: usa Fixed_Spacing_Pips
 // Se FALSE: usa Fixed_Spacing_Pips o ATR Decision Table esistente
 
 input group "    ⏱️ TIMING"

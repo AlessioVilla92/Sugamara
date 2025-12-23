@@ -449,29 +449,59 @@ bool ShouldReopenGridALower(int level) {
 
 //+------------------------------------------------------------------+
 //| Reopen Grid A Upper Level                                        |
+//| FIX v5.9: SAVE/RESET/TRY/RESTORE pattern for guaranteed retry    |
+//| PlaceGridAUpperOrder requires ORDER_NONE, so we must reset first |
+//| On failure, restore previous status to trigger automatic retry   |
 //+------------------------------------------------------------------+
 void ReopenGridAUpper(int level) {
-    // Reset status
+    // 1. SAVE current status for rollback on failure
+    ENUM_ORDER_STATUS prevStatus = gridA_Upper_Status[level];
+    ulong prevTicket = gridA_Upper_Tickets[level];
+
+    // 2. RESET to ORDER_NONE (required by PlaceGridAUpperOrder line 187)
     gridA_Upper_Status[level] = ORDER_NONE;
     gridA_Upper_Tickets[level] = 0;
 
-    // Place new order
+    // 3. ATTEMPT to place order
     if(PlaceGridAUpperOrder(level)) {
+        // SUCCESS! PlaceGridAUpperOrder already set:
+        // - gridA_Upper_Status[level] = ORDER_PENDING (line 213)
+        // - gridA_Upper_Tickets[level] = ticket (line 212)
         LogGridStatus(GRID_A, ZONE_UPPER, level, "REOPENED (Cycle " +
                       IntegerToString(gridA_Upper_Cycles[level]) + ")");
+    } else {
+        // 4. FAILED! Restore previous status for automatic retry next tick
+        gridA_Upper_Status[level] = prevStatus;
+        gridA_Upper_Tickets[level] = prevTicket;
     }
 }
 
 //+------------------------------------------------------------------+
 //| Reopen Grid A Lower Level                                        |
+//| FIX v5.9: SAVE/RESET/TRY/RESTORE pattern for guaranteed retry    |
+//| PlaceGridALowerOrder requires ORDER_NONE, so we must reset first |
+//| On failure, restore previous status to trigger automatic retry   |
 //+------------------------------------------------------------------+
 void ReopenGridALower(int level) {
+    // 1. SAVE current status for rollback on failure
+    ENUM_ORDER_STATUS prevStatus = gridA_Lower_Status[level];
+    ulong prevTicket = gridA_Lower_Tickets[level];
+
+    // 2. RESET to ORDER_NONE (required by PlaceGridALowerOrder line 227)
     gridA_Lower_Status[level] = ORDER_NONE;
     gridA_Lower_Tickets[level] = 0;
 
+    // 3. ATTEMPT to place order
     if(PlaceGridALowerOrder(level)) {
+        // SUCCESS! PlaceGridALowerOrder already set:
+        // - gridA_Lower_Status[level] = ORDER_PENDING (line 254)
+        // - gridA_Lower_Tickets[level] = ticket (line 253)
         LogGridStatus(GRID_A, ZONE_LOWER, level, "REOPENED (Cycle " +
                       IntegerToString(gridA_Lower_Cycles[level]) + ")");
+    } else {
+        // 4. FAILED! Restore previous status for automatic retry next tick
+        gridA_Lower_Status[level] = prevStatus;
+        gridA_Lower_Tickets[level] = prevTicket;
     }
 }
 

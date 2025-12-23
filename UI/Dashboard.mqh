@@ -629,12 +629,13 @@ void CreateVolatilityPanel() {
 
 //+------------------------------------------------------------------+
 //| Create Shield Panel (Right Side)                                  |
+//| v5.8: Expanded with PreAlert/Shield levels and distance           |
 //+------------------------------------------------------------------+
 void CreateShieldPanel() {
     int shieldX = Dashboard_X + TOTAL_WIDTH + 10;
     int shieldY = Dashboard_Y + 165;  // v5.3: Subito sotto ATR Monitor (160 + 5 gap)
     int shieldWidth = 175;
-    int shieldHeight = 140;
+    int shieldHeight = 215;  // v5.8: Expanded from 140 to 215 for new level fields
 
     DashRectangle("SHIELD_PANEL", shieldX, shieldY, shieldWidth, shieldHeight, C'25,35,25');
 
@@ -654,45 +655,65 @@ void CreateShieldPanel() {
 
     // Shield Phase
     DashLabel("SHIELD_PHASE", shieldX + 10, ly, "Phase: Normal", clrGray, 8);
-    ly += 18;
+    ly += 16;
+
+    // v5.8: Shield Levels section
+    DashLabel("SHIELD_SEP2", shieldX + 10, ly, "--- LEVELS ---", clrGray, 7);
+    ly += 14;
+
+    // PreAlert and Shield levels
+    DashLabel("SHIELD_PREALERT_UP", shieldX + 10, ly, "PreAlert↑: ------", CLR_NEUTRAL, 7);
+    ly += 13;
+    DashLabel("SHIELD_PREALERT_DN", shieldX + 10, ly, "PreAlert↓: ------", CLR_NEUTRAL, 7);
+    ly += 13;
+    DashLabel("SHIELD_BREAKOUT_UP", shieldX + 10, ly, "Shield↑:   ------", CLR_LOSS, 7);
+    ly += 13;
+    DashLabel("SHIELD_BREAKOUT_DN", shieldX + 10, ly, "Shield↓:   ------", CLR_LOSS, 7);
+    ly += 13;
+    DashLabel("SHIELD_DISTANCE", shieldX + 10, ly, "Distance:  --- pips", CLR_AZURE_1, 7);
+    ly += 16;
 
     // Active Shield Info
     DashLabel("SHIELD_TYPE", shieldX + 10, ly, "Type: ---", clrGray, 8);
-    ly += 16;
+    ly += 14;
     DashLabel("SHIELD_LOT", shieldX + 10, ly, "Lot: ---", clrGray, 8);
-    ly += 16;
+    ly += 14;
     DashLabel("SHIELD_PL", shieldX + 10, ly, "P/L: ---", clrGray, 9, "Arial Bold");
 
-    Print("SUCCESS: Shield Panel created");
+    Print("SUCCESS: Shield Panel created (expanded with levels)");
 }
 
 //+------------------------------------------------------------------+
-//| Create Grid Legend Panel (Right Side)                             |
+//| Create Grid Legend Panel (Under Performance - Right Column)       |
+//| v5.8: Moved under Performance, horizontal layout 2x2              |
 //+------------------------------------------------------------------+
 void CreateGridLegendPanel() {
-    int legendX = Dashboard_X + TOTAL_WIDTH + 10;
-    int legendY = Dashboard_Y + 470;  // v5.3: Spostato in fondo, sotto COP (310 + 155 + 5 gap)
-    int legendWidth = 175;
-    int legendHeight = 100;
+    // v5.8: Position under Performance in right column
+    int legendX = Dashboard_X + PANEL_WIDTH;  // Right column X
+    int legendY = Dashboard_Y + 180 + 190;    // After GridB (180) + Performance (190)
+    int legendWidth = PANEL_WIDTH;            // Same width as Performance (315)
+    int legendHeight = 55;                    // Compact height for 2 rows
 
     DashRectangle("GRID_LEGEND_PANEL", legendX, legendY, legendWidth, legendHeight, CLR_BG_DARK);
 
-    int ly = legendY + 8;
-    DashLabel("LEGEND_TITLE", legendX + 10, ly, "GRID LINES", CLR_GOLD, 9, "Arial Bold");
-    ly += 20;
-    DashLabel("LEGEND_SEP", legendX + 10, ly, "------------------------", clrGray, 7);
-    ly += 15;
+    int ly = legendY + 6;
+    DashLabel("LEGEND_TITLE", legendX + legendWidth/2 - 35, ly, "GRID LINES", CLR_GOLD, 8, "Arial Bold");
+    ly += 18;
 
-    // Legend Items con colori delle grid lines
-    DashLabel("LEGEND_BL", legendX + 10, ly, "■ BUY LIMIT (GA Up)", GridLine_BuyLimit, 8);
-    ly += 16;
-    DashLabel("LEGEND_SS", legendX + 10, ly, "■ SELL STOP (GA Low)", GridLine_SellStop, 8);
-    ly += 16;
-    DashLabel("LEGEND_SL", legendX + 10, ly, "■ SELL LIMIT (GB Up)", GridLine_SellLimit, 8);
-    ly += 16;
-    DashLabel("LEGEND_BS", legendX + 10, ly, "■ BUY STOP (GB Low)", GridLine_BuyStop, 8);
+    // v5.8: Horizontal layout - 2 columns x 2 rows
+    int col1 = legendX + 8;
+    int col2 = legendX + legendWidth/2 + 5;
 
-    Print("SUCCESS: Grid Legend Panel created");
+    // Row 1
+    DashLabel("LEGEND_BL", col1, ly, "■ BUY LMT (GA↑)", GridLine_BuyLimit, 7);
+    DashLabel("LEGEND_SS", col2, ly, "■ SELL STP (GA↓)", GridLine_SellStop, 7);
+    ly += 14;
+
+    // Row 2
+    DashLabel("LEGEND_SL", col1, ly, "■ SELL LMT (GB↑)", GridLine_SellLimit, 7);
+    DashLabel("LEGEND_BS", col2, ly, "■ BUY STP (GB↓)", GridLine_BuyStop, 7);
+
+    Print("SUCCESS: Grid Legend Panel created (under Performance)");
 }
 
 //+------------------------------------------------------------------+
@@ -702,7 +723,7 @@ void CreateCOPPanel() {
     if(!Enable_CloseOnProfit) return;
 
     int copX = Dashboard_X + TOTAL_WIDTH + 10;
-    int copY = Dashboard_Y + 310;  // v5.3: Subito sotto Shield (165 + 140 + 5 gap)
+    int copY = Dashboard_Y + 385;  // v5.8: Subito sotto Shield (165 + 215 + 5 gap)
     int copWidth = 175;
     int copHeight = 155;  // Increased for new fields
 
@@ -996,6 +1017,12 @@ void UpdateShieldSection() {
         ObjectSetInteger(0, "SHIELD_STATUS", OBJPROP_COLOR, clrGray);
         ObjectSetString(0, "SHIELD_PHASE", OBJPROP_TEXT, "Phase: N/A");
         ObjectSetInteger(0, "SHIELD_PHASE", OBJPROP_COLOR, clrGray);
+        // v5.8: New level fields
+        ObjectSetString(0, "SHIELD_PREALERT_UP", OBJPROP_TEXT, "PreAlert↑: N/A");
+        ObjectSetString(0, "SHIELD_PREALERT_DN", OBJPROP_TEXT, "PreAlert↓: N/A");
+        ObjectSetString(0, "SHIELD_BREAKOUT_UP", OBJPROP_TEXT, "Shield↑:   N/A");
+        ObjectSetString(0, "SHIELD_BREAKOUT_DN", OBJPROP_TEXT, "Shield↓:   N/A");
+        ObjectSetString(0, "SHIELD_DISTANCE", OBJPROP_TEXT, "Distance:  N/A");
         ObjectSetString(0, "SHIELD_TYPE", OBJPROP_TEXT, "Type: ---");
         ObjectSetString(0, "SHIELD_LOT", OBJPROP_TEXT, "Lot: ---");
         ObjectSetString(0, "SHIELD_PL", OBJPROP_TEXT, "P/L: ---");
@@ -1060,6 +1087,63 @@ void UpdateShieldSection() {
         case PHASE_SHIELD_ACTIVE: phaseText += "Active"; break;
     }
     ObjectSetString(0, "SHIELD_PHASE", OBJPROP_TEXT, phaseText);
+
+    // v5.8: Shield Levels Update
+    int priceDigits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
+
+    // PreAlert Levels (Warning Zone)
+    if(szWarningZoneUp > 0) {
+        ObjectSetString(0, "SHIELD_PREALERT_UP", OBJPROP_TEXT,
+                        StringFormat("PreAlert↑: %s", DoubleToString(szWarningZoneUp, priceDigits)));
+    } else {
+        ObjectSetString(0, "SHIELD_PREALERT_UP", OBJPROP_TEXT, "PreAlert↑: ------");
+    }
+
+    if(szWarningZoneDown > 0) {
+        ObjectSetString(0, "SHIELD_PREALERT_DN", OBJPROP_TEXT,
+                        StringFormat("PreAlert↓: %s", DoubleToString(szWarningZoneDown, priceDigits)));
+    } else {
+        ObjectSetString(0, "SHIELD_PREALERT_DN", OBJPROP_TEXT, "PreAlert↓: ------");
+    }
+
+    // Breakout Levels (Shield Trigger)
+    if(szBreakoutUp > 0) {
+        ObjectSetString(0, "SHIELD_BREAKOUT_UP", OBJPROP_TEXT,
+                        StringFormat("Shield↑:   %s", DoubleToString(szBreakoutUp, priceDigits)));
+    } else {
+        ObjectSetString(0, "SHIELD_BREAKOUT_UP", OBJPROP_TEXT, "Shield↑:   ------");
+    }
+
+    if(szBreakoutDown > 0) {
+        ObjectSetString(0, "SHIELD_BREAKOUT_DN", OBJPROP_TEXT,
+                        StringFormat("Shield↓:   %s", DoubleToString(szBreakoutDown, priceDigits)));
+    } else {
+        ObjectSetString(0, "SHIELD_BREAKOUT_DN", OBJPROP_TEXT, "Shield↓:   ------");
+    }
+
+    // Distance to nearest breakout
+    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+    double distanceUp = (szBreakoutUp > 0) ? PointsToPips(szBreakoutUp - currentPrice) : 0;
+    double distanceDown = (szBreakoutDown > 0) ? PointsToPips(currentPrice - szBreakoutDown) : 0;
+    double nearestDistance = 0;
+
+    if(distanceUp > 0 && distanceDown > 0) {
+        nearestDistance = MathMin(distanceUp, distanceDown);
+    } else if(distanceUp > 0) {
+        nearestDistance = distanceUp;
+    } else if(distanceDown > 0) {
+        nearestDistance = distanceDown;
+    }
+
+    if(nearestDistance > 0) {
+        color distColor = (nearestDistance < 20) ? CLR_NEUTRAL : CLR_AZURE_1;
+        ObjectSetString(0, "SHIELD_DISTANCE", OBJPROP_TEXT,
+                        StringFormat("Distance:  %.1f pips", nearestDistance));
+        ObjectSetInteger(0, "SHIELD_DISTANCE", OBJPROP_COLOR, distColor);
+    } else {
+        ObjectSetString(0, "SHIELD_DISTANCE", OBJPROP_TEXT, "Distance:  --- pips");
+        ObjectSetInteger(0, "SHIELD_DISTANCE", OBJPROP_COLOR, clrGray);
+    }
 
     // Active Shield Details
     if(shield.isActive) {

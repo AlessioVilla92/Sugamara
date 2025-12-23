@@ -8,6 +8,15 @@
 #property link      "https://sugamara.com"
 
 //+------------------------------------------------------------------+
+//| v5.7: THROTTLING VARIABLES FOR LOG OPTIMIZATION                   |
+//+------------------------------------------------------------------+
+datetime g_lastMarginWarning = 0;       // Last margin warning log time
+datetime g_lastMarginLevelWarning = 0;  // Last margin level warning log time
+datetime g_lastVolatilityWarning = 0;   // Last volatility warning log time
+datetime g_lastNewsPauseLog = 0;        // Last news pause log time
+int      g_warningThrottleSec = 300;    // Warning throttle: 5 minutes
+
+//+------------------------------------------------------------------+
 //| RISK MANAGER INITIALIZATION                                      |
 //+------------------------------------------------------------------+
 
@@ -49,21 +58,28 @@ bool PerformRiskChecks() {
         return false;
     }
 
-    // 3. Margin Check
+    // 3. Margin Check (logging throttled inside HasSufficientMargin)
     if(!HasSufficientMargin()) {
-        LogMessage(LOG_WARNING, "Insufficient margin for new orders");
         return false;
     }
 
     // 4. Volatility Check
     if(PauseOnHighATR && IsMarketTooVolatile()) {
-        LogMessage(LOG_WARNING, "High volatility - new orders blocked");
+        // v5.7: Throttled logging - 1x every 5 minutes if condition persists
+        if(TimeCurrent() - g_lastVolatilityWarning >= g_warningThrottleSec) {
+            LogMessage(LOG_WARNING, "High volatility - new orders blocked");
+            g_lastVolatilityWarning = TimeCurrent();
+        }
         return false;
     }
 
     // 5. News Pause (manual)
     if(PauseOnNews && isNewsPause) {
-        LogMessage(LOG_INFO, "News pause active - new orders blocked");
+        // v5.7: Throttled logging - 1x every 5 minutes if condition persists
+        if(TimeCurrent() - g_lastNewsPauseLog >= g_warningThrottleSec) {
+            LogMessage(LOG_INFO, "News pause active - new orders blocked");
+            g_lastNewsPauseLog = TimeCurrent();
+        }
         return false;
     }
 
@@ -194,13 +210,21 @@ bool HasSufficientMargin() {
     if(minMarginRequired < 50) minMarginRequired = 50;  // Minimum absolute $50
 
     if(freeMargin < minMarginRequired) {
-        LogMessage(LOG_WARNING, "Free margin too low: " + FormatMoney(freeMargin) + " (min: " + FormatMoney(minMarginRequired) + ")");
+        // v5.7: Throttled logging - 1x every 5 minutes if condition persists
+        if(TimeCurrent() - g_lastMarginWarning >= g_warningThrottleSec) {
+            LogMessage(LOG_WARNING, "Free margin too low: " + FormatMoney(freeMargin) + " (min: " + FormatMoney(minMarginRequired) + ")");
+            g_lastMarginWarning = TimeCurrent();
+        }
         return false;
     }
 
     // Margin level check (if positions open)
     if(marginLevel > 0 && marginLevel < 200) {
-        LogMessage(LOG_WARNING, "Margin level too low: " + FormatPercent(marginLevel));
+        // v5.7: Throttled logging - 1x every 5 minutes if condition persists
+        if(TimeCurrent() - g_lastMarginLevelWarning >= g_warningThrottleSec) {
+            LogMessage(LOG_WARNING, "Margin level too low: " + FormatPercent(marginLevel));
+            g_lastMarginLevelWarning = TimeCurrent();
+        }
         return false;
     }
 
