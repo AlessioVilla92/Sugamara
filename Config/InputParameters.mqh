@@ -42,6 +42,42 @@ input string    DebugCloseTime = "";                         // Close Time (HH:M
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
+//| 🎰 FOREX PAIR SELECTION (Spostato qui per visibilità)            |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🎰 FOREX PAIR SELECTION                                 ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ╔═ SELEZIONA COPPIA ══════════════════════════════════════🔽🔽🔽"
+input ENUM_FOREX_PAIR SelectedPair = PAIR_EURUSD;            // 📋 Select Forex Pair ▼
+// EUR/USD: Spread basso, range medio, ideale per iniziare
+// USD/CAD: Spread basso, range contenuto, ottimo per grid neutral
+// AUD/NZD: Range strettissimo, win rate altissimo, BEST per neutral
+
+//+------------------------------------------------------------------+
+//| 📐 GRID CONFIGURATION (Spostato qui per visibilità)              |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  📐 GRID CONFIGURATION                                   ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📏 GRID STRUCTURE"
+input int       GridLevelsPerSide = 7;                       // 🔢 Livelli per Lato (3-10) [Default: 7]
+// 7 livelli × 2 zone × 2 grid = 28 ordini totali
+
+input group "    ╔═ SELEZIONA SPACING MODE ════════════════════════════════🔽🔽🔽"
+input ENUM_SPACING_MODE SpacingMode = SPACING_ATR;           // 📏 Modalità Spacing ▼
+input double    Fixed_Spacing_Pips = 20.0;                   // 📐 Spacing Fisso (pips)
+input double    SpacingATR_Multiplier = 0.7;                 // 📈 Moltiplicatore ATR (se SPACING_ATR)
+// Spacing = ATR(14) × 0.7
+input double    SpacingGeometric_Percent = 0.20;             // 📊 Spacing % (se SPACING_GEOMETRIC)
+// Spacing = Prezzo × 0.20%
+
+//+------------------------------------------------------------------+
 //| 🔒 BREAK ON PROFIT (BOP) v5.1                                    |
 //+------------------------------------------------------------------+
 
@@ -129,31 +165,7 @@ input ENUM_ENTRY_MODE DefaultEntryMode = ENTRY_MARKET;      // 📊 Entry Mode D
 input double    LimitActivation_Price = 0.0;                // 📍 LIMIT: Prezzo Attivazione (0=manual)
 input double    StopActivation_Price = 0.0;                 // 📍 STOP: Prezzo Breakout (0=manual)
 
-//+------------------------------------------------------------------+
-//| 🎨 VISUAL THEME SETTINGS (v3.0)                                  |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  🎨 VISUAL THEME (v3.0)                                   ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    🖼️ CHART COLORS"
-input color     Theme_ChartBackground = C'25,12,35';        // 🎨 Sfondo Chart (Viola Scurissimo)
-input color     Theme_CandleBull = clrDodgerBlue;           // 📈 Candele Bullish (Blu Splendente)
-input color     Theme_CandleBear = clrYellow;               // 📉 Candele Bearish (Giallo)
-
-input group "    🎨 DASHBOARD COLORS"
-input color     Theme_DashboardBG = C'20,60,80';            // 🎨 Dashboard Background (Blu Turchese)
-input color     Theme_DashboardText = clrCyan;              // 📝 Dashboard Text (Azzurro)
-input color     Theme_DashboardAccent = clrAqua;            // ⭐ Dashboard Accent
-
-input group "    📏 GRID LINE COLORS"
-input color     GridLine_BuyLimit = clrDarkGreen;           // 🟢 BUY LIMIT: Verde Scuro
-input color     GridLine_BuyStop = clrBlue;                 // 🔵 BUY STOP: Blu
-input color     GridLine_SellLimit = clrOrange;             // 🟠 SELL LIMIT: Arancione
-input color     GridLine_SellStop = clrPlum;                // 🟣 SELL STOP: Viola Chiaro
-input int       GridLine_Width = 3;                         // 📏 Spessore Linee Grid (v5.4: Increased)
+// (VISUAL THEME spostato alla fine del file)
 
 //+------------------------------------------------------------------+
 //| 1️⃣ ⚙️ SYSTEM CONFIGURATION                                      |
@@ -197,7 +209,7 @@ input group "║  3️⃣  📊 ATR SETTINGS (CASCADE Mode)                     
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ⚡ ATR ACTIVATION"
-input bool      UseATR = true;                               // ⭐ Abilita ATR (ignora se PURE)
+input bool      UseATR = false;                              // ⭐ Abilita ATR (default FALSE per usare Fixed_Spacing_Pips)
 
 input group "    ⏱️ TIMEFRAME SETTINGS"
 input group "    ╔═ SELEZIONA TIMEFRAME ATR ═══════════════════════════════🔽🔽🔽"
@@ -284,44 +296,10 @@ input bool      ATR_AlertOnSpacingChange = true;             // 🔔 Alert su Ca
 input bool      ATR_LogEveryCheck = false;                   // 🔍 Log ogni check ATR (debug mode)
 input bool      ATR_LogStepTransitions = true;               // 📊 Log transizioni step ATR
 
-//+------------------------------------------------------------------+
-//| 4️⃣ 🎰 FOREX PAIR SELECTION                                       |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  4️⃣  🎰 FOREX PAIR SELECTION                              ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ╔═ SELEZIONA COPPIA ══════════════════════════════════════🔽🔽🔽"
-input ENUM_FOREX_PAIR SelectedPair = PAIR_EURUSD;            // 📋 Select Forex Pair ▼
-// EUR/USD: Spread basso, range medio, ideale per iniziare
-// USD/CAD: Spread basso, range contenuto, ottimo per grid neutral
-// AUD/NZD: Range strettissimo, win rate altissimo, BEST per neutral
+// (FOREX PAIR SELECTION e GRID CONFIGURATION spostati in alto dopo DEBUG MODE)
 
 //+------------------------------------------------------------------+
-//| 5️⃣ 📐 GRID CONFIGURATION                                         |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  5️⃣  📐 GRID CONFIGURATION                                ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    📏 GRID STRUCTURE"
-input int       GridLevelsPerSide = 7;                       // 🔢 Livelli per Lato (3-10) [Default: 7]
-// 7 livelli × 2 zone × 2 grid = 28 ordini totali
-
-input group "    ╔═ SELEZIONA SPACING MODE ════════════════════════════════🔽🔽🔽"
-input ENUM_SPACING_MODE SpacingMode = SPACING_ATR;           // 📏 Modalità Spacing ▼
-input double    Fixed_Spacing_Pips = 20.0;                   // 📐 Spacing Fisso (pips)
-input double    SpacingATR_Multiplier = 0.7;                 // 📈 Moltiplicatore ATR (se SPACING_ATR)
-// Spacing = ATR(14) × 0.7
-input double    SpacingGeometric_Percent = 0.20;             // 📊 Spacing % (se SPACING_GEOMETRIC)
-// Spacing = Prezzo × 0.20%
-
-//+------------------------------------------------------------------+
-//| 6️⃣ 🎯 TP SETTINGS (Solo PURE)                                    |
+//| 🎯 TP SETTINGS (Solo PURE)                                       |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
@@ -945,4 +923,30 @@ input color     TP_Line_Buy_Color = clrLightYellow;          // 🟡 TP Color fo
 input color     TP_Line_Sell_Color = clrRed;                 // 🔴 TP Color for SELL orders
 input ENUM_LINE_STYLE TP_Line_Style = STYLE_DASH;            // 📏 TP Line Style (dashed)
 input int       TP_Line_Width = 1;                           // 📐 TP Line Width
+
+//+------------------------------------------------------------------+
+//| 🎨 VISUAL THEME SETTINGS (v3.0) - SPOSTATO ALLA FINE             |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🎨 VISUAL THEME (v3.0)                                   ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    🖼️ CHART COLORS"
+input color     Theme_ChartBackground = C'25,12,35';        // 🎨 Sfondo Chart (Viola Scurissimo)
+input color     Theme_CandleBull = clrDodgerBlue;           // 📈 Candele Bullish (Blu Splendente)
+input color     Theme_CandleBear = clrYellow;               // 📉 Candele Bearish (Giallo)
+
+input group "    🎨 DASHBOARD COLORS"
+input color     Theme_DashboardBG = C'20,60,80';            // 🎨 Dashboard Background (Blu Turchese)
+input color     Theme_DashboardText = clrCyan;              // 📝 Dashboard Text (Azzurro)
+input color     Theme_DashboardAccent = clrAqua;            // ⭐ Dashboard Accent
+
+input group "    📏 GRID LINE COLORS"
+input color     GridLine_BuyLimit = clrDarkGreen;           // 🟢 BUY LIMIT: Verde Scuro
+input color     GridLine_BuyStop = clrBlue;                 // 🔵 BUY STOP: Blu
+input color     GridLine_SellLimit = clrOrange;             // 🟠 SELL LIMIT: Arancione
+input color     GridLine_SellStop = clrPlum;                // 🟣 SELL STOP: Viola Chiaro
+input int       GridLine_Width = 3;                         // 📏 Spessore Linee Grid (v5.4: Increased)
 

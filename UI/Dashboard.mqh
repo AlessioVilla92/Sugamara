@@ -533,6 +533,18 @@ void CreateUnifiedDashboard() {
 
     // v5.2: RANGEBOX panel removed (mode deprecated)
 
+    //--- GRID INFO PANEL (v5.x) ---
+    int gridInfoHeight = 55;
+    DashRectangle("RIGHT_GRIDINFO_PANEL", rightX, rightY, colWidth, gridInfoHeight, CLR_PANEL_PERF);
+
+    int gy = rightY + 8;
+    DashLabel("RIGHT_GRIDINFO_TITLE", rightX + colWidth/2 - 35, gy, "GRID INFO", CLR_GOLD, 9, "Arial Bold");
+    gy += 20;
+    DashLabel("RIGHT_GRIDINFO_SPACING", rightX + 10, gy, "Spacing: --- pips", CLR_CYAN, 9);
+    DashLabel("RIGHT_GRIDINFO_LEVELS", rightX + colWidth/2 + 10, gy, "Levels: ---", CLR_CYAN, 9);
+
+    rightY += gridInfoHeight;
+
     //--- PERFORMANCE PANEL ---
     int perfHeight = 190;  // Increased for Risk line
     DashRectangle("RIGHT_PERF_PANEL", rightX, rightY, colWidth, perfHeight, CLR_PANEL_PERF);
@@ -775,6 +787,7 @@ void UpdateDashboard() {
     UpdateGridBSection();
     UpdateExposureSection();
     // v5.2: UpdateRangeBoxSection removed (mode deprecated)
+    UpdateGridInfoSection();  // v5.x: Grid Info Section
     UpdatePerformanceSection();
     UpdateVolatilityPanel();
     UpdateShieldSection();
@@ -924,6 +937,19 @@ void UpdateExposureSection() {
 }
 
 // v5.2: UpdateRangeBoxSection() removed (RANGEBOX mode deprecated)
+
+//+------------------------------------------------------------------+
+//| Update Grid Info Section (v5.x)                                  |
+//+------------------------------------------------------------------+
+void UpdateGridInfoSection() {
+    // Grid Spacing
+    string spacingText = StringFormat("Spacing: %.1f pips", currentSpacing_Pips);
+    ObjectSetString(0, "RIGHT_GRIDINFO_SPACING", OBJPROP_TEXT, spacingText);
+
+    // Grid Levels
+    string levelsText = StringFormat("Levels: %d", GridLevelsPerSide);
+    ObjectSetString(0, "RIGHT_GRIDINFO_LEVELS", OBJPROP_TEXT, levelsText);
+}
 
 //+------------------------------------------------------------------+
 //| Update Performance Section                                       |
