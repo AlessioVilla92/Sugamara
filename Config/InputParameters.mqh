@@ -355,13 +355,11 @@ input ENUM_SHIELD_ORDER_TYPE ShieldOrderType = SHIELD_ORDER_MARKET; // 🛡️ T
 
 input group "    📐 SHIELD BREAKOUT PARAMETERS"
 input double    Breakout_Buffer_Pips = 20.0;                 // 📏 Buffer Breakout oltre ultimo grid (pips)
-input double    Reentry_Buffer_Pips = 30.0;                  // 📏 Buffer Rientro nel range (pips)
 input int       Breakout_Confirm_Candles = 2;                // 🔢 Candele Conferma Breakout
 input bool      Use_Candle_Close = true;                     // ✅ Usa Chiusura Candela per Conferma
 input int       Reentry_Confirm_Seconds = 30;                // ⏱️ Secondi conferma Reentry (0=disabilitato)
 
 input group "    ⚠️ SHIELD 3 FASI PARAMETERS"
-input double    Warning_Zone_Percent = 10.0;                 // 📊 Warning Zone (% dal bordo)
 input bool      Shield_Use_Trailing = false;                 // ✅ Trailing per Shield
 input double    Shield_Trailing_Start = 30.0;                // 📏 Trailing Start (pips)
 input double    Shield_Trailing_Step = 10.0;                 // 📏 Trailing Step (pips)
@@ -534,7 +532,6 @@ input bool      ShowDashboard = true;                        // ✅ Mostra Dashb
 input int       Dashboard_X = 20;                            // 📍 Posizione X Dashboard
 input int       Dashboard_Y = 30;                            // 📍 Posizione Y Dashboard
 input bool      ShowGridLines = true;                        // ✅ Mostra Linee Grid su Chart
-input bool      ShowRangeBox = false;                        // DEPRECATED - Non usato (mantenuto per compatibilità)
 
 //+------------------------------------------------------------------+
 //| 1️⃣6️⃣ 📊 VOLATILITY MONITOR                                       |

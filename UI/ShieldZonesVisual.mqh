@@ -92,6 +92,10 @@ bool InitializeShieldZonesVisual()
 
 //+------------------------------------------------------------------+
 //| Calculate Shield Zone Price Levels                                |
+//| v5.10 FIX: Ora usa i valori effettivi da GridHelpers.mqh          |
+//|            invece di calcoli separati con Warning_Zone_Percent    |
+//|            e Breakout_Buffer_Pips. Questo garantisce che la       |
+//|            visualizzazione corrisponda esattamente alla logica.   |
 //+------------------------------------------------------------------+
 bool CalculateShieldZoneLevels()
 {
@@ -101,26 +105,25 @@ bool CalculateShieldZoneLevels()
       return false;
    }
 
-   double rangeSize = shieldZone.resistance - shieldZone.support;
-   double warningBuffer = rangeSize * (Warning_Zone_Percent / 100.0);
+   // v5.10 FIX: Usa i valori effettivi calcolati in GridHelpers.mqh
+   // Questi sono gli stessi valori usati dalla logica Shield in ShieldManager.mqh
 
-   // Warning Zone levels (Phase 1)
-   szWarningZoneUp = shieldZone.resistance - warningBuffer;
-   szWarningZoneDown = shieldZone.support + warningBuffer;
+   // Warning Zone levels (Phase 1) - usa valori da shieldZone struct
+   // warningZoneUp/Down sono calcolati come: entryPoint +/- (spacing * (GridLevelsPerSide - 0.5))
+   szWarningZoneUp = shieldZone.warningZoneUp;
+   szWarningZoneDown = shieldZone.warningZoneDown;
 
-   // Last Grid levels (Phase 2 boundary)
-   // Grid B Upper = ultimo livello sopra
-   // Grid A Lower = ultimo livello sotto
-   szLastGridUp = shieldZone.resistance;    // Approximately at resistance
-   szLastGridDown = shieldZone.support;     // Approximately at support
+   // Last Grid levels (Phase 2 boundary) - support e resistance
+   // Questi sono gli ultimi livelli della grid (N * spacing)
+   szLastGridUp = shieldZone.resistance;
+   szLastGridDown = shieldZone.support;
 
-   // Breakout levels (Phase 3 boundary)
-   double breakoutBuffer = Breakout_Buffer_Pips * symbolPoint * 10;
-   szBreakoutUp = shieldZone.resistance + breakoutBuffer;
-   szBreakoutDown = shieldZone.support - breakoutBuffer;
+   // Breakout levels (Phase 3 boundary) - usa valori globali da GridHelpers
+   // upperBreakoutLevel/lowerBreakoutLevel sono calcolati come: entryPoint +/- (spacing * (GridLevelsPerSide + 0.5))
+   szBreakoutUp = upperBreakoutLevel;
+   szBreakoutDown = lowerBreakoutLevel;
 
    // Shield Entry levels (where market order would execute)
-   // Typically at breakout level or slightly beyond
    szShieldEntryUp = szBreakoutUp;
    szShieldEntryDown = szBreakoutDown;
 

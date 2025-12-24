@@ -947,16 +947,6 @@ void DrawEntryPointLine() {
 }
 
 //+------------------------------------------------------------------+
-//| Draw Range Boundaries                                            |
-//+------------------------------------------------------------------+
-void DrawRangeBoundaries() {
-    if(!ShowRangeBox) return;
-
-    CreateHLine("SUGAMARA_RANGE_UPPER", rangeUpperBound, COLOR_RANGE_UPPER, 1, STYLE_DASHDOT);
-    CreateHLine("SUGAMARA_RANGE_LOWER", rangeLowerBound, COLOR_RANGE_LOWER, 1, STYLE_DASHDOT);
-}
-
-//+------------------------------------------------------------------+
 //| GRID VALIDATION FUNCTIONS                                        |
 //+------------------------------------------------------------------+
 

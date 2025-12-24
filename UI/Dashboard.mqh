@@ -1370,7 +1370,6 @@ void DrawGridVisualization() {
     if(!ShowGridLines) return;
 
     DrawEntryPointLine();
-    DrawRangeBoundaries();
     DrawGridALines();
     DrawGridBLines();
 
@@ -1379,10 +1378,6 @@ void DrawGridVisualization() {
 
 //+------------------------------------------------------------------+
 //| NOTE: DrawEntryPointLine() is defined in Utils/GridHelpers.mqh   |
-//+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| NOTE: DrawRangeBoundaries() is defined in Utils/GridHelpers.mqh  |
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
