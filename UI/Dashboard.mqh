@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
 //|                                                    Dashboard.mqh |
-//|                     SUGAMARA RIBELLE v5.0 - Dashboard Display    |
+//|                     SUGAMARA RIBELLE v5.1 - Dashboard Display    |
 //|                                                                  |
 //|  Visual dashboard for CASCADE SOVRAPPOSTO (RIBELLE)              |
 //|  Color Scheme: DUNE/ARRAKIS DESERT THEME - 2 COLUMN LAYOUT       |
 //|                                                                  |
-//|  v5.0: DUNE Theme + Detailed Logging + CASCADE_OVERLAP           |
+//|  v5.1: DUNE Theme + Detailed Logging + CASCADE_OVERLAP           |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
@@ -19,7 +19,7 @@ datetime g_lastDashboardCheck = 0;
 const int DASHBOARD_CHECK_INTERVAL = 5;  // Seconds between checks
 
 //+------------------------------------------------------------------+
-//| DUNE/ARRAKIS DESERT COLOR SCHEME v5.0                            |
+//| DUNE/ARRAKIS DESERT COLOR SCHEME v5.1                            |
 //| "The spice must flow" - Inspired by Dune (2021/2024)             |
 //|                                                                  |
 //| Palette: Desert sands, Spice Orange, Fremen Blue, Sandworm Gold  |
@@ -250,7 +250,7 @@ bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA RIBELLE v5.0 - CASCADE SOVRAPPOSTO - DUNE THEME          ");
+    Print("  SUGAMARA RIBELLE v5.1 - CASCADE SOVRAPPOSTO - DUNE THEME          ");
     Print("  \"The Spice Must Flow\" - Grid Trading System 24/7                 ");
     Print("═══════════════════════════════════════════════════════════════════");
 

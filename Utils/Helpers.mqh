@@ -214,7 +214,7 @@ void LogGridStatus(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, string s
 }
 
 //+------------------------------------------------------------------+
-//| ENHANCED LOGGING SYSTEM v5.0 - SUGAMARA RIBELLE                  |
+//| ENHANCED LOGGING SYSTEM v5.1 - SUGAMARA RIBELLE                  |
 //| Detailed logging for all EA functionalities                      |
 //+------------------------------------------------------------------+
 
@@ -445,7 +445,7 @@ void LogStartupBanner() {
     Print("║     ███████║╚██████╔╝╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║██║  ██║ ║");
     Print("║     ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ║");
     Print("║                                                                   ║");
-    Print("║                      R I B E L L E   v5.0                         ║");
+    Print("║                      R I B E L L E   v5.1                         ║");
     Print("║              CASCADE SOVRAPPOSTO - DUNE THEME                     ║");
     Print("║                  \"The Spice Must Flow\"                            ║");
     Print("║                                                                   ║");
