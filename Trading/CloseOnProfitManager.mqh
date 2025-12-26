@@ -126,6 +126,12 @@ bool COP_CheckTarget() {
               " | Floating: $", DoubleToString(cop_FloatingProfit, 2),
               " | Commissions: $", DoubleToString(cop_TotalCommissions, 2));
 
+        // v5.x: Alert popup quando COP chiude
+        Alert("SUGAMARA COP: Target $", DoubleToString(COP_DailyTarget_USD, 2),
+              " raggiunto! Net: $", DoubleToString(cop_NetProfit, 2),
+              " | Real: $", DoubleToString(cop_RealizedProfit, 2),
+              " | Float: $", DoubleToString(cop_FloatingProfit, 2));
+
         // Execute target actions
         COP_ExecuteTargetActions();
 
