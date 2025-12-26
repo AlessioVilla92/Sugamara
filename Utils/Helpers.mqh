@@ -57,6 +57,12 @@ int PriceToPoints(double price) {
 double GetSpreadPips() {
     double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
     double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+
+    // v5.x FIX: Strategy Tester compatibility - return default if no price
+    if(ask <= 0 || bid <= 0) {
+        return 1.0;  // Default 1 pip spread
+    }
+
     return PointsToPips(ask - bid);
 }
 

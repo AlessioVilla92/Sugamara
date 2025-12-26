@@ -84,11 +84,44 @@ void PrintSystemConfiguration() {
 //+------------------------------------------------------------------+
 //| Initialize Entry Point                                           |
 //| Sets the central price around which grids are built              |
+//| v5.x FIX: Gestisce correttamente Strategy Tester con ASK/BID=0   |
 //+------------------------------------------------------------------+
 void InitializeEntryPoint() {
-    // Get current market price (midpoint of bid/ask)
-    double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
-    double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+    // v5.x FIX: Usa SymbolInfoTick per dati più affidabili
+    MqlTick tick;
+    double ask = 0, bid = 0;
+
+    // Metodo 1: SymbolInfoTick (più affidabile)
+    if(SymbolInfoTick(_Symbol, tick) && tick.ask > 0 && tick.bid > 0) {
+        ask = tick.ask;
+        bid = tick.bid;
+    } else {
+        // Metodo 2: Fallback a SymbolInfoDouble
+        ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+        bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+    }
+
+    // v5.x FIX: Verifica dati validi (CRITICO per Strategy Tester)
+    // In Strategy Tester al primo tick ASK/BID possono essere 0
+    if(ask <= 0 || bid <= 0) {
+        Print("[EntryPoint] WARNING: ASK/BID not available - using iClose() as fallback");
+        double lastClose = iClose(_Symbol, PERIOD_M1, 0);
+        if(lastClose > 0) {
+            ask = lastClose;
+            bid = lastClose;
+            Print("[EntryPoint] Using last M1 close: ", lastClose);
+        } else {
+            // Ultimo tentativo: iClose su timeframe corrente
+            lastClose = iClose(_Symbol, PERIOD_CURRENT, 0);
+            if(lastClose > 0) {
+                ask = lastClose;
+                bid = lastClose;
+                Print("[EntryPoint] Using current TF close: ", lastClose);
+            } else {
+                Print("[EntryPoint] CRITICAL: No price data available!");
+            }
+        }
+    }
 
     entryPoint = NormalizeDouble((ask + bid) / 2.0, symbolDigits);
     entryPointTime = TimeCurrent();

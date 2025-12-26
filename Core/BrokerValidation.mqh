@@ -359,6 +359,17 @@ double ValidateTakeProfit(double price, double tp, bool isBuy) {
 bool IsValidPendingPrice(double price, ENUM_ORDER_TYPE orderType) {
     double currentAsk = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
     double currentBid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+
+    // v5.x FIX: Verifica tick validi (CRITICO per Strategy Tester)
+    // In Strategy Tester al primo tick ASK/BID possono essere 0
+    // In REAL trading sono sempre > 0, quindi questo check non viene mai attivato
+    if(currentAsk <= 0 || currentBid <= 0) {
+        if(DetailedLogging) {
+            Print("[BrokerValidation] WARNING: ASK/BID not available yet - allowing order");
+        }
+        return true;  // Permetti ordine - cyclic reopen riproverà se necessario
+    }
+
     double minDistance = symbolStopsLevel * symbolPoint;
 
     if(minDistance < symbolPoint * 10) {
@@ -392,10 +403,18 @@ bool IsValidPendingPrice(double price, ENUM_ORDER_TYPE orderType) {
 //| FIX: Non collassa più i prezzi allo stesso valore                |
 //| Ritorna il prezzo originale - la validazione avviene in fase di  |
 //| piazzamento ordine. Questo preserva lo spacing tra i livelli.    |
+//| v5.x FIX: Gestisce Strategy Tester con ASK/BID=0                 |
 //+------------------------------------------------------------------+
 double GetSafeOrderPrice(double desiredPrice, ENUM_ORDER_TYPE orderType) {
     double currentAsk = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
     double currentBid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+
+    // v5.x FIX: Se dati non disponibili, ritorna prezzo originale
+    // In Strategy Tester al primo tick ASK/BID possono essere 0
+    if(currentAsk <= 0 || currentBid <= 0) {
+        return NormalizeDouble(desiredPrice, symbolDigits);
+    }
+
     double minDistance = symbolStopsLevel * symbolPoint;
 
     if(minDistance < symbolPoint * 10) {

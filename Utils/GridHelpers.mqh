@@ -1176,6 +1176,9 @@ bool IsPriceAtReopenLevel(double levelPrice) {
 
     double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
+    // v5.x FIX: Strategy Tester - skip check if no price available
+    if(currentPrice <= 0) return false;
+
     // Se offset disabilitato, riapre solo al prezzo esatto (tolleranza 1 pip)
     if(!EnableReopenOffset) {
         double minOffset = PipsToPoints(1.0);  // Tolleranza minima 1 pip
