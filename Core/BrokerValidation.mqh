@@ -399,10 +399,9 @@ bool IsValidPendingPrice(double price, ENUM_ORDER_TYPE orderType) {
 }
 
 //+------------------------------------------------------------------+
-//| Get Safe Order Price (v5.0 FIX - NO PRICE COLLAPSE)              |
-//| FIX: Non collassa più i prezzi allo stesso valore                |
-//| Ritorna il prezzo originale - la validazione avviene in fase di  |
-//| piazzamento ordine. Questo preserva lo spacing tra i livelli.    |
+//| Get Safe Order Price - v5.20 ADAPTIVE PRICE FIX                  |
+//| FIX: Se prezzo invalido, calcola prezzo adattivo valido          |
+//| Mantiene ordine pendente, non converte a market                  |
 //| v5.x FIX: Gestisce Strategy Tester con ASK/BID=0                 |
 //+------------------------------------------------------------------+
 double GetSafeOrderPrice(double desiredPrice, ENUM_ORDER_TYPE orderType) {
@@ -415,60 +414,70 @@ double GetSafeOrderPrice(double desiredPrice, ENUM_ORDER_TYPE orderType) {
         return NormalizeDouble(desiredPrice, symbolDigits);
     }
 
+    // Calcola distanza minima dal broker
     double minDistance = symbolStopsLevel * symbolPoint;
-
     if(minDistance < symbolPoint * 10) {
-        minDistance = symbolPoint * 30;  // FIX v4.5: Unified to 3 pips minimum
+        minDistance = symbolPoint * 30;  // Minimo 3 pips
     }
+    minDistance *= 1.5;  // Margine sicurezza 50%
 
-    // Add safety margin
-    minDistance *= 1.5;
+    // Buffer extra per evitare rifiuti marginali
+    double buffer = symbolPoint * 10;  // 1 pip extra
 
-    bool priceInvalid = false;
+    double adaptivePrice = desiredPrice;
+    bool priceAdjusted = false;
     string reason = "";
 
     switch(orderType) {
         case ORDER_TYPE_BUY_LIMIT:
+            // BUY LIMIT deve essere SOTTO Ask
             if(desiredPrice >= currentAsk - minDistance) {
-                priceInvalid = true;
-                reason = StringFormat("BUY LIMIT %.5f too close to Ask %.5f (min dist: %.5f)",
-                                      desiredPrice, currentAsk, minDistance);
+                adaptivePrice = currentAsk - minDistance - buffer;
+                priceAdjusted = true;
+                reason = StringFormat("BUY LIMIT adjusted: %.5f -> %.5f (Ask: %.5f)",
+                                      desiredPrice, adaptivePrice, currentAsk);
             }
             break;
 
         case ORDER_TYPE_SELL_LIMIT:
+            // SELL LIMIT deve essere SOPRA Bid
             if(desiredPrice <= currentBid + minDistance) {
-                priceInvalid = true;
-                reason = StringFormat("SELL LIMIT %.5f too close to Bid %.5f (min dist: %.5f)",
-                                      desiredPrice, currentBid, minDistance);
+                adaptivePrice = currentBid + minDistance + buffer;
+                priceAdjusted = true;
+                reason = StringFormat("SELL LIMIT adjusted: %.5f -> %.5f (Bid: %.5f)",
+                                      desiredPrice, adaptivePrice, currentBid);
             }
             break;
 
         case ORDER_TYPE_BUY_STOP:
+            // BUY STOP deve essere SOPRA Ask
             if(desiredPrice <= currentAsk + minDistance) {
-                priceInvalid = true;
-                reason = StringFormat("BUY STOP %.5f too close to Ask %.5f (min dist: %.5f)",
-                                      desiredPrice, currentAsk, minDistance);
+                adaptivePrice = currentAsk + minDistance + buffer;
+                priceAdjusted = true;
+                reason = StringFormat("BUY STOP adjusted: %.5f -> %.5f (Ask: %.5f)",
+                                      desiredPrice, adaptivePrice, currentAsk);
             }
             break;
 
         case ORDER_TYPE_SELL_STOP:
+            // SELL STOP deve essere SOTTO Bid
             if(desiredPrice >= currentBid - minDistance) {
-                priceInvalid = true;
-                reason = StringFormat("SELL STOP %.5f too close to Bid %.5f (min dist: %.5f)",
-                                      desiredPrice, currentBid, minDistance);
+                adaptivePrice = currentBid - minDistance - buffer;
+                priceAdjusted = true;
+                reason = StringFormat("SELL STOP adjusted: %.5f -> %.5f (Bid: %.5f)",
+                                      desiredPrice, adaptivePrice, currentBid);
             }
             break;
     }
 
-    // v5.0 FIX: Log warning but return ORIGINAL price to preserve grid spacing
-    // Orders that fail will be retried by cyclic reopen when price moves
-    if(priceInvalid && DetailedLogging) {
-        Print("[BrokerValidation] WARNING: ", reason);
-        Print("[BrokerValidation] Keeping original price to preserve grid spacing");
+    // v5.20 FIX: Log adattamento prezzo e ritorna prezzo valido
+    if(priceAdjusted && DetailedLogging) {
+        double deviationPips = MathAbs(desiredPrice - adaptivePrice) / symbolPoint / 10;
+        Print("[BrokerValidation] ADAPTIVE PRICE: ", reason);
+        Print("[BrokerValidation] Deviation: ", DoubleToString(deviationPips, 1), " pips");
     }
 
-    // RETURN ORIGINAL PRICE - don't collapse to same safe price
-    return NormalizeDouble(desiredPrice, symbolDigits);
+    // RETURN ADAPTIVE PRICE - garantisce ordine piazzabile
+    return NormalizeDouble(adaptivePrice, symbolDigits);
 }
 
