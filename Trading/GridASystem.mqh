@@ -300,6 +300,14 @@ void UpdateGridAUpperStatus(int level) {
             if(PositionSelectByTicket(ticket)) {
                 gridA_Upper_Status[level] = ORDER_FILLED;
                 LogGridStatus(GRID_A, ZONE_UPPER, level, "Order FILLED");
+
+                // v5.2: Setup Double Parcelling
+                if(Enable_DoubleParcelling) {
+                    double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+                    double lots = PositionGetDouble(POSITION_VOLUME);
+                    bool isBuy = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY;
+                    SetupDP_OnFill(GRID_A, ZONE_UPPER, level, ticket, entryPrice, lots, isBuy);
+                }
             } else {
                 // Order was deleted/cancelled
                 gridA_Upper_Status[level] = ORDER_CANCELLED;
@@ -348,6 +356,14 @@ void UpdateGridALowerStatus(int level) {
             if(PositionSelectByTicket(ticket)) {
                 gridA_Lower_Status[level] = ORDER_FILLED;
                 LogGridStatus(GRID_A, ZONE_LOWER, level, "Order FILLED");
+
+                // v5.2: Setup Double Parcelling
+                if(Enable_DoubleParcelling) {
+                    double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+                    double lots = PositionGetDouble(POSITION_VOLUME);
+                    bool isBuy = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY;
+                    SetupDP_OnFill(GRID_A, ZONE_LOWER, level, ticket, entryPrice, lots, isBuy);
+                }
             } else {
                 gridA_Lower_Status[level] = ORDER_CANCELLED;
                 gridA_Lower_Tickets[level] = 0;
@@ -406,6 +422,11 @@ void ProcessGridACyclicReopen() {
 bool ShouldReopenGridAUpper(int level) {
     ENUM_ORDER_STATUS status = gridA_Upper_Status[level];
 
+    // v5.2: Double Parcelling - Blocca reopen se Parcel B ancora attivo
+    if(Enable_DoubleParcelling && IsWaitingForParcelB(GRID_A, ZONE_UPPER, level)) {
+        return false;
+    }
+
     // Can only reopen if closed
     if(status != ORDER_CLOSED_TP && status != ORDER_CLOSED_SL && status != ORDER_CANCELLED) {
         return false;
@@ -430,6 +451,11 @@ bool ShouldReopenGridAUpper(int level) {
 //+------------------------------------------------------------------+
 bool ShouldReopenGridALower(int level) {
     ENUM_ORDER_STATUS status = gridA_Lower_Status[level];
+
+    // v5.2: Double Parcelling - Blocca reopen se Parcel B ancora attivo
+    if(Enable_DoubleParcelling && IsWaitingForParcelB(GRID_A, ZONE_LOWER, level)) {
+        return false;
+    }
 
     if(status != ORDER_CLOSED_TP && status != ORDER_CLOSED_SL && status != ORDER_CANCELLED) {
         return false;

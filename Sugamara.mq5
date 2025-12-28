@@ -71,6 +71,9 @@
 // v5.1 NEW Trading Modules
 #include "Trading/CloseOnProfitManager.mqh"
 
+// v5.2 NEW Trading Modules
+#include "Trading/DoubleParcelling.mqh"
+
 // v4.0 NEW Modules
 #include "Utils/DynamicATRAdapter.mqh"
 #include "Indicators/CenterCalculator.mqh"
@@ -222,6 +225,9 @@ int OnInit() {
 
     //--- STEP 13.8b: Initialize Close On Profit (v5.1) ---
     InitializeCloseOnProfit();
+
+    //--- STEP 13.8c: Initialize Double Parcelling (v5.2) ---
+    InitializeDoubleParcelling();
 
     //--- STEP 13.9: Initialize Trailing Manager (REMOVED - CASCADE_OVERLAP puro) ---
     // GridTrailingManager eliminato - non necessario per CASCADE SOVRAPPOSTO
@@ -431,6 +437,9 @@ void OnDeinit(const int reason) {
     COP_ResetDaily();  // Reset COP counter on EA removal/chart close
     DeinitializeCloseOnProfit();
 
+    // v5.2: Deinitialize Double Parcelling
+    DeinitializeDoubleParcelling();
+
     // v4.0: Deinitialize new modules
     if(ShowCenterIndicators || EnableAutoRecenter) {
         DeinitializeCenterCalculator();
@@ -555,6 +564,11 @@ void OnTick() {
 
     //--- v3.0: PARTIAL TAKE PROFIT REMOVED (v5.x cleanup) ---
     // ProcessPartialTPs(); // Dannoso per Cyclic Reopen
+
+    //--- v5.2: DOUBLE PARCELLING PROCESSING ---
+    // ProcessDoubleParcelling deve essere chiamato PRIMA di CheckBreakOnProfit
+    // perché DP ha i propri BOP1/BOP2 interni
+    ProcessDoubleParcelling();
 
     //--- v5.1: BREAK ON PROFIT (BOP) ---
     CheckBreakOnProfit();

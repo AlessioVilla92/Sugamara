@@ -273,6 +273,95 @@ ENUM_BREAKOUT_DIRECTION g_breakoutPendingDirection = BREAKOUT_NONE;
 datetime g_shieldReentryStart = 0;
 
 //+------------------------------------------------------------------+
+//| 🎯 DOUBLE PARCELLING v5.2 - Tracking Class                       |
+//| Nota: Usiamo class invece di struct per permettere puntatori     |
+//+------------------------------------------------------------------+
+class DoubleParcelling_Level {
+public:
+    // === STATO GENERALE ===
+    bool   isActive;                // DP attivo per questo livello
+    ENUM_DP_PHASE phase;            // Fase corrente del DP
+
+    // === TICKET TRACKING ===
+    ulong  originalTicket;          // Ticket originale (prima di partial close)
+    ulong  currentTicket;           // Ticket corrente (può cambiare dopo partial!)
+
+    // === PREZZI CALCOLATI ===
+    double entryPrice;              // Prezzo entry
+    double tp1_Price;               // TP1 per Parcel A
+    double tp2_Price;               // TP2 per Parcel B
+    double tp1_Distance;            // Distanza TP1 in points
+    double tp2_Distance;            // Distanza TP2 in points
+
+    // === BREAK ON PARCELLING 1 (Parcel A) ===
+    bool   bop1_Activated;          // BOP1 già attivato
+    double bop1_TriggerPrice;       // Prezzo trigger BOP1
+    double bop1_SL_Price;           // Prezzo SL dopo BOP1
+
+    // === BREAK ON PARCELLING 2 (Parcel B) ===
+    bool   bop2_Activated;          // BOP2 già attivato
+    double bop2_TriggerPrice;       // Prezzo trigger BOP2
+    double bop2_SL_Price;           // Prezzo SL dopo BOP2
+
+    // === PARCEL A (Prima metà) ===
+    bool   parcelA_Closed;          // Parcel A chiuso
+    double parcelA_Lots;            // Lotti Parcel A
+    double parcelA_Profit;          // Profit realizzato
+    datetime parcelA_CloseTime;     // Tempo chiusura
+
+    // === PARCEL B (Seconda metà) ===
+    bool   parcelB_Closed;          // Parcel B chiuso
+    double parcelB_Lots;            // Lotti Parcel B
+    double parcelB_Profit;          // Profit realizzato
+    datetime parcelB_CloseTime;     // Tempo chiusura
+
+    // === SL TRACKING ===
+    double currentSL;               // SL corrente sulla posizione
+    bool   positionType;            // true = BUY, false = SELL
+
+    // Costruttore per inizializzare i valori di default
+    DoubleParcelling_Level() {
+        isActive = false;
+        phase = DP_PHASE_INACTIVE;
+        originalTicket = 0;
+        currentTicket = 0;
+        entryPrice = 0;
+        tp1_Price = 0;
+        tp2_Price = 0;
+        tp1_Distance = 0;
+        tp2_Distance = 0;
+        bop1_Activated = false;
+        bop1_TriggerPrice = 0;
+        bop1_SL_Price = 0;
+        bop2_Activated = false;
+        bop2_TriggerPrice = 0;
+        bop2_SL_Price = 0;
+        parcelA_Closed = false;
+        parcelA_Lots = 0;
+        parcelA_Profit = 0;
+        parcelA_CloseTime = 0;
+        parcelB_Closed = false;
+        parcelB_Lots = 0;
+        parcelB_Profit = 0;
+        parcelB_CloseTime = 0;
+        currentSL = 0;
+        positionType = true;
+    }
+};
+
+// Double Parcelling Arrays (per ogni grid/zone)
+DoubleParcelling_Level dpA_Upper[10];   // Grid A Upper Zone
+DoubleParcelling_Level dpA_Lower[10];   // Grid A Lower Zone
+DoubleParcelling_Level dpB_Upper[10];   // Grid B Upper Zone
+DoubleParcelling_Level dpB_Lower[10];   // Grid B Lower Zone
+
+// Double Parcelling Statistics
+int    g_dp_TotalCycles = 0;            // Cicli DP completati
+double g_dp_TotalProfit = 0;            // Profit totale da DP
+int    g_dp_ParcelA_Active = 0;         // Parcel A attualmente attivi
+int    g_dp_ParcelB_Active = 0;         // Parcel B attualmente attivi
+
+//+------------------------------------------------------------------+
 //| CURRENT SYSTEM STATE (Extended)                                  |
 //+------------------------------------------------------------------+
 ENUM_SYSTEM_STATE currentSystemState = STATE_INIT;

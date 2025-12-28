@@ -647,6 +647,12 @@ void ProcessDealEvent(ulong dealTicket) {
 void CheckBreakOnProfit() {
     if(!Enable_BreakOnProfit) return;
 
+    // v5.2: Skip BOP tradizionale se Double Parcelling è attivo
+    // Double Parcelling ha i propri BOP1/BOP2 interni per ogni parcel
+    if(Enable_DoubleParcelling) {
+        return;
+    }
+
     for(int i = PositionsTotal() - 1; i >= 0; i--) {
         ulong ticket = PositionGetTicket(i);
         if(!PositionSelectByTicket(ticket)) continue;

@@ -120,6 +120,37 @@ input bool      COP_DeletePending = true;                   // 🗑️ Cancella 
 input bool      COP_PauseTrading = true;                    // ⏸️ Pausa Trading dopo Target
 
 //+------------------------------------------------------------------+
+//| 🎯 DOUBLE PARCELLING SETTINGS (v5.2)                              |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🎯 DOUBLE PARCELLING (v5.2)                              ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input bool      Enable_DoubleParcelling = false;            // ✅ Abilita Double Parcelling
+
+input group "    📊 TP1 - PARCEL A"
+input int       DP_TP1_Percent = 100;                       // 🎯 TP1 (% dello spacing)
+                                                            // 100 = 1 spacing = Entry Grid 2
+
+input group "    📊 TP2 - PARCEL B"
+input int       DP_TP2_Percent = 200;                       // 🎯 TP2 (% dello spacing)
+                                                            // 200 = 2× spacing = Entry Grid 3
+
+input group "    🔒 BREAK ON PARCELLING - PARCEL A"
+input int       DP_BOP1_Trigger_Percent = 70;               // 🔔 BOP1 Trigger (% progress verso TP1)
+input int       DP_BOP1_SL_Percent = 50;                    // 🛡️ BOP1 SL Level (% progress)
+
+input group "    🔒 BREAK ON PARCELLING - PARCEL B"
+input int       DP_BOP2_Trigger_Percent = 100;              // 🔔 BOP2 Trigger (% progress verso TP2)
+input int       DP_BOP2_SL_Percent = 70;                    // 🛡️ BOP2 SL Level (% progress)
+
+input group "    📦 LOT CONFIGURATION"
+input int       DP_LotRatio = 50;                           // 📦 Parcel Split (%)
+                                                            // 50 = 50/50 (0.01 + 0.01)
+
+//+------------------------------------------------------------------+
 //| 📊 ATR MULTI-TIMEFRAME SETTINGS                                  |
 //+------------------------------------------------------------------+
 
