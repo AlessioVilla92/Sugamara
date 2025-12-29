@@ -86,7 +86,7 @@ input group "╔═════════════════════�
 input group "║  🔒 BREAK ON PROFIT (BOP) v5.1                           ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
-input bool      Enable_BreakOnProfit = false;               // ✅ Abilita Break On Profit (default OFF)
+input bool      Enable_BreakOnProfit = true;                // ✅ Abilita Break On Profit (v5.6: default ON)
 // Quando posizione raggiunge X% del TP, sposta SL a Y% del profit
 
 input group "    📊 BOP PARAMETERS"
@@ -119,36 +119,6 @@ input bool      COP_ClosePositions = true;                  // ❌ Chiudi tutte 
 input bool      COP_DeletePending = true;                   // 🗑️ Cancella tutti i Pending
 input bool      COP_PauseTrading = true;                    // ⏸️ Pausa Trading dopo Target
 
-//+------------------------------------------------------------------+
-//| 🎯 DOUBLE PARCELLING SETTINGS (v5.2)                              |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  🎯 DOUBLE PARCELLING (v5.2)                              ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input bool      Enable_DoubleParcelling = true;             // ✅ Abilita Double Parcelling (v5.4 default ON)
-
-input group "    📊 TP1 - PARCEL A"
-input int       DP_TP1_Percent = 100;                       // 🎯 TP1 (% dello spacing)
-                                                            // 100 = 1 spacing = Entry Grid 2
-
-input group "    📊 TP2 - PARCEL B"
-input int       DP_TP2_Percent = 200;                       // 🎯 TP2 (% dello spacing)
-                                                            // 200 = 2× spacing = Entry Grid 3
-
-input group "    🔒 BREAK ON PARCELLING - PARCEL A"
-input int       DP_BOP1_Trigger_Percent = 70;               // 🔔 BOP1 Trigger (% progress verso TP1)
-input int       DP_BOP1_SL_Percent = 65;                    // 🛡️ BOP1 SL Level (% progress) - v5.4 ottimizzato
-
-input group "    🔒 BREAK ON PARCELLING - PARCEL B"
-input int       DP_BOP2_Trigger_Percent = 70;               // 🔔 BOP2 Trigger (% progress verso TP2) - v5.4 ottimizzato
-input int       DP_BOP2_SL_Percent = 50;                    // 🛡️ BOP2 SL Level (% progress) - v5.4 ottimizzato
-
-input group "    📦 LOT CONFIGURATION"
-input int       DP_LotRatio = 50;                           // 📦 Parcel Split (%)
-                                                            // 50 = 50/50 (0.01 + 0.01)
 
 //+------------------------------------------------------------------+
 //| 🔄 TRAILING GRID INTELLIGENTE v5.3                                |
@@ -360,19 +330,13 @@ input bool      ATR_LogEveryCheck = false;                   // 🔍 Log ogni ch
 input bool      ATR_LogStepTransitions = true;               // 📊 Log transizioni step ATR
 
 //+------------------------------------------------------------------+
-//| 3️⃣.8️⃣ 📝 DOUBLE PARCELLING & TRAILING GRID LOGGING v5.4          |
+//| 3️⃣.8️⃣ 📝 TRAILING GRID LOGGING v5.5                               |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  3️⃣.8️⃣  📝 DP & TRAILING GRID LOGGING v5.4                ║"
+input group "║  3️⃣.8️⃣  📝 TRAILING GRID LOGGING v5.5                     ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    📝 DOUBLE PARCELLING LOGGING"
-input bool      DP_DetailedLogging = true;                   // ✅ Log Dettagliato Double Parcelling
-input bool      DP_LogPhaseChanges = true;                   // 📊 Log Cambi Fase (TP1/TP2/BOP)
-input bool      DP_LogTickProgress = false;                  // 🔍 Log Ogni Tick (Debug - HEAVY!)
-input bool      DP_LogProfitDetails = true;                  // 💰 Log Dettagli Profitto Parcels
 
 input group "    📝 TRAILING GRID LOGGING"
 input bool      Trail_DetailedLogging = true;                // ✅ Log Dettagliato Trailing Grid
@@ -550,22 +514,16 @@ input bool      PauseOnNews = false;                         // ✅ Pausa durant
 // Richiede attivazione manuale 30 min prima di news
 
 //+------------------------------------------------------------------+
-//| 1️⃣3️⃣ 🛑 STOP LOSS CONFIGURATION                                  |
+//| 1️⃣3️⃣ 🛑 STOP LOSS - REMOVED v5.6                                  |
 //+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  1️⃣3️⃣  🛑 STOP LOSS CONFIGURATION                         ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    🌐 GLOBAL STOP LOSS"
-input bool      UseGlobalStopLoss = false;                   // ❌ DISABILITATO - Rompe la logica neutrale! L'auto-hedging compensa le perdite
-input double    GlobalSL_Percent = 120.0;                    // 📊 SL Globale (% del range)
-// SL = Entry ± (Range × 120%) = 20% oltre il range
-
-input group "    📍 INDIVIDUAL STOP LOSS"
-input bool      UseIndividualSL = false;                     // ✅ Usa SL Individuale
-input double    IndividualSL_Pips = 50.0;                    // 📏 SL per Ordine (pips)
+// ❌ RIMOSSO in v5.6 - L'auto-hedging CASCADE_OVERLAP compensa le perdite
+// Grid A = SOLO BUY, Grid B = SOLO SELL = Hedge naturale
+// Stop Loss rompe la logica neutrale chiudendo posizioni che sarebbero compensate
+// Variabili mantenute per backward compatibility (sempre false/0)
+bool      UseGlobalStopLoss = false;
+double    GlobalSL_Percent = 0;
+bool      UseIndividualSL = false;
+double    IndividualSL_Pips = 0;
 
 //+------------------------------------------------------------------+
 //| 1️⃣4️⃣ 🔧 BROKER SETTINGS                                          |

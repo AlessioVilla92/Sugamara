@@ -290,35 +290,13 @@ double NormalizeLotSize(double lot) {
 }
 
 //+------------------------------------------------------------------+
-//| Validate Stop Loss Distance                                      |
-//| Ensures SL is at least broker minimum distance from price        |
+//| Validate Stop Loss Distance - REMOVED v5.6                       |
 //+------------------------------------------------------------------+
+// ❌ FUNZIONE RIMOSSA in v5.6 - SL non più usato
+// L'auto-hedging CASCADE_OVERLAP compensa le perdite automaticamente
+// Funzione stub mantenuta per backward compatibility
 double ValidateStopLoss(double price, double sl, bool isBuy) {
-    if(sl == 0) return 0;
-
-    double minDistance = symbolStopsLevel * symbolPoint;
-    if(minDistance < symbolPoint * 10) {
-        minDistance = symbolPoint * 30;  // Default 3 pips minimum (was 50=5pips - v4.6 FIX)
-    }
-
-    // Add safety margin
-    minDistance *= 1.1;  // 10% margin (was 1.2=20% - v4.6 FIX)
-
-    if(isBuy) {
-        // For BUY, SL must be below price
-        double minSL = price - minDistance;
-        if(sl > minSL) {
-            sl = minSL;
-        }
-    } else {
-        // For SELL, SL must be above price
-        double maxSL = price + minDistance;
-        if(sl < maxSL) {
-            sl = maxSL;
-        }
-    }
-
-    return NormalizeDouble(sl, symbolDigits);
+    return 0;  // v5.6: Sempre 0 - No SL
 }
 
 //+------------------------------------------------------------------+

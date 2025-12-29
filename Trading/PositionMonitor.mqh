@@ -613,6 +613,10 @@ void ProcessDealEvent(ulong dealTicket) {
     // Check if this is our deal
     if(magic < MagicNumber || magic > MagicNumber + MAGIC_OFFSET_GRID_B + 1000) return;
 
+    // v5.7 FIX: Check symbol - filtra solo trade del pair corrente
+    string dealSymbol = HistoryDealGetString(dealTicket, DEAL_SYMBOL);
+    if(dealSymbol != _Symbol) return;
+
     // Get profit
     double profit = HistoryDealGetDouble(dealTicket, DEAL_PROFIT);
     profit += HistoryDealGetDouble(dealTicket, DEAL_SWAP);
@@ -646,12 +650,6 @@ void ProcessDealEvent(ulong dealTicket) {
 //+------------------------------------------------------------------+
 void CheckBreakOnProfit() {
     if(!Enable_BreakOnProfit) return;
-
-    // v5.2: Skip BOP tradizionale se Double Parcelling è attivo
-    // Double Parcelling ha i propri BOP1/BOP2 interni per ogni parcel
-    if(Enable_DoubleParcelling) {
-        return;
-    }
 
     for(int i = PositionsTotal() - 1; i >= 0; i--) {
         ulong ticket = PositionGetTicket(i);

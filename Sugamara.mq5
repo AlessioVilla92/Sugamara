@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v5.4         |
+//|                                    SUGAMARA RIBELLE v5.7         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025 - Sugamara Ribelle Development Team          |
-//|  Version: 5.4.0 CASCADE SOVRAPPOSTO + DP + TRAILING              |
+//|  Version: 5.7.0 COP FIX (Symbol Filter + Commission)             |
 //|  Release Date: December 2025                                     |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,19 +16,24 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v5.4 FEATURES:                                                  |
+//|  v5.7 FIXES:                                                     |
+//|  - COP Symbol Filter: filtra solo trade del pair corrente        |
+//|  - COP Commission Fix: elimina double counting commissioni       |
+//|                                                                  |
+//|  v5.6 FEATURES:                                                  |
+//|  - ZERO Stop Loss - Auto-hedging compensa le perdite             |
+//|  - BOP (Break On Profit) abilitato di default                    |
 //|  - CASCADE_OVERLAP: Grid A=BUY puro, Grid B=SELL puro            |
-//|  - Double Parcelling (DP) - Split TP1/TP2 con BOP protetto       |
 //|  - Trailing Grid Intelligente - Segue il drift del mercato       |
-//|  - Enhanced DP/Trail Logging System                              |
+//|  - Cyclic Reopen sempre attivo (senza blocchi)                   |
 //|  - Shield 3 Phases Protection                                    |
 //|  - DUNE/Arrakis Desert Theme                                     |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
-#property version   "5.40"
-#property description "SUGAMARA RIBELLE v5.4 - CASCADE + DP + TRAILING"
+#property version   "5.70"
+#property description "SUGAMARA RIBELLE v5.7 - COP FIX + NO SL + BOP DEFAULT"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -70,9 +75,6 @@
 
 // v5.1 NEW Trading Modules
 #include "Trading/CloseOnProfitManager.mqh"
-
-// v5.2 NEW Trading Modules
-#include "Trading/DoubleParcelling.mqh"
 
 // v5.3 NEW Trading Modules
 #include "Trading/TrailingGridManager.mqh"
@@ -229,10 +231,7 @@ int OnInit() {
     //--- STEP 13.8b: Initialize Close On Profit (v5.1) ---
     InitializeCloseOnProfit();
 
-    //--- STEP 13.8c: Initialize Double Parcelling (v5.2) ---
-    InitializeDoubleParcelling();
-
-    //--- STEP 13.8d: Initialize Trailing Grid Intelligente (v5.3) ---
+    //--- STEP 13.8c: Initialize Trailing Grid Intelligente (v5.3) ---
     if(!InitializeTrailingGrid()) {
         Print("WARNING: Failed to initialize Trailing Grid");
     }
@@ -337,7 +336,6 @@ int OnInit() {
         Print("  ✅ CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
         Print("  ✅ Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
     }
-    Print("  ✅ Double Parcelling: ", Enable_DoubleParcelling ? "ENABLED (TP1/TP2 split)" : "DISABLED");
     Print("  ✅ Trailing Grid: ", Enable_TrailingGrid ? "ENABLED (L" + IntegerToString(Trail_Trigger_Level) + " trigger)" : "DISABLED");
     Print("  ✅ ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
     Print("  ✅ Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
@@ -446,9 +444,6 @@ void OnDeinit(const int reason) {
     // v5.1: Reset and Deinitialize COP
     COP_ResetDaily();  // Reset COP counter on EA removal/chart close
     DeinitializeCloseOnProfit();
-
-    // v5.2: Deinitialize Double Parcelling
-    DeinitializeDoubleParcelling();
 
     // v5.3: Deinitialize Trailing Grid
     DeinitializeTrailingGrid();
@@ -577,11 +572,6 @@ void OnTick() {
 
     //--- v3.0: PARTIAL TAKE PROFIT REMOVED (v5.x cleanup) ---
     // ProcessPartialTPs(); // Dannoso per Cyclic Reopen
-
-    //--- v5.2: DOUBLE PARCELLING PROCESSING ---
-    // ProcessDoubleParcelling deve essere chiamato PRIMA di CheckBreakOnProfit
-    // perche DP ha i propri BOP1/BOP2 interni
-    ProcessDoubleParcelling();
 
     //--- v5.3: TRAILING GRID INTELLIGENTE PROCESSING ---
     if(Enable_TrailingGrid && systemState == STATE_ACTIVE) {

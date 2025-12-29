@@ -343,43 +343,16 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
 }
 
 //+------------------------------------------------------------------+
-//| Calculate Stop Loss for Grid Level                               |
+//| Calculate Stop Loss for Grid Level - REMOVED v5.6                |
 //+------------------------------------------------------------------+
+// ❌ FUNZIONE RIMOSSA in v5.6
+// L'auto-hedging CASCADE_OVERLAP compensa le perdite automaticamente
+// Grid A = SOLO BUY, Grid B = SOLO SELL = Hedge naturale
+// Stop Loss rompe la logica neutrale
+// Funzione stub mantenuta per backward compatibility
 double CalculateGridSL(double baseEntryPoint, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone,
                        int level, double spacingPips, int totalLevels) {
-
-    if(!UseGlobalStopLoss && !UseIndividualSL) {
-        return 0;  // No SL
-    }
-
-    bool isBuy = IsGridOrderBuy(side, zone);
-    double levelPrice = CalculateGridLevelPrice(baseEntryPoint, zone, level, spacingPips);
-
-    // Individual SL
-    if(UseIndividualSL) {
-        double slDistance = PipsToPoints(IndividualSL_Pips);
-        if(isBuy) {
-            return NormalizeDouble(levelPrice - slDistance, symbolDigits);
-        } else {
-            return NormalizeDouble(levelPrice + slDistance, symbolDigits);
-        }
-    }
-
-    // Global SL (% of range)
-    if(UseGlobalStopLoss) {
-        double totalRange = spacingPips * totalLevels;
-        double slDistance = PipsToPoints(totalRange * GlobalSL_Percent / 100.0);
-
-        if(zone == ZONE_UPPER) {
-            // Upper zone: SL above the range
-            return NormalizeDouble(baseEntryPoint + PipsToPoints(totalRange) + slDistance, symbolDigits);
-        } else {
-            // Lower zone: SL below the range
-            return NormalizeDouble(baseEntryPoint - PipsToPoints(totalRange) - slDistance, symbolDigits);
-        }
-    }
-
-    return 0;
+    return 0;  // v5.6: Sempre 0 - No SL
 }
 
 //+------------------------------------------------------------------+

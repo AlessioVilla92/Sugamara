@@ -257,18 +257,6 @@ enum ENUM_BUTTON_STATE {
 };
 
 //+------------------------------------------------------------------+
-//| 🎯 DOUBLE PARCELLING PHASE - Fase DP v5.2                        |
-//+------------------------------------------------------------------+
-enum ENUM_DP_PHASE {
-    DP_PHASE_INACTIVE = 0,      // DP non attivo per questo livello
-    DP_PHASE_TRACKING_A = 1,    // Tracking Parcel A (pre-TP1)
-    DP_PHASE_BOP1_ACTIVE = 2,   // BOP1 attivato, aspetta TP1
-    DP_PHASE_TRACKING_B = 3,    // Parcel A chiuso, tracking Parcel B
-    DP_PHASE_BOP2_ACTIVE = 4,   // BOP2 attivato, aspetta TP2
-    DP_PHASE_COMPLETED = 5      // Entrambi i parcels chiusi
-};
-
-//+------------------------------------------------------------------+
 //| NOTE: Color inputs moved to Config/InputParameters.mqh           |
 //+------------------------------------------------------------------+
 

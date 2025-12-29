@@ -99,11 +99,13 @@ void COP_UpdateTracking() {
     // Update floating
     cop_FloatingProfit = COP_IncludeFloating ? COP_GetFloatingProfit() : 0;
 
-    // Update commissions
+    // Update commissions (solo per display/dashboard)
     cop_TotalCommissions = COP_CalculateCommissions();
 
     // Calculate net profit
-    cop_NetProfit = cop_RealizedProfit + cop_FloatingProfit - cop_TotalCommissions;
+    // v5.7 FIX: cop_RealizedProfit GIA' include DEAL_COMMISSION (negativo)
+    // NON sottrarre cop_TotalCommissions per evitare double counting
+    cop_NetProfit = cop_RealizedProfit + cop_FloatingProfit;
 }
 
 //+------------------------------------------------------------------+

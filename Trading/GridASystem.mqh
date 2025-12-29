@@ -188,7 +188,7 @@ bool PlaceGridAUpperOrder(int level) {
 
     double entryPrice = gridA_Upper_EntryPrices[level];
     double tp = gridA_Upper_TP[level];
-    double sl = gridA_Upper_SL[level];
+    double sl = 0;  // v5.6: No SL - Auto-hedging compensa le perdite
     double lot = gridA_Upper_Lots[level];
 
     // Get order type (CASCADE_OVERLAP: BUY_STOP, otherwise: BUY_LIMIT)
@@ -199,9 +199,8 @@ bool PlaceGridAUpperOrder(int level) {
         entryPrice = GetSafeOrderPrice(entryPrice, orderType);
     }
 
-    // Validate TP/SL
+    // Validate TP (v5.6: SL rimosso)
     tp = ValidateTakeProfit(entryPrice, tp, true);
-    sl = ValidateStopLoss(entryPrice, sl, true);
 
     // Place order
     ulong ticket = PlacePendingOrder(orderType, lot, entryPrice, sl, tp,
@@ -228,7 +227,7 @@ bool PlaceGridALowerOrder(int level) {
 
     double entryPrice = gridA_Lower_EntryPrices[level];
     double tp = gridA_Lower_TP[level];
-    double sl = gridA_Lower_SL[level];
+    double sl = 0;  // v5.6: No SL - Auto-hedging compensa le perdite
     double lot = gridA_Lower_Lots[level];
 
     // Get order type (CASCADE_OVERLAP: BUY_LIMIT, otherwise: SELL_STOP)
@@ -240,9 +239,8 @@ bool PlaceGridALowerOrder(int level) {
         entryPrice = GetSafeOrderPrice(entryPrice, orderType);
     }
 
-    // Validate TP/SL (isBuyOrder determines direction)
+    // Validate TP (v5.6: SL rimosso)
     tp = ValidateTakeProfit(entryPrice, tp, isBuyOrder);
-    sl = ValidateStopLoss(entryPrice, sl, isBuyOrder);
 
     // Place order
     ulong ticket = PlacePendingOrder(orderType, lot, entryPrice, sl, tp,
@@ -300,14 +298,6 @@ void UpdateGridAUpperStatus(int level) {
             if(PositionSelectByTicket(ticket)) {
                 gridA_Upper_Status[level] = ORDER_FILLED;
                 LogGridStatus(GRID_A, ZONE_UPPER, level, "Order FILLED");
-
-                // v5.2: Setup Double Parcelling
-                if(Enable_DoubleParcelling) {
-                    double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
-                    double lots = PositionGetDouble(POSITION_VOLUME);
-                    bool isBuy = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY;
-                    SetupDP_OnFill(GRID_A, ZONE_UPPER, level, ticket, entryPrice, lots, isBuy);
-                }
             } else {
                 // Order was deleted/cancelled
                 gridA_Upper_Status[level] = ORDER_CANCELLED;
@@ -356,14 +346,6 @@ void UpdateGridALowerStatus(int level) {
             if(PositionSelectByTicket(ticket)) {
                 gridA_Lower_Status[level] = ORDER_FILLED;
                 LogGridStatus(GRID_A, ZONE_LOWER, level, "Order FILLED");
-
-                // v5.2: Setup Double Parcelling
-                if(Enable_DoubleParcelling) {
-                    double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
-                    double lots = PositionGetDouble(POSITION_VOLUME);
-                    bool isBuy = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY;
-                    SetupDP_OnFill(GRID_A, ZONE_LOWER, level, ticket, entryPrice, lots, isBuy);
-                }
             } else {
                 gridA_Lower_Status[level] = ORDER_CANCELLED;
                 gridA_Lower_Tickets[level] = 0;
@@ -422,11 +404,6 @@ void ProcessGridACyclicReopen() {
 bool ShouldReopenGridAUpper(int level) {
     ENUM_ORDER_STATUS status = gridA_Upper_Status[level];
 
-    // v5.2: Double Parcelling - Blocca reopen se Parcel B ancora attivo
-    if(Enable_DoubleParcelling && IsWaitingForParcelB(GRID_A, ZONE_UPPER, level)) {
-        return false;
-    }
-
     // Can only reopen if closed
     if(status != ORDER_CLOSED_TP && status != ORDER_CLOSED_SL && status != ORDER_CANCELLED) {
         return false;
@@ -452,11 +429,7 @@ bool ShouldReopenGridAUpper(int level) {
 bool ShouldReopenGridALower(int level) {
     ENUM_ORDER_STATUS status = gridA_Lower_Status[level];
 
-    // v5.2: Double Parcelling - Blocca reopen se Parcel B ancora attivo
-    if(Enable_DoubleParcelling && IsWaitingForParcelB(GRID_A, ZONE_LOWER, level)) {
-        return false;
-    }
-
+    // Can only reopen if closed
     if(status != ORDER_CLOSED_TP && status != ORDER_CLOSED_SL && status != ORDER_CANCELLED) {
         return false;
     }
