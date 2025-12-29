@@ -275,7 +275,7 @@ enum ENUM_DP_PHASE {
 //+------------------------------------------------------------------+
 //| CONSTANTS - Costanti di sistema                                  |
 //+------------------------------------------------------------------+
-const int MAX_GRID_LEVELS = 10;           // Max livelli per lato
+const int MAX_GRID_LEVELS = 15;           // Max livelli per lato (v5.3: Esteso per Trailing Grid)
 const int MAX_TOTAL_ORDERS = 40;          // Max ordini totali (Grid A + Grid B)
 const double MIN_SPACING_PIPS = 10.0;     // Spacing minimo (pips)
 const double MAX_SPACING_PIPS = 100.0;    // Spacing massimo (pips)

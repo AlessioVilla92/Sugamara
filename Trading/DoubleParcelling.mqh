@@ -29,7 +29,7 @@ bool InitializeDoubleParcelling() {
     LogMessage(LOG_INFO, "[DP] Initializing Double Parcelling v5.2...");
 
     // Reset all DP structures
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i < MAX_GRID_LEVELS; i++) {
         ResetDP_Level(dpA_Upper[i]);
         ResetDP_Level(dpA_Lower[i]);
         ResetDP_Level(dpB_Upper[i]);
@@ -64,10 +64,7 @@ void DeinitializeDoubleParcelling() {
 
     LogMessage(LOG_INFO, "[DP] ═══════════════════════════════════════");
     LogMessage(LOG_INFO, "[DP] Double Parcelling Final Statistics:");
-    LogMessage(LOG_INFO, "[DP] Total Cycles Completed: " + IntegerToString(g_dp_TotalCycles));
-    LogMessage(LOG_INFO, "[DP] Total Profit: " + FormatMoney(g_dp_TotalProfit));
-    LogMessage(LOG_INFO, "[DP] Active Parcel A: " + IntegerToString(g_dp_ParcelA_Active));
-    LogMessage(LOG_INFO, "[DP] Active Parcel B: " + IntegerToString(g_dp_ParcelB_Active));
+    LogDP_Statistics(g_dp_TotalCycles, g_dp_TotalProfit, g_dp_ParcelA_Active, g_dp_ParcelB_Active);
     LogMessage(LOG_INFO, "[DP] ═══════════════════════════════════════");
 }
 
@@ -106,7 +103,7 @@ void ResetDP_Level(DoubleParcelling_Level &dp) {
 //| GET DP LEVEL POINTER                                             |
 //+------------------------------------------------------------------+
 DoubleParcelling_Level* GetDP_LevelPtr(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
-    if(level < 0 || level >= 10) return NULL;
+    if(level < 0 || level >= MAX_GRID_LEVELS) return NULL;
 
     if(side == GRID_A) {
         if(zone == ZONE_UPPER) return GetPointer(dpA_Upper[level]);
@@ -196,21 +193,9 @@ void SetupDP_OnFill(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
     dp.parcelA_Lots = NormalizeDouble(lots * DP_LotRatio / 100.0, 2);
     dp.parcelB_Lots = NormalizeDouble(lots - dp.parcelA_Lots, 2);
 
-    // Log
-    string gridStr = (side == GRID_A) ? "A" : "B";
-    string zoneStr = (zone == ZONE_UPPER) ? "Upper" : "Lower";
-
-    LogMessage(LOG_INFO, "[DP] Setup " + gridStr + "-" + zoneStr +
-               " L" + IntegerToString(level+1) +
-               " | Ticket: #" + IntegerToString(ticket) +
-               " | Entry: " + DoubleToString(entryPrice, symbolDigits) +
-               " | Lots: " + DoubleToString(lots, 2) +
-               " (" + DoubleToString(dp.parcelA_Lots, 2) + "+" +
-               DoubleToString(dp.parcelB_Lots, 2) + ")");
-    LogMessage(LOG_INFO, "[DP] TP1: " + DoubleToString(dp.tp1_Price, symbolDigits) +
-               " | TP2: " + DoubleToString(dp.tp2_Price, symbolDigits) +
-               " | BOP1@" + DoubleToString(dp.bop1_TriggerPrice, symbolDigits) +
-               " | BOP2@" + DoubleToString(dp.bop2_TriggerPrice, symbolDigits));
+    // Log dettagliato setup con nuove funzioni
+    LogDP_Setup(side, zone, level, ticket, entryPrice, lots, dp.parcelA_Lots, dp.parcelB_Lots);
+    LogDP_TPLevels(side, zone, level, dp.tp1_Price, dp.tp2_Price, dp.bop1_TriggerPrice, dp.bop2_TriggerPrice);
 
     g_dp_ParcelA_Active++;
     g_dp_ParcelB_Active++;
@@ -223,28 +208,28 @@ void ProcessDoubleParcelling() {
     if(!Enable_DoubleParcelling) return;
 
     // Process Grid A Upper
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i < MAX_GRID_LEVELS; i++) {
         if(dpA_Upper[i].isActive) {
             ProcessDP_SingleLevel(dpA_Upper[i], GRID_A, ZONE_UPPER, i);
         }
     }
 
     // Process Grid A Lower
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i < MAX_GRID_LEVELS; i++) {
         if(dpA_Lower[i].isActive) {
             ProcessDP_SingleLevel(dpA_Lower[i], GRID_A, ZONE_LOWER, i);
         }
     }
 
     // Process Grid B Upper
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i < MAX_GRID_LEVELS; i++) {
         if(dpB_Upper[i].isActive) {
             ProcessDP_SingleLevel(dpB_Upper[i], GRID_B, ZONE_UPPER, i);
         }
     }
 
     // Process Grid B Lower
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i < MAX_GRID_LEVELS; i++) {
         if(dpB_Lower[i].isActive) {
             ProcessDP_SingleLevel(dpB_Lower[i], GRID_B, ZONE_LOWER, i);
         }
@@ -291,14 +276,13 @@ void ProcessDP_SingleLevel(DoubleParcelling_Level &dp,
                 // Attiva BOP1 - Sposta SL
                 if(ModifyPositionSL_DP(dp.currentTicket, dp.bop1_SL_Price)) {
                     dp.bop1_Activated = true;
-                    dp.phase = DP_PHASE_BOP1_ACTIVE;
                     dp.currentSL = dp.bop1_SL_Price;
 
-                    string gridStr = (side == GRID_A) ? "A" : "B";
-                    string zoneStr = (zone == ZONE_UPPER) ? "Upper" : "Lower";
-                    LogMessage(LOG_SUCCESS, "[DP] BOP1 Activated " + gridStr + "-" + zoneStr +
-                               " L" + IntegerToString(level+1) +
-                               " | SL moved to " + DoubleToString(dp.bop1_SL_Price, symbolDigits));
+                    // Log phase change e BOP activation
+                    LogDP_PhaseChange(side, zone, level, "TRACKING_A", "BOP1_ACTIVE");
+                    LogDP_BOPActivated(side, zone, level, 1, currentPrice, dp.bop1_SL_Price);
+
+                    dp.phase = DP_PHASE_BOP1_ACTIVE;
                 }
             }
         }
@@ -322,14 +306,13 @@ void ProcessDP_SingleLevel(DoubleParcelling_Level &dp,
                 dp.parcelA_CloseTime = TimeCurrent();
                 dp.parcelA_Profit = CalculateParcelProfit_DP(dp.parcelA_Lots, dp.tp1_Distance, dp.positionType);
                 dp.currentTicket = newTicket;  // Aggiorna ticket!
-                dp.phase = DP_PHASE_TRACKING_B;
 
-                string gridStr = (side == GRID_A) ? "A" : "B";
-                string zoneStr = (zone == ZONE_UPPER) ? "Upper" : "Lower";
-                LogMessage(LOG_SUCCESS, "[DP] Parcel A CLOSED " + gridStr + "-" + zoneStr +
-                           " L" + IntegerToString(level+1) +
-                           " | Profit: " + FormatMoney(dp.parcelA_Profit) +
-                           " | New ticket: #" + IntegerToString(newTicket));
+                // Log parcel close e phase change
+                LogDP_ParcelClosed(side, zone, level, "A", dp.parcelA_Lots, dp.parcelA_Profit, dp.tp1_Price);
+                LogDP_PhaseChange(side, zone, level, "BOP1_ACTIVE", "TRACKING_B",
+                                  "New ticket: #" + IntegerToString(newTicket));
+
+                dp.phase = DP_PHASE_TRACKING_B;
                 g_dp_ParcelA_Active--;
 
             } else if(newTicket == 0) {
@@ -373,14 +356,13 @@ void ProcessDP_SingleLevel(DoubleParcelling_Level &dp,
                 // Attiva BOP2 - Sposta SL
                 if(ModifyPositionSL_DP(dp.currentTicket, dp.bop2_SL_Price)) {
                     dp.bop2_Activated = true;
-                    dp.phase = DP_PHASE_BOP2_ACTIVE;
                     dp.currentSL = dp.bop2_SL_Price;
 
-                    string gridStr = (side == GRID_A) ? "A" : "B";
-                    string zoneStr = (zone == ZONE_UPPER) ? "Upper" : "Lower";
-                    LogMessage(LOG_SUCCESS, "[DP] BOP2 Activated " + gridStr + "-" + zoneStr +
-                               " L" + IntegerToString(level+1) +
-                               " | SL moved to " + DoubleToString(dp.bop2_SL_Price, symbolDigits));
+                    // Log phase change e BOP activation
+                    LogDP_PhaseChange(side, zone, level, "TRACKING_B", "BOP2_ACTIVE");
+                    LogDP_BOPActivated(side, zone, level, 2, currentPrice, dp.bop2_SL_Price);
+
+                    dp.phase = DP_PHASE_BOP2_ACTIVE;
                 }
             }
         }
@@ -397,12 +379,10 @@ void ProcessDP_SingleLevel(DoubleParcelling_Level &dp,
                 dp.parcelB_CloseTime = TimeCurrent();
                 dp.parcelB_Profit = CalculateParcelProfit_DP(dp.parcelB_Lots, dp.tp2_Distance, dp.positionType);
 
-                string gridStr = (side == GRID_A) ? "A" : "B";
-                string zoneStr = (zone == ZONE_UPPER) ? "Upper" : "Lower";
-                LogMessage(LOG_SUCCESS, "[DP] Parcel B CLOSED " + gridStr + "-" + zoneStr +
-                           " L" + IntegerToString(level+1) +
-                           " | Profit: " + FormatMoney(dp.parcelB_Profit) +
-                           " | Total: " + FormatMoney(dp.parcelA_Profit + dp.parcelB_Profit));
+                // Log parcel close
+                LogDP_ParcelClosed(side, zone, level, "B", dp.parcelB_Lots, dp.parcelB_Profit, dp.tp2_Price);
+                LogDP_PhaseChange(side, zone, level, "BOP2_ACTIVE", "COMPLETED",
+                                  "Total profit: " + FormatMoney(dp.parcelA_Profit + dp.parcelB_Profit));
 
                 g_dp_ParcelB_Active--;
             }
@@ -472,13 +452,8 @@ void CompleteCycle_DP(DoubleParcelling_Level &dp,
     double cycleProfit = dp.parcelA_Profit + dp.parcelB_Profit;
     g_dp_TotalProfit += cycleProfit;
 
-    string gridStr = (side == GRID_A) ? "A" : "B";
-    string zoneStr = (zone == ZONE_UPPER) ? "Upper" : "Lower";
-
-    LogMessage(LOG_SUCCESS, "[DP] ═══ CYCLE COMPLETED ═══ " + gridStr + "-" + zoneStr +
-               " L" + IntegerToString(level+1) +
-               " | Profit: " + FormatMoney(cycleProfit) +
-               " | Total cycles: " + IntegerToString(g_dp_TotalCycles));
+    // Log cycle complete con funzione dedicata
+    LogDP_CycleComplete(side, zone, level, dp.parcelA_Profit, dp.parcelB_Profit, cycleProfit);
 
     // Update grid status to allow recycling
     SetGridStatus_DP(side, zone, level, ORDER_CLOSED_TP);
@@ -486,6 +461,9 @@ void CompleteCycle_DP(DoubleParcelling_Level &dp,
     // Mark as completed and reset
     dp.phase = DP_PHASE_COMPLETED;
     dp.isActive = false;
+
+    // Log statistiche aggregate
+    LogDP_Statistics(g_dp_TotalCycles, g_dp_TotalProfit, g_dp_ParcelA_Active, g_dp_ParcelB_Active);
 
     // Don't fully reset - keep stats for logging
     // ResetDP_Level(dp);  // Commented out to preserve cycle data

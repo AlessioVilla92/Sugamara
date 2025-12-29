@@ -233,6 +233,8 @@ void LogGridStatus(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, string s
 #define LOG_CAT_ATR       "[ATR]"
 #define LOG_CAT_CYCLE     "[CYCLE]"
 #define LOG_CAT_REOPEN    "[REOPEN]"
+#define LOG_CAT_DP        "[DP]"
+#define LOG_CAT_TRAIL     "[TRAIL]"
 
 //+------------------------------------------------------------------+
 //| Get Current Timestamp String                                      |
@@ -315,6 +317,196 @@ void LogReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, string reaso
     string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
     PrintFormat("%s %s Grid%s-%s-L%d: %s",
                 GetLogTimestamp(), LOG_CAT_REOPEN, gridName, zoneName, level+1, reason);
+}
+
+//+------------------------------------------------------------------+
+//| DOUBLE PARCELLING LOGGING FUNCTIONS v5.4                         |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Log DP Setup Event                                                |
+//+------------------------------------------------------------------+
+void LogDP_Setup(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
+                 ulong ticket, double entryPrice, double lots,
+                 double parcelA_Lots, double parcelB_Lots) {
+    if(!DP_DetailedLogging) return;
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    PrintFormat("%s %s SETUP Grid%s-%s-L%d | Ticket:#%d | Entry:%.5f | Total:%.2f lots (A:%.2f + B:%.2f)",
+                GetLogTimestamp(), LOG_CAT_DP, gridName, zoneName, level+1,
+                ticket, entryPrice, lots, parcelA_Lots, parcelB_Lots);
+}
+
+//+------------------------------------------------------------------+
+//| Log DP TP Levels Calculated                                       |
+//+------------------------------------------------------------------+
+void LogDP_TPLevels(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
+                    double tp1, double tp2, double bop1_trigger, double bop2_trigger) {
+    if(!DP_DetailedLogging || !DP_LogPhaseChanges) return;
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    PrintFormat("%s %s LEVELS Grid%s-%s-L%d | TP1:%.5f | TP2:%.5f | BOP1@%.5f | BOP2@%.5f",
+                GetLogTimestamp(), LOG_CAT_DP, gridName, zoneName, level+1,
+                tp1, tp2, bop1_trigger, bop2_trigger);
+}
+
+//+------------------------------------------------------------------+
+//| Log DP Phase Change                                               |
+//+------------------------------------------------------------------+
+void LogDP_PhaseChange(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
+                       string fromPhase, string toPhase, string details = "") {
+    if(!DP_DetailedLogging || !DP_LogPhaseChanges) return;
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    if(details != "") {
+        PrintFormat("%s %s PHASE Grid%s-%s-L%d | %s -> %s | %s",
+                    GetLogTimestamp(), LOG_CAT_DP, gridName, zoneName, level+1,
+                    fromPhase, toPhase, details);
+    } else {
+        PrintFormat("%s %s PHASE Grid%s-%s-L%d | %s -> %s",
+                    GetLogTimestamp(), LOG_CAT_DP, gridName, zoneName, level+1,
+                    fromPhase, toPhase);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Log DP BOP Activation                                             |
+//+------------------------------------------------------------------+
+void LogDP_BOPActivated(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
+                        int bopNum, double triggerPrice, double newSL) {
+    if(!DP_DetailedLogging) return;
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    PrintFormat("%s %s BOP%d ACTIVATED Grid%s-%s-L%d | Trigger@%.5f | SL moved to %.5f",
+                GetLogTimestamp(), LOG_CAT_DP, bopNum, gridName, zoneName, level+1,
+                triggerPrice, newSL);
+}
+
+//+------------------------------------------------------------------+
+//| Log DP Parcel Close                                               |
+//+------------------------------------------------------------------+
+void LogDP_ParcelClosed(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
+                        string parcel, double lots, double profit, double closePrice) {
+    if(!DP_DetailedLogging) return;
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    PrintFormat("%s %s PARCEL %s CLOSED Grid%s-%s-L%d | Lots:%.2f | Profit:$%.2f | Close@%.5f",
+                GetLogTimestamp(), LOG_CAT_DP, parcel, gridName, zoneName, level+1,
+                lots, profit, closePrice);
+}
+
+//+------------------------------------------------------------------+
+//| Log DP Cycle Complete                                             |
+//+------------------------------------------------------------------+
+void LogDP_CycleComplete(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
+                         double parcelA_Profit, double parcelB_Profit, double totalProfit) {
+    // Always log cycle completions (important event)
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    PrintFormat("%s %s ═══ CYCLE COMPLETE ═══ Grid%s-%s-L%d | A:$%.2f + B:$%.2f = Total:$%.2f",
+                GetLogTimestamp(), LOG_CAT_DP, gridName, zoneName, level+1,
+                parcelA_Profit, parcelB_Profit, totalProfit);
+}
+
+//+------------------------------------------------------------------+
+//| Log DP Tick Progress (Debug Only)                                 |
+//+------------------------------------------------------------------+
+void LogDP_TickProgress(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
+                        double currentPrice, double tp1Progress, double tp2Progress) {
+    if(!DP_LogTickProgress) return;
+    string gridName = (side == GRID_A) ? "A" : "B";
+    string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
+    PrintFormat("%s %s TICK Grid%s-%s-L%d | Price:%.5f | TP1:%.1f%% | TP2:%.1f%%",
+                GetLogTimestamp(), LOG_CAT_DP, gridName, zoneName, level+1,
+                currentPrice, tp1Progress, tp2Progress);
+}
+
+//+------------------------------------------------------------------+
+//| Log DP Statistics                                                 |
+//+------------------------------------------------------------------+
+void LogDP_Statistics(int totalCycles, double totalProfit, int activeA, int activeB) {
+    if(!DP_DetailedLogging || !DP_LogProfitDetails) return;
+    PrintFormat("%s %s STATS | Cycles:%d | Total Profit:$%.2f | Active: A=%d B=%d",
+                GetLogTimestamp(), LOG_CAT_DP, totalCycles, totalProfit, activeA, activeB);
+}
+
+//+------------------------------------------------------------------+
+//| TRAILING GRID LOGGING FUNCTIONS v5.4                              |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Log Trail Initialization                                          |
+//+------------------------------------------------------------------+
+void LogTrail_Init(int triggerLevel, double spacingMult, int maxExtra, bool syncShield) {
+    if(!Trail_DetailedLogging) return;
+    PrintFormat("%s %s INIT | Trigger:L%d | SpacingMult:%.2f | MaxExtra:%d | SyncShield:%s",
+                GetLogTimestamp(), LOG_CAT_TRAIL, triggerLevel, spacingMult, maxExtra,
+                syncShield ? "YES" : "NO");
+}
+
+//+------------------------------------------------------------------+
+//| Log Trail Trigger Check (Debug)                                   |
+//+------------------------------------------------------------------+
+void LogTrail_TriggerCheck(string direction, int pendingCount, int triggerLevel, double currentPrice) {
+    if(!Trail_LogTriggerChecks) return;
+    PrintFormat("%s %s CHECK %s | Pending:%d (trigger<=%d) | Price:%.5f",
+                GetLogTimestamp(), LOG_CAT_TRAIL, direction, pendingCount, triggerLevel, currentPrice);
+}
+
+//+------------------------------------------------------------------+
+//| Log Trail Grid Insertion                                          |
+//+------------------------------------------------------------------+
+void LogTrail_GridInserted(string direction, int newIndex, double gridAPrice, double gridBPrice,
+                           double lotSize, double tpA, double tpB) {
+    if(!Trail_DetailedLogging || !Trail_LogInsertions) return;
+    PrintFormat("%s %s ➕ INSERT %s [%d] | GridA@%.5f (TP:%.5f) | GridB@%.5f (TP:%.5f) | Lot:%.2f",
+                GetLogTimestamp(), LOG_CAT_TRAIL, direction, newIndex,
+                gridAPrice, tpA, gridBPrice, tpB, lotSize);
+}
+
+//+------------------------------------------------------------------+
+//| Log Trail Grid Removal                                            |
+//+------------------------------------------------------------------+
+void LogTrail_GridRemoved(string direction, int index, double price) {
+    if(!Trail_DetailedLogging || !Trail_LogRemovals) return;
+    PrintFormat("%s %s ➖ REMOVE %s [%d] @ %.5f",
+                GetLogTimestamp(), LOG_CAT_TRAIL, direction, index, price);
+}
+
+//+------------------------------------------------------------------+
+//| Log Trail Shield Zone Update                                      |
+//+------------------------------------------------------------------+
+void LogTrail_ShieldUpdate(double newResistance, double newSupport, double rangeHeight) {
+    if(!Trail_DetailedLogging || !Trail_LogShieldSync) return;
+    PrintFormat("%s %s 🛡️ SHIELD SYNC | R:%.5f | S:%.5f | Range:%.1f pips",
+                GetLogTimestamp(), LOG_CAT_TRAIL, newResistance, newSupport, rangeHeight);
+}
+
+//+------------------------------------------------------------------+
+//| Log Trail Trigger Event                                           |
+//+------------------------------------------------------------------+
+void LogTrail_Triggered(string direction, int pendingCount, double newLevel, int extraCount) {
+    if(!Trail_DetailedLogging) return;
+    PrintFormat("%s %s TRIGGER %s | Pending:%d | NewLevel:%.5f | ExtraGrids:%d",
+                GetLogTimestamp(), LOG_CAT_TRAIL, direction, pendingCount, newLevel, extraCount);
+}
+
+//+------------------------------------------------------------------+
+//| Log Trail Statistics                                              |
+//+------------------------------------------------------------------+
+void LogTrail_Statistics(int upperAdded, int upperRemoved, int lowerAdded, int lowerRemoved) {
+    if(!Trail_DetailedLogging) return;
+    PrintFormat("%s %s STATS | Upper: +%d/-%d | Lower: +%d/-%d",
+                GetLogTimestamp(), LOG_CAT_TRAIL, upperAdded, upperRemoved, lowerAdded, lowerRemoved);
+}
+
+//+------------------------------------------------------------------+
+//| Log Trail Error                                                   |
+//+------------------------------------------------------------------+
+void LogTrail_Error(string operation, string errorMessage) {
+    // Always log errors
+    PrintFormat("%s %s ERROR in %s: %s",
+                GetLogTimestamp(), LOG_CAT_TRAIL, operation, errorMessage);
 }
 
 //+------------------------------------------------------------------+

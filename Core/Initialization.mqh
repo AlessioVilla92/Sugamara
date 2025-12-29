@@ -119,6 +119,8 @@ void InitializeEntryPoint() {
                 Print("[EntryPoint] Using current TF close: ", lastClose);
             } else {
                 Print("[EntryPoint] CRITICAL: No price data available!");
+                Print("[EntryPoint] Strategy Tester may not have price data at first tick - EA will not function!");
+                return;  // v5.x FIX: Exit without setting entryPoint (remains 0, caught by CalculateRangeBoundaries)
             }
         }
     }

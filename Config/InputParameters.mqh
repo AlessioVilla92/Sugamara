@@ -3,7 +3,7 @@
 //|                        Sugamara - Input Parameters               |
 //|                                                                  |
 //|  User-configurable parameters for Double Grid Neutral            |
-//|  v5.2 MULTIMODE - PURE / CASCADE                                 |
+//|  v5.4 MULTIMODE - PURE / CASCADE                                 |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
@@ -86,7 +86,7 @@ input group "╔═════════════════════�
 input group "║  🔒 BREAK ON PROFIT (BOP) v5.1                           ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
-input bool      Enable_BreakOnProfit = true;                // ✅ Abilita Break On Profit
+input bool      Enable_BreakOnProfit = false;               // ✅ Abilita Break On Profit (default OFF)
 // Quando posizione raggiunge X% del TP, sposta SL a Y% del profit
 
 input group "    📊 BOP PARAMETERS"
@@ -128,7 +128,7 @@ input group "╔═════════════════════�
 input group "║  🎯 DOUBLE PARCELLING (v5.2)                              ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
-input bool      Enable_DoubleParcelling = false;            // ✅ Abilita Double Parcelling
+input bool      Enable_DoubleParcelling = true;             // ✅ Abilita Double Parcelling (v5.4 default ON)
 
 input group "    📊 TP1 - PARCEL A"
 input int       DP_TP1_Percent = 100;                       // 🎯 TP1 (% dello spacing)
@@ -140,15 +140,47 @@ input int       DP_TP2_Percent = 200;                       // 🎯 TP2 (% dello
 
 input group "    🔒 BREAK ON PARCELLING - PARCEL A"
 input int       DP_BOP1_Trigger_Percent = 70;               // 🔔 BOP1 Trigger (% progress verso TP1)
-input int       DP_BOP1_SL_Percent = 50;                    // 🛡️ BOP1 SL Level (% progress)
+input int       DP_BOP1_SL_Percent = 65;                    // 🛡️ BOP1 SL Level (% progress) - v5.4 ottimizzato
 
 input group "    🔒 BREAK ON PARCELLING - PARCEL B"
-input int       DP_BOP2_Trigger_Percent = 100;              // 🔔 BOP2 Trigger (% progress verso TP2)
-input int       DP_BOP2_SL_Percent = 70;                    // 🛡️ BOP2 SL Level (% progress)
+input int       DP_BOP2_Trigger_Percent = 70;               // 🔔 BOP2 Trigger (% progress verso TP2) - v5.4 ottimizzato
+input int       DP_BOP2_SL_Percent = 50;                    // 🛡️ BOP2 SL Level (% progress) - v5.4 ottimizzato
 
 input group "    📦 LOT CONFIGURATION"
 input int       DP_LotRatio = 50;                           // 📦 Parcel Split (%)
                                                             // 50 = 50/50 (0.01 + 0.01)
+
+//+------------------------------------------------------------------+
+//| 🔄 TRAILING GRID INTELLIGENTE v5.3                                |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🔄 TRAILING GRID INTELLIGENTE (v5.3)                     ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ✅ ATTIVAZIONE"
+input bool   Enable_TrailingGrid = true;                    // ✅ Abilita Trailing Grid (v5.4 default ON)
+// Quando abilitato, il sistema aggiunge automaticamente nuove grid
+// seguendo il movimento del mercato (drift)
+
+input group "    📊 CONFIGURAZIONE"
+input int    Trail_Trigger_Level = 2;                       // 🎯 Trigger Level (1=ultima, 2=penultima)
+// 1 = Trigger quando l'ultima grid si attiva (breve finestra scoperta)
+// 2 = Trigger quando la penultima si attiva (RACCOMANDATO - 1 grid buffer)
+// 3 = Trigger quando la terzultima si attiva (2 grid buffer)
+
+input double Trail_Spacing_Multiplier = 1.0;                // 📏 Moltiplicatore Spacing (1.0-2.0)
+// 1.0 = Stesso spacing delle grid normali
+// 1.5 = 50% piu largo (piu conservativo)
+
+input int    Trail_Max_Extra_Grids = 4;                     // 🔢 Max Grid Extra per Lato (1-4)
+// Con GridLevelsPerSide=7: max 7+4=11 grid totali per lato
+// 0 = Nessun limite (ATTENZIONE: puo raggiungere limite array!)
+
+input group "    🔧 OPZIONI AVANZATE"
+input bool   Trail_Remove_Distant = true;                   // 🗑️ Elimina Grid Lontane (lato opposto)
+input bool   Trail_Sync_Shield = true;                      // 🛡️ Sincronizza Shield Zone
 
 //+------------------------------------------------------------------+
 //| 📊 ATR MULTI-TIMEFRAME SETTINGS                                  |
@@ -327,6 +359,28 @@ input bool      ATR_AlertOnSpacingChange = true;             // 🔔 Alert su Ca
 input bool      ATR_LogEveryCheck = false;                   // 🔍 Log ogni check ATR (debug mode)
 input bool      ATR_LogStepTransitions = true;               // 📊 Log transizioni step ATR
 
+//+------------------------------------------------------------------+
+//| 3️⃣.8️⃣ 📝 DOUBLE PARCELLING & TRAILING GRID LOGGING v5.4          |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣.8️⃣  📝 DP & TRAILING GRID LOGGING v5.4                ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📝 DOUBLE PARCELLING LOGGING"
+input bool      DP_DetailedLogging = true;                   // ✅ Log Dettagliato Double Parcelling
+input bool      DP_LogPhaseChanges = true;                   // 📊 Log Cambi Fase (TP1/TP2/BOP)
+input bool      DP_LogTickProgress = false;                  // 🔍 Log Ogni Tick (Debug - HEAVY!)
+input bool      DP_LogProfitDetails = true;                  // 💰 Log Dettagli Profitto Parcels
+
+input group "    📝 TRAILING GRID LOGGING"
+input bool      Trail_DetailedLogging = true;                // ✅ Log Dettagliato Trailing Grid
+input bool      Trail_LogInsertions = true;                  // ➕ Log Inserimenti Nuove Grid
+input bool      Trail_LogRemovals = true;                    // ➖ Log Rimozioni Grid Distanti
+input bool      Trail_LogTriggerChecks = false;              // 🔍 Log Check Trigger (Debug - HEAVY!)
+input bool      Trail_LogShieldSync = true;                  // 🛡️ Log Sync Shield Zone
+
 // (FOREX PAIR SELECTION e GRID CONFIGURATION spostati in alto dopo DEBUG MODE)
 
 //+------------------------------------------------------------------+
@@ -399,7 +453,7 @@ input group "║  9️⃣  💰 LOT SIZING ⚠️ [CRITICAL SECTION]            
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ╔═ SELEZIONA LOT MODE ════════════════════════════════════🔽🔽🔽"
-input ENUM_LOT_MODE LotMode = LOT_PROGRESSIVE;               // 💵 Lot Calculation Mode ▼
+input ENUM_LOT_MODE LotMode = LOT_FIXED;                     // 💵 Lot Calculation Mode ▼ (v5.4: default FIXED per 0.02 su tutte le grid)
 
 input group "    📊 LOT PARAMETERS (FIXED/PROGRESSIVE)"
 input double    BaseLot = 0.02;                              // 💵 Lot Base (livello 1)

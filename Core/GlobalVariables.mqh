@@ -91,6 +91,29 @@ datetime        g_lastLoggedATRChange = 0;              // Ultimo log ATR
 string          g_lastATRStepName = "";                 // Nome ultimo step loggato
 
 //+------------------------------------------------------------------+
+//| 🔄 TRAILING GRID STATE VARIABLES v5.3                             |
+//+------------------------------------------------------------------+
+
+// Contatori grid extra inserite per lato
+int g_trailExtraGridsAbove = 0;              // Grid extra inserite sopra
+int g_trailExtraGridsBelow = 0;              // Grid extra inserite sotto
+
+// Tracking livello massimo attivo (0-based index)
+int g_currentMaxLevelAbove = 0;              // Livello max attivo sopra
+int g_currentMaxLevelBelow = 0;              // Livello max attivo sotto
+
+// Stato sistema trailing
+bool g_trailActiveAbove = false;             // Trailing attivo verso l'alto
+bool g_trailActiveBelow = false;             // Trailing attivo verso il basso
+datetime g_lastTrailInsertTime = 0;          // Timestamp ultimo inserimento
+
+// Statistiche sessione per Dashboard
+int g_trailUpperAdded = 0;                   // Contatore UPPER ADDED
+int g_trailUpperRemoved = 0;                 // Contatore UPPER REMOVED
+int g_trailLowerAdded = 0;                   // Contatore LOWER ADDED
+int g_trailLowerRemoved = 0;                 // Contatore LOWER REMOVED
+
+//+------------------------------------------------------------------+
 //| 🎯 CENTER CALCULATOR v4.0                                        |
 //+------------------------------------------------------------------+
 // Pivot Point Daily
@@ -140,9 +163,9 @@ bool            g_recenterPending = false;  // Flag: recenter in attesa conferma
 
 //+------------------------------------------------------------------+
 //| GRID STRUCTURE                                                   |
-//| Ogni array ha dimensione [MAX_GRID_LEVELS] = 10 elementi         |
+//| Ogni array ha dimensione [MAX_GRID_LEVELS] = 15 elementi         |
 //| Indice 0 = Level 1 (piu vicino a entry)                          |
-//| Indice 9 = Level 10 (piu lontano da entry)                       |
+//| v5.3: Esteso da [10] a [15] per supportare Trailing Grid         |
 //+------------------------------------------------------------------+
 
 // ═══════════════════════════════════════════════════════════════════
@@ -150,48 +173,48 @@ bool            g_recenterPending = false;  // Flag: recenter in attesa conferma
 // ═══════════════════════════════════════════════════════════════════
 
 // Upper Zone (sopra Entry Point) - Buy Limit orders
-ulong gridA_Upper_Tickets[10];              // Ticket ordini pending
-double gridA_Upper_EntryPrices[10];         // Prezzi entry calcolati
-double gridA_Upper_Lots[10];                // Lot size per livello
-double gridA_Upper_TP[10];                  // Take Profit (Cascade)
-double gridA_Upper_SL[10];                  // Stop Loss
-ENUM_ORDER_STATUS gridA_Upper_Status[10];   // Stato ordine
-datetime gridA_Upper_LastClose[10];         // Tempo ultima chiusura (per cyclic)
-int gridA_Upper_Cycles[10];                 // Contatore cicli
+ulong gridA_Upper_Tickets[15];              // Ticket ordini pending
+double gridA_Upper_EntryPrices[15];         // Prezzi entry calcolati
+double gridA_Upper_Lots[15];                // Lot size per livello
+double gridA_Upper_TP[15];                  // Take Profit (Cascade)
+double gridA_Upper_SL[15];                  // Stop Loss
+ENUM_ORDER_STATUS gridA_Upper_Status[15];   // Stato ordine
+datetime gridA_Upper_LastClose[15];         // Tempo ultima chiusura (per cyclic)
+int gridA_Upper_Cycles[15];                 // Contatore cicli
 
 // Lower Zone (sotto Entry Point) - Sell Stop orders
-ulong gridA_Lower_Tickets[10];
-double gridA_Lower_EntryPrices[10];
-double gridA_Lower_Lots[10];
-double gridA_Lower_TP[10];
-double gridA_Lower_SL[10];
-ENUM_ORDER_STATUS gridA_Lower_Status[10];
-datetime gridA_Lower_LastClose[10];
-int gridA_Lower_Cycles[10];
+ulong gridA_Lower_Tickets[15];
+double gridA_Lower_EntryPrices[15];
+double gridA_Lower_Lots[15];
+double gridA_Lower_TP[15];
+double gridA_Lower_SL[15];
+ENUM_ORDER_STATUS gridA_Lower_Status[15];
+datetime gridA_Lower_LastClose[15];
+int gridA_Lower_Cycles[15];
 
 // ═══════════════════════════════════════════════════════════════════
 // GRID B - Short Bias (Sell Limit sopra, Buy Stop sotto)
 // ═══════════════════════════════════════════════════════════════════
 
 // Upper Zone (sopra Entry Point) - Sell Limit orders
-ulong gridB_Upper_Tickets[10];
-double gridB_Upper_EntryPrices[10];
-double gridB_Upper_Lots[10];
-double gridB_Upper_TP[10];
-double gridB_Upper_SL[10];
-ENUM_ORDER_STATUS gridB_Upper_Status[10];
-datetime gridB_Upper_LastClose[10];
-int gridB_Upper_Cycles[10];
+ulong gridB_Upper_Tickets[15];
+double gridB_Upper_EntryPrices[15];
+double gridB_Upper_Lots[15];
+double gridB_Upper_TP[15];
+double gridB_Upper_SL[15];
+ENUM_ORDER_STATUS gridB_Upper_Status[15];
+datetime gridB_Upper_LastClose[15];
+int gridB_Upper_Cycles[15];
 
 // Lower Zone (sotto Entry Point) - Buy Stop orders
-ulong gridB_Lower_Tickets[10];
-double gridB_Lower_EntryPrices[10];
-double gridB_Lower_Lots[10];
-double gridB_Lower_TP[10];
-double gridB_Lower_SL[10];
-ENUM_ORDER_STATUS gridB_Lower_Status[10];
-datetime gridB_Lower_LastClose[10];
-int gridB_Lower_Cycles[10];
+ulong gridB_Lower_Tickets[15];
+double gridB_Lower_EntryPrices[15];
+double gridB_Lower_Lots[15];
+double gridB_Lower_TP[15];
+double gridB_Lower_SL[15];
+ENUM_ORDER_STATUS gridB_Lower_Status[15];
+datetime gridB_Lower_LastClose[15];
+int gridB_Lower_Cycles[15];
 
 //+------------------------------------------------------------------+
 //| NET EXPOSURE                                                     |
@@ -256,7 +279,6 @@ double upperReentryLevel = 0;
 double lowerReentryLevel = 0;
 
 // Breakout Detection
-int breakoutConfirmCounter = 0;
 datetime breakoutDetectionTime = 0;
 ENUM_BREAKOUT_DIRECTION lastBreakoutDirection = BREAKOUT_NONE;
 
@@ -349,11 +371,11 @@ public:
     }
 };
 
-// Double Parcelling Arrays (per ogni grid/zone)
-DoubleParcelling_Level dpA_Upper[10];   // Grid A Upper Zone
-DoubleParcelling_Level dpA_Lower[10];   // Grid A Lower Zone
-DoubleParcelling_Level dpB_Upper[10];   // Grid B Upper Zone
-DoubleParcelling_Level dpB_Lower[10];   // Grid B Lower Zone
+// Double Parcelling Arrays (per ogni grid/zone) - v5.3: Esteso a [15]
+DoubleParcelling_Level dpA_Upper[15];   // Grid A Upper Zone
+DoubleParcelling_Level dpA_Lower[15];   // Grid A Lower Zone
+DoubleParcelling_Level dpB_Upper[15];   // Grid B Upper Zone
+DoubleParcelling_Level dpB_Lower[15];   // Grid B Lower Zone
 
 // Double Parcelling Statistics
 int    g_dp_TotalCycles = 0;            // Cicli DP completati
@@ -491,7 +513,6 @@ void InitializeArrays() {
     lowerBreakoutLevel = 0;
     upperReentryLevel = 0;
     lowerReentryLevel = 0;
-    breakoutConfirmCounter = 0;
     breakoutDetectionTime = 0;
     lastBreakoutDirection = BREAKOUT_NONE;
 

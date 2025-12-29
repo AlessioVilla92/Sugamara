@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v5.1         |
+//|                                    SUGAMARA RIBELLE v5.4         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025 - Sugamara Ribelle Development Team          |
-//|  Version: 5.1.0 CASCADE SOVRAPPOSTO                              |
+//|  Version: 5.4.0 CASCADE SOVRAPPOSTO + DP + TRAILING              |
 //|  Release Date: December 2025                                     |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,19 +16,19 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v5.1 FEATURES:                                                  |
+//|  v5.4 FEATURES:                                                  |
 //|  - CASCADE_OVERLAP: Grid A=BUY puro, Grid B=SELL puro            |
-//|  - Hedge Spacing: 3 pips (STOP <-> LIMIT)                        |
-//|  - DUNE/Arrakis Desert Theme                                     |
-//|  - Enhanced Logging System                                       |
+//|  - Double Parcelling (DP) - Split TP1/TP2 con BOP protetto       |
+//|  - Trailing Grid Intelligente - Segue il drift del mercato       |
+//|  - Enhanced DP/Trail Logging System                              |
 //|  - Shield 3 Phases Protection                                    |
-//|  - Manual S/R Drag & Drop                                        |
+//|  - DUNE/Arrakis Desert Theme                                     |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
-#property version   "5.10"
-#property description "SUGAMARA RIBELLE v5.1 - CASCADE SOVRAPPOSTO"
+#property version   "5.40"
+#property description "SUGAMARA RIBELLE v5.4 - CASCADE + DP + TRAILING"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -73,6 +73,9 @@
 
 // v5.2 NEW Trading Modules
 #include "Trading/DoubleParcelling.mqh"
+
+// v5.3 NEW Trading Modules
+#include "Trading/TrailingGridManager.mqh"
 
 // v4.0 NEW Modules
 #include "Utils/DynamicATRAdapter.mqh"
@@ -229,6 +232,11 @@ int OnInit() {
     //--- STEP 13.8c: Initialize Double Parcelling (v5.2) ---
     InitializeDoubleParcelling();
 
+    //--- STEP 13.8d: Initialize Trailing Grid Intelligente (v5.3) ---
+    if(!InitializeTrailingGrid()) {
+        Print("WARNING: Failed to initialize Trailing Grid");
+    }
+
     //--- STEP 13.9: Initialize Trailing Manager (REMOVED - CASCADE_OVERLAP puro) ---
     // GridTrailingManager eliminato - non necessario per CASCADE SOVRAPPOSTO
 
@@ -313,7 +321,7 @@ int OnInit() {
 
     Print("");
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA RIBELLE v5.1 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v5.4 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), IsCascadeOverlapMode() ? " (CASCADE SOVRAPPOSTO)" : "");
     Print("  System State: IDLE (Click START)");
     Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions(), IsCascadeOverlapMode() ? " [SOLO BUY]" : "");
@@ -324,12 +332,13 @@ int OnInit() {
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("───────────────────────────────────────────────────────────────────");
-    Print("  v5.1 FEATURES:");
+    Print("  v5.4 FEATURES:");
     if(IsCascadeOverlapMode()) {
         Print("  ✅ CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
         Print("  ✅ Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
     }
-    // Partial TP REMOVED - v5.x cleanup
+    Print("  ✅ Double Parcelling: ", Enable_DoubleParcelling ? "ENABLED (TP1/TP2 split)" : "DISABLED");
+    Print("  ✅ Trailing Grid: ", Enable_TrailingGrid ? "ENABLED (L" + IntegerToString(Trail_Trigger_Level) + " trigger)" : "DISABLED");
     Print("  ✅ ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
     Print("  ✅ Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
     Print("  ✅ Control Buttons: ALWAYS ACTIVE");
@@ -379,7 +388,8 @@ int OnInit() {
     //--- v4.6: Initialize Session Manager ---
     InitializeSessionManager();
 
-    if(EnableAlerts) {
+    // v5.x FIX: Skip Alert() in Strategy Tester/Optimization (blocks execution)
+    if(EnableAlerts && !MQLInfoInteger(MQL_TESTER) && !MQLInfoInteger(MQL_OPTIMIZATION)) {
         Alert("SUGAMARA: System initialized and ACTIVE");
     }
 
@@ -439,6 +449,9 @@ void OnDeinit(const int reason) {
 
     // v5.2: Deinitialize Double Parcelling
     DeinitializeDoubleParcelling();
+
+    // v5.3: Deinitialize Trailing Grid
+    DeinitializeTrailingGrid();
 
     // v4.0: Deinitialize new modules
     if(ShowCenterIndicators || EnableAutoRecenter) {
@@ -567,8 +580,13 @@ void OnTick() {
 
     //--- v5.2: DOUBLE PARCELLING PROCESSING ---
     // ProcessDoubleParcelling deve essere chiamato PRIMA di CheckBreakOnProfit
-    // perché DP ha i propri BOP1/BOP2 interni
+    // perche DP ha i propri BOP1/BOP2 interni
     ProcessDoubleParcelling();
+
+    //--- v5.3: TRAILING GRID INTELLIGENTE PROCESSING ---
+    if(Enable_TrailingGrid && systemState == STATE_ACTIVE) {
+        ProcessTrailingGridCheck();
+    }
 
     //--- v5.1: BREAK ON PROFIT (BOP) ---
     CheckBreakOnProfit();
@@ -800,7 +818,7 @@ void HandleKeyPress(int key) {
 void LogV4StatusReport() {
     Print("");
     Print("╔═══════════════════════════════════════════════════════════════════╗");
-    Print("║       SUGAMARA RIBELLE v5.1 - COMPLETE STATUS REPORT              ║");
+    Print("║       SUGAMARA RIBELLE v5.4 - COMPLETE STATUS REPORT              ║");
     Print("║       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                      ║");
     Print("╚═══════════════════════════════════════════════════════════════════╝");
     Print("");
@@ -903,7 +921,7 @@ void ApplyVisualTheme() {
     ChartSetInteger(0, CHART_SHOW_ASK_LINE, true);
     ChartSetInteger(0, CHART_SHOW_BID_LINE, true);
 
-    Print("Visual Theme v5.1 applied: DUNE/Arrakis Desert Theme (The Spice Must Flow)");
+    Print("Visual Theme v5.4 applied: DUNE/Arrakis Desert Theme (The Spice Must Flow)");
     ChartRedraw(0);
 }
 
