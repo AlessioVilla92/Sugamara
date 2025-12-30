@@ -83,8 +83,8 @@ bool InitializeShieldZonesVisual()
    if(Enable_ProfitZoneVisual) {
       Print("  Profit Zone: Green zone created (central area)");
    }
-   Print("  Danger Zones Transparency: ", ShieldZones_Transparency);
-   Print("  Profit Zone Transparency: ", ProfitZone_Transparency);
+   Print("  Danger Zones Transparency: ", SHIELDZONES_TRANSPARENCY);
+   Print("  Profit Zone Transparency: ", PROFITZONE_TRANSPARENCY);
    Print("=============================================================");
 
    return true;
@@ -160,7 +160,7 @@ void CreateAllShieldZones()
       SHIELD_ZONE_PHASE1_UP,
       shieldZonesStartTime, szWarningZoneUp,
       futureTime, szLastGridUp,
-      ShieldZone_Phase1_Color,
+      SHIELDZONE_PHASE1_COLOR,
       "Phase 1 Warning UP"
    );
 
@@ -169,7 +169,7 @@ void CreateAllShieldZones()
       SHIELD_ZONE_PHASE2_UP,
       shieldZonesStartTime, szLastGridUp,
       futureTime, szBreakoutUp,
-      ShieldZone_Phase2_Color,
+      SHIELDZONE_PHASE2_COLOR,
       "Phase 2 Pre-Shield UP"
    );
 
@@ -179,7 +179,7 @@ void CreateAllShieldZones()
       SHIELD_ZONE_PHASE3_UP,
       shieldZonesStartTime, szBreakoutUp,
       futureTime, extendedUp,
-      ShieldZone_Phase3_Color,
+      SHIELDZONE_PHASE3_COLOR,
       "Phase 3 Breakout UP"
    );
 
@@ -192,7 +192,7 @@ void CreateAllShieldZones()
       SHIELD_ZONE_PHASE1_DOWN,
       shieldZonesStartTime, szLastGridDown,
       futureTime, szWarningZoneDown,
-      ShieldZone_Phase1_Color,
+      SHIELDZONE_PHASE1_COLOR,
       "Phase 1 Warning DOWN"
    );
 
@@ -201,7 +201,7 @@ void CreateAllShieldZones()
       SHIELD_ZONE_PHASE2_DOWN,
       shieldZonesStartTime, szBreakoutDown,
       futureTime, szLastGridDown,
-      ShieldZone_Phase2_Color,
+      SHIELDZONE_PHASE2_COLOR,
       "Phase 2 Pre-Shield DOWN"
    );
 
@@ -211,7 +211,7 @@ void CreateAllShieldZones()
       SHIELD_ZONE_PHASE3_DOWN,
       shieldZonesStartTime, extendedDown,
       futureTime, szBreakoutDown,
-      ShieldZone_Phase3_Color,
+      SHIELDZONE_PHASE3_COLOR,
       "Phase 3 Breakout DOWN"
    );
 
@@ -241,7 +241,7 @@ void CreateAllShieldZones()
          PROFIT_ZONE_CENTER,
          shieldZonesStartTime, szWarningZoneDown,
          futureTime, szWarningZoneUp,
-         ProfitZone_Color,
+         PROFITZONE_COLOR,
          "PROFIT ZONE - Grid Operating Area"
       );
    }
@@ -266,7 +266,7 @@ void CreateShieldZoneRectangle(string name, datetime time1, double price1,
    }
 
    // Convert color to ARGB with transparency
-   uint argbColor = ColorToARGB(clr, ShieldZones_Transparency);
+   uint argbColor = ColorToARGB(clr, SHIELDZONES_TRANSPARENCY);
 
    // Set properties
    ObjectSetInteger(0, name, OBJPROP_COLOR, argbColor);
@@ -299,7 +299,7 @@ void CreateProfitZoneRectangle(string name, datetime time1, double price1,
    }
 
    // Convert color to ARGB with PROFIT ZONE transparency (more transparent)
-   uint argbColor = ColorToARGB(clr, ProfitZone_Transparency);
+   uint argbColor = ColorToARGB(clr, PROFITZONE_TRANSPARENCY);
 
    // Set properties
    ObjectSetInteger(0, name, OBJPROP_COLOR, argbColor);
@@ -330,9 +330,9 @@ void CreateShieldEntryLine(string name, double price, string label)
    }
 
    // Set properties
-   ObjectSetInteger(0, name, OBJPROP_COLOR, ShieldEntry_Line_Color);
-   ObjectSetInteger(0, name, OBJPROP_WIDTH, ShieldEntry_Line_Width);
-   ObjectSetInteger(0, name, OBJPROP_STYLE, ShieldEntry_Line_Style);
+   ObjectSetInteger(0, name, OBJPROP_COLOR, SHIELDENTRY_LINE_COLOR);
+   ObjectSetInteger(0, name, OBJPROP_WIDTH, SHIELDENTRY_LINE_WIDTH);
+   ObjectSetInteger(0, name, OBJPROP_STYLE, SHIELDENTRY_LINE_STYLE);
    ObjectSetInteger(0, name, OBJPROP_BACK, false);          // In front for visibility
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_SELECTED, false);
@@ -345,7 +345,7 @@ void CreateShieldEntryLine(string name, double price, string label)
 
    if(ObjectCreate(0, labelName, OBJ_TEXT, 0, TimeCurrent(), price)) {
       ObjectSetString(0, labelName, OBJPROP_TEXT, "  " + label);
-      ObjectSetInteger(0, labelName, OBJPROP_COLOR, ShieldEntry_Line_Color);
+      ObjectSetInteger(0, labelName, OBJPROP_COLOR, SHIELDENTRY_LINE_COLOR);
       ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 8);
       ObjectSetString(0, labelName, OBJPROP_FONT, "Arial Bold");
       ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_LEFT);
@@ -499,9 +499,9 @@ void LogShieldZonesReport()
    Print("=============================================================");
    PrintFormat("  Enabled: %s", (Enable_ShieldZonesVisual ? "YES" : "NO"));
    PrintFormat("  Initialized: %s", (shieldZonesInitialized ? "YES" : "NO"));
-   PrintFormat("  Danger Zones Transparency: %d", ShieldZones_Transparency);
+   PrintFormat("  Danger Zones Transparency: %d", SHIELDZONES_TRANSPARENCY);
    PrintFormat("  Profit Zone Enabled: %s", (Enable_ProfitZoneVisual ? "YES" : "NO"));
-   PrintFormat("  Profit Zone Transparency: %d", ProfitZone_Transparency);
+   PrintFormat("  Profit Zone Transparency: %d", PROFITZONE_TRANSPARENCY);
    Print("-------------------------------------------------------------");
    Print("  UPPER ZONES (Danger):");
    PrintFormat("    Phase 1 (Warning):    %.5f - %.5f", szWarningZoneUp, szLastGridUp);

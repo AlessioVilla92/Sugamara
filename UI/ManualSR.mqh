@@ -87,12 +87,12 @@ bool InitializeManualSR() {
     if(LimitActivation_Price > 0) manualSR_Activation = LimitActivation_Price;
 
     // Create lines
-    CreateSRLine(SR_LINE_RESISTANCE, manualSR_Resistance, ManualSR_ResistanceColor, "Resistance");
-    CreateSRLine(SR_LINE_SUPPORT, manualSR_Support, ManualSR_SupportColor, "Support");
+    CreateSRLine(SR_LINE_RESISTANCE, manualSR_Resistance, MANUAL_SR_RESISTANCE_COLOR, "Resistance");
+    CreateSRLine(SR_LINE_SUPPORT, manualSR_Support, MANUAL_SR_SUPPORT_COLOR, "Support");
 
     // Only create activation line if in LIMIT or STOP mode
     if(DefaultEntryMode == ENTRY_LIMIT || DefaultEntryMode == ENTRY_STOP) {
-        CreateSRLine(SR_LINE_ACTIVATION, manualSR_Activation, ManualSR_ActivationColor, "Activation");
+        CreateSRLine(SR_LINE_ACTIVATION, manualSR_Activation, MANUAL_SR_ACTIVATION_COLOR, "Activation");
     }
 
     manualSR_Initialized = true;
@@ -124,7 +124,7 @@ void CreateSRLine(string name, double price, color clr, string label) {
     }
 
     ObjectSetInteger(0, name, OBJPROP_COLOR, clr);
-    ObjectSetInteger(0, name, OBJPROP_WIDTH, ManualSR_LineWidth);
+    ObjectSetInteger(0, name, OBJPROP_WIDTH, MANUAL_SR_LINE_WIDTH);
     ObjectSetInteger(0, name, OBJPROP_STYLE, STYLE_SOLID);
     ObjectSetInteger(0, name, OBJPROP_BACK, false);
     ObjectSetInteger(0, name, OBJPROP_SELECTABLE, true);    // Enable selection
@@ -133,7 +133,7 @@ void CreateSRLine(string name, double price, color clr, string label) {
     ObjectSetString(0, name, OBJPROP_TOOLTIP, label + ": " + DoubleToString(price, _Digits));
 
     // Create label
-    if(ManualSR_ShowLabels) {
+    if(MANUAL_SR_SHOW_LABELS) {
         string lblName = name + "_LBL";
         ObjectDelete(0, lblName);
 
@@ -204,7 +204,7 @@ void UpdateSRLine(string name, double newPrice, string label) {
     ObjectSetString(0, name, OBJPROP_TOOLTIP, label + ": " + DoubleToString(newPrice, _Digits));
 
     // Update label
-    if(ManualSR_ShowLabels) {
+    if(MANUAL_SR_SHOW_LABELS) {
         string lblName = name + "_LBL";
         if(ObjectFind(0, lblName) >= 0) {
             ObjectSetDouble(0, lblName, OBJPROP_PRICE, newPrice);

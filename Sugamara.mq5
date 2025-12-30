@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v5.7         |
+//|                                    SUGAMARA RIBELLE v5.8         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025 - Sugamara Ribelle Development Team          |
-//|  Version: 5.7.0 COP FIX (Symbol Filter + Commission)             |
+//|  Version: 5.8.0 CLEANUP (AutoRecenter + Cooldown removed)        |
 //|  Release Date: December 2025                                     |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,24 +16,20 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
+//|  v5.8 CLEANUP:                                                   |
+//|  - AutoRecenter REMOVED: feature mai implementata                |
+//|  - CyclicCooldown REMOVED: reopen sempre immediato               |
+//|  - 6 parametri obsoleti rimossi da InputParameters               |
+//|                                                                  |
 //|  v5.7 FIXES:                                                     |
 //|  - COP Symbol Filter: filtra solo trade del pair corrente        |
 //|  - COP Commission Fix: elimina double counting commissioni       |
-//|                                                                  |
-//|  v5.6 FEATURES:                                                  |
-//|  - ZERO Stop Loss - Auto-hedging compensa le perdite             |
-//|  - BOP (Break On Profit) abilitato di default                    |
-//|  - CASCADE_OVERLAP: Grid A=BUY puro, Grid B=SELL puro            |
-//|  - Trailing Grid Intelligente - Segue il drift del mercato       |
-//|  - Cyclic Reopen sempre attivo (senza blocchi)                   |
-//|  - Shield 3 Phases Protection                                    |
-//|  - DUNE/Arrakis Desert Theme                                     |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
-#property version   "5.70"
-#property description "SUGAMARA RIBELLE v5.7 - COP FIX + NO SL + BOP DEFAULT"
+#property version   "5.80"
+#property description "SUGAMARA RIBELLE v5.8 - CLEANUP + COP FIX + NO SL + BOP"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -80,7 +76,6 @@
 #include "Trading/TrailingGridManager.mqh"
 
 // v4.0 NEW Modules
-#include "Utils/DynamicATRAdapter.mqh"
 #include "Indicators/CenterCalculator.mqh"
 
 // UI Module
@@ -244,15 +239,8 @@ int OnInit() {
         Print("WARNING: Failed to initialize Manual S/R");
     }
 
-    //--- STEP 13.11: Initialize Dynamic ATR Adapter (v4.0) ---
-    if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
-        if(!InitializeDynamicATRAdapter()) {
-            Print("WARNING: Failed to initialize Dynamic ATR Adapter");
-        }
-    }
-
     //--- STEP 13.12: Initialize Center Calculator (v4.0) ---
-    if(EnableAutoRecenter || ShowCenterIndicators) {
+    if(ShowCenterIndicators) {
         if(!InitializeCenterCalculator()) {
             Print("WARNING: Failed to initialize Center Calculator");
         }
@@ -343,45 +331,15 @@ int OnInit() {
     Print("  ✅ Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
     Print("  ✅ Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
     Print("───────────────────────────────────────────────────────────────────");
-    Print("  ATR/SPACING FEATURES:");
-    Print("  ✅ Dynamic ATR Spacing: ", (EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) ? "ENABLED" : "DISABLED");
-    if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
-        Print("     ATR Step: ", GetATRStepName(currentATRStep));
-        Print("     Current Spacing: ", DoubleToString(GetDynamicSpacing(), 1), " pips");
-    }
+    Print("  ATR/CENTER FEATURES:");
+    Print("  ✅ ATR Indicator: ", UseATR ? "ENABLED" : "DISABLED");
+    Print("  ✅ ATR Multi-TF Dashboard: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
     Print("  ✅ Center Indicators: ", ShowCenterIndicators ? "ENABLED" : "DISABLED");
-    Print("  ✅ Auto-Recenter: ", EnableAutoRecenter ? "ENABLED" : "DISABLED");
-    // ATR Extreme Warning REMOVED - v5.x cleanup (ridondante con Shield)
-    Print("  ✅ ATR Alert on Spacing: ", ATR_AlertOnSpacingChange ? "ENABLED" : "DISABLED");
     Print("═══════════════════════════════════════════════════════════════════");
 
-    //--- v4.1: Setup Timer with dynamic interval (uses user parameter) ---
-    int timerInterval = MathMax(ATR_CheckInterval_Seconds, 60);
-    EventSetTimer(timerInterval);
-    Print("[TIMER] Set to ", timerInterval, " seconds (ATR_CheckInterval_Seconds = ", ATR_CheckInterval_Seconds, ")");
-
-    //--- v4.2: Log ATR Dynamic Spacing Configuration ---
-    if(EnableDynamicATRSpacing && ATR_DetailedLogging && NeutralMode != NEUTRAL_PURE) {
-        Print("");
-        Print("╔══════════════════════════════════════════════════════════════╗");
-        Print("║          ATR DYNAMIC SPACING INITIALIZED v4.2                ║");
-        Print("╠══════════════════════════════════════════════════════════════╣");
-        Print("║  Check Interval: ", ATR_CheckInterval_Seconds, " seconds");
-        Print("║  Min Time Between Changes: ", ATR_MinTimeBetweenChanges, " seconds");
-        Print("║  Step Change Threshold: ", DoubleToString(ATR_StepChangeThreshold, 1), "%");
-        Print("║  Timeframe: ", EnumToString(ATR_Timeframe));
-        Print("║  Detailed Logging: ", ATR_DetailedLogging ? "ON" : "OFF");
-        Print("║  Alert on Change: ", ATR_AlertOnSpacingChange ? "ON" : "OFF");
-        Print("╠══════════════════════════════════════════════════════════════╣");
-        Print("║  SOGLIE ATR (pips):");
-        Print("║    VERY_LOW: < ", DoubleToString(ATR_Threshold_VeryLow, 1), " -> ", DoubleToString(Spacing_VeryLow_Pips, 1), " pips spacing");
-        Print("║    LOW: < ", DoubleToString(ATR_Threshold_Low, 1), " -> ", DoubleToString(Spacing_Low_Pips, 1), " pips spacing");
-        Print("║    NORMAL: < ", DoubleToString(ATR_Threshold_Normal, 1), " -> ", DoubleToString(Spacing_Normal_Pips, 1), " pips spacing");
-        Print("║    HIGH: < ", DoubleToString(ATR_Threshold_High, 1), " -> ", DoubleToString(Spacing_High_Pips, 1), " pips spacing");
-        Print("║    EXTREME: >= ", DoubleToString(ATR_Threshold_High, 1), " -> ", DoubleToString(Spacing_Extreme_Pips, 1), " pips spacing");
-        Print("╚══════════════════════════════════════════════════════════════╝");
-        Print("");
-    }
+    //--- Setup Timer (60 seconds default) ---
+    EventSetTimer(60);
+    Print("[TIMER] Set to 60 seconds");
 
     //--- v4.6: Initialize Session Manager ---
     InitializeSessionManager();
@@ -449,7 +407,7 @@ void OnDeinit(const int reason) {
     DeinitializeTrailingGrid();
 
     // v4.0: Deinitialize new modules
-    if(ShowCenterIndicators || EnableAutoRecenter) {
+    if(ShowCenterIndicators) {
         DeinitializeCenterCalculator();
     }
 
@@ -542,21 +500,9 @@ void OnTick() {
         ProcessShield();
     }
 
-    //--- CHECK ATR RECALCULATION (only if ATR enabled) ---
-    if(IsATREnabled() && UpdateATRAndCheckAdjustment()) {
-        // ATR changed significantly - may need to adjust spacing
-        double newSpacing = CalculateCurrentSpacing();
-
-        if(MathAbs(newSpacing - currentSpacing_Pips) > 2.0) {
-            LogMessage(LOG_INFO, "ATR spacing change: " +
-                       DoubleToString(currentSpacing_Pips, 1) + " -> " +
-                       DoubleToString(newSpacing, 1) + " pips");
-
-            // Note: Full grid recalculation would require closing and reopening orders
-            // For now, just log the change - new cyclic orders will use new spacing
-            currentSpacing_Pips = newSpacing;
-        }
-    }
+    // v5.8: ATR recalculation removed - ATR for monitoring only, spacing is fixed
+    // Spacing is updated from CalculateCurrentSpacing() which now returns fixed spacing
+    currentSpacing_Pips = CalculateCurrentSpacing();
 
     //--- PROCESS CYCLIC REOPENING ---
     if(EnableCyclicReopen && !IsMarketTooVolatile()) {
@@ -625,18 +571,11 @@ void OnTimer() {
     if(systemState != STATE_ACTIVE) return;
 
     // ═══════════════════════════════════════════════════════════════════
-    // v4.0: ATR Dynamic Spacing Check
-    // ═══════════════════════════════════════════════════════════════════
-    if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
-        CheckAndAdaptATRSpacing();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
     // v4.0: Center Indicators Update (every 5 minutes)
     // ═══════════════════════════════════════════════════════════════════
     static datetime lastCenterUpdate = 0;
     if(TimeCurrent() - lastCenterUpdate >= 300) {
-        if(ShowCenterIndicators || EnableAutoRecenter) {
+        if(ShowCenterIndicators) {
             UpdateCenterIndicators();
         }
         lastCenterUpdate = TimeCurrent();
@@ -777,18 +716,9 @@ void HandleKeyPress(int key) {
         LogV4StatusReport();
     }
 
-    // D = Dynamic ATR Report
-    if(key == 'D' || key == 'd') {
-        if(IsATRDynamicAvailable()) {
-            LogATRDynamicReport();
-        } else {
-            Print("Dynamic ATR Spacing not available (PURE mode or disabled)");
-        }
-    }
-
     // C = Center Indicators Report
     if(key == 'C' || key == 'c') {
-        if(ShowCenterIndicators || EnableAutoRecenter) {
+        if(ShowCenterIndicators) {
             LogCenterIndicatorsReport();
         } else {
             Print("Center Indicators not available (disabled)");
@@ -821,7 +751,7 @@ void LogV4StatusReport() {
     Print("│  State: ", EnumToString(systemState));
     Print("│  Entry Point: ", DoubleToString(entryPoint, symbolDigits));
     Print("│  Current Price: ", DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), symbolDigits));
-    Print("│  Current Spacing: ", DoubleToString(GetDynamicSpacing(), 1), " pips");
+    Print("│  Current Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
@@ -834,20 +764,14 @@ void LogV4StatusReport() {
         Print("│      Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
     }
 
-    // ATR Dynamic Spacing
-    if(NeutralMode == NEUTRAL_PURE) {
-        Print("│  🔄 ATR Dynamic Spacing: N/A (PURE mode - fixed spacing)");
-    } else if(EnableDynamicATRSpacing) {
-        Print("│  🔄 ATR Dynamic Spacing: ACTIVE");
-        Print("│      Step: ", GetATRStepName(currentATRStep),
-              " | ATR: ", DoubleToString(GetATRInPips(), 1), " pips");
-        Print("│      Spacing: ", DoubleToString(GetDynamicSpacing(), 1), " pips");
-    } else {
-        Print("│  🔄 ATR Dynamic Spacing: DISABLED");
+    // ATR Indicator (monitoring only)
+    if(UseATR) {
+        Print("│  📊 ATR Indicator: ACTIVE");
+        Print("│      ATR: ", DoubleToString(GetATRPips(), 1), " pips | ", GetATRConditionName(GetATRCondition()));
     }
 
     // Center Indicators
-    if(ShowCenterIndicators || EnableAutoRecenter) {
+    if(ShowCenterIndicators) {
         Print("│  🎯 Center Indicators: ACTIVE");
         if(g_centerCalc.isValid) {
             Print("│      Optimal Center: ", DoubleToString(g_centerCalc.optimalCenter, symbolDigits));
@@ -867,10 +791,10 @@ void LogV4StatusReport() {
 
     // Hotkeys reminder
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v5.1 HOTKEYS                                                   │");
+    Print("│  v5.8 HOTKEYS                                                   │");
     Print("├─────────────────────────────────────────────────────────────────┤");
-    Print("│  V = This report (v5.1 Full Status)                             │");
-    Print("│  D = Dynamic ATR Spacing detailed report                        │");
+    Print("│  V = This report (Full Status)                                  │");
+    Print("│  A = ATR Report                                                 │");
     Print("│  C = Center Indicators detailed report                          │");
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
@@ -882,13 +806,13 @@ void LogV4StatusReport() {
 //+------------------------------------------------------------------+
 void ApplyVisualTheme() {
     // Apply chart background color (Deep Desert Night)
-    ChartSetInteger(0, CHART_COLOR_BACKGROUND, Theme_ChartBackground);
+    ChartSetInteger(0, CHART_COLOR_BACKGROUND, THEME_CHART_BACKGROUND);
 
     // Apply candle colors (DUNE Theme)
-    ChartSetInteger(0, CHART_COLOR_CANDLE_BULL, Theme_CandleBull);  // Spice Orange
-    ChartSetInteger(0, CHART_COLOR_CANDLE_BEAR, Theme_CandleBear);  // Fremen Blue
-    ChartSetInteger(0, CHART_COLOR_CHART_UP, Theme_CandleBull);
-    ChartSetInteger(0, CHART_COLOR_CHART_DOWN, Theme_CandleBear);
+    ChartSetInteger(0, CHART_COLOR_CANDLE_BULL, THEME_CANDLE_BULL);  // Spice Orange
+    ChartSetInteger(0, CHART_COLOR_CANDLE_BEAR, THEME_CANDLE_BEAR);  // Fremen Blue
+    ChartSetInteger(0, CHART_COLOR_CHART_UP, THEME_CANDLE_BULL);
+    ChartSetInteger(0, CHART_COLOR_CHART_DOWN, THEME_CANDLE_BEAR);
 
     // Hide grid and apply axis colors
     ChartSetInteger(0, CHART_SHOW_GRID, false);               // No grid (clean desert)

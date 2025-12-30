@@ -3,10 +3,13 @@
 //|                        Sugamara - Input Parameters               |
 //|                                                                  |
 //|  User-configurable parameters for Double Grid Neutral            |
-//|  v5.4 MULTIMODE - PURE / CASCADE                                 |
+//|  v5.8 MULTIMODE - PURE / CASCADE                                 |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
+
+// Visual Theme Constants (hardcoded, not editable in EA settings)
+#include "VisualTheme.mqh"
 
 //+------------------------------------------------------------------+
 //| 🆕 v3.0 FEATURES ACTIVATION                                      |
@@ -69,11 +72,9 @@ input group "    📏 GRID STRUCTURE"
 input int       GridLevelsPerSide = 7;                       // 🔢 Livelli per Lato (3-10) [Default: 7]
 // 7 livelli × 2 zone × 2 grid = 28 ordini totali
 
-input group "    ╔═ SELEZIONA SPACING MODE ════════════════════════════════🔽🔽🔽"
-input ENUM_SPACING_MODE SpacingMode = SPACING_ATR;           // 📏 Modalità Spacing ▼
+input group "    ╔═ SPACING SETTINGS ════════════════════════════════🔽🔽🔽"
+input ENUM_SPACING_MODE SpacingMode = SPACING_FIXED;         // 📏 Modalità Spacing ▼
 input double    Fixed_Spacing_Pips = 20.0;                   // 📐 Spacing Fisso (pips)
-input double    SpacingATR_Multiplier = 0.7;                 // 📈 Moltiplicatore ATR (se SPACING_ATR)
-// Spacing = ATR(14) × 0.7
 input double    SpacingGeometric_Percent = 0.20;             // 📊 Spacing % (se SPACING_GEOMETRIC)
 // Spacing = Prezzo × 0.20%
 
@@ -177,12 +178,7 @@ input group "╔═════════════════════�
 input group "║  📍 MANUAL S/R DRAG & DROP (v3.0)                         ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
-input group "    🎨 S/R LINE SETTINGS"
-input color     ManualSR_ResistanceColor = clrRed;          // 🔺 Colore Resistance
-input color     ManualSR_SupportColor = clrLime;            // 🔻 Colore Support
-input color     ManualSR_ActivationColor = clrGold;         // ⭐ Colore Activation Level
-input int       ManualSR_LineWidth = 2;                     // 📏 Spessore Linee
-input bool      ManualSR_ShowLabels = true;                 // 📝 Mostra Etichette
+// S/R LINE COLORS: Now in VisualTheme.mqh (MANUAL_SR_*)
 
 //+------------------------------------------------------------------+
 //| 🎮 CONTROL BUTTONS SETTINGS                                      |
@@ -244,90 +240,11 @@ input group "╚═════════════════════�
 input group "    ⚡ ATR ACTIVATION"
 input bool      UseATR = false;                              // ⭐ Abilita ATR (default FALSE per usare Fixed_Spacing_Pips)
 
-input group "    ⏱️ TIMEFRAME SETTINGS"
+input group "    ⏱️ ATR INDICATOR SETTINGS"
 input group "    ╔═ SELEZIONA TIMEFRAME ATR ═══════════════════════════════🔽🔽🔽"
 input ENUM_TIMEFRAMES ATR_Timeframe = PERIOD_M5;             // 📊 ATR Timeframe ▼
 input int       ATR_Period = 14;                             // 📈 ATR Period (bars)
-input int       ATR_RecalcHours = 4;                         // 🔄 Ore tra Ricalcoli ATR
-
-// ═══════════════════════════════════════════════════════════════
-// DEPRECATED v4.5: Legacy ATR Decision Table - Usare ATR_Threshold_* invece
-// Mantenuto per backward compatibility - NON MODIFICARE
-// ═══════════════════════════════════════════════════════════════
-input group "    🎯 ATR DECISION TABLE (LEGACY - Use v4.0 section below)"
-input double    ATR_Calm_Threshold = 15.0;                   // [DEPRECATED] Soglia ATR Calmo
-input double    ATR_Calm_Spacing = 10.0;                     // [DEPRECATED] Spacing se ATR < 15
-input double    ATR_Normal_Threshold = 30.0;                 // [DEPRECATED] Soglia ATR Normale
-input double    ATR_Normal_Spacing = 10.0;                   // [DEPRECATED] Spacing se ATR 15-30
-input double    ATR_Volatile_Threshold = 50.0;               // [DEPRECATED] Soglia ATR Volatile
-input double    ATR_Volatile_Spacing = 30.0;                 // [DEPRECATED] Spacing se ATR 30-50
-input double    ATR_Extreme_Spacing = 40.0;                  // [DEPRECATED] Spacing se ATR > 50
-
-//+------------------------------------------------------------------+
-//| 3️⃣.5️⃣ 🔄 ATR DYNAMIC SPACING v4.0                                |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  3️⃣.5️⃣  🔄 ATR DYNAMIC SPACING v4.0                       ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ⚡ ATTIVAZIONE"
-input bool      EnableDynamicATRSpacing = false;             // ❌ Disabilitato: usa Fixed_Spacing_Pips
-// Se FALSE: usa Fixed_Spacing_Pips o ATR Decision Table esistente
-
-input group "    ⏱️ TIMING"
-input int       ATR_CheckInterval_Seconds = 60;              // ⏱️ Intervallo Check ATR (secondi) [60=1min] - v4.6 più reattivo
-input int       ATR_MinTimeBetweenChanges = 120;             // ⏱️ Min tempo tra cambi (secondi) [120=2min] - v4.6 cooldown ridotto
-input double    ATR_StepChangeThreshold = 15.0;              // 📊 Soglia cambio step (%) [cambio solo se >15%]
-
-input group "    📊 SOGLIE ATR PER STEP (pips)"
-input double    ATR_Threshold_VeryLow = 10.0;                // 📊 Soglia VERY_LOW (ATR < X)
-input double    ATR_Threshold_Low = 18.0;                    // 📊 Soglia LOW (ATR < X)
-input double    ATR_Threshold_Normal = 28.0;                 // 📊 Soglia NORMAL (ATR < X)
-input double    ATR_Threshold_High = 40.0;                   // 📊 Soglia HIGH (ATR < X, sopra = EXTREME)
-
-input group "    📏 SPACING PER STEP (pips) - CONFIGURABILI"
-input double    Spacing_VeryLow_Pips = 8.0;                  // 📏 Spacing VERY_LOW (mercato piatto)
-input double    Spacing_Low_Pips = 12.0;                     // 📏 Spacing LOW (bassa volatilità)
-input double    Spacing_Normal_Pips = 18.0;                  // 📏 Spacing NORMAL (condizioni tipiche)
-input double    Spacing_High_Pips = 26.0;                    // 📏 Spacing HIGH (volatilità elevata)
-input double    Spacing_Extreme_Pips = 35.0;                 // 📏 Spacing EXTREME (news/eventi)
-
-input group "    🔒 LIMITI ASSOLUTI"
-input double    DynamicSpacing_Min_Pips = 6.0;               // 🔒 Spacing Minimo Assoluto (pips)
-input double    DynamicSpacing_Max_Pips = 50.0;              // 🔒 Spacing Massimo Assoluto (pips)
-
-input group "    📈 LINEAR INTERPOLATION + RATE LIMITING (v4.6)"
-input bool      UseLinearInterpolation = true;               // ✅ Usa Interpolazione Lineare (elimina salti)
-input double    ATR_Reference_Min = 8.0;                     // 📊 ATR Minimo Riferimento (pips)
-input double    ATR_Reference_Max = 50.0;                    // 📊 ATR Massimo Riferimento (pips)
-input double    Spacing_Interpolated_Min = 8.0;              // 📏 Spacing Minimo (pips) - mercato calmo
-input double    Spacing_Interpolated_Max = 35.0;             // 📏 Spacing Massimo (pips) - alta volatilita
-
-input group "    🛡️ RATE LIMITING (Anti-Spike)"
-input bool      EnableRateLimiting = true;                   // ✅ Limita cambio spacing per ciclo
-input double    MaxSpacingChangePerCycle = 3.0;              // 📏 Max cambio per ciclo (pips) - anti spike
-
-//+------------------------------------------------------------------+
-//| 3️⃣.6️⃣ ATR EXTREME WARNING - REMOVED (v5.x cleanup)               |
-//| Ridondante con Shield + Max Net Exposure                         |
-//+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| 3️⃣.7️⃣ 📝 ATR LOGGING v4.2                                        |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  3️⃣.7️⃣  📝 ATR LOGGING v4.2                               ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    📝 LOGGING DETTAGLIATO"
-input bool      ATR_DetailedLogging = true;                  // ✅ Logging Dettagliato ATR (tutti i cambi)
-input bool      ATR_AlertOnSpacingChange = true;             // 🔔 Alert su Cambio Spacing (popup visibile)
-input bool      ATR_LogEveryCheck = false;                   // 🔍 Log ogni check ATR (debug mode)
-input bool      ATR_LogStepTransitions = true;               // 📊 Log transizioni step ATR
+// v5.8: ATR usato solo per monitoraggio volatilità nel dashboard
 
 //+------------------------------------------------------------------+
 //| 3️⃣.8️⃣ 📝 TRAILING GRID LOGGING v5.5                               |
@@ -393,16 +310,8 @@ input double    Shield_Trailing_Step = 10.0;                 // 📏 Trailing St
 
 input group "    🎨 SHIELD ZONES VISUAL (Fasce Colorate)"
 input bool      Enable_ShieldZonesVisual = true;             // ✅ Mostra Fasce Shield Zones
-input uchar     ShieldZones_Transparency = 210;              // 🔍 Trasparenza Fasce Pericolo (0=opaco, 255=invisibile)
-input color     ShieldZone_Phase1_Color = clrYellow;         // 🟡 Fase 1 (Warning) - Giallo
-input color     ShieldZone_Phase2_Color = clrOrange;         // 🟠 Fase 2 (Pre-Shield) - Arancione
-input color     ShieldZone_Phase3_Color = C'160,40,40';      // 🔴 Fase 3 (Breakout) - Rosso Scuro (v5.4)
-input color     ShieldEntry_Line_Color = C'139,0,0';         // 🔴 Linea Entry Shield - Rosso Scuro
-input int       ShieldEntry_Line_Width = 2;                  // 📏 Spessore Linea Entry Shield
-input ENUM_LINE_STYLE ShieldEntry_Line_Style = STYLE_DASH;   // 📐 Stile Linea Entry Shield
 input bool      Enable_ProfitZoneVisual = true;              // ✅ Mostra Zona Profit (Verde)
-input color     ProfitZone_Color = clrLime;                  // 🟢 Colore Zona Profit - Verde
-input uchar     ProfitZone_Transparency = 220;               // 🔍 Trasparenza Zona Profit (molto trasparente)
+// SHIELD ZONE COLORS: Now in VisualTheme.mqh (SHIELDZONE_*, PROFITZONE_*)
 
 input group "    🔧 LEGACY HEDGE (Backward Compatibility)"
 input bool      EnableHedging = true;                        // ✅ Abilita hedging (maps to Shield)
@@ -473,8 +382,7 @@ input group "    ╔═ SELEZIONA TRIGGER MODE ═══════════
 input ENUM_REOPEN_TRIGGER ReopenTrigger = REOPEN_IMMEDIATE;  // 📊 Trigger Reopen ▼ (IMMEDIATE = griglia sempre completa!)
 
 input group "    📐 CYCLIC PARAMETERS"
-input bool      EnableCyclicCooldown = false;                // ✅ Abilita Cooldown Temporale ( Disattivato 12dic )
-input int       CyclicCooldown_Seconds = 120;                // ⏱️ Cooldown tra Cicli (sec)
+// Cooldown REMOVED v5.8 - Reopen sempre immediato
 input int       MaxCyclesPerLevel = 0;                       // 🔢 Max Cicli per Livello (0=infiniti)
 input bool      EnableReopenOffset = true;                   // ✅ Abilita Offset Bidirezionale
 input double    ReopenOffset_Pips = 5.0;                     // 📏 Offset Bidirezionale (±pips)
@@ -505,11 +413,7 @@ input bool      EnableDailyTarget = false;                   // ✅ Abilita Targ
 input double    DailyProfitTarget_USD = 100.0;               // 💵 Profit Target ($)
 input double    DailyLossLimit_USD = 50.0;                   // 📉 Loss Limit ($)
 
-input group "    ⚠️ VOLATILITY PAUSE"
-input bool      PauseOnHighATR = false;                      // ✅ Pausa se ATR Alto ( Disattivato 12dic )
-input double    HighATR_Threshold = 50.0;                    // 📊 Soglia ATR Pausa (pips)
-// Non piazza nuovi ordini se ATR > 50 pips
-
+input group "    ⚠️ NEWS PAUSE"
 input bool      PauseOnNews = false;                         // ✅ Pausa durante News (manuale)
 // Richiede attivazione manuale 30 min prima di news
 
@@ -609,30 +513,13 @@ input ENUM_TIMEFRAMES Donchian_Timeframe = PERIOD_M15;       // 📊 Timeframe D
 
 input group "    🎨 VISUALIZZAZIONE CENTRO"
 input bool      ShowCenterIndicators = true;                 // ✅ Mostra indicatori su chart
-input color     Color_PivotLine = clrGold;                   // 🟡 Colore Pivot Point
-input color     Color_EMALine = clrDodgerBlue;               // 🔵 Colore EMA
-input color     Color_DonchianUpper = clrMagenta;            // 🟣 Colore Donchian Upper
-input color     Color_DonchianLower = clrMagenta;            // 🟣 Colore Donchian Lower
-input color     Color_DonchianCenter = clrOrchid;            // 🟣 Colore Donchian Center
-input color     Color_OptimalCenter = clrLime;               // 🟢 Colore Centro Ottimale
-input int       CenterLines_Width = 2;                       // 📏 Spessore linee
+// CENTER INDICATOR COLORS: Now in VisualTheme.mqh (COLOR_PIVOT_*, COLOR_EMA_*, COLOR_DONCHIAN_*, COLOR_OPTIMAL_*)
 
 //+------------------------------------------------------------------+
 //| 1️⃣7️⃣.6️⃣ 🔄 AUTO-RECENTER v4.0                                    |
 //+------------------------------------------------------------------+
 
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  1️⃣7️⃣.6️⃣  🔄 AUTO-RECENTER v4.0                           ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ⚙️ ATTIVAZIONE"
-input bool      EnableAutoRecenter = false;                  // ✅ Abilita Auto-Recenter ( Disattivato 12dic )
-
-input group "    📏 CONDIZIONI TRIGGER"
-input double    Recenter_PriceProximity_Pips = 10.0;         // 📏 Prezzo deve essere entro X pips dal centro
-input double    Recenter_EntryDistance_Pips = 40.0;          // 📏 Entry deve essere lontano almeno X pips dal centro
-input double    Recenter_MinConfidence = 60.0;               // 📊 Confidence minima indicatori (%)
+// AUTO-RECENTER REMOVED v5.8 - feature mai implementata
 
 //+------------------------------------------------------------------+
 //| 1️⃣8️⃣ ⚙️ ADVANCED SETTINGS                                        |
@@ -651,12 +538,6 @@ input bool      SyncGridAB = true;                           // ✅ Sincronizza 
 input group "    ⚖️ NET EXPOSURE"
 input double    NetExposure_MaxLot = 0.10;                   // 📊 Max Esposizione Netta (lot)
 // Se |LONG - SHORT| > 0.10 lot, sistema in allerta
-
-input group "    🔄 AUTO ADJUST"
-input bool      AutoAdjustOnATR = true;                      // ✅ Auto-Adjust su cambio ATR
-// Ricalcola grid se ATR cambia significativamente
-input double    ATR_ChangeThreshold = 20.0;                  // 📊 Soglia Cambio ATR (%)
-// Ricalcola se ATR cambia > 20%
 
 //+------------------------------------------------------------------+
 //| 1️⃣9️⃣ 🇪🇺🇺🇸 EUR/USD SOTTOSTANTI                                   |
@@ -895,39 +776,8 @@ input double    Custom_ATR_Typical = 25.0;                   // 📊 ATR Tipico 
 input double    Custom_MinLot = 0.01;                        // 💵 Lot Minimo
 input double    Custom_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
 
-//+------------------------------------------------------------------+
-//| 3️⃣0️⃣ 🎨 LEGACY COLOR SCHEME (Grid Lines by Level)                |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  3️⃣0️⃣  🎨 LEGACY COLOR SCHEME - Grid Lines by Level       ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    🔵 Main System Colors"
-input color COLOR_ENTRY_POINT = clrCyan;              // 🔷 Entry Point Line
-input color COLOR_RANGE_UPPER = clrDarkCyan;          // 🔺 Range Upper Bound
-input color COLOR_RANGE_LOWER = clrDarkCyan;          // 🔻 Range Lower Bound
-
-input group "    🎨 Grid A Colors (Long Bias - Azure)"
-input color COLOR_GRID_A_UPPER = C'100,180,255';      // 🔵 Grid A Upper Zone
-input color COLOR_GRID_A_LOWER = C'60,140,205';       // 🔵 Grid A Lower Zone
-input color COLOR_GRID_A_TP = C'130,200,255';         // 🎯 Grid A Take Profit
-input color COLOR_GRID_A_1 = C'100,180,255';          // 🔵 Grid A Level 1
-input color COLOR_GRID_A_2 = C'80,160,230';           // 🔵 Grid A Level 2
-input color COLOR_GRID_A_3 = C'60,140,205';           // 🔵 Grid A Level 3
-input color COLOR_GRID_A_4 = C'40,120,180';           // 🔵 Grid A Level 4
-input color COLOR_GRID_A_5 = C'30,100,160';           // 🔵 Grid A Level 5+
-
-input group "    🎨 Grid B Colors (Short Bias - Cyan)"
-input color COLOR_GRID_B_UPPER = C'100,220,255';      // 🔵 Grid B Upper Zone
-input color COLOR_GRID_B_LOWER = C'60,180,205';       // 🔵 Grid B Lower Zone
-input color COLOR_GRID_B_TP = C'130,240,255';         // 🎯 Grid B Take Profit
-input color COLOR_GRID_B_1 = C'100,220,255';          // 🔵 Grid B Level 1
-input color COLOR_GRID_B_2 = C'80,200,230';           // 🔵 Grid B Level 2
-input color COLOR_GRID_B_3 = C'60,180,205';           // 🔵 Grid B Level 3
-input color COLOR_GRID_B_4 = C'40,160,180';           // 🔵 Grid B Level 4
-input color COLOR_GRID_B_5 = C'30,140,160';           // 🔵 Grid B Level 5+
+// LEGACY COLOR SCHEME REMOVED - Now in VisualTheme.mqh
+// COLOR_ENTRY_POINT, COLOR_GRID_A_*, COLOR_GRID_B_* are now #define constants
 
 //+------------------------------------------------------------------+
 //| 3️⃣1️⃣ ⏰ AUTOMATIC HOUR SESSION v4.6                              |
@@ -957,39 +807,11 @@ input bool      DeletePendingOnEnd = true;                   // ✅ Delete All P
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  3️⃣2️⃣  🎨 TP VISUAL LINES v4.6                            ║"
-input group "║      Show TP levels on chart with colors                 ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
-input group "    🎨 TP LINE SETTINGS"
 input bool      ShowTPLines = true;                          // ✅ Show TP Lines on Chart
-input color     TP_Line_Buy_Color = clrLightYellow;          // 🟡 TP Color for BUY orders
-input color     TP_Line_Sell_Color = clrRed;                 // 🔴 TP Color for SELL orders
-input ENUM_LINE_STYLE TP_Line_Style = STYLE_DASH;            // 📏 TP Line Style (dashed)
-input int       TP_Line_Width = 1;                           // 📐 TP Line Width
+// TP LINE COLORS: Now in VisualTheme.mqh (TP_LINE_*)
 
-//+------------------------------------------------------------------+
-//| 🎨 VISUAL THEME SETTINGS (v3.0) - SPOSTATO ALLA FINE             |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  🎨 VISUAL THEME (v3.0)                                   ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    🖼️ CHART COLORS"
-input color     Theme_ChartBackground = C'25,12,35';        // 🎨 Sfondo Chart (Viola Scurissimo)
-input color     Theme_CandleBull = clrDodgerBlue;           // 📈 Candele Bullish (Blu Splendente)
-input color     Theme_CandleBear = clrYellow;               // 📉 Candele Bearish (Giallo)
-
-input group "    🎨 DASHBOARD COLORS"
-input color     Theme_DashboardBG = C'20,60,80';            // 🎨 Dashboard Background (Blu Turchese)
-input color     Theme_DashboardText = clrCyan;              // 📝 Dashboard Text (Azzurro)
-input color     Theme_DashboardAccent = clrAqua;            // ⭐ Dashboard Accent
-
-input group "    📏 GRID LINE COLORS"
-input color     GridLine_BuyLimit = clrDarkGreen;           // 🟢 BUY LIMIT: Verde Scuro
-input color     GridLine_BuyStop = clrBlue;                 // 🔵 BUY STOP: Blu
-input color     GridLine_SellLimit = clrOrange;             // 🟠 SELL LIMIT: Arancione
-input color     GridLine_SellStop = clrPlum;                // 🟣 SELL STOP: Viola Chiaro
-input int       GridLine_Width = 3;                         // 📏 Spessore Linee Grid (v5.4: Increased)
+// VISUAL THEME REMOVED - Now in VisualTheme.mqh
+// THEME_CHART_*, THEME_CANDLE_*, THEME_DASHBOARD_*, COLOR_GRIDLINE_* are now #define constants
 

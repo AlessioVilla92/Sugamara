@@ -283,10 +283,7 @@ void CheckRiskLimits() {
     // Exposure Check
     CheckExposureLimits();
 
-    // Volatility Check
-    if(PauseOnHighATR) {
-        CheckVolatilityLimits();
-    }
+    // v5.8: PauseOnHighATR removed - volatility check disabled
 }
 
 //+------------------------------------------------------------------+

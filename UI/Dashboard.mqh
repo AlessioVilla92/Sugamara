@@ -38,10 +38,10 @@ const int DASHBOARD_CHECK_INTERVAL = 5;  // Seconds between checks
 #define CLR_DASH_ACCENT   C'255,180,80'      // Spice orange accent
 
 // Getter functions to use actual input values at runtime
-color GetThemeChartBackground() { return Theme_ChartBackground; }
-color GetThemeDashboardBG() { return Theme_DashboardBG; }
-color GetThemeDashboardText() { return Theme_DashboardText; }
-color GetThemeDashboardAccent() { return Theme_DashboardAccent; }
+color GetThemeChartBackground() { return THEME_CHART_BACKGROUND; }
+color GetThemeDashboardBG() { return THEME_DASHBOARD_BG; }
+color GetThemeDashboardText() { return THEME_DASHBOARD_TEXT; }
+color GetThemeDashboardAccent() { return THEME_DASHBOARD_ACCENT; }
 
 // Text Colors (Desert Sand Gradient - Light to Dark)
 #define CLR_SAND_1        C'255,220,170'     // Brightest sand (titles)
@@ -719,13 +719,13 @@ void CreateGridLegendPanel() {
     int col2 = legendX + legendWidth/2 + 5;
 
     // Row 1
-    DashLabel("LEGEND_BL", col1, ly, "■ BUY LMT (GA↑)", GridLine_BuyLimit, 7);
-    DashLabel("LEGEND_SS", col2, ly, "■ SELL STP (GA↓)", GridLine_SellStop, 7);
+    DashLabel("LEGEND_BL", col1, ly, "■ BUY LMT (GA↑)", COLOR_GRIDLINE_BUY_LIMIT, 7);
+    DashLabel("LEGEND_SS", col2, ly, "■ SELL STP (GA↓)", COLOR_GRIDLINE_SELL_STOP, 7);
     ly += 14;
 
     // Row 2
-    DashLabel("LEGEND_SL", col1, ly, "■ SELL LMT (GB↑)", GridLine_SellLimit, 7);
-    DashLabel("LEGEND_BS", col2, ly, "■ BUY STP (GB↓)", GridLine_BuyStop, 7);
+    DashLabel("LEGEND_SL", col1, ly, "■ SELL LMT (GB↑)", COLOR_GRIDLINE_SELL_LIMIT, 7);
+    DashLabel("LEGEND_BS", col2, ly, "■ BUY STP (GB↓)", COLOR_GRIDLINE_BUY_STOP, 7);
 
     Print("SUCCESS: Grid Legend Panel created (under Performance)");
 }
@@ -849,30 +849,30 @@ void UpdateModeSection() {
     string symbolText = StringFormat("Symbol: %s | Spread: %.1f pips", _Symbol, GetSpreadPips());
     ObjectSetString(0, "MODE_INFO2", OBJPROP_TEXT, symbolText);
 
-    // Line 3: Pair + Grids + Spacing (DYNAMIC)
+    // Line 3: Pair + Grids + Spacing (Fixed)
     string pairName = GetPairDisplayName(SelectedPair);
-    double dynSpacing = GetDynamicSpacing();
     string pairGridText = StringFormat("Pair: %s | Grids: %d | Spacing: %.1f pips",
-                                        pairName, GridLevelsPerSide, dynSpacing);
+                                        pairName, GridLevelsPerSide, currentSpacing_Pips);
     ObjectSetString(0, "MODE_INFO3", OBJPROP_TEXT, pairGridText);
 
-    // Line 4: ATR
+    // Line 4: ATR (monitoring only)
     double atrPips = GetATRPips();
     string atrText = StringFormat("ATR: %.1f pips", atrPips);
     ObjectSetString(0, "MODE_INFO4", OBJPROP_TEXT, atrText);
 
-    // Line 5: ATR Step (v4.0 Dynamic)
-    if(EnableDynamicATRSpacing && NeutralMode != NEUTRAL_PURE) {
-        string stepName = GetATRStepName(currentATRStep);
-        ObjectSetString(0, "MODE_INFO6", OBJPROP_TEXT, "Step: " + stepName);
-        // Color based on step
-        color stepColor = CLR_AZURE_2;
-        if(currentATRStep == ATR_STEP_EXTREME) stepColor = CLR_LOSS;
-        else if(currentATRStep == ATR_STEP_HIGH) stepColor = CLR_NEUTRAL;
-        else if(currentATRStep == ATR_STEP_VERY_LOW) stepColor = clrGray;
-        ObjectSetInteger(0, "MODE_INFO6", OBJPROP_COLOR, stepColor);
+    // Line 5: ATR Condition (for monitoring)
+    if(UseATR) {
+        ENUM_ATR_CONDITION atrCond = GetATRCondition();
+        string condName = GetATRConditionName(atrCond);
+        ObjectSetString(0, "MODE_INFO6", OBJPROP_TEXT, "Volatility: " + condName);
+        // Color based on condition
+        color condColor = CLR_AZURE_2;
+        if(atrCond == ATR_EXTREME) condColor = CLR_LOSS;
+        else if(atrCond == ATR_VOLATILE) condColor = CLR_NEUTRAL;
+        else if(atrCond == ATR_CALM) condColor = clrGray;
+        ObjectSetInteger(0, "MODE_INFO6", OBJPROP_COLOR, condColor);
     } else {
-        ObjectSetString(0, "MODE_INFO6", OBJPROP_TEXT, "Step: N/A (Fixed)");
+        ObjectSetString(0, "MODE_INFO6", OBJPROP_TEXT, "ATR: Disabled");
         ObjectSetInteger(0, "MODE_INFO6", OBJPROP_COLOR, clrGray);
     }
 }

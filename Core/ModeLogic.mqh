@@ -55,38 +55,36 @@ bool UsesCascadeTP()
 }
 
 //+------------------------------------------------------------------+
-//| Calcola lo spacing corrente in base a modalità e ATR             |
+//| Calcola lo spacing corrente - v5.8 Always Fixed                  |
+//| ATR dynamic spacing removed - spacing is always fixed            |
 //+------------------------------------------------------------------+
 double CalculateCurrentSpacing()
 {
+   // v5.8: ATR dynamic spacing removed - always use fixed spacing
+   // SpacingMode can be SPACING_FIXED, SPACING_GEOMETRIC, or SPACING_CUSTOM
+
    double spacing = Fixed_Spacing_Pips;
 
-   //--- NEUTRAL_PURE: sempre spacing fisso
-   if(NeutralMode == NEUTRAL_PURE)
-   {
-      return Fixed_Spacing_Pips;
+   switch(SpacingMode) {
+      case SPACING_GEOMETRIC:
+         // Geometric: spacing as % of current price
+         spacing = SymbolInfoDouble(_Symbol, SYMBOL_BID) * SpacingGeometric_Percent / 100.0;
+         spacing = spacing / symbolPoint;  // Convert to pips
+         break;
+
+      case SPACING_CUSTOM:
+         // Custom: use fixed spacing (can be extended for custom logic)
+         spacing = Fixed_Spacing_Pips;
+         break;
+
+      case SPACING_FIXED:
+      default:
+         spacing = Fixed_Spacing_Pips;
+         break;
    }
 
-   //--- Se ATR NON abilitato, usa spacing fisso
-   if(!IsATREnabled())
-   {
-      return Fixed_Spacing_Pips;
-   }
-
-   //--- ATR ABILITATO: calcola spacing dinamico dalla tabella
-   double atrValue = GetATRPips();
-
-   if(atrValue < ATR_Calm_Threshold)
-      spacing = ATR_Calm_Spacing;           // ATR < 15 → 15 pips
-   else if(atrValue < ATR_Normal_Threshold)
-      spacing = ATR_Normal_Spacing;         // ATR 15-30 → 20 pips
-   else if(atrValue < ATR_Volatile_Threshold)
-      spacing = ATR_Volatile_Spacing;       // ATR 30-50 → 30 pips
-   else
-      spacing = ATR_Extreme_Spacing;        // ATR > 50 → 40 pips
-
-   if(DetailedLogging)
-      PrintFormat("[ModeLogic] ATR: %.1f pips → Spacing: %.1f pips", atrValue, spacing);
+   // Apply minimum spacing safety limit
+   spacing = MathMax(spacing, 5.0);  // Minimum 5 pips
 
    return spacing;
 }
@@ -406,35 +404,26 @@ void ProcessModeOnTick()
 }
 
 //+------------------------------------------------------------------+
-//| Check ATR Recalculation                                           |
+//| Check ATR Recalculation - v5.8 Simplified (monitoring only)       |
+//| ATR no longer affects spacing, just updates monitoring value      |
 //+------------------------------------------------------------------+
 void CheckATRRecalculation()
 {
    if(!IsATREnabled()) return;
 
    datetime now = TimeCurrent();
-   if(now - lastATRRecalc < ATR_RecalcHours * 3600) return;
+   // Check every hour (3600 seconds)
+   if(now - lastATRRecalc < 3600) return;
 
    double newATR = GetATRPips();
    if(newATR <= 0) return;
 
-   double changePercent = 0;
-   if(currentATR_Pips > 0) {
-      changePercent = MathAbs((newATR - currentATR_Pips) / currentATR_Pips) * 100;
-   }
+   // Update ATR monitoring value
+   currentATR_Pips = newATR;
+   lastATRRecalc = now;
 
-   if(changePercent > ATR_ChangeThreshold || currentATR_Pips == 0) {
-      double oldSpacing = currentSpacing_Pips;
-      currentATR_Pips = newATR;
-      currentSpacing_Pips = CalculateCurrentSpacing();
-      lastATRRecalc = now;
-
-      if(DetailedLogging && changePercent > 0) {
-         Print("[ModeLogic] ATR recalculated: ", DoubleToString(changePercent, 1), "% change");
-         Print("  Old Spacing: ", DoubleToString(oldSpacing, 1), " pips");
-         Print("  New Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
-      }
-   }
+   // v5.8: Spacing is now fixed, just update for display
+   currentSpacing_Pips = CalculateCurrentSpacing();
 }
 
 //+------------------------------------------------------------------+

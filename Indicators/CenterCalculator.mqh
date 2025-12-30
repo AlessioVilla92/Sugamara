@@ -302,34 +302,34 @@ void DrawCenterIndicators() {
 
     // Pivot Point Line
     if(UsePivotPoint && g_pivotLevels.isValid) {
-        CreateHLine(CENTER_LINE_PIVOT, g_pivotLevels.pivot, Color_PivotLine, CenterLines_Width, STYLE_DOT);
+        CreateHLine(CENTER_LINE_PIVOT, g_pivotLevels.pivot, COLOR_PIVOT_LINE, CENTERLINES_WIDTH, STYLE_DOT);
         CreateLabel(CENTER_LABEL_PREFIX + "PIVOT", 10, GetYFromPrice(g_pivotLevels.pivot),
-                    "Pivot: " + DoubleToString(g_pivotLevels.pivot, symbolDigits), Color_PivotLine, 8);
+                    "Pivot: " + DoubleToString(g_pivotLevels.pivot, symbolDigits), COLOR_PIVOT_LINE, 8);
     }
 
     // EMA Line
     if(UseEMA50 && g_centerCalc.emaCenter > 0) {
-        CreateHLine(CENTER_LINE_EMA, g_centerCalc.emaCenter, Color_EMALine, CenterLines_Width, STYLE_DOT);
+        CreateHLine(CENTER_LINE_EMA, g_centerCalc.emaCenter, COLOR_EMA_LINE, CENTERLINES_WIDTH, STYLE_DOT);
         CreateLabel(CENTER_LABEL_PREFIX + "EMA", 10, GetYFromPrice(g_centerCalc.emaCenter),
                     "EMA" + IntegerToString(EMA_Period) + ": " +
-                    DoubleToString(g_centerCalc.emaCenter, symbolDigits), Color_EMALine, 8);
+                    DoubleToString(g_centerCalc.emaCenter, symbolDigits), COLOR_EMA_LINE, 8);
     }
 
     // Donchian Channel Lines
     if(UseDonchianCenter && g_donchianLevels.isValid) {
-        CreateHLine(CENTER_LINE_DONCH_U, g_donchianLevels.upper, Color_DonchianUpper, 1, STYLE_DOT);
-        CreateHLine(CENTER_LINE_DONCH_L, g_donchianLevels.lower, Color_DonchianLower, 1, STYLE_DOT);
-        CreateHLine(CENTER_LINE_DONCH_C, g_donchianLevels.center, Color_DonchianCenter, CenterLines_Width, STYLE_DOT);
+        CreateHLine(CENTER_LINE_DONCH_U, g_donchianLevels.upper, COLOR_DONCHIAN_UPPER, 1, STYLE_DOT);
+        CreateHLine(CENTER_LINE_DONCH_L, g_donchianLevels.lower, COLOR_DONCHIAN_LOWER, 1, STYLE_DOT);
+        CreateHLine(CENTER_LINE_DONCH_C, g_donchianLevels.center, COLOR_DONCHIAN_CENTER, CENTERLINES_WIDTH, STYLE_DOT);
         CreateLabel(CENTER_LABEL_PREFIX + "DONCH", 10, GetYFromPrice(g_donchianLevels.center),
-                    "Donchian: " + DoubleToString(g_donchianLevels.center, symbolDigits), Color_DonchianCenter, 8);
+                    "Donchian: " + DoubleToString(g_donchianLevels.center, symbolDigits), COLOR_DONCHIAN_CENTER, 8);
     }
 
     // Optimal Center Line (prominent)
     if(g_centerCalc.isValid) {
-        CreateHLine(CENTER_LINE_OPTIMAL, g_centerCalc.optimalCenter, Color_OptimalCenter, CenterLines_Width + 1, STYLE_SOLID);
+        CreateHLine(CENTER_LINE_OPTIMAL, g_centerCalc.optimalCenter, COLOR_OPTIMAL_CENTER, CENTERLINES_WIDTH + 1, STYLE_SOLID);
         CreateLabel(CENTER_LABEL_PREFIX + "OPTIMAL", 10, GetYFromPrice(g_centerCalc.optimalCenter) - 15,
                     "OPTIMAL CENTER: " + DoubleToString(g_centerCalc.optimalCenter, symbolDigits) +
-                    " (" + DoubleToString(g_centerCalc.confidence, 0) + "% conf)", Color_OptimalCenter, 9);
+                    " (" + DoubleToString(g_centerCalc.confidence, 0) + "% conf)", COLOR_OPTIMAL_CENTER, 9);
     }
 
     ChartRedraw(0);
@@ -480,13 +480,7 @@ void LogCenterIndicatorsReport() {
         Print("║  Price Distance: ", centerDist >= 0 ? "+" : "", DoubleToString(PointsToPips(centerDist), 1), " pips");
         Print("║  Entry Distance: ", entryDist >= 0 ? "+" : "", DoubleToString(PointsToPips(entryDist), 1), " pips");
         Print("║  Last Calculated: ", TimeToString(g_centerCalc.calcTime, TIME_DATE|TIME_SECONDS));
-
-        // Recenter recommendation
-        if(MathAbs(PointsToPips(entryDist)) > Recenter_EntryDistance_Pips &&
-           MathAbs(PointsToPips(centerDist)) < Recenter_PriceProximity_Pips &&
-           g_centerCalc.confidence >= Recenter_MinConfidence) {
-            Print("║  📢 RECENTER RECOMMENDED - Conditions met!");
-        }
+        // AutoRecenter REMOVED v5.8 - feature mai implementata
     } else {
         Print("║  OPTIMAL CENTER: Not calculated yet");
     }

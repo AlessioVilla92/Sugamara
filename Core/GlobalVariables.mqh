@@ -51,42 +51,15 @@ datetime lastATRRecalc = 0;                 // Ultimo ricalcolo ATR
 double currentSpacing_Pips = 0;             // Spacing corrente calcolato da ATR
 
 //+------------------------------------------------------------------+
-//| 🔄 ATR DYNAMIC SPACING v4.0                                      |
-//+------------------------------------------------------------------+
-ENUM_ATR_STEP   currentATRStep = ATR_STEP_NORMAL;      // Step ATR corrente (5 livelli)
-ENUM_ATR_STEP   lastATRStep = ATR_STEP_NORMAL;         // Step ATR precedente
-double          lastATRValue_Dynamic = 0;               // Ultimo valore ATR per dynamic
-datetime        lastATRCheck_Dynamic = 0;               // Ultimo check ATR dynamic
-datetime        lastSpacingChange = 0;                  // Ultimo cambio spacing
-double          previousSpacing_Pips = 0;               // Spacing precedente
-bool            spacingChangeInProgress = false;        // Flag: cambio in corso
-
-// Rate Limiting state (v4.6)
-double          lastAppliedSpacing_Pips = 0;            // Ultimo spacing effettivamente applicato
-datetime        lastRateLimitedChange = 0;              // Timestamp ultimo cambio rate-limited
-
-//+------------------------------------------------------------------+
-//| 📦 ATR UNIFIED CACHE v4.1 - Single Source of Truth               |
+//| 📦 ATR CACHE v5.8 - For monitoring only (no spacing logic)       |
 //+------------------------------------------------------------------+
 struct ATRCacheStruct {
     double valuePips;                                   // Valore ATR in pips
-    ENUM_ATR_STEP step;                                 // Step corrente
-    datetime lastFullUpdate;                            // Ultimo aggiornamento completo
+    datetime lastFullUpdate;                            // Ultimo aggiornamento
     datetime lastBarTime;                               // Tempo ultima candela usata
     bool isValid;                                       // Cache valida
 };
 ATRCacheStruct g_atrCache;
-
-//+------------------------------------------------------------------+
-//| ⚠️ ATR EXTREME WARNING - REMOVED (v5.x cleanup)                  |
-//| Ridondante con Shield + Max Net Exposure                         |
-//+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| 📝 ATR LOGGING STATE v4.2                                        |
-//+------------------------------------------------------------------+
-int             g_atrStepChangeCount = 0;               // Contatore cambi step sessione
-int             g_spacingChangeCount = 0;               // Contatore cambi spacing sessione
 datetime        g_lastLoggedATRChange = 0;              // Ultimo log ATR
 string          g_lastATRStepName = "";                 // Nome ultimo step loggato
 
@@ -428,33 +401,13 @@ void InitializeArrays() {
     lastBreakoutDirection = BREAKOUT_NONE;
 
     // ═══════════════════════════════════════════════════════════════════
-    // v4.0: Initialize ATR Dynamic Spacing
-    // ═══════════════════════════════════════════════════════════════════
-    currentATRStep = ATR_STEP_NORMAL;
-    lastATRStep = ATR_STEP_NORMAL;
-    lastATRValue_Dynamic = 0;
-    lastATRCheck_Dynamic = 0;
-    lastSpacingChange = 0;
-    previousSpacing_Pips = 0;
-    spacingChangeInProgress = false;
-
-    // ═══════════════════════════════════════════════════════════════════
-    // v4.1: Initialize ATR Unified Cache
+    // v5.8: Initialize ATR Cache (monitoring only)
     // ═══════════════════════════════════════════════════════════════════
     ZeroMemory(g_atrCache);
     g_atrCache.valuePips = 0;
-    g_atrCache.step = ATR_STEP_NORMAL;
     g_atrCache.lastFullUpdate = 0;
     g_atrCache.lastBarTime = 0;
     g_atrCache.isValid = false;
-
-    // v4.1: Extreme Warning REMOVED (v5.x cleanup)
-
-    // ═══════════════════════════════════════════════════════════════════
-    // v4.2: Initialize ATR Logging State
-    // ═══════════════════════════════════════════════════════════════════
-    g_atrStepChangeCount = 0;
-    g_spacingChangeCount = 0;
     g_lastLoggedATRChange = 0;
     g_lastATRStepName = "";
 

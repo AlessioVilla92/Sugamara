@@ -30,10 +30,10 @@ void PrintSystemConfiguration() {
 
     if(SpacingMode == SPACING_FIXED) {
         Print("  Fixed Spacing: ", Fixed_Spacing_Pips, " pips");
-    } else if(SpacingMode == SPACING_ATR) {
-        Print("  ATR Period: ", ATR_Period);
-        Print("  ATR Timeframe: ", EnumToString(ATR_Timeframe));
-        Print("  ATR Multiplier: ", SpacingATR_Multiplier);
+    } else if(SpacingMode == SPACING_GEOMETRIC) {
+        Print("  Geometric Percent: ", SpacingGeometric_Percent, "%");
+    } else if(SpacingMode == SPACING_CUSTOM) {
+        Print("  Custom Spacing configured");
     }
 
     // Lot Configuration
@@ -58,7 +58,7 @@ void PrintSystemConfiguration() {
     Print("  Enabled: ", EnableCyclicReopen ? "YES" : "NO");
     if(EnableCyclicReopen) {
         Print("  Trigger: ", EnumToString(ReopenTrigger));
-        Print("  Cooldown: ", CyclicCooldown_Seconds, " seconds");
+        // Cooldown REMOVED v5.8 - Reopen sempre immediato
         Print("  Max Cycles: ", MaxCyclesPerLevel == 0 ? "Unlimited" : IntegerToString(MaxCyclesPerLevel));
     }
 
@@ -68,10 +68,7 @@ void PrintSystemConfiguration() {
     if(EnableEmergencyStop) {
         Print("  Emergency Threshold: ", EmergencyStop_Percent, "% equity");
     }
-    Print("  Pause on High ATR: ", PauseOnHighATR ? "YES" : "NO");
-    if(PauseOnHighATR) {
-        Print("  High ATR Threshold: ", HighATR_Threshold, " pips");
-    }
+    // v5.8: PauseOnHighATR removed
 
     // Performance Targets
     Print("\n[PERFORMANCE TARGETS]");

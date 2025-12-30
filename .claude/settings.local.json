@@ -26,7 +26,8 @@
       "Bash(\"C:\\\\Program Files\\\\MetaTrader 5\\\\metaeditor64.exe\" /compile:\"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Sugamara.mq5\" /log:\"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\compile.log\" /inc:\"C:\\\\Users\\\\Admin\\\\AppData\\\\Roaming\\\\MetaQuotes\\\\Terminal\\\\73B7A2420D6397DFF9014A20F1201F97\\\\MQL5\")",
       "Bash(powershell:*)",
       "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Trading\\\\DoubleParcelling.mqh\")",
-      "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\ANALISI\\\\DOUBLE_PARCELLING_IMPLEMENTAZIONE_FINALE.md\")"
+      "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\ANALISI\\\\DOUBLE_PARCELLING_IMPLEMENTAZIONE_FINALE.md\")",
+      "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Utils\\\\DynamicATRAdapter.mqh\")"
     ],
     "deny": [],
     "ask": []

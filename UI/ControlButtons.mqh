@@ -48,7 +48,7 @@ bool InitializeControlButtons(int startX, int startY, int panelWidth) {
     int spacing = 10;
 
     // Status Label
-    CreateButtonLabel(BTN_STATUS_V3, x, y, panelWidth - 20, "READY - Click START", Theme_DashboardText);
+    CreateButtonLabel(BTN_STATUS_V3, x, y, panelWidth - 20, "READY - Click START", THEME_DASHBOARD_TEXT);
     y += 25;
 
     // START Button (verde)

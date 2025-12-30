@@ -816,10 +816,10 @@ color GetGridLineColor(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
 
     // v3.0: Color based on order type
     switch(orderType) {
-        case ORDER_TYPE_BUY_STOP:   return GridLine_BuyStop;    // Verde scuro
-        case ORDER_TYPE_BUY_LIMIT:  return GridLine_BuyLimit;   // Verde chiaro
-        case ORDER_TYPE_SELL_STOP:  return GridLine_SellStop;   // Rosso
-        case ORDER_TYPE_SELL_LIMIT: return GridLine_SellLimit;  // Arancione
+        case ORDER_TYPE_BUY_STOP:   return COLOR_GRIDLINE_BUY_STOP;    // Verde scuro
+        case ORDER_TYPE_BUY_LIMIT:  return COLOR_GRIDLINE_BUY_LIMIT;   // Verde chiaro
+        case ORDER_TYPE_SELL_STOP:  return COLOR_GRIDLINE_SELL_STOP;   // Rosso
+        case ORDER_TYPE_SELL_LIMIT: return COLOR_GRIDLINE_SELL_LIMIT;  // Arancione
         default: break;
     }
 
@@ -851,8 +851,8 @@ void CreateGridLevelLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, do
     string name = GetGridObjectPrefix(side, zone) + "L" + IntegerToString(level + 1);
     color clr = GetGridLineColor(side, zone);
 
-    // v3.0: Stesso spessore per tutte le linee (GridLine_Width)
-    CreateHLine(name, price, clr, GridLine_Width, STYLE_SOLID);
+    // v3.0: Stesso spessore per tutte le linee (GRIDLINE_WIDTH)
+    CreateHLine(name, price, clr, GRIDLINE_WIDTH, STYLE_SOLID);
 
     // Add order type label
     ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
@@ -883,10 +883,10 @@ void CreateGridTPLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, doubl
     // v4.6: Determine color based on order type (BUY = yellow, SELL = red)
     ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
     bool isBuy = (orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_BUY_STOP);
-    color clr = isBuy ? TP_Line_Buy_Color : TP_Line_Sell_Color;
+    color clr = isBuy ? TP_LINE_BUY_COLOR : TP_LINE_SELL_COLOR;
 
     // v4.6: Use configurable style and width
-    CreateHLine(name, price, clr, TP_Line_Width, TP_Line_Style);
+    CreateHLine(name, price, clr, TP_LINE_WIDTH, TP_LINE_STYLE);
 
     // Add small TP label
     string labelName = name + "_LBL";
@@ -1006,10 +1006,10 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // v4.0 SAFETY CHECK 3: Block on extreme volatility
+    // v5.8 SAFETY CHECK 3: Block on extreme volatility (simplified)
     // ═══════════════════════════════════════════════════════════════════
     if(PauseReopenOnExtreme) {
-        if(currentATRStep == ATR_STEP_EXTREME || currentATR_Condition == ATR_EXTREME) {
+        if(currentATR_Condition == ATR_EXTREME) {
             if(DetailedLogging) {
                 Print("Reopen blocked: Extreme volatility");
             }
@@ -1037,13 +1037,7 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
 
     if(lastClose == 0) return true;  // Never closed, can open
 
-    // COOLDOWN CHECK (v4.6 - Disabilitabile)
-    if(EnableCyclicCooldown) {
-        int elapsed = SecondsElapsed(lastClose);
-        if(elapsed < CyclicCooldown_Seconds) {
-            return false;  // Still in cooldown
-        }
-    }
+    // COOLDOWN REMOVED v5.8 - Reopen sempre immediato
 
     // ═══════════════════════════════════════════════════════════════════
     // ORIGINAL CHECK: Max cycles
@@ -1100,9 +1094,9 @@ double CalculateReopenPrice(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level)
             return originalPrice;
 
         case REOPEN_MODE_ATR_DRIVEN:
-            // Recalculate based on current ATR spacing
+            // Recalculate based on current spacing
             {
-                double newSpacing = GetDynamicSpacing();
+                double newSpacing = currentSpacing_Pips;
                 double spacingPoints = PipsToPoints(newSpacing);
 
                 if(zone == ZONE_UPPER) {
@@ -1113,10 +1107,10 @@ double CalculateReopenPrice(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level)
             }
 
         case REOPEN_MODE_HYBRID:
-            // If ATR price is close to original (within 50% of spacing), use original
-            // Otherwise use ATR-driven price
+            // If new price is close to original (within 50% of spacing), use original
+            // Otherwise use new calculated price
             {
-                double newSpacing = GetDynamicSpacing();
+                double newSpacing = currentSpacing_Pips;
                 double spacingPoints = PipsToPoints(newSpacing);
                 double atrPrice = 0;
 

@@ -116,18 +116,7 @@ bool ValidateInputParameters() {
     }
 
     // ====================================================================
-    // CHECK 4: ATR Multiplier
-    // ====================================================================
-    if(SpacingMode == SPACING_ATR) {
-        if(SpacingATR_Multiplier < 0.3 || SpacingATR_Multiplier > 2.0) {
-            Print("WARNING: SpacingATR_Multiplier ", SpacingATR_Multiplier,
-                  " outside typical range 0.3-2.0");
-            warnings++;
-        }
-    }
-
-    // ====================================================================
-    // CHECK 5: Lot Multiplier (Progressive mode)
+    // CHECK 4: Lot Multiplier (Progressive mode)
     // ====================================================================
     if(LotMode == LOT_PROGRESSIVE) {
         if(LotMultiplier < 1.0) {

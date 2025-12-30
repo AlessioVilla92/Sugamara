@@ -63,15 +63,8 @@ bool PerformRiskChecks() {
         return false;
     }
 
-    // 4. Volatility Check
-    if(PauseOnHighATR && IsMarketTooVolatile()) {
-        // v5.7: Throttled logging - 1x every 5 minutes if condition persists
-        if(TimeCurrent() - g_lastVolatilityWarning >= g_warningThrottleSec) {
-            LogMessage(LOG_WARNING, "High volatility - new orders blocked");
-            g_lastVolatilityWarning = TimeCurrent();
-        }
-        return false;
-    }
+    // 4. Volatility Check - REMOVED v5.8
+    // PauseOnHighATR removed - ATR used only for monitoring
 
     // 5. News Pause (manual)
     if(PauseOnNews && isNewsPause) {
@@ -440,8 +433,7 @@ void LogRiskReport() {
     double atrPips = GetATRPips();
     Print("  ATR: ", DoubleToString(atrPips, 1), " pips");
     Print("  Condition: ", GetATRConditionName(GetATRCondition(atrPips)));
-    Print("  High ATR Threshold: ", DoubleToString(HighATR_Threshold, 1), " pips");
-    Print("  Market Too Volatile: ", IsMarketTooVolatile() ? "YES" : "NO");
+    // v5.8: High ATR Threshold removed - ATR for monitoring only
     Print("");
 
     // Daily Status
