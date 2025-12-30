@@ -546,7 +546,7 @@ input double    NetExposure_MaxLot = 0.10;                   // 📊 Max Esposiz
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  1️⃣9️⃣  🇪🇺🇺🇸 SOTTOSTANTI - EUR/USD                        ║"
-input group "║      Spread: 0.8-1.5 pips | Range: 60-100 pips/day       ║"
+input group "║      Spread: 0.8-1.5 | Range: 60-100 | Spacing: 9 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 EUR/USD GRID SETTINGS"
@@ -563,7 +563,7 @@ input double    EURUSD_ATR_Typical = 25.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣0️⃣  🇺🇸🇨🇦 SOTTOSTANTI - USD/CAD                        ║"
-input group "║      Spread: 1.0-1.8 pips | Range: 50-80 pips/day        ║"
+input group "║      Spread: 1.0-1.8 | Range: 50-80 | Spacing: 12 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 USD/CAD GRID SETTINGS"
@@ -580,7 +580,7 @@ input double    USDCAD_ATR_Typical = 22.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣1️⃣  🇦🇺🇳🇿 SOTTOSTANTI - AUD/NZD (BEST NEUTRAL)         ║"
-input group "║      Spread: 2.5-3.5 pips | Range: 50-80 pips/day        ║"
+input group "║      Spread: 2.5-3.5 | Range: 50-80 | Spacing: 10 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 AUD/NZD GRID SETTINGS"
@@ -597,7 +597,7 @@ input double    AUDNZD_ATR_Typical = 18.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣2️⃣  🇪🇺🇨🇭 SOTTOSTANTI - EUR/CHF (LOW VOLATILITY)       ║"
-input group "║      Spread: 1.2-2.0 pips | Range: 40-60 pips/day        ║"
+input group "║      Spread: 1.2-2.0 | Range: 40-60 | Spacing: 10 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 EUR/CHF GRID SETTINGS"
@@ -614,7 +614,7 @@ input double    EURCHF_ATR_Typical = 15.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣3️⃣  🇦🇺🇨🇦 SOTTOSTANTI - AUD/CAD (COMMODITY)            ║"
-input group "║      Spread: 2.0-3.0 pips | Range: 60-90 pips/day        ║"
+input group "║      Spread: 2.0-3.0 | Range: 60-90 | Spacing: 10 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 AUD/CAD GRID SETTINGS"
@@ -631,7 +631,7 @@ input double    AUDCAD_ATR_Typical = 22.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣4️⃣  🇳🇿🇨🇦 SOTTOSTANTI - NZD/CAD                         ║"
-input group "║      Spread: 2.5-3.5 pips | Range: 55-85 pips/day        ║"
+input group "║      Spread: 2.5-3.5 | Range: 55-85 | Spacing: 10 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 NZD/CAD GRID SETTINGS"
@@ -648,7 +648,7 @@ input double    NZDCAD_ATR_Typical = 20.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣5️⃣  🇪🇺🇬🇧 SOTTOSTANTI - EUR/GBP (EXCELLENT NEUTRAL)    ║"
-input group "║      Spread: 1.2-2.0 pips | Range: 45-70 pips/day        ║"
+input group "║      Spread: 1.2-2.0 | Range: 45-70 | Spacing: 10 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 EUR/GBP GRID SETTINGS"
@@ -665,7 +665,7 @@ input double    EURGBP_ATR_Typical = 16.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣6️⃣  🇬🇧🇺🇸 SOTTOSTANTI - GBP/USD (MEAN REVERTING)       ║"
-input group "║      Spread: 1.0-1.5 pips | Range: 80-120 pips/day       ║"
+input group "║      Spread: 1.0-1.5 | Range: 80-120 | Spacing: 12 pips  ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 GBP/USD GRID SETTINGS"
@@ -682,7 +682,7 @@ input double    GBPUSD_ATR_Typical = 28.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣7️⃣  🇺🇸🇨🇭 SOTTOSTANTI - USD/CHF (SAFE HAVEN)           ║"
-input group "║      Spread: 1.2-2.0 pips | Range: 50-75 pips/day        ║"
+input group "║      Spread: 1.2-2.0 | Range: 50-75 | Spacing: 10 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 USD/CHF GRID SETTINGS"
@@ -699,7 +699,7 @@ input double    USDCHF_ATR_Typical = 18.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣8️⃣  🇺🇸🇯🇵 SOTTOSTANTI - USD/JPY (HIGH VOLATILITY)      ║"
-input group "║      Spread: 0.8-1.5 pips | Range: 80-110 pips/day       ║"
+input group "║      Spread: 0.8-1.5 | Range: 80-110 | Spacing: 12 pips  ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 USD/JPY GRID SETTINGS"
@@ -716,7 +716,7 @@ input double    USDJPY_ATR_Typical = 28.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  2️⃣9️⃣  🇪🇺🇯🇵 SOTTOSTANTI - EUR/JPY (CROSS MAJOR)          ║"
-input group "║      Spread: 1.0-1.8 pips | Range: 80-120 pips/day       ║"
+input group "║      Spread: 1.0-1.8 | Range: 80-120 | Spacing: 12 pips  ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 EUR/JPY GRID SETTINGS"
@@ -733,7 +733,7 @@ input double    EURJPY_ATR_Typical = 30.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  3️⃣0️⃣  🇦🇺🇺🇸 SOTTOSTANTI - AUD/USD (COMMODITY MAJOR)      ║"
-input group "║      Spread: 0.8-1.5 pips | Range: 60-90 pips/day        ║"
+input group "║      Spread: 0.8-1.5 | Range: 60-90 | Spacing: 10 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 AUD/USD GRID SETTINGS"
@@ -750,7 +750,7 @@ input double    AUDUSD_ATR_Typical = 22.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  3️⃣1️⃣  🇳🇿🇺🇸 SOTTOSTANTI - NZD/USD (COMMODITY PAIR)       ║"
-input group "║      Spread: 1.2-2.0 pips | Range: 50-80 pips/day        ║"
+input group "║      Spread: 1.2-2.0 | Range: 50-80 | Spacing: 10 pips   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 NZD/USD GRID SETTINGS"
@@ -767,6 +767,7 @@ input double    NZDUSD_ATR_Typical = 20.0;                   // 📊 ATR Tipico 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  3️⃣2️⃣  ⚙️ CUSTOM PAIR SETTINGS (if CUSTOM selected)       ║"
+input group "║      Spacing: 10 pips (default) - configurabile         ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 CUSTOM PAIR PARAMETERS"

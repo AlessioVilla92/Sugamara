@@ -155,8 +155,8 @@ void HandleControlButtonClick(string objectName) {
 
         CloseAllSugamaraOrders();
 
-        // Reset COP counter on CLOSE ALL
-        COP_ResetDaily();
+        // v5.8 FIX: COP_ResetDaily() RIMOSSO - profitti devono accumularsi
+        // Il reset avviene solo al cambio giorno (COP_IsNewDay) o target raggiunto
 
         currentEntryMode = ENTRY_MARKET;
         buttonState = BTN_STATE_IDLE;
@@ -180,8 +180,8 @@ void HandleControlButtonClick(string objectName) {
 //| Start Grid System                                                |
 //+------------------------------------------------------------------+
 void StartGridSystem() {
-    // Reset COP counter on every START
-    COP_ResetDaily();
+    // v5.8 FIX: COP_ResetDaily() RIMOSSO - profitti devono accumularsi
+    // Il reset avviene solo al cambio giorno (COP_IsNewDay) o target raggiunto
 
     systemState = STATE_ACTIVE;
 

@@ -224,8 +224,8 @@ void HandleButtonClick(string clickedObject) {
     if(clickedObject == "BTN_CLOSE_ALL") {
         Print("WARNING: CLOSE ALL requested");
         CloseAllSugamaraOrders();
-        // Reset COP counter on CLOSE ALL
-        COP_ResetDaily();
+        // v5.8 FIX: COP_ResetDaily() RIMOSSO - profitti devono accumularsi
+        // Il reset avviene solo al cambio giorno (COP_IsNewDay) o target raggiunto
         systemState = STATE_IDLE;
         if(EnableAlerts) Alert("Sugamara: ALL POSITIONS CLOSED");
         return;

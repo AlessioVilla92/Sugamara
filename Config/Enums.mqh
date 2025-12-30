@@ -83,12 +83,13 @@ enum ENUM_BREAKOUT_DIRECTION {
 
 //+------------------------------------------------------------------+
 //| 📏 SPACING MODE - Modalità calcolo spacing griglia               |
-//| v5.8: SPACING_ATR rimosso - ATR usato solo per monitoraggio      |
+//| v5.9: SPACING_PAIR_AUTO aggiunto - legge spacing dal pair preset |
 //+------------------------------------------------------------------+
 enum ENUM_SPACING_MODE {
-    SPACING_FIXED,              // Fixed - Spacing fisso in pips (CONSIGLIATO)
-    SPACING_GEOMETRIC,          // Geometric - Spacing % del prezzo
-    SPACING_CUSTOM              // Custom - Spacing personalizzato
+    SPACING_FIXED,              // Fixed - Spacing fisso manuale (pips)
+    SPACING_PAIR_AUTO,          // Pair Auto - Usa spacing preset della coppia selezionata (PROFESSIONALE)
+    SPACING_GEOMETRIC           // Geometric - Spacing % del prezzo
+    // SPACING_CUSTOM rimosso v5.9 - era identico a SPACING_FIXED
 };
 
 //+------------------------------------------------------------------+

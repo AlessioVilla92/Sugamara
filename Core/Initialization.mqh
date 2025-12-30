@@ -30,10 +30,10 @@ void PrintSystemConfiguration() {
 
     if(SpacingMode == SPACING_FIXED) {
         Print("  Fixed Spacing: ", Fixed_Spacing_Pips, " pips");
+    } else if(SpacingMode == SPACING_PAIR_AUTO) {
+        Print("  Pair Auto Spacing: ", GetPairDefaultSpacing(), " pips (from ", EnumToString(SelectedPair), ")");
     } else if(SpacingMode == SPACING_GEOMETRIC) {
         Print("  Geometric Percent: ", SpacingGeometric_Percent, "%");
-    } else if(SpacingMode == SPACING_CUSTOM) {
-        Print("  Custom Spacing configured");
     }
 
     // Lot Configuration

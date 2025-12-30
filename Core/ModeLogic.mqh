@@ -55,26 +55,51 @@ bool UsesCascadeTP()
 }
 
 //+------------------------------------------------------------------+
-//| Calcola lo spacing corrente - v5.8 Always Fixed                  |
-//| ATR dynamic spacing removed - spacing is always fixed            |
+//| Get Default Spacing for Selected Pair - v5.9                      |
+//| Returns the default spacing from the pair preset                  |
+//+------------------------------------------------------------------+
+double GetPairDefaultSpacing()
+{
+   switch(SelectedPair) {
+      case PAIR_EURUSD:  return EURUSD_DefaultSpacing;
+      case PAIR_USDCAD:  return USDCAD_DefaultSpacing;
+      case PAIR_AUDNZD:  return AUDNZD_DefaultSpacing;
+      case PAIR_EURCHF:  return EURCHF_DefaultSpacing;
+      case PAIR_AUDCAD:  return AUDCAD_DefaultSpacing;
+      case PAIR_NZDCAD:  return NZDCAD_DefaultSpacing;
+      case PAIR_EURGBP:  return EURGBP_DefaultSpacing;
+      case PAIR_GBPUSD:  return GBPUSD_DefaultSpacing;
+      case PAIR_USDCHF:  return USDCHF_DefaultSpacing;
+      case PAIR_USDJPY:  return USDJPY_DefaultSpacing;
+      case PAIR_EURJPY:  return EURJPY_DefaultSpacing;
+      case PAIR_AUDUSD:  return AUDUSD_DefaultSpacing;
+      case PAIR_NZDUSD:  return NZDUSD_DefaultSpacing;
+      case PAIR_CUSTOM:  return Custom_DefaultSpacing;
+      default:           return Fixed_Spacing_Pips;
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Calcola lo spacing corrente - v5.9 con SPACING_PAIR_AUTO          |
+//| Supporta: FIXED, PAIR_AUTO, GEOMETRIC                             |
 //+------------------------------------------------------------------+
 double CalculateCurrentSpacing()
 {
-   // v5.8: ATR dynamic spacing removed - always use fixed spacing
-   // SpacingMode can be SPACING_FIXED, SPACING_GEOMETRIC, or SPACING_CUSTOM
+   // v5.9: Supporta SPACING_FIXED, SPACING_PAIR_AUTO, SPACING_GEOMETRIC
+   // SPACING_CUSTOM rimosso (era identico a SPACING_FIXED)
 
    double spacing = Fixed_Spacing_Pips;
 
    switch(SpacingMode) {
+      case SPACING_PAIR_AUTO:
+         // Pair Auto: usa spacing preset dalla coppia selezionata
+         spacing = GetPairDefaultSpacing();
+         break;
+
       case SPACING_GEOMETRIC:
          // Geometric: spacing as % of current price
          spacing = SymbolInfoDouble(_Symbol, SYMBOL_BID) * SpacingGeometric_Percent / 100.0;
          spacing = spacing / symbolPoint;  // Convert to pips
-         break;
-
-      case SPACING_CUSTOM:
-         // Custom: use fixed spacing (can be extended for custom logic)
-         spacing = Fixed_Spacing_Pips;
          break;
 
       case SPACING_FIXED:
