@@ -27,7 +27,11 @@
       "Bash(powershell:*)",
       "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Trading\\\\DoubleParcelling.mqh\")",
       "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\ANALISI\\\\DOUBLE_PARCELLING_IMPLEMENTAZIONE_FINALE.md\")",
-      "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Utils\\\\DynamicATRAdapter.mqh\")"
+      "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Utils\\\\DynamicATRAdapter.mqh\")",
+      "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_log.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_log_detailed.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_profits.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_profits_v2.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_shield.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_bop_summary.ps1\")",
+      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\read_log.ps1\")",
+      "Bash(powershell.exe:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

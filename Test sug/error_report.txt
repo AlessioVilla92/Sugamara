@@ -1,0 +1,177 @@
+﻿================================================================================
+REPORT ERRORI E WARNING - LOG TRADING 30-31 DICEMBRE 2025
+================================================================================
+
+
+--------------------------------------------------------------------------------
+FILE: 20251230.log
+--------------------------------------------------------------------------------
+Totale linee con errori/warning: 114
+
+
+--------------------------------------------------------------------------------
+FILE: 20251231.log
+--------------------------------------------------------------------------------
+Totale linee con errori/warning: 0
+
+
+================================================================================
+SEZIONE 1: LISTA COMPLETA ERRORI (ERROR)
+================================================================================
+Totale ERROR: 8
+
+[20251230.log] IP	0	03:52:18.189	Sugamara29.1 (AUDUSD,H1)	[ATR] ERROR: BarsCalculated() returned error: 4806
+[20251230.log] HD	0	03:52:57.361	Sugamara29 (USDJPY,H1)	  ERROR: PAIR MISMATCH DETECTED!
+[20251230.log] QL	0	03:54:38.995	Sugamara30 (EURUSD,H1)	ERROR: Spacing too small: 9.0 pips
+[20251230.log] OF	0	03:55:23.199	Sugamara30 (EURUSD,H1)	[ATR] ERROR: BarsCalculated() returned error: 4807
+[20251230.log] LG	0	03:55:53.855	Sugamara30 (GBPUSD,H1)	[ATR] ERROR: BarsCalculated() returned error: 4807
+[20251230.log] RD	0	03:56:12.071	Sugamara30 (USDJPY,H1)	[ATR] ERROR: BarsCalculated() returned error: 4807
+[20251230.log] KO	0	03:57:04.138	Sugamara30 (AUDNZD,H1)	[ATR] ERROR: BarsCalculated() returned error: 4807
+[20251230.log] NK	0	12:21:32.455	Sugamara30 (EURJPY,H1)	[ATR] ERROR: BarsCalculated() returned error: 4807
+
+================================================================================
+SEZIONE 2: LISTA COMPLETA WARNING
+================================================================================
+Totale WARNING: 63
+
+[20251230.log] FE	0	03:52:17.747	Sugamara29.1 (AUDUSD,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] FE	0	03:52:17.748	Sugamara29.1 (AUDUSD,H1)	  Warning Down: 0.66251 | Warning Up: 0.67811
+[20251230.log] JQ	0	03:52:17.748	Sugamara29.1 (AUDUSD,H1)	  Warning Zone UP: 0.67811
+[20251230.log] DI	0	03:52:17.748	Sugamara29.1 (AUDUSD,H1)	  Warning Zone DOWN: 0.66251
+[20251230.log] QE	0	03:52:17.807	Sugamara29.1 (EURUSD,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] PG	0	03:52:17.808	Sugamara29.1 (EURUSD,H1)	  Warning Down: 1.17097 | Warning Up: 1.18397
+[20251230.log] RG	0	03:52:17.809	Sugamara29.1 (EURUSD,H1)	  Warning Zone UP: 1.18397
+[20251230.log] EI	0	03:52:17.809	Sugamara29.1 (EURUSD,H1)	  Warning Zone DOWN: 1.17097
+[20251230.log] OF	0	03:52:17.855	Sugamara29.1 (AUDUSD,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] HM	0	03:52:17.887	Sugamara29.1 (EURUSD,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] FJ	0	03:52:18.310	Sugamara29.1 (GBPUSD,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] OH	0	03:52:18.310	Sugamara29.1 (GBPUSD,H1)	  Warning Down: 1.34258 | Warning Up: 1.35818
+[20251230.log] RD	0	03:52:18.310	Sugamara29.1 (GBPUSD,H1)	  Warning Zone UP: 1.35818
+[20251230.log] DN	0	03:52:18.310	Sugamara29.1 (GBPUSD,H1)	  Warning Zone DOWN: 1.34258
+[20251230.log] HG	0	03:52:18.311	Sugamara29.1 (GBPUSD,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] GN	0	03:52:38.448	Sugamara29.1 (EURUSD,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] GG	0	03:52:40.336	Sugamara29.1 (GBPUSD,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] FS	0	03:52:41.333	Sugamara29.1 (EURUSD,H1)	WARNING: Grid A position closed: -$4.62
+[20251230.log] KL	0	03:52:41.333	Sugamara29.1 (EURUSD,H1)	WARNING: Grid A position closed: -$4.70
+[20251230.log] CI	0	03:52:43.176	Sugamara29.1 (GBPUSD,H1)	WARNING: Grid A position closed: -$1.75
+[20251230.log] MP	0	03:52:43.176	Sugamara29.1 (GBPUSD,H1)	WARNING: Grid A position closed: -$0.32
+[20251230.log] IS	0	03:52:45.718	Sugamara29.1 (AUDUSD,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] GN	0	03:52:48.427	Sugamara29.1 (AUDUSD,H1)	WARNING: Grid A position closed: -$0.13
+[20251230.log] IM	0	03:52:48.427	Sugamara29.1 (AUDUSD,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] RS	0	03:52:57.361	Sugamara29 (USDJPY,H1)	WARNING: Chart symbol doesn't match selected pair preset
+[20251230.log] JK	0	03:52:57.361	Sugamara29 (USDJPY,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] IN	0	03:52:57.361	Sugamara29 (USDJPY,H1)	  Warning Down: 154.99300 | Warning Up: 157.59300
+[20251230.log] JO	0	03:52:57.361	Sugamara29 (USDJPY,H1)	  Warning Zone UP: 157.59300
+[20251230.log] DG	0	03:52:57.361	Sugamara29 (USDJPY,H1)	  Warning Zone DOWN: 154.99300
+[20251230.log] MQ	0	03:52:57.361	Sugamara29 (USDJPY,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] LJ	0	03:52:59.480	Sugamara29 (USDJPY,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] NR	0	03:53:02.247	Sugamara29 (USDJPY,H1)	WARNING: Grid A position closed: -$4.80
+[20251230.log] RJ	0	03:54:38.392	Sugamara30 (EURUSD,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] JP	0	03:54:38.392	Sugamara30 (EURUSD,H1)	  Warning Down: 1.17152 | Warning Up: 1.18322
+[20251230.log] GM	0	03:54:38.392	Sugamara30 (EURUSD,H1)	  Warning Zone UP: 1.18322
+[20251230.log] FK	0	03:54:38.392	Sugamara30 (EURUSD,H1)	  Warning Zone DOWN: 1.17152
+[20251230.log] MI	0	03:54:38.392	Sugamara30 (EURUSD,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] QJ	0	03:55:09.387	Sugamara30 (EURUSD,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] IN	0	03:55:09.387	Sugamara30 (EURUSD,H1)	  Warning Down: 1.17092 | Warning Up: 1.18392
+[20251230.log] KO	0	03:55:09.387	Sugamara30 (EURUSD,H1)	  Warning Zone UP: 1.18392
+[20251230.log] LE	0	03:55:09.387	Sugamara30 (EURUSD,H1)	  Warning Zone DOWN: 1.17092
+[20251230.log] EK	0	03:55:09.388	Sugamara30 (EURUSD,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] EQ	0	03:55:39.895	Sugamara30 (GBPUSD,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] FH	0	03:55:39.895	Sugamara30 (GBPUSD,H1)	  Warning Down: 1.34266 | Warning Up: 1.35826
+[20251230.log] HJ	0	03:55:39.895	Sugamara30 (GBPUSD,H1)	  Warning Zone UP: 1.35826
+[20251230.log] NS	0	03:55:39.895	Sugamara30 (GBPUSD,H1)	  Warning Zone DOWN: 1.34266
+[20251230.log] RN	0	03:55:39.895	Sugamara30 (GBPUSD,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] KP	0	03:56:00.759	Sugamara30 (USDJPY,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] FI	0	03:56:00.759	Sugamara30 (USDJPY,H1)	  Warning Down: 155.52200 | Warning Up: 157.08200
+[20251230.log] PJ	0	03:56:00.759	Sugamara30 (USDJPY,H1)	  Warning Zone UP: 157.08200
+[20251230.log] PS	0	03:56:00.759	Sugamara30 (USDJPY,H1)	  Warning Zone DOWN: 155.52200
+[20251230.log] ND	0	03:56:00.760	Sugamara30 (USDJPY,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] OR	0	03:56:56.887	Sugamara30 (AUDNZD,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] HG	0	03:56:56.887	Sugamara30 (AUDNZD,H1)	  Warning Down: 1.14703 | Warning Up: 1.16133
+[20251230.log] JE	0	03:56:56.887	Sugamara30 (AUDNZD,H1)	  Warning Zone UP: 1.16133
+[20251230.log] DL	0	03:56:56.887	Sugamara30 (AUDNZD,H1)	  Warning Zone DOWN: 1.14703
+[20251230.log] DQ	0	03:56:56.887	Sugamara30 (AUDNZD,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] PG	0	12:21:19.378	Sugamara30 (EURJPY,H1)	WARNING: ATR data not ready, using default spacing
+[20251230.log] RH	0	12:21:19.379	Sugamara30 (EURJPY,H1)	  Warning Down: 182.86300 | Warning Up: 184.16300
+[20251230.log] FE	0	12:21:19.379	Sugamara30 (EURJPY,H1)	  Warning Zone UP: 184.16300
+[20251230.log] DL	0	12:21:19.379	Sugamara30 (EURJPY,H1)	  Warning Zone DOWN: 182.86300
+[20251230.log] LG	0	12:21:19.380	Sugamara30 (EURJPY,H1)	  Phase 1 (Warning): Yellow zones created
+[20251230.log] LD	0	20:44:58.258	Sugamara30 (GBPUSD,H1)	WARNING: Dashboard missing - auto-recreating...
+
+================================================================================
+SEZIONE 3: LISTA FAILED
+================================================================================
+Totale FAILED: 2
+
+[20251230.log] QH	0	03:54:38.995	Sugamara30 (EURUSD,H1)	CRITICAL: Grid configuration validation FAILED
+[20251230.log] LF	0	03:54:38.995	Sugamara30 (EURUSD,H1)	Reason: 8 (Initialization failed)
+
+================================================================================
+SEZIONE 4: LISTA MISMATCH
+================================================================================
+Totale MISMATCH: 2
+
+[20251230.log] HD	0	03:52:57.361	Sugamara29 (USDJPY,H1)	  ERROR: PAIR MISMATCH DETECTED!
+[20251230.log] RM	0	03:52:57.361	Sugamara29 (USDJPY,H1)	Alert: SUGAMARA: Pair mismatch! Selected EURUSD but chart is USDJPY
+
+================================================================================
+SEZIONE 5: LISTA EMERGENCY
+================================================================================
+Totale EMERGENCY: 24
+
+[20251230.log] OP	0	03:52:17.855	Sugamara29.1 (AUDUSD,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] HO	0	03:52:17.887	Sugamara29.1 (EURUSD,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] HG	0	03:52:18.311	Sugamara29.1 (GBPUSD,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] PM	0	03:52:19.362	Sugamara29.1 (AUDUSD,H1)	  Emergency Stop: NO
+[20251230.log] OI	0	03:52:19.369	Sugamara29.1 (EURUSD,H1)	  Emergency Stop: NO
+[20251230.log] HN	0	03:52:19.578	Sugamara29.1 (GBPUSD,H1)	  Emergency Stop: NO
+[20251230.log] GN	0	03:52:38.448	Sugamara29.1 (EURUSD,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] GG	0	03:52:40.336	Sugamara29.1 (GBPUSD,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] IS	0	03:52:45.718	Sugamara29.1 (AUDUSD,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] IM	0	03:52:48.427	Sugamara29.1 (AUDUSD,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] QN	0	03:52:57.361	Sugamara29 (USDJPY,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] RF	0	03:52:58.611	Sugamara29 (USDJPY,H1)	  Emergency Stop: NO
+[20251230.log] LJ	0	03:52:59.480	Sugamara29 (USDJPY,H1)	WARNING: EMERGENCY: Closing ALL orders and positions...
+[20251230.log] QF	0	03:54:38.392	Sugamara30 (EURUSD,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] JP	0	03:55:09.389	Sugamara30 (EURUSD,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] ID	0	03:55:09.885	Sugamara30 (EURUSD,H1)	  Emergency Stop: NO
+[20251230.log] CL	0	03:55:39.896	Sugamara30 (GBPUSD,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] NG	0	03:55:40.675	Sugamara30 (GBPUSD,H1)	  Emergency Stop: NO
+[20251230.log] RK	0	03:56:00.760	Sugamara30 (USDJPY,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] GO	0	03:56:01.915	Sugamara30 (USDJPY,H1)	  Emergency Stop: NO
+[20251230.log] EO	0	03:56:56.888	Sugamara30 (AUDNZD,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] QQ	0	03:56:57.542	Sugamara30 (AUDNZD,H1)	  Emergency Stop: NO
+[20251230.log] PD	0	12:21:19.380	Sugamara30 (EURJPY,H1)	INFO: Emergency Stop: 20.00%
+[20251230.log] NN	0	12:21:20.540	Sugamara30 (EURJPY,H1)	  Emergency Stop: NO
+
+================================================================================
+SEZIONE 6: ANALISI PER PAIR
+================================================================================
+Errori/Warning per Pair:
+  Sugama : 114 occorrenze
+
+================================================================================
+SEZIONE 7: FREQUENZA TIPI DI ERRORE
+================================================================================
+  Warning : 73 occorrenze
+  Emergency : 19 occorrenze
+  Error : 19 occorrenze
+  FAILED : 2 occorrenze
+  mismatch : 1 occorrenze
+
+================================================================================
+SEZIONE 8: CLASSIFICAZIONE PER GRAVITA
+================================================================================
+CRITICAL (EMERGENCY/FATAL): 26
+HIGH (ERROR): 8
+MEDIUM (FAILED/MISMATCH): 4
+LOW (WARNING): 63
+
+================================================================================
+RIEPILOGO FINALE
+================================================================================
+Totale linee analizzate con errori/warning: 114
+
+Distribuzione per file:
+  20251230.log: 114
+  20251231.log: 0

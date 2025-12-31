@@ -842,8 +842,9 @@ string GetGridObjectPrefix(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
 }
 
 //+------------------------------------------------------------------+
-//| Create Grid Level Line on Chart v3.0                             |
+//| Create Grid Level Line on Chart v5.9                             |
 //| Stesso spessore per tutte le linee                               |
+//| v5.9: Labels in colonna fissa vicino ai pannelli laterali        |
 //+------------------------------------------------------------------+
 void CreateGridLevelLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, double price) {
     if(!ShowGridLines) return;
@@ -859,20 +860,34 @@ void CreateGridLevelLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, do
     string orderTypeLabel = GetOrderTypeString(orderType);
     string labelName = name + "_LBL";
 
-    // Create small label next to line
+    // v5.9: Convert price to Y pixel coordinate for fixed position
+    int chartHeight = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
+    double priceMax = ChartGetDouble(0, CHART_PRICE_MAX);
+    double priceMin = ChartGetDouble(0, CHART_PRICE_MIN);
+    int yPixel = (int)((priceMax - price) / (priceMax - priceMin) * chartHeight);
+
+    // v5.9: Fixed X position near side panels (Dashboard ends at ~630px)
+    int xPixel = Dashboard_X + 620;
+
     ObjectDelete(0, labelName);
-    if(ObjectCreate(0, labelName, OBJ_TEXT, 0, TimeCurrent() + PeriodSeconds() * 5, price)) {
+    if(ObjectCreate(0, labelName, OBJ_LABEL, 0, 0, 0)) {
+        ObjectSetInteger(0, labelName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, xPixel);
+        ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, yPixel);
         ObjectSetString(0, labelName, OBJPROP_TEXT, orderTypeLabel);
         ObjectSetInteger(0, labelName, OBJPROP_COLOR, clr);
         ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 7);
         ObjectSetString(0, labelName, OBJPROP_FONT, "Arial");
-        ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_LEFT);
+        ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_RIGHT);
+        ObjectSetInteger(0, labelName, OBJPROP_BACK, false);
+        ObjectSetInteger(0, labelName, OBJPROP_ZORDER, 9500);
     }
 }
 
 //+------------------------------------------------------------------+
-//| Create TP Line on Chart v4.6                                     |
+//| Create TP Line on Chart v5.9                                     |
 //| Uses configurable colors: yellow for BUY, red for SELL           |
+//| v5.9: Labels in colonna fissa vicino ai pannelli laterali        |
 //+------------------------------------------------------------------+
 void CreateGridTPLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, double price) {
     // v4.6: Use new ShowTPLines parameter
@@ -888,15 +903,29 @@ void CreateGridTPLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, doubl
     // v4.6: Use configurable style and width
     CreateHLine(name, price, clr, TP_LINE_WIDTH, TP_LINE_STYLE);
 
+    // v5.9: Convert price to Y pixel coordinate for fixed position
+    int chartHeight = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
+    double priceMax = ChartGetDouble(0, CHART_PRICE_MAX);
+    double priceMin = ChartGetDouble(0, CHART_PRICE_MIN);
+    int yPixel = (int)((priceMax - price) / (priceMax - priceMin) * chartHeight);
+
+    // v5.9: Fixed X position near side panels (Dashboard ends at ~630px)
+    int xPixel = Dashboard_X + 620;
+
     // Add small TP label
     string labelName = name + "_LBL";
     ObjectDelete(0, labelName);
-    if(ObjectCreate(0, labelName, OBJ_TEXT, 0, TimeCurrent() + PeriodSeconds() * 3, price)) {
+    if(ObjectCreate(0, labelName, OBJ_LABEL, 0, 0, 0)) {
+        ObjectSetInteger(0, labelName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, xPixel);
+        ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, yPixel);
         ObjectSetString(0, labelName, OBJPROP_TEXT, "TP");
         ObjectSetInteger(0, labelName, OBJPROP_COLOR, clr);
         ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 6);
         ObjectSetString(0, labelName, OBJPROP_FONT, "Arial");
-        ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_LEFT);
+        ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_RIGHT);
+        ObjectSetInteger(0, labelName, OBJPROP_BACK, false);
+        ObjectSetInteger(0, labelName, OBJPROP_ZORDER, 9500);
     }
 }
 

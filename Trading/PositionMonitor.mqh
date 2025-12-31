@@ -28,8 +28,108 @@ void UpdateAllPositionStatuses() {
     // Update Grid B
     UpdateGridBStatuses();
 
+    // v5.8: Update Grid Zero statuses
+    UpdateGridZeroStatuses();
+
     // Recalculate exposure
     CalculateNetExposure();
+}
+
+//+------------------------------------------------------------------+
+//| Update Grid Zero Statuses (v5.8)                                  |
+//+------------------------------------------------------------------+
+void UpdateGridZeroStatuses() {
+    if(!Enable_GridZero) return;
+    if(!g_gridZeroInserted) return;
+
+    // Check STOP order
+    if(g_gridZero_StopTicket > 0) {
+        bool found = false;
+
+        // Check if pending
+        for(int i = OrdersTotal() - 1; i >= 0; i--) {
+            ulong ticket = OrderGetTicket(i);
+            if(ticket == g_gridZero_StopTicket) {
+                found = true;
+                if(g_gridZero_StopStatus != ORDER_PENDING) {
+                    g_gridZero_StopStatus = ORDER_PENDING;
+                }
+                break;
+            }
+        }
+
+        // Check if filled (now a position)
+        if(!found) {
+            for(int i = PositionsTotal() - 1; i >= 0; i--) {
+                ulong ticket = PositionGetTicket(i);
+                if(!PositionSelectByTicket(ticket)) continue;
+                ulong orderTicket = (ulong)PositionGetInteger(POSITION_TICKET);
+                // Note: Position ticket != Order ticket in MT5
+                // We need to check the position magic and comment
+                string comment = PositionGetString(POSITION_COMMENT);
+                if(StringFind(comment, "L0-") >= 0 &&
+                   StringFind(comment, (g_gridZeroBiasUp ? "SELL_STOP" : "BUY_STOP")) >= 0) {
+                    found = true;
+                    if(g_gridZero_StopStatus != ORDER_FILLED) {
+                        g_gridZero_StopStatus = ORDER_FILLED;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // If not found anywhere, it was closed
+        if(!found && g_gridZero_StopStatus != ORDER_NONE) {
+            // Determine if TP or SL based on last status
+            if(g_gridZero_StopStatus == ORDER_FILLED) {
+                // Check history for this trade
+                g_gridZero_StopStatus = ORDER_CLOSED_TP;  // Assume TP (Grid Zero designed for TP)
+                g_gridZero_LastStopClose = TimeCurrent();
+            }
+        }
+    }
+
+    // Check LIMIT order (same logic)
+    if(g_gridZero_LimitTicket > 0) {
+        bool found = false;
+
+        // Check if pending
+        for(int i = OrdersTotal() - 1; i >= 0; i--) {
+            ulong ticket = OrderGetTicket(i);
+            if(ticket == g_gridZero_LimitTicket) {
+                found = true;
+                if(g_gridZero_LimitStatus != ORDER_PENDING) {
+                    g_gridZero_LimitStatus = ORDER_PENDING;
+                }
+                break;
+            }
+        }
+
+        // Check if filled (now a position)
+        if(!found) {
+            for(int i = PositionsTotal() - 1; i >= 0; i--) {
+                ulong ticket = PositionGetTicket(i);
+                if(!PositionSelectByTicket(ticket)) continue;
+                string comment = PositionGetString(POSITION_COMMENT);
+                if(StringFind(comment, "L0-") >= 0 &&
+                   StringFind(comment, (g_gridZeroBiasUp ? "BUY_LIMIT" : "SELL_LIMIT")) >= 0) {
+                    found = true;
+                    if(g_gridZero_LimitStatus != ORDER_FILLED) {
+                        g_gridZero_LimitStatus = ORDER_FILLED;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // If not found anywhere, it was closed
+        if(!found && g_gridZero_LimitStatus != ORDER_NONE) {
+            if(g_gridZero_LimitStatus == ORDER_FILLED) {
+                g_gridZero_LimitStatus = ORDER_CLOSED_TP;
+                g_gridZero_LastLimitClose = TimeCurrent();
+            }
+        }
+    }
 }
 
 //+------------------------------------------------------------------+

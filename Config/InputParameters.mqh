@@ -154,6 +154,27 @@ input bool   Trail_Remove_Distant = true;                   // 🗑️ Elimina G
 input bool   Trail_Sync_Shield = true;                      // 🛡️ Sincronizza Shield Zone
 
 //+------------------------------------------------------------------+
+//| 🎯 GRID ZERO v5.8 - Center Gap Filler                            |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🎯 GRID ZERO v5.8 - Center Gap Filler                    ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ✅ ATTIVAZIONE"
+input bool   Enable_GridZero = true;                        // ✅ Abilita Grid Zero (Mean Reversion)
+// Grid Zero fills the 27-pip gap at the center of the grid
+// Triggered when L2 is filled (price moved 24+ pips from entry)
+// Inserts counter-trend orders for mean-reversion strategy
+
+input group "    📊 CONFIGURAZIONE"
+input int    GridZero_Trigger_Level = 2;                    // 🎯 Trigger Level (L2 = default)
+// 1 = Trigger when L1 filled (12 pips from entry)
+// 2 = Trigger when L2 filled (24 pips from entry) - RECOMMENDED
+// 3 = Trigger when L3 filled (36 pips from entry) - Conservative
+
+//+------------------------------------------------------------------+
 //| 📊 ATR MULTI-TIMEFRAME SETTINGS                                  |
 //+------------------------------------------------------------------+
 
@@ -454,7 +475,7 @@ input group "╚═════════════════════�
 
 input group "    📊 DASHBOARD DISPLAY"
 input bool      ShowDashboard = true;                        // ✅ Mostra Dashboard
-input int       Dashboard_X = 20;                            // 📍 Posizione X Dashboard
+input int       Dashboard_X = 0;                             // 📍 Posizione X Dashboard (v5.9: 0=nessun margine)
 input int       Dashboard_Y = 30;                            // 📍 Posizione Y Dashboard
 input bool      ShowGridLines = true;                        // ✅ Mostra Linee Grid su Chart
 

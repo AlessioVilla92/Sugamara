@@ -158,6 +158,9 @@ void HandleControlButtonClick(string objectName) {
         // v5.8 FIX: COP_ResetDaily() RIMOSSO - profitti devono accumularsi
         // Il reset avviene solo al cambio giorno (COP_IsNewDay) o target raggiunto
 
+        // v5.8: Reset Grid Zero flags on CLOSE ALL
+        ResetGridZeroFlags();
+
         currentEntryMode = ENTRY_MARKET;
         buttonState = BTN_STATE_IDLE;
         waitingForActivation = false;
@@ -182,6 +185,9 @@ void HandleControlButtonClick(string objectName) {
 void StartGridSystem() {
     // v5.8 FIX: COP_ResetDaily() RIMOSSO - profitti devono accumularsi
     // Il reset avviene solo al cambio giorno (COP_IsNewDay) o target raggiunto
+
+    // v5.8: Reset Grid Zero flags on START (ready for new cycle)
+    ResetGridZeroFlags();
 
     systemState = STATE_ACTIVE;
 

@@ -75,6 +75,9 @@
 // v5.3 NEW Trading Modules
 #include "Trading/TrailingGridManager.mqh"
 
+// v5.8 NEW Trading Modules
+#include "Trading/GridZero.mqh"
+
 // v4.0 NEW Modules
 #include "Indicators/CenterCalculator.mqh"
 
@@ -231,6 +234,9 @@ int OnInit() {
         Print("WARNING: Failed to initialize Trailing Grid");
     }
 
+    //--- STEP 13.8d: Initialize Grid Zero (v5.8) ---
+    InitGridZero();
+
     //--- STEP 13.9: Initialize Trailing Manager (REMOVED - CASCADE_OVERLAP puro) ---
     // GridTrailingManager eliminato - non necessario per CASCADE SOVRAPPOSTO
 
@@ -330,6 +336,7 @@ int OnInit() {
     Print("  ✅ Control Buttons: ALWAYS ACTIVE");
     Print("  ✅ Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
     Print("  ✅ Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
+    Print("  ✅ Grid Zero: ", Enable_GridZero ? ("ENABLED (L" + IntegerToString(GridZero_Trigger_Level) + " trigger)") : "DISABLED");
     Print("───────────────────────────────────────────────────────────────────");
     Print("  ATR/CENTER FEATURES:");
     Print("  ✅ ATR Indicator: ", UseATR ? "ENABLED" : "DISABLED");
@@ -405,6 +412,9 @@ void OnDeinit(const int reason) {
 
     // v5.3: Deinitialize Trailing Grid
     DeinitializeTrailingGrid();
+
+    // v5.8: Deinitialize Grid Zero
+    DeinitializeGridZero();
 
     // v4.0: Deinitialize new modules
     if(ShowCenterIndicators) {
@@ -522,6 +532,12 @@ void OnTick() {
     //--- v5.3: TRAILING GRID INTELLIGENTE PROCESSING ---
     if(Enable_TrailingGrid && systemState == STATE_ACTIVE) {
         ProcessTrailingGridCheck();
+    }
+
+    //--- v5.8: GRID ZERO - CHECK AND INSERT + CYCLING ---
+    if(Enable_GridZero && systemState == STATE_ACTIVE) {
+        CheckAndInsertGridZero();
+        ProcessGridZeroCycling();
     }
 
     //--- v5.1: BREAK ON PROFIT (BOP) ---

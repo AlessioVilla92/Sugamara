@@ -497,7 +497,7 @@ void CreateUnifiedDashboard() {
     leftY += exposureHeight;
 
     //--- CONTROL BUTTONS PANEL ---
-    int buttonsHeight = 170;
+    int buttonsHeight = 200;  // v5.8: Increased +30px to balance Grid Zero panel
     DashRectangle("LEFT_BUTTONS_PANEL", leftX, leftY, colWidth, buttonsHeight, CLR_PANEL_BUTTONS);
     g_btnY = leftY;
     CreateControlButtons(leftY, leftX, colWidth);
@@ -570,6 +570,23 @@ void CreateUnifiedDashboard() {
 
     rightY += perfHeight;
 
+    //--- GRID ZERO PANEL (v5.8) ---
+    if(Enable_GridZero) {
+        int gzHeight = 55;
+        DashRectangle("GZ_PANEL", rightX, rightY, colWidth, gzHeight, C'35,40,30');
+
+        int gz = rightY + 6;
+        DashLabel("GZ_TITLE", rightX + 10, gz, "GRID ZERO", CLR_GOLD, 9, "Arial Bold");
+        DashLabel("GZ_STATUS", rightX + 100, gz, "Status: ---", clrGray, 8);
+        DashLabel("GZ_BIAS", rightX + 200, gz, "Bias: ---", clrGray, 8);
+        gz += 18;
+        DashLabel("GZ_STOP", rightX + 10, gz, "STOP: ---", clrGray, 8);
+        DashLabel("GZ_LIMIT", rightX + 100, gz, "LIMIT: ---", clrGray, 8);
+        DashLabel("GZ_CYCLES", rightX + 200, gz, "Cycles: 0", clrGray, 8);
+
+        rightY += gzHeight;
+    }
+
     ChartRedraw(0);
     Print("SUCCESS: Unified Dashboard created with 2-column layout");
 }
@@ -604,50 +621,38 @@ void CreateControlButtons(int startY, int startX, int panelWidth) {
 
 //+------------------------------------------------------------------+
 //| Create Volatility/ATR Monitor Panel (Right Side)                 |
+//| v5.9: Compacted to 55px (was 160px) - 3 rows max                 |
 //+------------------------------------------------------------------+
 void CreateVolatilityPanel() {
     int volX = Dashboard_X + TOTAL_WIDTH + 10;
     int volY = Dashboard_Y;
     int volWidth = 175;
-    int volHeight = 160;
+    int volHeight = 55;  // v5.9: Reduced from 160 to 55
 
     DashRectangle("VOL_PANEL", volX, volY, volWidth, volHeight, CLR_BG_DARK);
 
-    int ly = volY + 8;
+    int ly = volY + 6;
     DashLabel("VOL_TITLE", volX + 10, ly, "ATR MONITOR", CLR_GOLD, 9, "Arial Bold");
-    ly += 20;
-    DashLabel("VOL_SEPARATOR", volX + 10, ly, "------------------------", clrGray, 7);
-    ly += 15;
-
-    // IMMEDIATE Section
-    DashLabel("VOL_IMMEDIATE_TITLE", volX + 10, ly, "IMMEDIATE (M5):", CLR_CYAN, 8, "Arial Bold");
-    ly += 16;
-    DashLabel("VOL_IMMEDIATE_ATR", volX + 10, ly, "ATR: --- pips", clrGray, 8);
-    ly += 14;
-    DashLabel("VOL_IMMEDIATE_COND", volX + 10, ly, "Condition: ---", clrGray, 8);
     ly += 18;
 
-    // CONTEXT Section
-    DashLabel("VOL_CONTEXT_TITLE", volX + 10, ly, "CONTEXT (H1):", CLR_NEUTRAL, 8, "Arial Bold");
+    // v5.9: Compact single line for M5 and H1
+    DashLabel("VOL_ATR_LINE", volX + 10, ly, "M5: --- | H1: ---", CLR_AZURE_1, 8);
     ly += 16;
-    DashLabel("VOL_CONTEXT_ATR", volX + 10, ly, "ATR: --- pips", clrGray, 8);
-    ly += 14;
-    DashLabel("VOL_CONTEXT_COND", volX + 10, ly, "Condition: ---", clrGray, 8);
-    ly += 18;
 
-    // Spacing Status
-    DashLabel("VOL_SPACING_STATUS", volX + 10, ly, "Spacing: --- pips", CLR_AZURE_1, 9, "Arial Bold");
+    // Spacing + Condition on same line
+    DashLabel("VOL_SPACING_STATUS", volX + 10, ly, "Spacing: --- (Normal)", CLR_CYAN, 8);
 
-    Print("SUCCESS: Volatility Panel created");
+    Print("SUCCESS: Volatility Panel created (v5.9 compact)");
 }
 
 //+------------------------------------------------------------------+
 //| Create Shield Panel (Right Side)                                  |
 //| v5.8: Expanded with PreAlert/Shield levels and distance           |
+//| v5.9: Moved up (ATR Monitor reduced from 160 to 55px)             |
 //+------------------------------------------------------------------+
 void CreateShieldPanel() {
     int shieldX = Dashboard_X + TOTAL_WIDTH + 10;
-    int shieldY = Dashboard_Y + 165;  // v5.3: Subito sotto ATR Monitor (160 + 5 gap)
+    int shieldY = Dashboard_Y + 60;  // v5.9: Subito sotto ATR Monitor (55 + 5 gap)
     int shieldWidth = 175;
     int shieldHeight = 215;  // v5.8: Expanded from 140 to 215 for new level fields
 
@@ -702,9 +707,11 @@ void CreateShieldPanel() {
 //| v5.8: Moved under Performance, horizontal layout 2x2              |
 //+------------------------------------------------------------------+
 void CreateGridLegendPanel() {
-    // v5.8: Position under Performance in right column
+    // v5.8: Position under Performance (and Grid Zero if enabled) in right column
     int legendX = Dashboard_X + PANEL_WIDTH;  // Right column X
-    int legendY = Dashboard_Y + 180 + 190;    // After GridB (180) + Performance (190)
+    // Calculate Y: After GridB (180) + GridInfo (55) + Performance (190) + GridZero (55 if enabled)
+    int legendY = Dashboard_Y + 180 + 55 + 190;
+    if(Enable_GridZero) legendY += 55;        // Add Grid Zero panel height
     int legendWidth = PANEL_WIDTH;            // Same width as Performance (315)
     int legendHeight = 55;                    // Compact height for 2 rows
 
@@ -732,12 +739,13 @@ void CreateGridLegendPanel() {
 
 //+------------------------------------------------------------------+
 //| Create COP Panel (v5.1 - Close On Profit)                        |
+//| v5.9: Moved up (ATR Monitor reduced)                              |
 //+------------------------------------------------------------------+
 void CreateCOPPanel() {
     if(!Enable_CloseOnProfit) return;
 
     int copX = Dashboard_X + TOTAL_WIDTH + 10;
-    int copY = Dashboard_Y + 385;  // v5.8: Subito sotto Shield (165 + 215 + 5 gap)
+    int copY = Dashboard_Y + 280;  // v5.9: Subito sotto Shield (60 + 215 + 5 gap)
     int copWidth = 175;
     int copHeight = 155;  // Increased for new fields
 
@@ -775,12 +783,13 @@ void CreateCOPPanel() {
 
 //+------------------------------------------------------------------+
 //| Create Trailing Grid Panel (v5.3)                                 |
+//| v5.9: Moved up (ATR Monitor reduced)                              |
 //+------------------------------------------------------------------+
 void CreateTrailingGridPanel() {
     if(!Enable_TrailingGrid) return;
 
     int tgX = Dashboard_X + TOTAL_WIDTH + 10;
-    int tgY = Dashboard_Y + 545;  // Sotto COP panel (385 + 155 + 5 gap)
+    int tgY = Dashboard_Y + 440;  // v5.9: Sotto COP panel (280 + 155 + 5 gap)
     int tgWidth = 175;
     int tgHeight = 130;
 
@@ -828,6 +837,7 @@ void UpdateDashboard() {
     // v5.2: UpdateRangeBoxSection removed (mode deprecated)
     UpdateGridInfoSection();  // v5.x: Grid Info Section
     UpdatePerformanceSection();
+    UpdateGridZeroSection();  // v5.8: Grid Zero Section
     UpdateVolatilityPanel();
     UpdateShieldSection();
     UpdateCOPSection();  // v5.1: Close On Profit Section
@@ -1038,34 +1048,86 @@ void UpdatePerformanceSection() {
 }
 
 //+------------------------------------------------------------------+
-//| Update Volatility Panel - NO LAG                                 |
+//| Update Grid Zero Section (v5.8)                                   |
+//+------------------------------------------------------------------+
+void UpdateGridZeroSection() {
+    if(!Enable_GridZero) return;
+
+    // Status
+    string statusText = "Status: ";
+    color statusColor = clrGray;
+
+    if(!g_gridZeroInserted) {
+        statusText += "WAITING";
+        statusColor = CLR_AZURE_3;
+    } else if(g_gridZero_StopStatus == ORDER_PENDING ||
+              g_gridZero_LimitStatus == ORDER_PENDING) {
+        statusText += "ACTIVE";
+        statusColor = CLR_PROFIT;
+    } else if(g_gridZero_StopStatus == ORDER_FILLED ||
+              g_gridZero_LimitStatus == ORDER_FILLED) {
+        statusText += "IN TRADE";
+        statusColor = CLR_ACTIVE;
+    } else {
+        statusText += "CYCLING";
+        statusColor = CLR_NEUTRAL;
+    }
+    ObjectSetString(0, "GZ_STATUS", OBJPROP_TEXT, statusText);
+    ObjectSetInteger(0, "GZ_STATUS", OBJPROP_COLOR, statusColor);
+
+    // Bias
+    string biasText = "Bias: ";
+    color biasColor = clrGray;
+
+    if(g_gridZeroBiasUp) {
+        biasText += "BULLISH";
+        biasColor = CLR_GRID_A;
+    } else if(g_gridZeroBiasDown) {
+        biasText += "BEARISH";
+        biasColor = CLR_GRID_B;
+    } else {
+        biasText += "NONE";
+    }
+    ObjectSetString(0, "GZ_BIAS", OBJPROP_TEXT, biasText);
+    ObjectSetInteger(0, "GZ_BIAS", OBJPROP_COLOR, biasColor);
+
+    // STOP Status
+    string stopText = "STOP: " + GetOrderStatusName(g_gridZero_StopStatus);
+    ObjectSetString(0, "GZ_STOP", OBJPROP_TEXT, stopText);
+
+    // LIMIT Status
+    string limitText = "LIMIT: " + GetOrderStatusName(g_gridZero_LimitStatus);
+    ObjectSetString(0, "GZ_LIMIT", OBJPROP_TEXT, limitText);
+
+    // Cycles
+    int totalCycles = g_gridZero_StopCycles + g_gridZero_LimitCycles;
+    ObjectSetString(0, "GZ_CYCLES", OBJPROP_TEXT, StringFormat("Cycles: %d", totalCycles));
+}
+
+//+------------------------------------------------------------------+
+//| Update Volatility Panel - v5.9 Compact Version                   |
 //+------------------------------------------------------------------+
 void UpdateVolatilityPanel() {
-    // Immediate ATR (M5)
+    // Get ATR values
     double atrM5 = GetATRValue(PERIOD_M5);
     double atrM5Pips = atrM5 / symbolPoint / 10.0;
-
-    ObjectSetString(0, "VOL_IMMEDIATE_ATR", OBJPROP_TEXT, StringFormat("ATR: %.1f pips", atrM5Pips));
-
-    string condM5 = GetATRConditionText(atrM5Pips);
-    color condM5Color = GetATRConditionColor(atrM5Pips);
-    ObjectSetString(0, "VOL_IMMEDIATE_COND", OBJPROP_TEXT, "Condition: " + condM5);
-    ObjectSetInteger(0, "VOL_IMMEDIATE_COND", OBJPROP_COLOR, condM5Color);
-
-    // Context ATR (H1)
     double atrH1 = GetATRValue(PERIOD_H1);
     double atrH1Pips = atrH1 / symbolPoint / 10.0;
 
-    ObjectSetString(0, "VOL_CONTEXT_ATR", OBJPROP_TEXT, StringFormat("ATR: %.1f pips", atrH1Pips));
+    // v5.9: Compact single line for M5 and H1 ATR values
+    ObjectSetString(0, "VOL_ATR_LINE", OBJPROP_TEXT,
+                    StringFormat("M5: %.1f | H1: %.1f", atrM5Pips, atrH1Pips));
 
-    string condH1 = GetATRConditionText(atrH1Pips);
-    color condH1Color = GetATRConditionColor(atrH1Pips);
-    ObjectSetString(0, "VOL_CONTEXT_COND", OBJPROP_TEXT, "Condition: " + condH1);
-    ObjectSetInteger(0, "VOL_CONTEXT_COND", OBJPROP_COLOR, condH1Color);
+    // Color based on higher ATR condition
+    double maxAtr = MathMax(atrM5Pips, atrH1Pips);
+    color atrColor = GetATRConditionColor(maxAtr);
+    ObjectSetInteger(0, "VOL_ATR_LINE", OBJPROP_COLOR, atrColor);
 
-    // Spacing status
+    // v5.9: Spacing + Condition on same line
+    string condText = GetATRConditionText(atrM5Pips);  // Use M5 for condition
     ObjectSetString(0, "VOL_SPACING_STATUS", OBJPROP_TEXT,
-                    StringFormat("Spacing: %.1f pips", currentSpacing_Pips));
+                    StringFormat("Spacing: %.1f (%s)", currentSpacing_Pips, condText));
+    ObjectSetInteger(0, "VOL_SPACING_STATUS", OBJPROP_COLOR, GetATRConditionColor(atrM5Pips));
 }
 
 //+------------------------------------------------------------------+
@@ -1476,6 +1538,7 @@ void RemoveDashboard() {
     DeleteObjectsByPrefix("SHIELD_");
     DeleteObjectsByPrefix("COP_");  // v5.1: Close On Profit Panel
     DeleteObjectsByPrefix("TG_");   // v5.3: Trailing Grid Panel
+    DeleteObjectsByPrefix("GZ_");   // v5.8: Grid Zero Panel
     ChartRedraw(0);
 }
 
