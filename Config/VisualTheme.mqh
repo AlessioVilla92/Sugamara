@@ -30,6 +30,7 @@
 #define COLOR_GRIDLINE_BUY_STOP   clrBlue           // BUY STOP: Blu
 #define COLOR_GRIDLINE_SELL_LIMIT clrOrange         // SELL LIMIT: Arancione
 #define COLOR_GRIDLINE_SELL_STOP  clrPlum           // SELL STOP: Viola Chiaro
+#define COLOR_GRIDZERO_LINE       clrChartreuse     // v5.9.4: Grid Zero - Giallo-verde fluorescente
 #define GRIDLINE_WIDTH            3                  // Spessore Linee Grid
 
 //+------------------------------------------------------------------+
@@ -65,21 +66,10 @@
 #define SHIELDZONE_PHASE1_COLOR      clrYellow      // Phase 1 (Warning) - Yellow
 #define SHIELDZONE_PHASE2_COLOR      clrOrange      // Phase 2 (Pre-Shield) - Orange
 #define SHIELDZONE_PHASE3_COLOR      C'160,40,40'   // Phase 3 (Breakout) - Dark Red
-#define SHIELDENTRY_LINE_COLOR       C'139,0,0'     // Shield Entry Line - Dark Red
+#define SHIELDENTRY_LINE_COLOR       clrLightYellow // Shield Entry Line - Giallo Chiaro (v5.9.1)
 #define SHIELDENTRY_LINE_WIDTH       2              // Shield Entry Line Width
 #define SHIELDENTRY_LINE_STYLE       STYLE_DASH     // Shield Entry Line Style
 #define PROFITZONE_COLOR             clrLime        // Profit Zone - Green
 #define PROFITZONE_TRANSPARENCY      220            // Profit Zone Transparency
-
-//+------------------------------------------------------------------+
-//| CENTER INDICATORS COLORS                                          |
-//+------------------------------------------------------------------+
-#define COLOR_PIVOT_LINE          clrGold           // Pivot Point Line
-#define COLOR_EMA_LINE            clrDodgerBlue     // EMA Line
-#define COLOR_DONCHIAN_UPPER      clrMagenta        // Donchian Upper
-#define COLOR_DONCHIAN_LOWER      clrMagenta        // Donchian Lower
-#define COLOR_DONCHIAN_CENTER     clrOrchid         // Donchian Center
-#define COLOR_OPTIMAL_CENTER      clrLime           // Optimal Center (Weighted)
-#define CENTERLINES_WIDTH         2                  // Center Lines Width
 
 //+------------------------------------------------------------------+

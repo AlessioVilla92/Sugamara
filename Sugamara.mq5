@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v5.8         |
+//|                                    SUGAMARA RIBELLE v5.9         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,8 +7,8 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025 - Sugamara Ribelle Development Team          |
-//|  Version: 5.8.0 CLEANUP (AutoRecenter + Cooldown removed)        |
-//|  Release Date: December 2025                                     |
+//|  Version: 5.9.0 RECOVERY (Auto-Recovery dopo riavvio MT5/VPS)    |
+//|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
 //|                                                                  |
@@ -16,20 +16,22 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
+//|  v5.9 RECOVERY:                                                  |
+//|  - Auto-Recovery ordini dopo riavvio MT5/VPS                     |
+//|  - Scansiona broker per ordini esistenti con MagicNumber         |
+//|  - Ricostruisce array interni automaticamente                    |
+//|  - Bottone RECOVER per recovery manuale                          |
+//|  - Entry Point salvato in GlobalVariable (persistente)           |
+//|                                                                  |
 //|  v5.8 CLEANUP:                                                   |
 //|  - AutoRecenter REMOVED: feature mai implementata                |
 //|  - CyclicCooldown REMOVED: reopen sempre immediato               |
-//|  - 6 parametri obsoleti rimossi da InputParameters               |
-//|                                                                  |
-//|  v5.7 FIXES:                                                     |
-//|  - COP Symbol Filter: filtra solo trade del pair corrente        |
-//|  - COP Commission Fix: elimina double counting commissioni       |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
-#property version   "5.80"
-#property description "SUGAMARA RIBELLE v5.8 - CLEANUP + COP FIX + NO SL + BOP"
+#property version   "5.90"
+#property description "SUGAMARA RIBELLE v5.9 - AUTO-RECOVERY + COP FIX + NO SL + BOP"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -49,6 +51,7 @@
 #include "Core/Initialization.mqh"
 #include "Core/ModeLogic.mqh"
 #include "Core/SessionManager.mqh"  // v4.6 Auto Session
+#include "Core/RecoveryManager.mqh" // v5.9 Auto Recovery
 
 // Utility Modules
 #include "Utils/Helpers.mqh"
@@ -77,9 +80,6 @@
 
 // v5.8 NEW Trading Modules
 #include "Trading/GridZero.mqh"
-
-// v4.0 NEW Modules
-#include "Indicators/CenterCalculator.mqh"
 
 // UI Module
 #include "UI/Dashboard.mqh"
@@ -129,8 +129,38 @@ int OnInit() {
         return(INIT_FAILED);
     }
 
-    //--- STEP 2: Apply Pair Presets ---
-    ApplyPairPresets();
+    //--- STEP 1.5: CHECK FOR EXISTING ORDERS (AUTO-RECOVERY v5.9) ---
+    bool skipGridInit = false;  // v5.9: Flag to skip grid initialization after recovery
+
+    if(HasExistingOrders()) {
+        Print("");
+        Print("=======================================================================");
+        Print("  AUTO-RECOVERY: Found existing Sugamara orders for ", _Symbol);
+        Print("=======================================================================");
+
+        if(RecoverExistingOrders()) {
+            LogRecoveryReport();
+
+            // Recovery successful - skip normal grid initialization
+            Print("  Recovery successful - resuming normal operation");
+
+            // Still need to apply pair presets for other settings
+            ApplyPairPresets();
+
+            // Set flag to skip grid initialization
+            skipGridInit = true;
+        } else {
+            Print("  WARNING: Recovery failed - starting fresh");
+        }
+    }
+
+    //--- STEP 2: Apply Pair Presets (skip if recovered) ---
+    if(!skipGridInit) {
+        ApplyPairPresets();
+    }
+
+    //--- v5.9: Skip grid initialization if recovery was successful ---
+    if(!skipGridInit) {
 
     //--- STEP 3: Validate Pair/Symbol Match ---
     if(!ValidatePairSymbolMatch()) {
@@ -245,14 +275,7 @@ int OnInit() {
         Print("WARNING: Failed to initialize Manual S/R");
     }
 
-    //--- STEP 13.12: Initialize Center Calculator (v4.0) ---
-    if(ShowCenterIndicators) {
-        if(!InitializeCenterCalculator()) {
-            Print("WARNING: Failed to initialize Center Calculator");
-        }
-    }
-
-    //--- STEP 13.13: Initialize Recenter Manager (REMOVED - CASCADE_OVERLAP puro) ---
+    //--- STEP 13.12: Initialize Recenter Manager (REMOVED - CASCADE_OVERLAP puro) ---
     // GridRecenterManager eliminato - non necessario per CASCADE SOVRAPPOSTO
 
     //--- STEP 13.14: Initialize Debug Mode (v4.5) ---
@@ -296,11 +319,19 @@ int OnInit() {
     //--- STEP 18: Place Initial Orders ---
     // v4.4: Control Buttons ALWAYS active - wait for START button click
     Print("");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Print("=======================================================================");
     Print("  GRID ORDERS ON STANDBY - WAITING FOR START BUTTON");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Print("=======================================================================");
     Print("  Click START button to place grid orders");
     systemState = STATE_IDLE;
+
+    } // End of if(!skipGridInit) - v5.9
+
+    // v5.9: If recovery was performed, set state to ACTIVE
+    if(skipGridInit) {
+        systemState = STATE_ACTIVE;
+        Print("  Recovery mode: System set to STATE_ACTIVE");
+    }
 
     //--- STEP 19: Draw Grid Visualization ---
     DrawGridVisualization();
@@ -310,13 +341,17 @@ int OnInit() {
     LogATRReport();
 
     //--- INITIALIZATION COMPLETE ---
-    // systemState already set above based on Enable_AdvancedButtons
+    // systemState already set above based on Enable_AdvancedButtons or Recovery
 
     Print("");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA RIBELLE v5.4 INITIALIZATION COMPLETE");
+    Print("=======================================================================");
+    Print("  SUGAMARA RIBELLE v5.9 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), IsCascadeOverlapMode() ? " (CASCADE SOVRAPPOSTO)" : "");
-    Print("  System State: IDLE (Click START)");
+    if(skipGridInit) {
+        Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
+    } else {
+        Print("  System State: IDLE (Click START)");
+    }
     Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions(), IsCascadeOverlapMode() ? " [SOLO BUY]" : "");
     Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions(), IsCascadeOverlapMode() ? " [SOLO SELL]" : "");
     if(IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED) {
@@ -324,25 +359,26 @@ int OnInit() {
         Print("  Upper Breakout: ", DoubleToString(upperBreakoutLevel, symbolDigits));
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
-    Print("───────────────────────────────────────────────────────────────────");
-    Print("  v5.4 FEATURES:");
+    Print("-----------------------------------------------------------------------");
+    Print("  v5.9 FEATURES:");
+    Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
+    Print("  [+] RECOVER Button: Available for manual recovery");
     if(IsCascadeOverlapMode()) {
-        Print("  ✅ CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
-        Print("  ✅ Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
+        Print("  [+] CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
+        Print("  [+] Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
     }
-    Print("  ✅ Trailing Grid: ", Enable_TrailingGrid ? "ENABLED (L" + IntegerToString(Trail_Trigger_Level) + " trigger)" : "DISABLED");
-    Print("  ✅ ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
-    Print("  ✅ Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
-    Print("  ✅ Control Buttons: ALWAYS ACTIVE");
-    Print("  ✅ Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
-    Print("  ✅ Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
-    Print("  ✅ Grid Zero: ", Enable_GridZero ? ("ENABLED (L" + IntegerToString(GridZero_Trigger_Level) + " trigger)") : "DISABLED");
-    Print("───────────────────────────────────────────────────────────────────");
-    Print("  ATR/CENTER FEATURES:");
-    Print("  ✅ ATR Indicator: ", UseATR ? "ENABLED" : "DISABLED");
-    Print("  ✅ ATR Multi-TF Dashboard: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
-    Print("  ✅ Center Indicators: ", ShowCenterIndicators ? "ENABLED" : "DISABLED");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  [+] Trailing Grid: ", Enable_TrailingGrid ? "ENABLED (L" + IntegerToString(Trail_Trigger_Level) + " trigger)" : "DISABLED");
+    Print("  [+] ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
+    Print("  [+] Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
+    Print("  [+] Control Buttons: ALWAYS ACTIVE");
+    Print("  [+] Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
+    Print("  [+] Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
+    Print("  [+] Grid Zero: ", Enable_GridZero ? ("ENABLED (L" + IntegerToString(GridZero_Trigger_Level) + " trigger)") : "DISABLED");
+    Print("-----------------------------------------------------------------------");
+    Print("  ATR FEATURES:");
+    Print("  [+] ATR Indicator: ", UseATR ? "ENABLED" : "DISABLED");
+    Print("  [+] ATR Multi-TF Dashboard: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
+    Print("=======================================================================");
 
     //--- Setup Timer (60 seconds default) ---
     EventSetTimer(60);
@@ -363,9 +399,15 @@ int OnInit() {
 //| Expert deinitialization function                                  |
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason) {
-    Print("═══════════════════════════════════════════════════════════════════");
+    Print("=======================================================================");
     Print("  SUGAMARA DEINIT");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Print("=======================================================================");
+
+    //--- v5.9: Save Entry Point for Recovery ---
+    if(entryPoint > 0) {
+        SaveEntryPointToGlobal();
+        Print("  Entry point saved for recovery: ", DoubleToString(entryPoint, symbolDigits));
+    }
 
     // Log reason
     string reasonText = "";
@@ -415,11 +457,6 @@ void OnDeinit(const int reason) {
 
     // v5.8: Deinitialize Grid Zero
     DeinitializeGridZero();
-
-    // v4.0: Deinitialize new modules
-    if(ShowCenterIndicators) {
-        DeinitializeCenterCalculator();
-    }
 
     // v4.0: Kill timer
     EventKillTimer();
@@ -585,22 +622,6 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
 void OnTimer() {
     // Skip if system not active
     if(systemState != STATE_ACTIVE) return;
-
-    // ═══════════════════════════════════════════════════════════════════
-    // v4.0: Center Indicators Update (every 5 minutes)
-    // ═══════════════════════════════════════════════════════════════════
-    static datetime lastCenterUpdate = 0;
-    if(TimeCurrent() - lastCenterUpdate >= 300) {
-        if(ShowCenterIndicators) {
-            UpdateCenterIndicators();
-        }
-        lastCenterUpdate = TimeCurrent();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    // v4.0: Auto-Recenter Check (REMOVED - CASCADE_OVERLAP puro)
-    // ═══════════════════════════════════════════════════════════════════
-    // GridRecenterManager eliminato
 }
 
 //+------------------------------------------------------------------+
@@ -642,10 +663,6 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
            StringFind(sparam, "RIGHT_") >= 0) {
             Print("WARNING: Dashboard object deleted externally - scheduling recreation");
             g_dashboardInitialized = false;  // Force recreation on next tick
-        }
-        // v4.0: Handle center indicators deleted externally
-        if(StringFind(sparam, "CENTER_") >= 0 && ShowCenterIndicators) {
-            DrawCenterIndicators();  // Redraw
         }
     }
 }
@@ -732,15 +749,6 @@ void HandleKeyPress(int key) {
         LogV4StatusReport();
     }
 
-    // C = Center Indicators Report
-    if(key == 'C' || key == 'c') {
-        if(ShowCenterIndicators) {
-            LogCenterIndicatorsReport();
-        } else {
-            Print("Center Indicators not available (disabled)");
-        }
-    }
-
     // E = Recenter Status Report (REMOVED - CASCADE_OVERLAP puro)
     if(key == 'E' || key == 'e') {
         Print("Auto-Recenter removed in CASCADE_OVERLAP mode");
@@ -748,15 +756,15 @@ void HandleKeyPress(int key) {
 }
 
 //+------------------------------------------------------------------+
-//| LOG v5.1 COMPLETE STATUS REPORT                                   |
-//| Master report combining all v5.1 modules                          |
+//| LOG v5.9 COMPLETE STATUS REPORT                                   |
+//| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
     Print("");
-    Print("╔═══════════════════════════════════════════════════════════════════╗");
-    Print("║       SUGAMARA RIBELLE v5.4 - COMPLETE STATUS REPORT              ║");
-    Print("║       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                      ║");
-    Print("╚═══════════════════════════════════════════════════════════════════╝");
+    Print("+=====================================================================+");
+    Print("|       SUGAMARA RIBELLE v5.9 - COMPLETE STATUS REPORT                |");
+    Print("|       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                        |");
+    Print("+=====================================================================+");
     Print("");
 
     // System Overview
@@ -786,33 +794,32 @@ void LogV4StatusReport() {
         Print("│      ATR: ", DoubleToString(GetATRPips(), 1), " pips | ", GetATRConditionName(GetATRCondition()));
     }
 
-    // Center Indicators
-    if(ShowCenterIndicators) {
-        Print("│  🎯 Center Indicators: ACTIVE");
-        if(g_centerCalc.isValid) {
-            Print("│      Optimal Center: ", DoubleToString(g_centerCalc.optimalCenter, symbolDigits));
-            Print("│      Confidence: ", DoubleToString(g_centerCalc.confidence, 1), "%");
-        } else {
-            Print("│      Status: Calculating...");
-        }
-    } else {
-        Print("│  🎯 Center Indicators: DISABLED");
-    }
-
     // Auto-Recenter (REMOVED - CASCADE_OVERLAP puro)
     Print("│  🔁 Auto-Recenter: REMOVED (CASCADE_OVERLAP mode)");
 
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
+    // v5.9 Recovery Status
+    Print("+-------------------------------------------------------------------+");
+    Print("|  v5.9 RECOVERY STATUS                                            |");
+    Print("+-------------------------------------------------------------------+");
+    Print("|  Recovery Performed: ", g_recoveryPerformed ? "YES" : "NO");
+    if(g_recoveryPerformed) {
+        Print("|  Pending Orders Recovered: ", g_recoveredOrdersCount);
+        Print("|  Open Positions Recovered: ", g_recoveredPositionsCount);
+        Print("|  Recovery Time: ", TimeToString(g_lastRecoveryTime, TIME_DATE|TIME_SECONDS));
+    }
+    Print("+-------------------------------------------------------------------+");
+    Print("");
+
     // Hotkeys reminder
-    Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v5.8 HOTKEYS                                                   │");
-    Print("├─────────────────────────────────────────────────────────────────┤");
-    Print("│  V = This report (Full Status)                                  │");
-    Print("│  A = ATR Report                                                 │");
-    Print("│  C = Center Indicators detailed report                          │");
-    Print("└─────────────────────────────────────────────────────────────────┘");
+    Print("+-------------------------------------------------------------------+");
+    Print("|  v5.9 HOTKEYS                                                    |");
+    Print("+-------------------------------------------------------------------+");
+    Print("|  V = This report (Full Status)                                   |");
+    Print("|  A = ATR Report                                                  |");
+    Print("+-------------------------------------------------------------------+");
     Print("");
 }
 

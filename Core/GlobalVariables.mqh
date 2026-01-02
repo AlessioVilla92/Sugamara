@@ -87,44 +87,14 @@ int g_trailLowerAdded = 0;                   // Contatore LOWER ADDED
 int g_trailLowerRemoved = 0;                 // Contatore LOWER REMOVED
 
 //+------------------------------------------------------------------+
-//| 🎯 CENTER CALCULATOR v4.0                                        |
+//| 📊 GRID COUNTER v5.9.3 - Track closed vs pending grids           |
 //+------------------------------------------------------------------+
-// Pivot Point Daily
-struct PivotLevels {
-    double pivot;                           // Pivot centrale
-    double r1, r2, r3;                      // Resistenze
-    double s1, s2, s3;                      // Supporti
-    datetime calcTime;                      // Timestamp calcolo
-    bool isValid;
-};
-PivotLevels g_pivotLevels;
-
-// Donchian Channel
-struct DonchianLevels {
-    double upper;                           // Upper band (Highest High)
-    double lower;                           // Lower band (Lowest Low)
-    double center;                          // Centro (Upper + Lower) / 2
-    datetime calcTime;
-    bool isValid;
-};
-DonchianLevels g_donchianLevels;
-
-// Center Calculation Result
-struct CenterCalculation {
-    double pivotCenter;                     // Valore Pivot
-    double emaCenter;                       // Valore EMA
-    double donchianCenter;                  // Valore Donchian Center
-    double optimalCenter;                   // Centro ponderato finale
-    double confidence;                      // 0-100% (quanto i 3 indicatori sono allineati)
-    datetime calcTime;
-    bool isValid;
-};
-CenterCalculation g_centerCalc;
-
-// Center Indicator Handles
-int g_emaHandle = INVALID_HANDLE;           // Handle EMA indicator
-datetime g_lastPivotCalcDay = 0;            // Giorno ultimo calcolo pivot
-datetime g_lastCenterCalc = 0;              // Ultimo calcolo centro
+int g_gridA_ClosedCount = 0;                 // Grid A chiuse (TP hit)
+int g_gridA_PendingCount = 0;                // Grid A pending inserite
+int g_gridB_ClosedCount = 0;                 // Grid B chiuse (TP hit)
+int g_gridB_PendingCount = 0;                // Grid B pending inserite
+int g_gridZero_ClosedCount = 0;              // Grid Zero chiuse
+int g_gridZero_PendingCount = 0;             // Grid Zero pending inserite
 
 //+------------------------------------------------------------------+
 //| 🔄 AUTO-RECENTER v4.0                                            |
@@ -410,21 +380,6 @@ void InitializeArrays() {
     g_atrCache.isValid = false;
     g_lastLoggedATRChange = 0;
     g_lastATRStepName = "";
-
-    // ═══════════════════════════════════════════════════════════════════
-    // v4.0: Initialize Center Calculator Structures
-    // ═══════════════════════════════════════════════════════════════════
-    ZeroMemory(g_pivotLevels);
-    g_pivotLevels.isValid = false;
-
-    ZeroMemory(g_donchianLevels);
-    g_donchianLevels.isValid = false;
-
-    ZeroMemory(g_centerCalc);
-    g_centerCalc.isValid = false;
-
-    g_lastPivotCalcDay = 0;
-    g_lastCenterCalc = 0;
 
     // ═══════════════════════════════════════════════════════════════════
     // v4.0: Initialize Auto-Recenter

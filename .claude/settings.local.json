@@ -31,7 +31,9 @@
       "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_log.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_log_detailed.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_profits.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_profits_v2.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_shield.ps1\" \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_bop_summary.ps1\")",
       "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\read_log.ps1\")",
       "Bash(powershell.exe:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(del \"C:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_log.ps1\")",
+      "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Indicators\\\\CenterCalculator.mqh\")"
     ],
     "deny": [],
     "ask": []

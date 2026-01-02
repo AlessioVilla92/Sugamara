@@ -85,6 +85,7 @@ void UpdateGridZeroStatuses() {
                 // Check history for this trade
                 g_gridZero_StopStatus = ORDER_CLOSED_TP;  // Assume TP (Grid Zero designed for TP)
                 g_gridZero_LastStopClose = TimeCurrent();
+                g_gridZero_ClosedCount++;  // v5.9.3: Grid Counter
             }
         }
     }
@@ -127,6 +128,7 @@ void UpdateGridZeroStatuses() {
             if(g_gridZero_LimitStatus == ORDER_FILLED) {
                 g_gridZero_LimitStatus = ORDER_CLOSED_TP;
                 g_gridZero_LastLimitClose = TimeCurrent();
+                g_gridZero_ClosedCount++;  // v5.9.3: Grid Counter
             }
         }
     }
@@ -735,6 +737,15 @@ void ProcessDealEvent(ulong dealTicket) {
 
     LogMessage(isWin ? LOG_SUCCESS : LOG_WARNING,
                GetGridSideName(side) + " position closed: " + FormatMoney(profit));
+
+    // v5.9.3: Update Grid Counter (closed count)
+    if(isWin) {  // Only count TP hits (wins)
+        if(side == GRID_A) {
+            g_gridA_ClosedCount++;
+        } else if(side == GRID_B) {
+            g_gridB_ClosedCount++;
+        }
+    }
 }
 
 //+------------------------------------------------------------------+

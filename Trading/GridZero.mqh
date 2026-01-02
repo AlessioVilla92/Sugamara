@@ -99,6 +99,9 @@ void ResetGridZeroFlags() {
     g_gridZero_StopCycles = 0;
     g_gridZero_LimitCycles = 0;
 
+    // v5.9.4: Remove Grid Zero lines from chart
+    RemoveGridZeroLines();
+
     if(DetailedLogging) {
         Print("[GridZero] Flags reset");
     }
@@ -190,6 +193,7 @@ void InsertGridZeroBearish() {
     if(g_gridZero_StopTicket > 0) {
         Print("    SUCCESS: Ticket #", g_gridZero_StopTicket);
         g_gridZero_StopStatus = ORDER_PENDING;
+        g_gridZero_PendingCount++;  // v5.9.3: Grid Counter
     } else {
         Print("    ERROR: Failed to place SELL STOP - Error ", GetLastError());
     }
@@ -219,6 +223,7 @@ void InsertGridZeroBearish() {
     if(g_gridZero_LimitTicket > 0) {
         Print("    SUCCESS: Ticket #", g_gridZero_LimitTicket);
         g_gridZero_LimitStatus = ORDER_PENDING;
+        g_gridZero_PendingCount++;  // v5.9.3: Grid Counter
     } else {
         Print("    ERROR: Failed to place BUY LIMIT - Error ", GetLastError());
     }
@@ -232,6 +237,9 @@ void InsertGridZeroBearish() {
     PrintFormat("  STOP Ticket: %d | LIMIT Ticket: %d",
                 g_gridZero_StopTicket, g_gridZero_LimitTicket);
     Print("===================================================================");
+
+    // v5.9.4: Draw Grid Zero lines in chartreuse
+    DrawGridZeroLines();
 }
 
 //+------------------------------------------------------------------+
@@ -274,6 +282,7 @@ void InsertGridZeroBullish() {
     if(g_gridZero_StopTicket > 0) {
         Print("    SUCCESS: Ticket #", g_gridZero_StopTicket);
         g_gridZero_StopStatus = ORDER_PENDING;
+        g_gridZero_PendingCount++;  // v5.9.3: Grid Counter
     } else {
         Print("    ERROR: Failed to place BUY STOP - Error ", GetLastError());
     }
@@ -303,6 +312,7 @@ void InsertGridZeroBullish() {
     if(g_gridZero_LimitTicket > 0) {
         Print("    SUCCESS: Ticket #", g_gridZero_LimitTicket);
         g_gridZero_LimitStatus = ORDER_PENDING;
+        g_gridZero_PendingCount++;  // v5.9.3: Grid Counter
     } else {
         Print("    ERROR: Failed to place SELL LIMIT - Error ", GetLastError());
     }
@@ -316,6 +326,9 @@ void InsertGridZeroBullish() {
     PrintFormat("  STOP Ticket: %d | LIMIT Ticket: %d",
                 g_gridZero_StopTicket, g_gridZero_LimitTicket);
     Print("===================================================================");
+
+    // v5.9.4: Draw Grid Zero lines in chartreuse
+    DrawGridZeroLines();
 }
 
 //+------------------------------------------------------------------+
@@ -416,6 +429,7 @@ void ReopenGridZeroStop() {
     if(g_gridZero_StopTicket > 0) {
         g_gridZero_StopStatus = ORDER_PENDING;
         g_gridZero_StopCycles++;
+        g_gridZero_PendingCount++;  // v5.9.3: Grid Counter
 
         Print("===================================================================");
         Print("  [GridZero] CYCLING - STOP REOPENED");
@@ -470,6 +484,7 @@ void ReopenGridZeroLimit() {
     if(g_gridZero_LimitTicket > 0) {
         g_gridZero_LimitStatus = ORDER_PENDING;
         g_gridZero_LimitCycles++;
+        g_gridZero_PendingCount++;  // v5.9.3: Grid Counter
 
         Print("===================================================================");
         Print("  [GridZero] CYCLING - LIMIT REOPENED");
@@ -556,9 +571,67 @@ string GetGridZeroBiasText() {
 }
 
 //+------------------------------------------------------------------+
+//| DRAW GRID ZERO LINES (v5.9.4)                                     |
+//| Disegna le linee Grid Zero in chartreuse per distinguerle        |
+//+------------------------------------------------------------------+
+void DrawGridZeroLines() {
+    if(!ShowGridLines) return;
+    if(!g_gridZeroInserted) return;
+    if(entryPoint <= 0) return;
+
+    double hedgeOffset = PipsToPoints(Hedge_Spacing_Pips);
+
+    // STOP order line (sempre @ entryPoint)
+    if(g_gridZero_StopTicket > 0) {
+        double stopPrice = entryPoint;
+        string stopName = "GRIDZERO_STOP";
+
+        ObjectDelete(0, stopName);
+        if(ObjectCreate(0, stopName, OBJ_HLINE, 0, 0, stopPrice)) {
+            ObjectSetInteger(0, stopName, OBJPROP_COLOR, COLOR_GRIDZERO_LINE);
+            ObjectSetInteger(0, stopName, OBJPROP_WIDTH, GRIDLINE_WIDTH);
+            ObjectSetInteger(0, stopName, OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSetInteger(0, stopName, OBJPROP_BACK, true);
+            ObjectSetInteger(0, stopName, OBJPROP_SELECTABLE, false);
+        }
+    }
+
+    // LIMIT order line (@ entryPoint +/- hedge)
+    if(g_gridZero_LimitTicket > 0) {
+        double limitPrice = (g_gridZeroBiasUp) ?
+            entryPoint - hedgeOffset :   // BUY LIMIT (bias up -> bearish structure)
+            entryPoint + hedgeOffset;    // SELL LIMIT (bias down -> bullish structure)
+        string limitName = "GRIDZERO_LIMIT";
+
+        ObjectDelete(0, limitName);
+        if(ObjectCreate(0, limitName, OBJ_HLINE, 0, 0, limitPrice)) {
+            ObjectSetInteger(0, limitName, OBJPROP_COLOR, COLOR_GRIDZERO_LINE);
+            ObjectSetInteger(0, limitName, OBJPROP_WIDTH, GRIDLINE_WIDTH);
+            ObjectSetInteger(0, limitName, OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSetInteger(0, limitName, OBJPROP_BACK, true);
+            ObjectSetInteger(0, limitName, OBJPROP_SELECTABLE, false);
+        }
+    }
+
+    ChartRedraw(0);
+}
+
+//+------------------------------------------------------------------+
+//| REMOVE GRID ZERO LINES (v5.9.4)                                   |
+//+------------------------------------------------------------------+
+void RemoveGridZeroLines() {
+    ObjectDelete(0, "GRIDZERO_STOP");
+    ObjectDelete(0, "GRIDZERO_LIMIT");
+    ChartRedraw(0);
+}
+
+//+------------------------------------------------------------------+
 //| DEINITIALIZE GRID ZERO                                           |
 //+------------------------------------------------------------------+
 void DeinitializeGridZero() {
+    // v5.9.4: Remove Grid Zero lines from chart
+    RemoveGridZeroLines();
+
     if(!Enable_GridZero) return;
 
     Print("===================================================================");

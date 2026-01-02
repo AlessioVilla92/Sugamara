@@ -173,6 +173,7 @@ bool PlaceGridBUpperOrder(int level) {
     if(ticket > 0) {
         gridB_Upper_Tickets[level] = ticket;
         gridB_Upper_Status[level] = ORDER_PENDING;
+        g_gridB_PendingCount++;  // v5.9.3: Grid Counter
         LogGridStatus(GRID_B, ZONE_UPPER, level, "Order placed: " + IntegerToString(ticket));
         return true;
     }
@@ -213,6 +214,7 @@ bool PlaceGridBLowerOrder(int level) {
     if(ticket > 0) {
         gridB_Lower_Tickets[level] = ticket;
         gridB_Lower_Status[level] = ORDER_PENDING;
+        g_gridB_PendingCount++;  // v5.9.3: Grid Counter
         LogGridStatus(GRID_B, ZONE_LOWER, level, "Order placed: " + IntegerToString(ticket));
         return true;
     }

@@ -507,42 +507,6 @@ input double    Volatility_Rating7 = 1.40;                   // 📊 Rating 7→
 input double    Volatility_Rating8 = 2.00;                   // 📊 Rating 8→9 threshold (%)
 
 //+------------------------------------------------------------------+
-//| 1️⃣7️⃣ 🎯 CENTER INDICATORS v4.0                                   |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  1️⃣7️⃣.5️⃣  🎯 CENTER INDICATORS v4.0                       ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    📊 INDICATORI ATTIVI"
-input bool      UsePivotPoint = true;                        // ✅ Usa Pivot Point Daily (40% peso)
-input bool      UseEMA50 = true;                             // ✅ Usa EMA 50 (30% peso)
-input bool      UseDonchianCenter = true;                    // ✅ Usa Donchian Channel Center (30% peso)
-
-input group "    ⚖️ PESI INDICATORI (%)"
-input double    Weight_PivotPoint = 40.0;                    // ⚖️ Peso Pivot Point (%)
-input double    Weight_EMA50 = 30.0;                         // ⚖️ Peso EMA 50 (%)
-input double    Weight_Donchian = 30.0;                      // ⚖️ Peso Donchian Center (%)
-// NOTA: I pesi vengono normalizzati automaticamente a 100%
-
-input group "    ⚙️ PARAMETRI INDICATORI"
-input int       EMA_Period = 50;                             // 📊 Periodo EMA
-input ENUM_TIMEFRAMES EMA_Timeframe = PERIOD_M15;            // 📊 Timeframe EMA ▼
-input int       Donchian_Period = 20;                        // 📊 Periodo Donchian Channel
-input ENUM_TIMEFRAMES Donchian_Timeframe = PERIOD_M15;       // 📊 Timeframe Donchian ▼
-
-input group "    🎨 VISUALIZZAZIONE CENTRO"
-input bool      ShowCenterIndicators = true;                 // ✅ Mostra indicatori su chart
-// CENTER INDICATOR COLORS: Now in VisualTheme.mqh (COLOR_PIVOT_*, COLOR_EMA_*, COLOR_DONCHIAN_*, COLOR_OPTIMAL_*)
-
-//+------------------------------------------------------------------+
-//| 1️⃣7️⃣.6️⃣ 🔄 AUTO-RECENTER v4.0                                    |
-//+------------------------------------------------------------------+
-
-// AUTO-RECENTER REMOVED v5.8 - feature mai implementata
-
-//+------------------------------------------------------------------+
 //| 1️⃣8️⃣ ⚙️ ADVANCED SETTINGS                                        |
 //+------------------------------------------------------------------+
 

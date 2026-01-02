@@ -436,8 +436,9 @@ void CreateUnifiedDashboard() {
     //═══════════════════════════════════════════════════════════════
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 115, y + 12, "SUGAMARA RIBELLE", CLR_GOLD, 20, "Arial Black");  // v5.4b: font 20px
-    DashLabel("TITLE_SUB", x + totalWidth/2 - 85, y + 42, "CASCADE SOVRAPPOSTO - The Spice Must Flow", CLR_SAND_1, 10, "Arial Bold");
+    // v5.9.5: Titolo GIALLO, sottotitolo ARANCIONE SCURO
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 95, y + 12, "SUGAMARA RIBELLE", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_SUB", x + totalWidth/2 - 80, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
     //═══════════════════════════════════════════════════════════════
@@ -445,11 +446,13 @@ void CreateUnifiedDashboard() {
     //═══════════════════════════════════════════════════════════════
     int modeHeight = 55;
     DashRectangle("MODE_PANEL", x, y, totalWidth, modeHeight, CLR_BG_DARK);
+    // v5.9.3: Lato sinistro - Mode e Symbol
     DashLabel("MODE_INFO1", x + 15, y + 8, "Mode: ---", CLR_CYAN, 9);
     DashLabel("MODE_INFO2", x + 15, y + 24, "Symbol: --- | Spread: ---", CLR_SILVER, 8);
-    DashLabel("MODE_INFO3", x + 15, y + 38, "Pair: --- | Grids: --- | Spacing: ---", CLR_AZURE_2, 8);
-    DashLabel("MODE_INFO4", x + 350, y + 8, "ATR: --- pips", CLR_AZURE_1, 9);
-    DashLabel("MODE_INFO6", x + 350, y + 24, "Step: ---", CLR_AZURE_2, 8);
+    DashLabel("MODE_INFO3", x + 15, y + 38, "Pair: ---", CLR_AZURE_2, 8);
+    // v5.9.3: Lato destro - Spacing e Levels (sostituisce ATR)
+    DashLabel("MODE_SPACING", x + 350, y + 8, "Spacing: --- pips", CLR_CYAN, 9);
+    DashLabel("MODE_LEVELS", x + 350, y + 24, "Levels: ---", CLR_CYAN, 9);
     y += modeHeight;
 
     //═══════════════════════════════════════════════════════════════
@@ -534,20 +537,9 @@ void CreateUnifiedDashboard() {
     rightY += gridBHeight;
 
     // v5.2: RANGEBOX panel removed (mode deprecated)
+    // v5.9.3: GRID INFO panel removed (info moved to Mode row)
 
-    //--- GRID INFO PANEL (v5.x) ---
-    int gridInfoHeight = 55;
-    DashRectangle("RIGHT_GRIDINFO_PANEL", rightX, rightY, colWidth, gridInfoHeight, CLR_PANEL_PERF);
-
-    int gy = rightY + 8;
-    DashLabel("RIGHT_GRIDINFO_TITLE", rightX + colWidth/2 - 35, gy, "GRID INFO", CLR_GOLD, 9, "Arial Bold");
-    gy += 20;
-    DashLabel("RIGHT_GRIDINFO_SPACING", rightX + 10, gy, "Spacing: --- pips", CLR_CYAN, 9);
-    DashLabel("RIGHT_GRIDINFO_LEVELS", rightX + colWidth/2 + 10, gy, "Levels: ---", CLR_CYAN, 9);
-
-    rightY += gridInfoHeight;
-
-    //--- PERFORMANCE PANEL ---
+    //--- PERFORMANCE PANEL (v5.9.3: moved up, no more GRID INFO above) ---
     int perfHeight = 190;  // Increased for Risk line
     DashRectangle("RIGHT_PERF_PANEL", rightX, rightY, colWidth, perfHeight, CLR_PANEL_PERF);
 
@@ -570,13 +562,35 @@ void CreateUnifiedDashboard() {
 
     rightY += perfHeight;
 
-    //--- GRID ZERO PANEL (v5.8) ---
+    //--- GRID COUNTER PANEL (v5.9.3) ---
+    int counterHeight = 75;
+    DashRectangle("RIGHT_COUNTER_PANEL", rightX, rightY, colWidth, counterHeight, C'30,35,45');
+
+    int cy = rightY + 6;
+    DashLabel("RIGHT_COUNTER_TITLE", rightX + colWidth/2 - 45, cy, "GRID COUNTER", CLR_GOLD, 9, "Arial Bold");
+    cy += 18;
+    // Grid A contatori
+    DashLabel("COUNTER_A_CLOSED", rightX + 10, cy, "A Closed: 0", CLR_GRID_A, 8);
+    DashLabel("COUNTER_A_PENDING", rightX + 10, cy + 14, "A Pending: 0", CLR_GRID_A, 8);
+    // Grid B contatori
+    DashLabel("COUNTER_B_CLOSED", rightX + 110, cy, "B Closed: 0", CLR_GRID_B, 8);
+    DashLabel("COUNTER_B_PENDING", rightX + 110, cy + 14, "B Pending: 0", CLR_GRID_B, 8);
+    // Grid Zero contatori
+    DashLabel("COUNTER_ZERO", rightX + 210, cy, "Zero: 0/0", CLR_SILVER, 8);
+    // Totale
+    DashLabel("COUNTER_TOTAL", rightX + 210, cy + 14, "Tot: 0/0", CLR_WHITE, 8);
+
+    rightY += counterHeight;
+
+    //--- GRID ZERO PANEL (v5.8 + v5.9.4 legenda colore) ---
     if(Enable_GridZero) {
         int gzHeight = 55;
         DashRectangle("GZ_PANEL", rightX, rightY, colWidth, gzHeight, C'35,40,30');
 
         int gz = rightY + 6;
         DashLabel("GZ_TITLE", rightX + 10, gz, "GRID ZERO", CLR_GOLD, 9, "Arial Bold");
+        // v5.9.4: Quadratino legenda colore chartreuse
+        DashRectangle("GZ_COLOR_LEGEND", rightX + 85, gz + 2, 10, 10, clrChartreuse);
         DashLabel("GZ_STATUS", rightX + 100, gz, "Status: ---", clrGray, 8);
         DashLabel("GZ_BIAS", rightX + 200, gz, "Bias: ---", clrGray, 8);
         gz += 18;
@@ -835,8 +849,9 @@ void UpdateDashboard() {
     UpdateGridBSection();
     UpdateExposureSection();
     // v5.2: UpdateRangeBoxSection removed (mode deprecated)
-    UpdateGridInfoSection();  // v5.x: Grid Info Section
+    // v5.9.3: UpdateGridInfoSection removed (info moved to Mode row)
     UpdatePerformanceSection();
+    UpdateGridCounterSection();  // v5.9.3: Grid Counter Section
     UpdateGridZeroSection();  // v5.8: Grid Zero Section
     UpdateVolatilityPanel();
     UpdateShieldSection();
@@ -859,32 +874,16 @@ void UpdateModeSection() {
     string symbolText = StringFormat("Symbol: %s | Spread: %.1f pips", _Symbol, GetSpreadPips());
     ObjectSetString(0, "MODE_INFO2", OBJPROP_TEXT, symbolText);
 
-    // Line 3: Pair + Grids + Spacing (Fixed)
+    // Line 3: Pair only (v5.9.3: Grids e Spacing spostati a destra)
     string pairName = GetPairDisplayName(SelectedPair);
-    string pairGridText = StringFormat("Pair: %s | Grids: %d | Spacing: %.1f pips",
-                                        pairName, GridLevelsPerSide, currentSpacing_Pips);
-    ObjectSetString(0, "MODE_INFO3", OBJPROP_TEXT, pairGridText);
+    ObjectSetString(0, "MODE_INFO3", OBJPROP_TEXT, "Pair: " + pairName);
 
-    // Line 4: ATR (monitoring only)
-    double atrPips = GetATRPips();
-    string atrText = StringFormat("ATR: %.1f pips", atrPips);
-    ObjectSetString(0, "MODE_INFO4", OBJPROP_TEXT, atrText);
+    // v5.9.3: Right side - Spacing e Levels (sostituisce ATR)
+    string spacingText = StringFormat("Spacing: %.1f pips", currentSpacing_Pips);
+    ObjectSetString(0, "MODE_SPACING", OBJPROP_TEXT, spacingText);
 
-    // Line 5: ATR Condition (for monitoring)
-    if(UseATR) {
-        ENUM_ATR_CONDITION atrCond = GetATRCondition();
-        string condName = GetATRConditionName(atrCond);
-        ObjectSetString(0, "MODE_INFO6", OBJPROP_TEXT, "Volatility: " + condName);
-        // Color based on condition
-        color condColor = CLR_AZURE_2;
-        if(atrCond == ATR_EXTREME) condColor = CLR_LOSS;
-        else if(atrCond == ATR_VOLATILE) condColor = CLR_NEUTRAL;
-        else if(atrCond == ATR_CALM) condColor = clrGray;
-        ObjectSetInteger(0, "MODE_INFO6", OBJPROP_COLOR, condColor);
-    } else {
-        ObjectSetString(0, "MODE_INFO6", OBJPROP_TEXT, "ATR: Disabled");
-        ObjectSetInteger(0, "MODE_INFO6", OBJPROP_COLOR, clrGray);
-    }
+    string levelsText = StringFormat("Levels: %d", GridLevelsPerSide);
+    ObjectSetString(0, "MODE_LEVELS", OBJPROP_TEXT, levelsText);
 }
 
 //+------------------------------------------------------------------+
@@ -989,16 +988,34 @@ void UpdateExposureSection() {
 // v5.2: UpdateRangeBoxSection() removed (RANGEBOX mode deprecated)
 
 //+------------------------------------------------------------------+
-//| Update Grid Info Section (v5.x)                                  |
+//| Update Grid Counter Section (v5.9.3)                              |
 //+------------------------------------------------------------------+
-void UpdateGridInfoSection() {
-    // Grid Spacing
-    string spacingText = StringFormat("Spacing: %.1f pips", currentSpacing_Pips);
-    ObjectSetString(0, "RIGHT_GRIDINFO_SPACING", OBJPROP_TEXT, spacingText);
+void UpdateGridCounterSection() {
+    // Grid A counters
+    ObjectSetString(0, "COUNTER_A_CLOSED", OBJPROP_TEXT,
+                    StringFormat("A Closed: %d", g_gridA_ClosedCount));
+    ObjectSetString(0, "COUNTER_A_PENDING", OBJPROP_TEXT,
+                    StringFormat("A Pending: %d", g_gridA_PendingCount));
 
-    // Grid Levels
-    string levelsText = StringFormat("Levels: %d", GridLevelsPerSide);
-    ObjectSetString(0, "RIGHT_GRIDINFO_LEVELS", OBJPROP_TEXT, levelsText);
+    // Grid B counters
+    ObjectSetString(0, "COUNTER_B_CLOSED", OBJPROP_TEXT,
+                    StringFormat("B Closed: %d", g_gridB_ClosedCount));
+    ObjectSetString(0, "COUNTER_B_PENDING", OBJPROP_TEXT,
+                    StringFormat("B Pending: %d", g_gridB_PendingCount));
+
+    // Grid Zero counters (closed/pending)
+    ObjectSetString(0, "COUNTER_ZERO", OBJPROP_TEXT,
+                    StringFormat("Zero: %d/%d", g_gridZero_ClosedCount, g_gridZero_PendingCount));
+
+    // Totals
+    int totalClosed = g_gridA_ClosedCount + g_gridB_ClosedCount + g_gridZero_ClosedCount;
+    int totalPending = g_gridA_PendingCount + g_gridB_PendingCount + g_gridZero_PendingCount;
+    ObjectSetString(0, "COUNTER_TOTAL", OBJPROP_TEXT,
+                    StringFormat("Tot: %d/%d", totalClosed, totalPending));
+
+    // Colore: verde se closed == pending (bilanciato), rosso se diversi
+    color totColor = (totalClosed == totalPending) ? CLR_PROFIT : CLR_LOSS;
+    ObjectSetInteger(0, "COUNTER_TOTAL", OBJPROP_COLOR, totColor);
 }
 
 //+------------------------------------------------------------------+
