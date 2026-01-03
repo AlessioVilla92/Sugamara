@@ -87,9 +87,7 @@ enum ENUM_BREAKOUT_DIRECTION {
 //+------------------------------------------------------------------+
 enum ENUM_SPACING_MODE {
     SPACING_FIXED,              // Fixed - Spacing fisso manuale (pips)
-    SPACING_PAIR_AUTO,          // Pair Auto - Usa spacing preset della coppia selezionata (PROFESSIONALE)
-    SPACING_GEOMETRIC           // Geometric - Spacing % del prezzo
-    // SPACING_CUSTOM rimosso v5.9 - era identico a SPACING_FIXED
+    SPACING_PAIR_AUTO           // Pair Auto - Usa spacing preset della coppia (DEFAULT)
 };
 
 //+------------------------------------------------------------------+

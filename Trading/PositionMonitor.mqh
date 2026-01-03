@@ -149,9 +149,6 @@ void MonitorPositions() {
 
     // Check risk limits
     CheckRiskLimits();
-
-    // Update statistics
-    UpdateTradingStatistics();
 }
 
 //+------------------------------------------------------------------+
@@ -473,23 +470,6 @@ void CheckExposureLimits() {
 }
 
 //+------------------------------------------------------------------+
-//| Check Volatility Limits                                          |
-//+------------------------------------------------------------------+
-void CheckVolatilityLimits() {
-    if(IsMarketTooVolatile()) {
-        if(systemState == STATE_ACTIVE) {
-            // v5.7: Throttled logging - 1x every 5 minutes if condition persists
-            if(TimeCurrent() - g_lastVolatilityPMWarning >= g_pmWarningThrottleSec) {
-                LogMessage(LOG_WARNING, "High volatility detected - New orders paused");
-                g_lastVolatilityPMWarning = TimeCurrent();
-            }
-            // Don't change state, just prevent new orders
-            // systemState = STATE_PAUSED;
-        }
-    }
-}
-
-//+------------------------------------------------------------------+
 //| DAILY P&L TRACKING                                               |
 //+------------------------------------------------------------------+
 
@@ -533,28 +513,6 @@ void UpdateDailyStatistics(double profit, bool isWin) {
     if(currentEquity > dailyPeakEquity) {
         dailyPeakEquity = currentEquity;
     }
-}
-
-//+------------------------------------------------------------------+
-//| TRADING STATISTICS                                               |
-//+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| Update All Trading Statistics                                    |
-//+------------------------------------------------------------------+
-void UpdateTradingStatistics() {
-    // Count active positions
-    int gridA_Pos = GetGridAActivePositions();
-    int gridB_Pos = GetGridBActivePositions();
-    int totalPositions = gridA_Pos + gridB_Pos;
-
-    // Count pending orders
-    int gridA_Pend = GetGridAPendingOrders();
-    int gridB_Pend = GetGridBPendingOrders();
-    int totalPending = gridA_Pend + gridB_Pend;
-
-    // Update global counters
-    // (These could be displayed on dashboard)
 }
 
 //+------------------------------------------------------------------+

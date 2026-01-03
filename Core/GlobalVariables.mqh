@@ -97,14 +97,6 @@ int g_gridZero_ClosedCount = 0;              // Grid Zero chiuse
 int g_gridZero_PendingCount = 0;             // Grid Zero pending inserite
 
 //+------------------------------------------------------------------+
-//| 🔄 AUTO-RECENTER v4.0                                            |
-//+------------------------------------------------------------------+
-datetime        g_lastRecenterTime = 0;     // Timestamp ultimo recenter
-datetime        g_lastRecenterCheck = 0;    // Ultimo check recenter
-int             g_recenterCount = 0;        // Contatore recenter sessione
-bool            g_recenterPending = false;  // Flag: recenter in attesa conferma
-
-//+------------------------------------------------------------------+
 //| GRID STRUCTURE                                                   |
 //| Ogni array ha dimensione [MAX_GRID_LEVELS] = 15 elementi         |
 //| Indice 0 = Level 1 (piu vicino a entry)                          |
@@ -380,14 +372,6 @@ void InitializeArrays() {
     g_atrCache.isValid = false;
     g_lastLoggedATRChange = 0;
     g_lastATRStepName = "";
-
-    // ═══════════════════════════════════════════════════════════════════
-    // v4.0: Initialize Auto-Recenter
-    // ═══════════════════════════════════════════════════════════════════
-    g_lastRecenterTime = 0;
-    g_lastRecenterCheck = 0;
-    g_recenterCount = 0;
-    g_recenterPending = false;
 
     Print("SUCCESS: All grid arrays, Shield, and v4.0 modules initialized");
 }

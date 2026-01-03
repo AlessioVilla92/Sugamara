@@ -238,28 +238,6 @@ double CalculateMarginRequired(double lots, ENUM_ORDER_TYPE orderType) {
 }
 
 //+------------------------------------------------------------------+
-//| Check if Order Can be Placed (Margin Check)                      |
-//+------------------------------------------------------------------+
-bool CanPlaceOrder(double lots, ENUM_ORDER_TYPE orderType) {
-    double requiredMargin = CalculateMarginRequired(lots, orderType);
-
-    if(requiredMargin < 0) {
-        LogMessage(LOG_WARNING, "Cannot calculate margin requirement");
-        return false;
-    }
-
-    double freeMargin = GetFreeMargin();
-    double safetyBuffer = freeMargin * 0.2;  // Keep 20% buffer
-
-    if(requiredMargin > freeMargin - safetyBuffer) {
-        LogMessage(LOG_WARNING, "Insufficient margin for " + DoubleToString(lots, 2) + " lot order");
-        return false;
-    }
-
-    return true;
-}
-
-//+------------------------------------------------------------------+
 //| EXPOSURE MANAGEMENT                                              |
 //+------------------------------------------------------------------+
 
@@ -466,33 +444,4 @@ string GetRiskSummary() {
     return status + " (DD:" + FormatPercent(dd) + ")";
 }
 
-//+------------------------------------------------------------------+
-//| POSITION SIZING BASED ON RISK                                    |
-//+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| Calculate Safe Lot Size Based on Risk                            |
-//+------------------------------------------------------------------+
-double CalculateSafeLotSize(double desiredLot, int gridLevel) {
-    double lot = desiredLot;
-
-    // Apply volatility multiplier
-    lot *= GetVolatilityLotMultiplier();
-
-    // Check margin
-    ENUM_ORDER_TYPE checkType = ORDER_TYPE_BUY;  // Just for margin calc
-    if(!CanPlaceOrder(lot, checkType)) {
-        // Reduce lot size until it fits margin
-        while(lot > symbolMinLot && !CanPlaceOrder(lot, checkType)) {
-            lot = NormalizeLotSize(lot * 0.9);
-        }
-
-        if(lot < symbolMinLot) {
-            return 0;  // Cannot place order
-        }
-    }
-
-    // Apply final normalization
-    return NormalizeLotSize(lot);
-}
 

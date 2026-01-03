@@ -73,10 +73,8 @@ input int       GridLevelsPerSide = 7;                       // 🔢 Livelli per
 // 7 livelli × 2 zone × 2 grid = 28 ordini totali
 
 input group "    ╔═ SPACING SETTINGS ════════════════════════════════🔽🔽🔽"
-input ENUM_SPACING_MODE SpacingMode = SPACING_FIXED;         // 📏 Modalità Spacing ▼
-input double    Fixed_Spacing_Pips = 20.0;                   // 📐 Spacing Fisso (pips)
-input double    SpacingGeometric_Percent = 0.20;             // 📊 Spacing % (se SPACING_GEOMETRIC)
-// Spacing = Prezzo × 0.20%
+input ENUM_SPACING_MODE SpacingMode = SPACING_PAIR_AUTO;     // 📏 Modalità Spacing ▼ (DEFAULT: Pair Auto)
+input double    Fixed_Spacing_Pips = 11.0;                   // 📐 Spacing Fisso (pips) - usato solo se SPACING_FIXED
 
 //+------------------------------------------------------------------+
 //| 🔒 BREAK ON PROFIT (BOP) v5.1                                    |
@@ -437,18 +435,6 @@ input double    DailyLossLimit_USD = 50.0;                   // 📉 Loss Limit 
 input group "    ⚠️ NEWS PAUSE"
 input bool      PauseOnNews = false;                         // ✅ Pausa durante News (manuale)
 // Richiede attivazione manuale 30 min prima di news
-
-//+------------------------------------------------------------------+
-//| 1️⃣3️⃣ 🛑 STOP LOSS - REMOVED v5.6                                  |
-//+------------------------------------------------------------------+
-// ❌ RIMOSSO in v5.6 - L'auto-hedging CASCADE_OVERLAP compensa le perdite
-// Grid A = SOLO BUY, Grid B = SOLO SELL = Hedge naturale
-// Stop Loss rompe la logica neutrale chiudendo posizioni che sarebbero compensate
-// Variabili mantenute per backward compatibility (sempre false/0)
-bool      UseGlobalStopLoss = false;
-double    GlobalSL_Percent = 0;
-bool      UseIndividualSL = false;
-double    IndividualSL_Pips = 0;
 
 //+------------------------------------------------------------------+
 //| 1️⃣4️⃣ 🔧 BROKER SETTINGS                                          |

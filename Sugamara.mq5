@@ -617,14 +617,6 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
 }
 
 //+------------------------------------------------------------------+
-//| Timer function (v4.0 enhanced)                                    |
-//+------------------------------------------------------------------+
-void OnTimer() {
-    // Skip if system not active
-    if(systemState != STATE_ACTIVE) return;
-}
-
-//+------------------------------------------------------------------+
 //| Chart event function                                              |
 //+------------------------------------------------------------------+
 void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam) {
@@ -668,23 +660,9 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
 }
 
 //+------------------------------------------------------------------+
-//| Handle v4.0 Recenter Button Click (REMOVED - CASCADE_OVERLAP puro)|
-//+------------------------------------------------------------------+
-void HandleRecenterButtonClick(string objectName) {
-    // GridRecenterManager eliminato - funzioni non disponibili
-    Print("Recenter functionality removed in CASCADE_OVERLAP mode");
-}
-
-//+------------------------------------------------------------------+
 //| Handle Object Click                                               |
 //+------------------------------------------------------------------+
 void HandleObjectClick(string objectName) {
-    // v4.0: Handle recenter buttons
-    if(StringFind(objectName, "RECENTER") >= 0) {
-        HandleRecenterButtonClick(objectName);
-        return;
-    }
-
     // v3.0: Handle new control buttons
     if(StringFind(objectName, "BTN_V3_") == 0 || StringFind(objectName, "SUGAMARA_BTN_") == 0) {
         HandleControlButtonClick(objectName);
@@ -749,10 +727,6 @@ void HandleKeyPress(int key) {
         LogV4StatusReport();
     }
 
-    // E = Recenter Status Report (REMOVED - CASCADE_OVERLAP puro)
-    if(key == 'E' || key == 'e') {
-        Print("Auto-Recenter removed in CASCADE_OVERLAP mode");
-    }
 }
 
 //+------------------------------------------------------------------+

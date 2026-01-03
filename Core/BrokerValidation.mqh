@@ -279,16 +279,6 @@ double NormalizeLotSize(double lot) {
 }
 
 //+------------------------------------------------------------------+
-//| Validate Stop Loss Distance - REMOVED v5.6                       |
-//+------------------------------------------------------------------+
-// ❌ FUNZIONE RIMOSSA in v5.6 - SL non più usato
-// L'auto-hedging CASCADE_OVERLAP compensa le perdite automaticamente
-// Funzione stub mantenuta per backward compatibility
-double ValidateStopLoss(double price, double sl, bool isBuy) {
-    return 0;  // v5.6: Sempre 0 - No SL
-}
-
-//+------------------------------------------------------------------+
 //| Validate Take Profit Distance                                    |
 //| Ensures TP is at least broker minimum distance from price        |
 //+------------------------------------------------------------------+

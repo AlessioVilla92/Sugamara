@@ -168,40 +168,6 @@ bool DeletePendingOrder(ulong ticket) {
 }
 
 //+------------------------------------------------------------------+
-//| Modify Pending Order                                             |
-//+------------------------------------------------------------------+
-bool ModifyPendingOrder(ulong ticket, double newPrice, double newSL, double newTP) {
-    if(ticket == 0) return false;
-    if(!OrderSelect(ticket)) return false;
-
-    newPrice = NormalizeDouble(newPrice, symbolDigits);
-    newSL = NormalizeDouble(newSL, symbolDigits);
-    newTP = NormalizeDouble(newTP, symbolDigits);
-
-    int retries = 0;
-
-    while(retries < MaxRetries) {
-        if(trade.OrderModify(ticket, newPrice, newSL, newTP, ORDER_TIME_GTC, 0)) {
-            if(DetailedLogging) {
-                LogMessage(LOG_SUCCESS, "Order modified: #" + IntegerToString(ticket));
-            }
-            return true;
-        }
-
-        uint errorCode = trade.ResultRetcode();
-        LogMessage(LOG_WARNING, "Modify failed: " + trade.ResultRetcodeDescription() +
-                   ", retry " + IntegerToString(retries + 1));
-
-        retries++;
-        if(retries < MaxRetries) {
-            Sleep(RetryDelay_ms);
-        }
-    }
-
-    return false;
-}
-
-//+------------------------------------------------------------------+
 //| POSITION FUNCTIONS                                               |
 //+------------------------------------------------------------------+
 
@@ -248,39 +214,6 @@ bool ClosePosition(ulong ticket) {
 // - FindNewTicketAfterPartialClose() - Subordinata a sopra
 // - UpdateGridTicket() - Subordinata a sopra
 // Double Parcelling rimosso in v5.5 - queste erano funzioni orfane
-
-//+------------------------------------------------------------------+
-//| Modify Position SL/TP                                            |
-//+------------------------------------------------------------------+
-bool ModifyPosition(ulong ticket, double newSL, double newTP) {
-    if(ticket == 0) return false;
-    if(!PositionSelectByTicket(ticket)) return false;
-
-    newSL = NormalizeDouble(newSL, symbolDigits);
-    newTP = NormalizeDouble(newTP, symbolDigits);
-
-    int retries = 0;
-
-    while(retries < MaxRetries) {
-        if(trade.PositionModify(ticket, newSL, newTP)) {
-            if(DetailedLogging) {
-                LogMessage(LOG_SUCCESS, "Position modified: #" + IntegerToString(ticket));
-            }
-            return true;
-        }
-
-        uint errorCode = trade.ResultRetcode();
-        LogMessage(LOG_WARNING, "Position modify failed: " + trade.ResultRetcodeDescription() +
-                   ", retry " + IntegerToString(retries + 1));
-
-        retries++;
-        if(retries < MaxRetries) {
-            Sleep(RetryDelay_ms);
-        }
-    }
-
-    return false;
-}
 
 //+------------------------------------------------------------------+
 //| MARKET ORDER FUNCTIONS                                           |
@@ -499,52 +432,6 @@ double GetHistoricalOrderProfit(ulong ticket) {
     }
 
     return profit;
-}
-
-//+------------------------------------------------------------------+
-//| Get Last Order Error Code                                        |
-//+------------------------------------------------------------------+
-uint GetLastOrderError() {
-    return trade.ResultRetcode();
-}
-
-//+------------------------------------------------------------------+
-//| Get Last Order Error Description                                 |
-//+------------------------------------------------------------------+
-string GetLastOrderErrorDescription() {
-    return trade.ResultRetcodeDescription();
-}
-
-//+------------------------------------------------------------------+
-//| Check if Order Operation is Safe                                 |
-//+------------------------------------------------------------------+
-bool IsOrderOperationSafe() {
-    // Check margin
-    double freeMargin = GetFreeMargin();
-    if(freeMargin < 100) {
-        LogMessage(LOG_WARNING, "Low free margin: " + FormatMoney(freeMargin));
-        return false;
-    }
-
-    // Check spread
-    double spreadPips = GetSpreadPips();
-    if(spreadPips > 10) {
-        LogMessage(LOG_WARNING, "High spread: " + DoubleToString(spreadPips, 1) + " pips");
-        return false;
-    }
-
-    // Check if trading is allowed
-    if(!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)) {
-        LogMessage(LOG_WARNING, "Trading not allowed by terminal");
-        return false;
-    }
-
-    if(!MQLInfoInteger(MQL_TRADE_ALLOWED)) {
-        LogMessage(LOG_WARNING, "Trading not allowed for EA");
-        return false;
-    }
-
-    return true;
 }
 
 //+------------------------------------------------------------------+

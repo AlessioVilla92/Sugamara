@@ -81,25 +81,19 @@ double GetPairDefaultSpacing()
 
 //+------------------------------------------------------------------+
 //| Calcola lo spacing corrente - v5.9 con SPACING_PAIR_AUTO          |
-//| Supporta: FIXED, PAIR_AUTO, GEOMETRIC                             |
+//| Supporta: FIXED, PAIR_AUTO                                        |
 //+------------------------------------------------------------------+
 double CalculateCurrentSpacing()
 {
-   // v5.9: Supporta SPACING_FIXED, SPACING_PAIR_AUTO, SPACING_GEOMETRIC
-   // SPACING_CUSTOM rimosso (era identico a SPACING_FIXED)
+   // v5.9: Supporta SPACING_FIXED, SPACING_PAIR_AUTO
+   // SPACING_GEOMETRIC rimosso (mai utilizzato)
 
    double spacing = Fixed_Spacing_Pips;
 
    switch(SpacingMode) {
       case SPACING_PAIR_AUTO:
-         // Pair Auto: usa spacing preset dalla coppia selezionata
+         // Pair Auto: usa spacing preset dalla coppia selezionata (DEFAULT)
          spacing = GetPairDefaultSpacing();
-         break;
-
-      case SPACING_GEOMETRIC:
-         // Geometric: spacing as % of current price
-         spacing = SymbolInfoDouble(_Symbol, SYMBOL_BID) * SpacingGeometric_Percent / 100.0;
-         spacing = spacing / symbolPoint;  // Convert to pips
          break;
 
       case SPACING_FIXED:
