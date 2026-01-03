@@ -1,13 +1,13 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v5.9         |
+//|                                    SUGAMARA RIBELLE v7.0         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
 //|   "The Spice Must Flow" - DUNE Theme                             |
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
-//|  Copyright (C) 2025 - Sugamara Ribelle Development Team          |
-//|  Version: 5.9.0 RECOVERY (Auto-Recovery dopo riavvio MT5/VPS)    |
+//|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
+//|  Version: 7.0.0 STRADDLE TRENDING + VISUAL PRIORITY              |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,23 +16,22 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v5.9 RECOVERY:                                                  |
-//|  - Auto-Recovery ordini dopo riavvio MT5/VPS                     |
-//|  - Scansiona broker per ordini esistenti con MagicNumber         |
-//|  - Ricostruisce array interni automaticamente                    |
-//|  - Bottone RECOVER per recovery manuale                          |
-//|  - Entry Point salvato in GlobalVariable (persistente)           |
+//|  v7.0 STRADDLE TRENDING INTELLIGENTE:                            |
+//|  - Modulo Straddle completamente isolato (Magic 20260101)        |
+//|  - BUY STOP + SELL STOP con moltiplicatore whipsaw               |
+//|  - COP Straddle separato da CASCADE                              |
+//|  - Grid Zero linee con priorità visiva (spessore 5px)            |
 //|                                                                  |
-//|  v5.8 CLEANUP:                                                   |
-//|  - AutoRecenter REMOVED: feature mai implementata                |
-//|  - CyclicCooldown REMOVED: reopen sempre immediato               |
+//|  v5.9 RECOVERY (mantenuto):                                      |
+//|  - Auto-Recovery ordini dopo riavvio MT5/VPS                     |
+//|  - Entry Point salvato in GlobalVariable (persistente)           |
 //+------------------------------------------------------------------+
 
-#property copyright "Sugamara Ribelle (C) 2025"
+#property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "5.90"
-#property description "SUGAMARA RIBELLE v5.9 - AUTO-RECOVERY + COP FIX + NO SL + BOP"
-#property description "Grid A = SOLO BUY | Grid B = SOLO SELL"
+#property version   "7.00"
+#property description "SUGAMARA RIBELLE v7.0 - STRADDLE TRENDING + VISUAL PRIORITY"
+#property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Straddle = ISOLATO"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
 
@@ -80,6 +79,9 @@
 
 // v5.8 NEW Trading Modules
 #include "Trading/GridZero.mqh"
+
+// v6.0 Straddle Trending Intelligente (MODULO ISOLATO)
+#include "Trading/StraddleTrendingManager.mqh"
 
 // UI Module
 #include "UI/Dashboard.mqh"
@@ -267,6 +269,9 @@ int OnInit() {
     //--- STEP 13.8d: Initialize Grid Zero (v5.8) ---
     InitGridZero();
 
+    //--- STEP 13.8e: Initialize Straddle Trending (v6.0 - MODULO ISOLATO) ---
+    StraddleInit();
+
     //--- STEP 13.9: Initialize Trailing Manager (REMOVED - CASCADE_OVERLAP puro) ---
     // GridTrailingManager eliminato - non necessario per CASCADE SOVRAPPOSTO
 
@@ -345,7 +350,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v5.9 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v7.0 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), IsCascadeOverlapMode() ? " (CASCADE SOVRAPPOSTO)" : "");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -360,17 +365,15 @@ int OnInit() {
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("-----------------------------------------------------------------------");
-    Print("  v5.9 FEATURES:");
+    Print("  v7.0 FEATURES:");
+    Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
+    Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
-    Print("  [+] RECOVER Button: Available for manual recovery");
     if(IsCascadeOverlapMode()) {
         Print("  [+] CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
         Print("  [+] Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
     }
     Print("  [+] Trailing Grid: ", Enable_TrailingGrid ? "ENABLED (L" + IntegerToString(Trail_Trigger_Level) + " trigger)" : "DISABLED");
-    Print("  [+] ATR Multi-TF: ", Enable_ATRMultiTF ? "ENABLED" : "DISABLED");
-    Print("  [+] Manual S/R: ", Enable_ManualSR ? "ENABLED" : "DISABLED");
-    Print("  [+] Control Buttons: ALWAYS ACTIVE");
     Print("  [+] Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
     Print("  [+] Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
     Print("  [+] Grid Zero: ", Enable_GridZero ? ("ENABLED (L" + IntegerToString(GridZero_Trigger_Level) + " trigger)") : "DISABLED");
@@ -457,6 +460,9 @@ void OnDeinit(const int reason) {
 
     // v5.8: Deinitialize Grid Zero
     DeinitializeGridZero();
+
+    // v6.0: Deinitialize Straddle Trending (MODULO ISOLATO)
+    StraddleDeinit();
 
     // v4.0: Kill timer
     EventKillTimer();
@@ -577,6 +583,9 @@ void OnTick() {
         ProcessGridZeroCycling();
     }
 
+    //--- v6.0: STRADDLE TRENDING INTELLIGENTE (MODULO ISOLATO) ---
+    StraddleOnTick();
+
     //--- v5.1: BREAK ON PROFIT (BOP) ---
     CheckBreakOnProfit();
 
@@ -611,6 +620,9 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
 
     // Process trade events (grid orders)
     OnTradeTransactionHandler(trans, request, result);
+
+    // v6.0: Process Straddle trade events (MODULO ISOLATO)
+    OnStraddleTradeTransaction(trans, request, result);
 
     // Process hedge events (REMOVED - hedge integrato in LIMIT orders CASCADE_OVERLAP)
     // OnHedgeTradeTransaction eliminato con HedgingManager
@@ -730,13 +742,13 @@ void HandleKeyPress(int key) {
 }
 
 //+------------------------------------------------------------------+
-//| LOG v5.9 COMPLETE STATUS REPORT                                   |
+//| LOG v7.0 COMPLETE STATUS REPORT                                   |
 //| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
     Print("");
     Print("+=====================================================================+");
-    Print("|       SUGAMARA RIBELLE v5.9 - COMPLETE STATUS REPORT                |");
+    Print("|       SUGAMARA RIBELLE v7.0 - COMPLETE STATUS REPORT                |");
     Print("|       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                        |");
     Print("+=====================================================================+");
     Print("");
@@ -753,30 +765,29 @@ void LogV4StatusReport() {
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v5.1 Modules Status
+    // v7.0 Modules Status
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v5.1 MODULES STATUS                                            │");
+    Print("│  v7.0 MODULES STATUS                                            │");
     Print("├─────────────────────────────────────────────────────────────────┤");
     if(IsCascadeOverlapMode()) {
-        Print("│  🎯 CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
+        Print("│  CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
         Print("│      Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
     }
+    Print("│  STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
+    Print("│  GRID ZERO: ", Enable_GridZero ? "ENABLED (Visual Priority 5px)" : "DISABLED");
 
     // ATR Indicator (monitoring only)
     if(UseATR) {
-        Print("│  📊 ATR Indicator: ACTIVE");
+        Print("│  ATR Indicator: ACTIVE");
         Print("│      ATR: ", DoubleToString(GetATRPips(), 1), " pips | ", GetATRConditionName(GetATRCondition()));
     }
-
-    // Auto-Recenter (REMOVED - CASCADE_OVERLAP puro)
-    Print("│  🔁 Auto-Recenter: REMOVED (CASCADE_OVERLAP mode)");
 
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v5.9 Recovery Status
+    // v7.0 Recovery Status
     Print("+-------------------------------------------------------------------+");
-    Print("|  v5.9 RECOVERY STATUS                                            |");
+    Print("|  v7.0 RECOVERY STATUS                                            |");
     Print("+-------------------------------------------------------------------+");
     Print("|  Recovery Performed: ", g_recoveryPerformed ? "YES" : "NO");
     if(g_recoveryPerformed) {
@@ -789,7 +800,7 @@ void LogV4StatusReport() {
 
     // Hotkeys reminder
     Print("+-------------------------------------------------------------------+");
-    Print("|  v5.9 HOTKEYS                                                    |");
+    Print("|  v7.0 HOTKEYS                                                    |");
     Print("+-------------------------------------------------------------------+");
     Print("|  V = This report (Full Status)                                   |");
     Print("|  A = ATR Report                                                  |");

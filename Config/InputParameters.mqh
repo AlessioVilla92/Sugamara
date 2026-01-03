@@ -787,3 +787,52 @@ input bool      ShowTPLines = true;                          // ✅ Show TP Line
 // VISUAL THEME REMOVED - Now in VisualTheme.mqh
 // THEME_CHART_*, THEME_CANDLE_*, THEME_DASHBOARD_*, COLOR_GRIDLINE_* are now #define constants
 
+//+------------------------------------------------------------------+
+//| 3️⃣3️⃣ 🎯 STRADDLE TRENDING INTELLIGENTE v6.0                       |
+//|     Sistema ISOLATO con Magic Number separato                    |
+//|     Funziona INDIPENDENTE da CASCADE                             |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  3️⃣3️⃣  🎯 STRADDLE TRENDING INTELLIGENTE v6.0             ║"
+input group "║      Sistema ISOLATO - Magic Number: 20260101            ║"
+input group "║      Funziona INDIPENDENTE da CASCADE                    ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ✅ ATTIVAZIONE STRADDLE"
+input bool      Straddle_Enabled = false;                  // ▶ Abilita Straddle Trending
+input int       Straddle_MagicNumber = 20260101;           // 🆔 Magic Number Straddle (ISOLATO)
+
+input group "    📐 CONFIGURAZIONE STRADDLE"
+input double    Straddle_Spacing_Pips = 15.0;              // 📏 Distanza BUY/SELL (pips) - FIX 4
+input double    Straddle_BaseLot = 0.01;                   // 💰 Lot Iniziale
+input ENUM_STRADDLE_MULTIPLIER Straddle_LotMultiplier = STRADDLE_MULT_2X; // 📈 Moltiplicatore (1.5× o 2×)
+
+input group "    🔄 LIMITI WHIPSAW"
+input int       Straddle_MaxWhipsaw = 3;                   // 🔄 Max Whipsaw (poi Cover Mode)
+input double    Straddle_MaxLot = 0.50;                    // ⚠️ Lot Massimo Raggiungibile
+
+input group "    🎯 TAKE PROFIT STRADDLE"
+input bool      Straddle_UseTP = true;                     // 🎯 Usa Take Profit
+input int       Straddle_TP_GridLevel = 4;                 // 📍 TP @ Entry ± (N × Spacing)
+
+input group "    💵 CLOSE ON PROFIT STRADDLE (COP)"
+input bool      Straddle_COP_Enabled = true;               // ✅ Abilita COP Straddle
+input double    Straddle_COP_Target = 10.00;               // 💵 Target Profit ($) per chiudere
+
+input group "    ⚖️ BREAKEVEN EXIT STRADDLE"
+input bool      Straddle_BE_Enabled = false;               // ⚖️ Abilita Chiusura a Pari (dopo whipsaw)
+input double    Straddle_BE_Buffer = 0.50;                 // 📊 Buffer BE ($) - chiude se NET >= -buffer
+
+input group "    🌙 CHIUSURA EOD STRADDLE"
+input bool      Straddle_CloseEOD = true;                  // 🌙 Chiudi Fine Giornata
+input int       Straddle_EOD_Hour = 21;                    // ⏰ Ora EOD (GMT)
+input bool      Straddle_CloseFriday = true;               // 📅 Chiudi Venerdì Anticipato
+input int       Straddle_Friday_Hour = 19;                 // ⏰ Ora Venerdì (GMT)
+
+input group "    🔁 RIAPERTURA STRADDLE"
+input bool      Straddle_ReopenAfterClose = true;          // 🔁 Riapri Dopo Chiusura
+input int       Straddle_ReopenDelay = 30;                 // ⏱️ Delay Riapertura (secondi)
+

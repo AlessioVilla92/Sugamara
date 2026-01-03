@@ -252,6 +252,14 @@ enum ENUM_BUTTON_STATE {
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
+//| 🎯 STRADDLE MULTIPLIER - Moltiplicatore lot Straddle (v6.0)      |
+//+------------------------------------------------------------------+
+enum ENUM_STRADDLE_MULTIPLIER {
+    STRADDLE_MULT_1_5X = 0,     // 1.5× (Conservativo - BE più lento)
+    STRADDLE_MULT_2X = 1        // 2× (Standard - BE più veloce)
+};
+
+//+------------------------------------------------------------------+
 //| CONSTANTS - Costanti di sistema                                  |
 //+------------------------------------------------------------------+
 const int MAX_GRID_LEVELS = 15;           // Max livelli per lato (v5.3: Esteso per Trailing Grid)

@@ -589,9 +589,9 @@ void DrawGridZeroLines() {
         ObjectDelete(0, stopName);
         if(ObjectCreate(0, stopName, OBJ_HLINE, 0, 0, stopPrice)) {
             ObjectSetInteger(0, stopName, OBJPROP_COLOR, COLOR_GRIDZERO_LINE);
-            ObjectSetInteger(0, stopName, OBJPROP_WIDTH, GRIDLINE_WIDTH);
+            ObjectSetInteger(0, stopName, OBJPROP_WIDTH, GRIDZERO_LINE_WIDTH);  // v6.0: Spessore prioritario
             ObjectSetInteger(0, stopName, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSetInteger(0, stopName, OBJPROP_BACK, true);
+            ObjectSetInteger(0, stopName, OBJPROP_BACK, false);  // v6.0: In primo piano (non background)
             ObjectSetInteger(0, stopName, OBJPROP_SELECTABLE, false);
         }
     }
@@ -606,9 +606,9 @@ void DrawGridZeroLines() {
         ObjectDelete(0, limitName);
         if(ObjectCreate(0, limitName, OBJ_HLINE, 0, 0, limitPrice)) {
             ObjectSetInteger(0, limitName, OBJPROP_COLOR, COLOR_GRIDZERO_LINE);
-            ObjectSetInteger(0, limitName, OBJPROP_WIDTH, GRIDLINE_WIDTH);
+            ObjectSetInteger(0, limitName, OBJPROP_WIDTH, GRIDZERO_LINE_WIDTH);  // v6.0: Spessore prioritario
             ObjectSetInteger(0, limitName, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSetInteger(0, limitName, OBJPROP_BACK, true);
+            ObjectSetInteger(0, limitName, OBJPROP_BACK, false);  // v6.0: In primo piano (non background)
             ObjectSetInteger(0, limitName, OBJPROP_SELECTABLE, false);
         }
     }
