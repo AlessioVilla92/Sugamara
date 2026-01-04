@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v7.0         |
+//|                                    SUGAMARA RIBELLE v7.1         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 7.0.0 STRADDLE TRENDING + VISUAL PRIORITY              |
+//|  Version: 7.1.0 STRADDLE TRENDING + VISUAL PRIORITY              |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,7 +16,7 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v7.0 STRADDLE TRENDING INTELLIGENTE:                            |
+//|  v7.1 STRADDLE TRENDING INTELLIGENTE:                            |
 //|  - Modulo Straddle completamente isolato (Magic 20260101)        |
 //|  - BUY STOP + SELL STOP con moltiplicatore whipsaw               |
 //|  - COP Straddle separato da CASCADE                              |
@@ -29,8 +29,8 @@
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "7.00"
-#property description "SUGAMARA RIBELLE v7.0 - STRADDLE TRENDING + VISUAL PRIORITY"
+#property version   "7.10"
+#property description "SUGAMARA RIBELLE v7.1 - STRADDLE TRENDING + VISUAL PRIORITY"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Straddle = ISOLATO"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -350,7 +350,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v7.0 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v7.1 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), IsCascadeOverlapMode() ? " (CASCADE SOVRAPPOSTO)" : "");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -365,7 +365,7 @@ int OnInit() {
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("-----------------------------------------------------------------------");
-    Print("  v7.0 FEATURES:");
+    Print("  v7.1 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
@@ -742,13 +742,13 @@ void HandleKeyPress(int key) {
 }
 
 //+------------------------------------------------------------------+
-//| LOG v7.0 COMPLETE STATUS REPORT                                   |
+//| LOG v7.1 COMPLETE STATUS REPORT                                   |
 //| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
     Print("");
     Print("+=====================================================================+");
-    Print("|       SUGAMARA RIBELLE v7.0 - COMPLETE STATUS REPORT                |");
+    Print("|       SUGAMARA RIBELLE v7.1 - COMPLETE STATUS REPORT                |");
     Print("|       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                        |");
     Print("+=====================================================================+");
     Print("");
@@ -765,9 +765,9 @@ void LogV4StatusReport() {
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v7.0 Modules Status
+    // v7.1 Modules Status
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v7.0 MODULES STATUS                                            │");
+    Print("│  v7.1 MODULES STATUS                                            │");
     Print("├─────────────────────────────────────────────────────────────────┤");
     if(IsCascadeOverlapMode()) {
         Print("│  CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
@@ -785,9 +785,9 @@ void LogV4StatusReport() {
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v7.0 Recovery Status
+    // v7.1 Recovery Status
     Print("+-------------------------------------------------------------------+");
-    Print("|  v7.0 RECOVERY STATUS                                            |");
+    Print("|  v7.1 RECOVERY STATUS                                            |");
     Print("+-------------------------------------------------------------------+");
     Print("|  Recovery Performed: ", g_recoveryPerformed ? "YES" : "NO");
     if(g_recoveryPerformed) {
@@ -800,7 +800,7 @@ void LogV4StatusReport() {
 
     // Hotkeys reminder
     Print("+-------------------------------------------------------------------+");
-    Print("|  v7.0 HOTKEYS                                                    |");
+    Print("|  v7.1 HOTKEYS                                                    |");
     Print("+-------------------------------------------------------------------+");
     Print("|  V = This report (Full Status)                                   |");
     Print("|  A = ATR Report                                                  |");

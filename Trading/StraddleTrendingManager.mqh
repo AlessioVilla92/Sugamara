@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //|                                    StraddleTrendingManager.mqh   |
-//|                        SUGAMARA RIBELLE v7.0                     |
+//|                        SUGAMARA RIBELLE v7.1                     |
 //|                     Straddle Trending Intelligente               |
 //|                                                                  |
 //|  Sistema COMPLETAMENTE ISOLATO da CASCADE                        |
@@ -12,8 +12,8 @@
 //|  - FIX 3: Filling type dinamico per broker                      |
 //|  - FIX 5: Arrotondamento lot con lotStep broker                 |
 //+------------------------------------------------------------------+
-#property copyright "SUGAMARA RIBELLE v7.0"
-#property version   "7.00"
+#property copyright "SUGAMARA RIBELLE v7.1"
+#property version   "7.10"
 
 //+------------------------------------------------------------------+
 //| INCLUDES                                                          |

@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //|                                                    GridZero.mqh  |
-//|                        Sugamara v5.8 - Grid Zero System          |
+//|                        Sugamara v7.1 - Grid Zero System          |
 //|                                                                  |
 //|  Grid Zero fills the 27-pip gap in the center of the grid        |
 //|  using mean-reversion counter-trend orders.                      |
@@ -11,7 +11,7 @@
 //|  BULLISH bias -> BEARISH structure: SELL STOP + BUY LIMIT        |
 //|  BEARISH bias -> BULLISH structure: BUY STOP + SELL LIMIT        |
 //+------------------------------------------------------------------+
-#property copyright "Sugamara (C) 2025"
+#property copyright "Sugamara (C) 2025-2026"
 #property link      "https://sugamara.com"
 
 //+------------------------------------------------------------------+
