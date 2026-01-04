@@ -29,10 +29,10 @@ bool InitializeGridA() {
     // v5.0 DEBUG: Log input parameters
     PrintFormat("[GridA] Initializing with: entry=%.5f, spacing=%.1f pips, levels=%d",
                 entryPoint, currentSpacing_Pips, GridLevelsPerSide);
-    PrintFormat("[GridA] CASCADE_OVERLAP mode: %s", IsCascadeOverlapMode() ? "YES" : "NO");
+    PrintFormat("[GridA] v8.0: Grid A = SOLO BUY (struttura default)");
 
     // Calculate and store values for Upper Zone
-    // CASCADE_OVERLAP: BUY STOP (standard)
+    // v8.0: BUY STOP (Grid A = sempre BUY)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         gridA_Upper_EntryPrices[i] = CalculateGridLevelPrice(entryPoint, ZONE_UPPER, i, currentSpacing_Pips, GRID_A);
         gridA_Upper_TP[i] = CalculateCascadeTP(entryPoint, GRID_A, ZONE_UPPER, i, currentSpacing_Pips, GridLevelsPerSide);
@@ -45,7 +45,7 @@ bool InitializeGridA() {
     }
 
     // Calculate and store values for Lower Zone
-    // CASCADE_OVERLAP: BUY LIMIT @ -3 pips (hedge)
+    // v8.0: BUY LIMIT (Grid A = sempre BUY)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         gridA_Lower_EntryPrices[i] = CalculateGridLevelPrice(entryPoint, ZONE_LOWER, i, currentSpacing_Pips, GRID_A);
         gridA_Lower_TP[i] = CalculateCascadeTP(entryPoint, GRID_A, ZONE_LOWER, i, currentSpacing_Pips, GridLevelsPerSide);
@@ -97,24 +97,16 @@ bool InitializeGridA() {
 //+------------------------------------------------------------------+
 void LogGridAConfiguration() {
     Print("═══════════════════════════════════════════════════════════════════");
-    if(IsCascadeOverlapMode()) {
-        Print("  GRID A CONFIGURATION - SOLO BUY (CASCADE SOVRAPPOSTO)");
-    } else {
-        Print("  GRID A CONFIGURATION (LONG BIAS)");
-    }
+    Print("  GRID A CONFIGURATION - SOLO BUY (v8.0 DEFAULT)");
     Print("═══════════════════════════════════════════════════════════════════");
     Print("Entry Point: ", FormatPrice(entryPoint));
     Print("Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
     Print("Levels per Zone: ", GridLevelsPerSide);
-    if(IsCascadeOverlapMode()) {
-        Print("Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
-        Print("Mode: CASCADE_OVERLAP (Grid A = SOLO ordini BUY)");
-    }
+    Print("Mode: Perfect Cascade (TP = spacing)");
     Print("");
 
-    // Upper Zone - Order type depends on mode
-    string upperType = IsCascadeOverlapMode() ? "BUY STOP [TREND]" : "BUY LIMIT";
-    Print("--- UPPER ZONE (", upperType, ") ---");
+    // Upper Zone - v8.0: sempre BUY STOP
+    Print("--- UPPER ZONE (BUY STOP) ---");
     for(int i = 0; i < GridLevelsPerSide; i++) {
         Print("  L", i+1, ": Entry=", FormatPrice(gridA_Upper_EntryPrices[i]),
               " TP=", FormatPrice(gridA_Upper_TP[i]),
@@ -123,9 +115,8 @@ void LogGridAConfiguration() {
 
     Print("");
 
-    // Lower Zone - Order type depends on mode
-    string lowerType = IsCascadeOverlapMode() ? "BUY LIMIT [HEDGE -3pip]" : "SELL STOP";
-    Print("--- LOWER ZONE (", lowerType, ") ---");
+    // Lower Zone - v8.0: sempre BUY LIMIT
+    Print("--- LOWER ZONE (BUY LIMIT) ---");
     for(int i = 0; i < GridLevelsPerSide; i++) {
         Print("  L", i+1, ": Entry=", FormatPrice(gridA_Lower_EntryPrices[i]),
               " TP=", FormatPrice(gridA_Lower_TP[i]),
@@ -134,7 +125,7 @@ void LogGridAConfiguration() {
 
     Print("═══════════════════════════════════════════════════════════════════");
 
-    // Log enhanced summary for CASCADE_OVERLAP
+    // Log enhanced summary
     LogGridInitSummary(GRID_A);
 }
 
@@ -191,13 +182,11 @@ bool PlaceGridAUpperOrder(int level) {
     double sl = 0;  // v5.6: No SL - Auto-hedging compensa le perdite
     double lot = gridA_Upper_Lots[level];
 
-    // Get order type (CASCADE_OVERLAP: BUY_STOP, otherwise: BUY_LIMIT)
+    // v8.0: Grid A Upper = sempre BUY STOP
     ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_A, ZONE_UPPER);
 
-    // Validate price for order type
-    if(!IsValidPendingPrice(entryPrice, orderType)) {
-        entryPrice = GetSafeOrderPrice(entryPrice, orderType);
-    }
+    // v8.0: Rimosso GetSafeOrderPrice - entry SEMPRE originale
+    // Se prezzo invalido, OrderManager ritorna 0 e cyclic reopen riprova
 
     // Validate TP (v5.6: SL rimosso)
     tp = ValidateTakeProfit(entryPrice, tp, true);
@@ -231,14 +220,12 @@ bool PlaceGridALowerOrder(int level) {
     double sl = 0;  // v5.6: No SL - Auto-hedging compensa le perdite
     double lot = gridA_Lower_Lots[level];
 
-    // Get order type (CASCADE_OVERLAP: BUY_LIMIT, otherwise: SELL_STOP)
+    // v8.0: Grid A Lower = sempre BUY LIMIT
     ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_A, ZONE_LOWER);
-    bool isBuyOrder = (orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_BUY_STOP);
+    bool isBuyOrder = true;  // v8.0: Grid A = sempre BUY
 
-    // Validate price for order type
-    if(!IsValidPendingPrice(entryPrice, orderType)) {
-        entryPrice = GetSafeOrderPrice(entryPrice, orderType);
-    }
+    // v8.0: Rimosso GetSafeOrderPrice - entry SEMPRE originale
+    // Se prezzo invalido, OrderManager ritorna 0 e cyclic reopen riprova
 
     // Validate TP (v5.6: SL rimosso)
     tp = ValidateTakeProfit(entryPrice, tp, isBuyOrder);
@@ -402,6 +389,7 @@ void ProcessGridACyclicReopen() {
 
 //+------------------------------------------------------------------+
 //| Check if Grid A Upper Level Should Reopen                        |
+//| v8.0: Smart Reopen - BUY STOP con offset unidirezionale          |
 //+------------------------------------------------------------------+
 bool ShouldReopenGridAUpper(int level) {
     ENUM_ORDER_STATUS status = gridA_Upper_Status[level];
@@ -416,9 +404,10 @@ bool ShouldReopenGridAUpper(int level) {
         return false;
     }
 
-    // Check price level trigger
+    // v8.0: Smart Reopen - usa orderType per check unidirezionale
     double levelPrice = gridA_Upper_EntryPrices[level];
-    if(!IsPriceAtReopenLevel(levelPrice)) {
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_A, ZONE_UPPER);
+    if(!IsPriceAtReopenLevelSmart(levelPrice, orderType)) {
         return false;
     }
 
@@ -427,6 +416,7 @@ bool ShouldReopenGridAUpper(int level) {
 
 //+------------------------------------------------------------------+
 //| Check if Grid A Lower Level Should Reopen                        |
+//| v8.0: Smart Reopen - BUY LIMIT immediato                         |
 //+------------------------------------------------------------------+
 bool ShouldReopenGridALower(int level) {
     ENUM_ORDER_STATUS status = gridA_Lower_Status[level];
@@ -440,8 +430,10 @@ bool ShouldReopenGridALower(int level) {
         return false;
     }
 
+    // v8.0: Smart Reopen - LIMIT riapre immediatamente
     double levelPrice = gridA_Lower_EntryPrices[level];
-    if(!IsPriceAtReopenLevel(levelPrice)) {
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_A, ZONE_LOWER);
+    if(!IsPriceAtReopenLevelSmart(levelPrice, orderType)) {
         return false;
     }
 
@@ -463,17 +455,25 @@ void ReopenGridAUpper(int level) {
     gridA_Upper_Status[level] = ORDER_NONE;
     gridA_Upper_Tickets[level] = 0;
 
+    // v8.0: Log Smart Reopen type
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_A, ZONE_UPPER);
+    string reopenType = (orderType == ORDER_TYPE_BUY_STOP) ? "STOP+OFFSET" : "LIMIT+IMMEDIATO";
+
     // 3. ATTEMPT to place order
     if(PlaceGridAUpperOrder(level)) {
         // SUCCESS! PlaceGridAUpperOrder already set:
         // - gridA_Upper_Status[level] = ORDER_PENDING (line 213)
         // - gridA_Upper_Tickets[level] = ticket (line 212)
-        LogGridStatus(GRID_A, ZONE_UPPER, level, "REOPENED (Cycle " +
-                      IntegerToString(gridA_Upper_Cycles[level]) + ")");
+        PrintFormat("[SmartReopen] ✓ GridA-UP-L%d REOPENED | %s | Cycle %d | Entry %.5f",
+                    level+1, reopenType, gridA_Upper_Cycles[level], gridA_Upper_EntryPrices[level]);
+        IncrementCycleCount(GRID_A, ZONE_UPPER, level);
     } else {
         // 4. FAILED! Restore previous status for automatic retry next tick
         gridA_Upper_Status[level] = prevStatus;
         gridA_Upper_Tickets[level] = prevTicket;
+        if(DetailedLogging) {
+            PrintFormat("[SmartReopen] ✗ GridA-UP-L%d FAILED - retry next tick", level+1);
+        }
     }
 }
 
@@ -492,17 +492,25 @@ void ReopenGridALower(int level) {
     gridA_Lower_Status[level] = ORDER_NONE;
     gridA_Lower_Tickets[level] = 0;
 
+    // v8.0: Log Smart Reopen type
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_A, ZONE_LOWER);
+    string reopenType = (orderType == ORDER_TYPE_BUY_LIMIT) ? "LIMIT+IMMEDIATO" : "STOP+OFFSET";
+
     // 3. ATTEMPT to place order
     if(PlaceGridALowerOrder(level)) {
         // SUCCESS! PlaceGridALowerOrder already set:
         // - gridA_Lower_Status[level] = ORDER_PENDING (line 254)
         // - gridA_Lower_Tickets[level] = ticket (line 253)
-        LogGridStatus(GRID_A, ZONE_LOWER, level, "REOPENED (Cycle " +
-                      IntegerToString(gridA_Lower_Cycles[level]) + ")");
+        PrintFormat("[SmartReopen] ✓ GridA-DN-L%d REOPENED | %s | Cycle %d | Entry %.5f",
+                    level+1, reopenType, gridA_Lower_Cycles[level], gridA_Lower_EntryPrices[level]);
+        IncrementCycleCount(GRID_A, ZONE_LOWER, level);
     } else {
         // 4. FAILED! Restore previous status for automatic retry next tick
         gridA_Lower_Status[level] = prevStatus;
         gridA_Lower_Tickets[level] = prevTicket;
+        if(DetailedLogging) {
+            PrintFormat("[SmartReopen] ✗ GridA-DN-L%d FAILED - retry next tick", level+1);
+        }
     }
 }
 

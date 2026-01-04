@@ -36,12 +36,12 @@ bool IsATREnabled()
 }
 
 //+------------------------------------------------------------------+
-//| Verifica se Hedging è disponibile (CASCADE_OVERLAP con EnableHedging)|
+//| Verifica se Hedging è disponibile                                 |
 //+------------------------------------------------------------------+
 bool IsHedgingAvailable()
 {
-   // v5.2: Hedging available for CASCADE_OVERLAP mode
-   return (IsCascadeOverlapMode() && EnableHedging);
+   // v8.0: Hedging sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
+   return EnableHedging;
 }
 
 //+------------------------------------------------------------------+
@@ -320,7 +320,7 @@ void PrintModeConfiguration()
    PrintFormat("  ATR Disponibile: %s", IsATRAvailable() ? "Sì" : "No");
    PrintFormat("  ATR Abilitato: %s", IsATREnabled() ? "Sì" : "No");
    PrintFormat("  Shield Mode: %s", GetShieldModeNameLogic());
-   PrintFormat("  Hedging (CASCADE_OVERLAP): %s", IsHedgingAvailable() ? "Sì" : "No");
+   PrintFormat("  Auto-Hedging (Grid A=BUY, B=SELL): %s", IsHedgingAvailable() ? "Sì" : "No");
    PrintFormat("  TP Mode: %s", UsesCascadeTP() ? "CASCADE" : "FISSO");
    Print("───────────────────────────────────────────────────────────────────");
    PrintFormat("  Spacing Corrente: %.1f pips", CalculateCurrentSpacing());
@@ -338,8 +338,8 @@ void PrintModeConfiguration()
 //+------------------------------------------------------------------+
 bool IsShieldAvailableLogic()
 {
-   // v5.2: Shield now available for CASCADE_OVERLAP mode (RANGEBOX removed)
-   return (IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED);
+   // v8.0: Shield sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
+   return (ShieldMode != SHIELD_DISABLED);
 }
 
 //+------------------------------------------------------------------+
@@ -347,11 +347,7 @@ bool IsShieldAvailableLogic()
 //+------------------------------------------------------------------+
 string GetShieldModeNameLogic()
 {
-   // v5.2: Shield available for CASCADE_OVERLAP mode
-   if(!IsCascadeOverlapMode()) {
-      return "N/A";
-   }
-
+   // v8.0: Shield sempre disponibile
    switch(ShieldMode) {
       case SHIELD_DISABLED: return "DISABLED";
       case SHIELD_SIMPLE: return "SIMPLE";

@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
 //|                                                    Dashboard.mqh |
-//|                     SUGAMARA RIBELLE v5.1 - Dashboard Display    |
+//|                     SUGAMARA RIBELLE v8.0 - Dashboard Display    |
 //|                                                                  |
-//|  Visual dashboard for CASCADE SOVRAPPOSTO (RIBELLE)              |
+//|  Visual dashboard for Perfect Cascade (Grid A=BUY, B=SELL)       |
 //|  Color Scheme: DUNE/ARRAKIS DESERT THEME - 2 COLUMN LAYOUT       |
 //|                                                                  |
-//|  v5.1: DUNE Theme + Detailed Logging + CASCADE_OVERLAP           |
+//|  v8.0: Perfect Cascade + Smart Reopen                            |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
@@ -437,7 +437,7 @@ void CreateUnifiedDashboard() {
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
     // v5.9.5: Titolo GIALLO, sottotitolo ARANCIONE SCURO
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 95, y + 12, "SUGAMARA RIBELLE", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v8.0", clrYellow, 20, "Arial Black");
     DashLabel("TITLE_SUB", x + totalWidth/2 - 80, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
@@ -1153,26 +1153,7 @@ void UpdateVolatilityPanel() {
 void UpdateShieldSection() {
     // Shield Mode
     string modeText = "Mode: ";
-    // v5.2: Shield available for CASCADE_OVERLAP mode
-    if(!IsCascadeOverlapMode()) {
-        modeText += "N/A";
-        ObjectSetString(0, "SHIELD_MODE", OBJPROP_TEXT, modeText);
-        ObjectSetInteger(0, "SHIELD_MODE", OBJPROP_COLOR, clrGray);
-        ObjectSetString(0, "SHIELD_STATUS", OBJPROP_TEXT, "Status: N/A");
-        ObjectSetInteger(0, "SHIELD_STATUS", OBJPROP_COLOR, clrGray);
-        ObjectSetString(0, "SHIELD_PHASE", OBJPROP_TEXT, "Phase: N/A");
-        ObjectSetInteger(0, "SHIELD_PHASE", OBJPROP_COLOR, clrGray);
-        // v5.8: New level fields
-        ObjectSetString(0, "SHIELD_PREALERT_UP", OBJPROP_TEXT, "PreAlert↑: N/A");
-        ObjectSetString(0, "SHIELD_PREALERT_DN", OBJPROP_TEXT, "PreAlert↓: N/A");
-        ObjectSetString(0, "SHIELD_BREAKOUT_UP", OBJPROP_TEXT, "Shield↑:   N/A");
-        ObjectSetString(0, "SHIELD_BREAKOUT_DN", OBJPROP_TEXT, "Shield↓:   N/A");
-        ObjectSetString(0, "SHIELD_DISTANCE", OBJPROP_TEXT, "Distance:  N/A");
-        ObjectSetString(0, "SHIELD_TYPE", OBJPROP_TEXT, "Type: ---");
-        ObjectSetString(0, "SHIELD_LOT", OBJPROP_TEXT, "Lot: ---");
-        ObjectSetString(0, "SHIELD_PL", OBJPROP_TEXT, "P/L: ---");
-        return;
-    }
+    // v8.0: Rimosso check IsCascadeOverlapMode() - Shield sempre disponibile
 
     // Get Shield Mode Name
     switch(ShieldMode) {

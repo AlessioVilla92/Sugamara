@@ -62,98 +62,45 @@ string GetGridLevelID(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
 //| Get Order Type for Grid Position                                 |
 //| STANDARD MODE:                                                   |
 //|   Grid A Upper: Buy Limit  | Grid A Lower: Sell Stop             |
-//|   Grid B Upper: Sell Limit | Grid B Lower: Buy Stop              |
-//| CASCADE_OVERLAP MODE (RIBELLE):                                  |
-//|   Grid A = SOLO BUY  (Upper: BUY STOP,  Lower: BUY LIMIT)        |
-//|   Grid B = SOLO SELL (Upper: SELL LIMIT, Lower: SELL STOP)       |
+//| v8.0: Grid A = SEMPRE BUY, Grid B = SEMPRE SELL (DEFAULT)       |
+//|   Grid A Upper: BUY STOP   | Grid A Lower: BUY LIMIT            |
+//|   Grid B Upper: SELL LIMIT | Grid B Lower: SELL STOP            |
 //+------------------------------------------------------------------+
 ENUM_ORDER_TYPE GetGridOrderType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
     //═══════════════════════════════════════════════════════════════
-    // CASCADE_OVERLAP MODE: Grid A = solo BUY, Grid B = solo SELL
-    //═══════════════════════════════════════════════════════════════
-    if(CascadeMode == CASCADE_OVERLAP) {
-        if(side == GRID_A) {
-            // Grid A = SOLO ordini BUY
-            if(zone == ZONE_UPPER) {
-                return ORDER_TYPE_BUY_STOP;    // BUY STOP @ livello (trend capture)
-            } else {
-                return ORDER_TYPE_BUY_LIMIT;   // BUY LIMIT @ livello - 3 pips (hedge)
-            }
-        } else {  // GRID_B
-            // Grid B = SOLO ordini SELL
-            if(zone == ZONE_UPPER) {
-                return ORDER_TYPE_SELL_LIMIT;  // SELL LIMIT @ livello + 3 pips (hedge)
-            } else {
-                return ORDER_TYPE_SELL_STOP;   // SELL STOP @ livello (trend capture)
-            }
-        }
-    }
-
-    //═══════════════════════════════════════════════════════════════
-    // STANDARD MODE: Comportamento originale
+    // v8.0: Grid A = SEMPRE BUY, Grid B = SEMPRE SELL (struttura default)
     //═══════════════════════════════════════════════════════════════
     if(side == GRID_A) {
+        // Grid A = SOLO ordini BUY
         if(zone == ZONE_UPPER) {
-            return ORDER_TYPE_BUY_LIMIT;   // Grid A Upper: Buy Limit
+            return ORDER_TYPE_BUY_STOP;    // BUY STOP @ livello (trend capture)
         } else {
-            return ORDER_TYPE_SELL_STOP;   // Grid A Lower: Sell Stop
+            return ORDER_TYPE_BUY_LIMIT;   // BUY LIMIT @ livello (mean reversion)
         }
     } else {  // GRID_B
+        // Grid B = SOLO ordini SELL
         if(zone == ZONE_UPPER) {
-            return ORDER_TYPE_SELL_LIMIT;  // Grid B Upper: Sell Limit
+            return ORDER_TYPE_SELL_LIMIT;  // SELL LIMIT @ livello (mean reversion)
         } else {
-            return ORDER_TYPE_BUY_STOP;    // Grid B Lower: Buy Stop
+            return ORDER_TYPE_SELL_STOP;   // SELL STOP @ livello (trend capture)
         }
     }
 }
 
 //+------------------------------------------------------------------+
-//| CASCADE_OVERLAP HELPER FUNCTIONS                                 |
+//| v8.0: FUNZIONI ELIMINATE                                         |
+//| - IsCascadeOverlapMode() RIMOSSO (struttura ora default)         |
+//| - GetHedgeOffset() RIMOSSO (nessun offset necessario)            |
 //+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| Check if CASCADE_OVERLAP mode is active                          |
-//+------------------------------------------------------------------+
-bool IsCascadeOverlapMode() {
-    return (CascadeMode == CASCADE_OVERLAP);
-}
-
-//+------------------------------------------------------------------+
-//| Get Hedge Offset in Points (3 pips default)                      |
-//| Used to offset LIMIT orders from STOP orders                     |
-//+------------------------------------------------------------------+
-double GetHedgeOffset() {
-    if(!IsCascadeOverlapMode()) return 0;
-    return PipsToPoints(Hedge_Spacing_Pips);
-}
 
 //+------------------------------------------------------------------+
 //| Get Position Type When Order Fills                               |
-//| v5.1 FIX: Aggiunto supporto CASCADE_OVERLAP                      |
+//| v8.0: Grid A = SEMPRE BUY, Grid B = SEMPRE SELL                  |
 //+------------------------------------------------------------------+
 ENUM_POSITION_TYPE GetGridPositionType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
-    // ═══════════════════════════════════════════════════════════════
-    // CASCADE_OVERLAP: Grid A = sempre BUY, Grid B = sempre SELL
-    // Questo fix corregge il calcolo TP per ordini Lower Zone
-    // ═══════════════════════════════════════════════════════════════
-    if(IsCascadeOverlapMode()) {
-        return (side == GRID_A) ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
-    }
-
-    // Codice esistente per altri modi (NEUTRAL_PURE, CASCADE_PERFECT, etc.)
-    if(side == GRID_A) {
-        if(zone == ZONE_UPPER) {
-            return POSITION_TYPE_BUY;   // Buy Limit fills to Buy
-        } else {
-            return POSITION_TYPE_SELL;  // Sell Stop fills to Sell
-        }
-    } else {  // GRID_B
-        if(zone == ZONE_UPPER) {
-            return POSITION_TYPE_SELL;  // Sell Limit fills to Sell
-        } else {
-            return POSITION_TYPE_BUY;   // Buy Stop fills to Buy
-        }
-    }
+    // v8.0: Grid A = sempre BUY, Grid B = sempre SELL (struttura default)
+    // Il parametro zone non è più necessario ma mantenuto per compatibilità
+    return (side == GRID_A) ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
 }
 
 //+------------------------------------------------------------------+
@@ -185,36 +132,19 @@ string GetOrderTypeString(ENUM_ORDER_TYPE orderType) {
 
 //+------------------------------------------------------------------+
 //| Calculate Entry Price for Grid Level                             |
-//| CASCADE_OVERLAP: Applica offset hedge per LIMIT orders           |
-//|   Grid A Lower: -3 pips (BUY LIMIT hedge)                        |
-//|   Grid B Upper: +3 pips (SELL LIMIT hedge)                       |
+//| v8.0: Nessun hedge offset - tutti i livelli allineati            |
 //+------------------------------------------------------------------+
 double CalculateGridLevelPrice(double baseEntryPoint, ENUM_GRID_ZONE zone, int level,
                                 double spacingPips, ENUM_GRID_SIDE side = GRID_A) {
     double spacingPrice = PipsToPoints(spacingPips);
-    double hedgeOffset = 0;
 
-    //═══════════════════════════════════════════════════════════════
-    // CASCADE_OVERLAP: Applica offset per hedge orders
-    //═══════════════════════════════════════════════════════════════
-    if(IsCascadeOverlapMode()) {
-        if(side == GRID_A && zone == ZONE_LOWER) {
-            // Grid A Lower: BUY LIMIT a -3 pips dal livello
-            hedgeOffset = -GetHedgeOffset();
-        }
-        else if(side == GRID_B && zone == ZONE_UPPER) {
-            // Grid B Upper: SELL LIMIT a +3 pips dal livello
-            hedgeOffset = GetHedgeOffset();
-        }
-        // Grid A Upper e Grid B Lower: nessun offset (STOP orders)
-    }
-
+    // v8.0: Nessun hedge offset - Grid A e B sullo stesso livello
     if(zone == ZONE_UPPER) {
         // Upper zone: prices above entry point
-        return NormalizeDouble(baseEntryPoint + (spacingPrice * (level + 1)) + hedgeOffset, symbolDigits);
+        return NormalizeDouble(baseEntryPoint + (spacingPrice * (level + 1)), symbolDigits);
     } else {
         // Lower zone: prices below entry point
-        return NormalizeDouble(baseEntryPoint - (spacingPrice * (level + 1)) + hedgeOffset, symbolDigits);
+        return NormalizeDouble(baseEntryPoint - (spacingPrice * (level + 1)), symbolDigits);
     }
 }
 
@@ -301,37 +231,8 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
         }
     }
 
-    //═══════════════════════════════════════════════════════════════
-    // CASCADE_OVERLAP MODE (RIBELLE): TP differenziati STOP vs LIMIT
-    // STOP orders: TP = spacing (catturano trend)
-    // LIMIT orders (hedge): TP = spacing + hedge (tornano verso entry)
-    //═══════════════════════════════════════════════════════════════
-    if(CascadeMode == CASCADE_OVERLAP) {
-        ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
-        double hedgeOffset = GetHedgeOffset();
-
-        // Determina se è un ordine STOP o LIMIT
-        bool isStopOrder = (orderType == ORDER_TYPE_BUY_STOP || orderType == ORDER_TYPE_SELL_STOP);
-
-        if(isStopOrder) {
-            // STOP orders: TP = entry + spacing (nella direzione del trend)
-            double tpDistance = spacingPrice;
-            if(isBuy) {
-                return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
-            } else {
-                return NormalizeDouble(orderEntryPrice - tpDistance, symbolDigits);
-            }
-        } else {
-            // LIMIT orders (hedge): TP più lungo per compensare l'offset
-            // TP = spacing + hedge_offset (torna verso l'entry point)
-            double tpDistance = spacingPrice + hedgeOffset;
-            if(isBuy) {
-                return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
-            } else {
-                return NormalizeDouble(orderEntryPrice - tpDistance, symbolDigits);
-            }
-        }
-    }
+    // v8.0: CASCADE_OVERLAP RIMOSSO - Perfect Cascade è default
+    // TP = spacing per TUTTI gli ordini (STOP e LIMIT)
 
     // Fallback: Use fixed TP
     double fixedTP = PipsToPoints(FinalLevel_TP_Pips);
@@ -1005,7 +906,8 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     // ═══════════════════════════════════════════════════════════════════
     // v4.0 SAFETY CHECK 1: Block near Shield activation
     // ═══════════════════════════════════════════════════════════════════
-    if(PauseReopenNearShield && IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED) {
+    // v8.0: Rimosso IsCascadeOverlapMode() - struttura è default
+    if(PauseReopenNearShield && ShieldMode != SHIELD_DISABLED) {
         double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
         double proximityPoints = PipsToPoints(ShieldProximity_Pips);
 
@@ -1095,77 +997,12 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     return true;
 }
 
-//+------------------------------------------------------------------+
-//| Calculate Reopen Price Based on Mode (v4.0)                       |
-//+------------------------------------------------------------------+
-double CalculateReopenPrice(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
-    double originalPrice = 0;
-
-    // Get original entry price
-    if(side == GRID_A) {
-        if(zone == ZONE_UPPER) {
-            originalPrice = gridA_Upper_EntryPrices[level];
-        } else {
-            originalPrice = gridA_Lower_EntryPrices[level];
-        }
-    } else {
-        if(zone == ZONE_UPPER) {
-            originalPrice = gridB_Upper_EntryPrices[level];
-        } else {
-            originalPrice = gridB_Lower_EntryPrices[level];
-        }
-    }
-
-    // Mode selection
-    switch(ReopenMode) {
-        case REOPEN_MODE_SAME_POINT:
-            // Return exact original price
-            return originalPrice;
-
-        case REOPEN_MODE_ATR_DRIVEN:
-            // Recalculate based on current spacing
-            {
-                double newSpacing = currentSpacing_Pips;
-                double spacingPoints = PipsToPoints(newSpacing);
-
-                if(zone == ZONE_UPPER) {
-                    return NormalizeDouble(entryPoint + spacingPoints * (level + 1), symbolDigits);
-                } else {
-                    return NormalizeDouble(entryPoint - spacingPoints * (level + 1), symbolDigits);
-                }
-            }
-
-        case REOPEN_MODE_HYBRID:
-            // If new price is close to original (within 50% of spacing), use original
-            // Otherwise use new calculated price
-            {
-                double newSpacing = currentSpacing_Pips;
-                double spacingPoints = PipsToPoints(newSpacing);
-                double atrPrice = 0;
-
-                if(zone == ZONE_UPPER) {
-                    atrPrice = NormalizeDouble(entryPoint + spacingPoints * (level + 1), symbolDigits);
-                } else {
-                    atrPrice = NormalizeDouble(entryPoint - spacingPoints * (level + 1), symbolDigits);
-                }
-
-                double diff = MathAbs(originalPrice - atrPrice);
-                double threshold = spacingPoints * 0.5;  // 50% of spacing
-
-                if(diff <= threshold) {
-                    return originalPrice;  // Close enough, use original
-                } else {
-                    return atrPrice;  // Too far, use ATR-driven
-                }
-            }
-
-        default:
-            return originalPrice;
-    }
-}
+// v8.0: CalculateReopenPrice() ELIMINATO - funzione mai usata
+// Reopen usa sempre il prezzo originale memorizzato negli array
 
 //+------------------------------------------------------------------+
-//| Check Price Level for Reopen Trigger                             |
+//| Check Price Level for Reopen Trigger (Legacy - bidirezionale)    |
+//| v8.0: Mantenuto per compatibilità, usare IsPriceAtReopenLevelSmart |
 //+------------------------------------------------------------------+
 bool IsPriceAtReopenLevel(double levelPrice) {
     if(ReopenTrigger != REOPEN_PRICE_LEVEL) return true;
@@ -1175,14 +1012,74 @@ bool IsPriceAtReopenLevel(double levelPrice) {
     // v5.x FIX: Strategy Tester - skip check if no price available
     if(currentPrice <= 0) return false;
 
-    // Se offset disabilitato, riapre solo al prezzo esatto (tolleranza 1 pip)
-    if(!EnableReopenOffset) {
-        double minOffset = PipsToPoints(1.0);  // Tolleranza minima 1 pip
-        return (MathAbs(currentPrice - levelPrice) <= minOffset);
-    }
-
     double offsetPrice = PipsToPoints(ReopenOffset_Pips);
     return (MathAbs(currentPrice - levelPrice) <= offsetPrice);
+}
+
+//+------------------------------------------------------------------+
+//| SMART Reopen Level Check - v8.0                                  |
+//| LIMIT: sempre immediato (intrinsecamente protetti dal broker)    |
+//| STOP: controllo unidirezionale con offset                        |
+//+------------------------------------------------------------------+
+bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
+    // v8.0: Per IMMEDIATE trigger, sempre true
+    if(ReopenTrigger == REOPEN_IMMEDIATE) return true;
+
+    // LIMIT orders: sempre immediato (broker rifiuta se prezzo non valido)
+    if(orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_SELL_LIMIT) {
+        if(DetailedLogging) {
+            PrintFormat("[SmartReopen] %s @ %.5f → IMMEDIATO (LIMIT intrinsecamente protetto)",
+                        EnumToString(orderType), levelPrice);
+        }
+        return true;
+    }
+
+    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+    if(currentPrice <= 0) return false;
+
+    double offsetPoints = PipsToPoints(ReopenOffset_Pips);
+    bool canReopen = false;
+    string condition = "";
+    double targetPrice = 0;
+    double distancePips = 0;
+
+    switch(orderType) {
+        case ORDER_TYPE_BUY_STOP:
+            // BUY STOP: piazza quando prezzo SOTTO entry - garantisce validità
+            targetPrice = levelPrice - offsetPoints;
+            canReopen = (currentPrice <= targetPrice);
+            distancePips = PointsToPips(currentPrice - targetPrice);
+            condition = StringFormat("price %.5f <= %.5f (entry-%.1f)",
+                                     currentPrice, targetPrice, ReopenOffset_Pips);
+            break;
+
+        case ORDER_TYPE_SELL_STOP:
+            // SELL STOP: piazza quando prezzo SOPRA entry - garantisce validità
+            targetPrice = levelPrice + offsetPoints;
+            canReopen = (currentPrice >= targetPrice);
+            distancePips = PointsToPips(targetPrice - currentPrice);
+            condition = StringFormat("price %.5f >= %.5f (entry+%.1f)",
+                                     currentPrice, targetPrice, ReopenOffset_Pips);
+            break;
+
+        default:
+            return true;
+    }
+
+    // Log solo quando cambia stato o ogni N tick (evita spam)
+    static datetime lastLogTime = 0;
+    if(DetailedLogging && TimeCurrent() - lastLogTime >= 5) {  // Log ogni 5 secondi max
+        if(canReopen) {
+            PrintFormat("[SmartReopen] %s @ %.5f → PRONTO! %s ✓",
+                        EnumToString(orderType), levelPrice, condition);
+        } else {
+            PrintFormat("[SmartReopen] %s @ %.5f → ATTESA (%.1f pips) %s",
+                        EnumToString(orderType), levelPrice, MathAbs(distancePips), condition);
+        }
+        lastLogTime = TimeCurrent();
+    }
+
+    return canReopen;
 }
 
 //+------------------------------------------------------------------+

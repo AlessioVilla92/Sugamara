@@ -212,19 +212,17 @@ int OnInit() {
     //--- STEP 10.5: Initialize RangeBox (REMOVED - CASCADE_OVERLAP puro) ---
     // RangeBoxManager eliminato - CASCADE SOVRAPPOSTO non lo richiede
 
-    //--- STEP 10.6: Initialize Hedging (REMOVED - hedge integrato in CASCADE_OVERLAP) ---
-    // HedgingManager eliminato - l'hedge è integrato nei LIMIT orders
+    //--- STEP 10.6: v8.0 - Hedge offset rimosso (Perfect Cascade default) ---
 
-    //--- STEP 10.7: Initialize Shield Intelligente (CASCADE_OVERLAP mode) ---
-    if(IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED) {
+    //--- STEP 10.7: Initialize Shield Intelligente ---
+    if(ShieldMode != SHIELD_DISABLED) {
         if(!InitializeShield()) {
             Print("WARNING: Failed to initialize Shield Intelligente");
         }
-        // Calculate breakout levels after grid initialization (will recalc after grids)
     }
 
     //--- STEP 10.8: Initialize Shield Zones Visual (v3.0) ---
-    if(IsCascadeOverlapMode() && Enable_ShieldZonesVisual) {
+    if(Enable_ShieldZonesVisual) {
         if(!InitializeShieldZonesVisual()) {
             Print("WARNING: Failed to initialize Shield Zones Visual");
         }
@@ -350,29 +348,26 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v7.1 INITIALIZATION COMPLETE");
-    Print("  Mode: ", GetModeName(), IsCascadeOverlapMode() ? " (CASCADE SOVRAPPOSTO)" : "");
+    Print("  SUGAMARA RIBELLE v8.0 INITIALIZATION COMPLETE");
+    Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
     } else {
         Print("  System State: IDLE (Click START)");
     }
-    Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions(), IsCascadeOverlapMode() ? " [SOLO BUY]" : "");
-    Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions(), IsCascadeOverlapMode() ? " [SOLO SELL]" : "");
-    if(IsCascadeOverlapMode() && ShieldMode != SHIELD_DISABLED) {
+    Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions(), " [SOLO BUY]");
+    Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions(), " [SOLO SELL]");
+    if(ShieldMode != SHIELD_DISABLED) {
         Print("  Shield Mode: ", GetShieldModeName());
         Print("  Upper Breakout: ", DoubleToString(upperBreakoutLevel, symbolDigits));
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("-----------------------------------------------------------------------");
-    Print("  v7.1 FEATURES:");
+    Print("  v8.0 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
-    if(IsCascadeOverlapMode()) {
-        Print("  [+] CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
-        Print("  [+] Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
-    }
+    Print("  [+] PERFECT CASCADE: Grid A=BUY, Grid B=SELL (TP=spacing)");
     Print("  [+] Trailing Grid: ", Enable_TrailingGrid ? "ENABLED (L" + IntegerToString(Trail_Trigger_Level) + " trigger)" : "DISABLED");
     Print("  [+] Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
     Print("  [+] Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
@@ -765,14 +760,12 @@ void LogV4StatusReport() {
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v7.1 Modules Status
+    // v8.0 Modules Status
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v7.1 MODULES STATUS                                            │");
+    Print("│  v8.0 MODULES STATUS                                            │");
     Print("├─────────────────────────────────────────────────────────────────┤");
-    if(IsCascadeOverlapMode()) {
-        Print("│  CASCADE_OVERLAP: Grid A=BUY, Grid B=SELL");
-        Print("│      Hedge Spacing: ", DoubleToString(Hedge_Spacing_Pips, 1), " pips");
-    }
+    // v8.0: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
+    Print("│  PERFECT CASCADE: Grid A=BUY, Grid B=SELL (TP=spacing)");
     Print("│  STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("│  GRID ZERO: ", Enable_GridZero ? "ENABLED (Visual Priority 5px)" : "DISABLED");
 

@@ -398,31 +398,33 @@ void CalculateNetExposure() {
     totalLongLots = 0;
     totalShortLots = 0;
 
-    // Grid A Upper (Buy Limit -> LONG when filled)
+    // v8.0: Grid A = SEMPRE BUY (tutti LONG when filled)
+    // Grid A Upper (BUY STOP -> LONG when filled)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridA_Upper_Status[i] == ORDER_FILLED) {
             totalLongLots += gridA_Upper_Lots[i];
         }
     }
 
-    // Grid A Lower (Sell Stop -> SHORT when filled)
+    // Grid A Lower (BUY LIMIT -> LONG when filled)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridA_Lower_Status[i] == ORDER_FILLED) {
-            totalShortLots += gridA_Lower_Lots[i];
+            totalLongLots += gridA_Lower_Lots[i];  // v8.0 FIX: era totalShortLots!
         }
     }
 
-    // Grid B Upper (Sell Limit -> SHORT when filled)
+    // v8.0: Grid B = SEMPRE SELL (tutti SHORT when filled)
+    // Grid B Upper (SELL LIMIT -> SHORT when filled)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridB_Upper_Status[i] == ORDER_FILLED) {
             totalShortLots += gridB_Upper_Lots[i];
         }
     }
 
-    // Grid B Lower (Buy Stop -> LONG when filled)
+    // Grid B Lower (SELL STOP -> SHORT when filled)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridB_Lower_Status[i] == ORDER_FILLED) {
-            totalLongLots += gridB_Lower_Lots[i];
+            totalShortLots += gridB_Lower_Lots[i];  // v8.0 FIX: era totalLongLots!
         }
     }
 

@@ -268,13 +268,7 @@ void LogOrder(string action, ulong ticket, string details) {
     PrintFormat("%s %s %s #%d - %s", GetLogTimestamp(), LOG_CAT_ORDER, action, ticket, details);
 }
 
-//+------------------------------------------------------------------+
-//| Log CASCADE_OVERLAP Specific Events                               |
-//+------------------------------------------------------------------+
-void LogCascadeOverlap(string event, string details) {
-    if(!DetailedLogging) return;
-    PrintFormat("%s %s [OVERLAP] %s: %s", GetLogTimestamp(), LOG_CAT_CASCADE, event, details);
-}
+// v8.0: LogCascadeOverlap() ELIMINATO - funzione mai usata
 
 //+------------------------------------------------------------------+
 //| Log Shield Events (3 Phases, Activation, Deactivation)            |
@@ -398,7 +392,7 @@ void LogTrail_Error(string operation, string errorMessage) {
 }
 
 //+------------------------------------------------------------------+
-//| Log Detailed Order Placement (CASCADE_OVERLAP)                    |
+//| Log Detailed Order Placement (v8.0)                                |
 //+------------------------------------------------------------------+
 void LogOrderPlacement(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
                        ENUM_ORDER_TYPE orderType, double price, double tp, double sl, double lot) {
@@ -416,19 +410,12 @@ void LogOrderPlacement(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
         default: typeName = "UNKNOWN"; break;
     }
 
-    // Check if this is a hedge order (CASCADE_OVERLAP)
-    string hedgeInfo = "";
-    if(IsCascadeOverlapMode()) {
-        if((side == GRID_A && zone == ZONE_LOWER) || (side == GRID_B && zone == ZONE_UPPER)) {
-            hedgeInfo = " [HEDGE -3pip]";
-        } else {
-            hedgeInfo = " [TREND]";
-        }
-    }
+    // v8.0: Grid A=BUY, Grid B=SELL (struttura default)
+    string gridDir = (side == GRID_A) ? " [BUY]" : " [SELL]";
 
     PrintFormat("%s %s Grid%s-%s-L%d: %s%s @ %.5f | TP=%.5f | SL=%.5f | Lot=%.2f",
                 GetLogTimestamp(), LOG_CAT_ORDER, gridName, zoneName, level+1,
-                typeName, hedgeInfo, price, tp, sl, lot);
+                typeName, gridDir, price, tp, sl, lot);
 }
 
 //+------------------------------------------------------------------+
@@ -438,12 +425,8 @@ void LogOrderFill(ulong ticket, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int le
     string gridName = (side == GRID_A) ? "A" : "B";
     string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
 
-    string direction = "";
-    if(IsCascadeOverlapMode()) {
-        direction = (side == GRID_A) ? "LONG" : "SHORT";
-    } else {
-        direction = ((side == GRID_A && zone == ZONE_UPPER) || (side == GRID_B && zone == ZONE_LOWER)) ? "LONG" : "SHORT";
-    }
+    // v8.0: Grid A = sempre LONG, Grid B = sempre SHORT
+    string direction = (side == GRID_A) ? "LONG" : "SHORT";
 
     PrintFormat("%s %s FILLED #%d | Grid%s-%s-L%d | %s @ %.5f",
                 GetLogTimestamp(), LOG_CAT_ORDER, ticket, gridName, zoneName, level+1, direction, fillPrice);
@@ -469,10 +452,8 @@ void LogSessionSummary() {
     PrintFormat("  Total Wins: %d | Total Losses: %d", sessionWins, sessionLosses);
     PrintFormat("  Win Rate: %.1f%%", GetWinRate());
     PrintFormat("  Realized P/L: $%.2f", sessionRealizedProfit);
-    if(IsCascadeOverlapMode()) {
-        Print("  Mode: CASCADE_OVERLAP (Grid A=BUY, Grid B=SELL)");
-        PrintFormat("  Hedge Spacing: %.1f pips", Hedge_Spacing_Pips);
-    }
+    // v8.0: Struttura Grid A=BUY, Grid B=SELL è default
+    Print("  Mode: v8.0 Perfect Cascade (Grid A=BUY, Grid B=SELL)");
     Print("═══════════════════════════════════════════════════════════════════");
 }
 
@@ -485,18 +466,11 @@ void LogGridInitSummary(ENUM_GRID_SIDE side) {
     string gridName = (side == GRID_A) ? "A" : "B";
     string orderTypes = "";
 
-    if(IsCascadeOverlapMode()) {
-        if(side == GRID_A) {
-            orderTypes = "Upper=BUY_STOP, Lower=BUY_LIMIT(-3pip)";
-        } else {
-            orderTypes = "Upper=SELL_LIMIT(+3pip), Lower=SELL_STOP";
-        }
+    // v8.0: Struttura Grid A=BUY, Grid B=SELL è default
+    if(side == GRID_A) {
+        orderTypes = "Upper=BUY_STOP, Lower=BUY_LIMIT";
     } else {
-        if(side == GRID_A) {
-            orderTypes = "Upper=BUY_LIMIT, Lower=SELL_STOP";
-        } else {
-            orderTypes = "Upper=SELL_LIMIT, Lower=BUY_STOP";
-        }
+        orderTypes = "Upper=SELL_LIMIT, Lower=SELL_STOP";
     }
 
     Print("───────────────────────────────────────────────────────────────────");
@@ -532,17 +506,15 @@ void LogStartupBanner() {
     Print("║     ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ║");
     Print("║                                                                   ║");
     Print("║                      R I B E L L E   v5.1                         ║");
-    Print("║              CASCADE SOVRAPPOSTO - DUNE THEME                     ║");
+    Print("║              PERFECT CASCADE v8.0 - DUNE THEME                     ║");
     Print("║                  \"The Spice Must Flow\"                            ║");
     Print("║                                                                   ║");
     Print("╚═══════════════════════════════════════════════════════════════════╝");
     Print("");
     PrintFormat("  Symbol: %s | Timeframe: %s", _Symbol, EnumToString((ENUM_TIMEFRAMES)Period()));
     PrintFormat("  Start Time: %s", GetLogTimestamp());
-    if(IsCascadeOverlapMode()) {
-        Print("  Mode: CASCADE_OVERLAP (Grid A=SOLO BUY, Grid B=SOLO SELL)");
-        PrintFormat("  Hedge Spacing: %.1f pips", Hedge_Spacing_Pips);
-    }
+    // v8.0: Struttura Grid A=BUY, Grid B=SELL è default
+    Print("  Mode: v8.0 Perfect Cascade (Grid A=BUY, Grid B=SELL)");
     Print("");
 }
 

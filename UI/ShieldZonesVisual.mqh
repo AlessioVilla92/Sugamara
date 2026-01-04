@@ -52,11 +52,7 @@ bool InitializeShieldZonesVisual()
       return true;
    }
 
-   // v5.2: Shield zones available for CASCADE_OVERLAP mode
-   if(!IsCascadeOverlapMode()) {
-      Print("[ShieldZones] Visual zones only available in CASCADE_OVERLAP mode");
-      return true;
-   }
+   // v8.0: Rimosso check IsCascadeOverlapMode() - sempre disponibile
 
    Print("=============================================================");
    Print("  INITIALIZING SHIELD ZONES VISUAL");

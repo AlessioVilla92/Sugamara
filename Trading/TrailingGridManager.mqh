@@ -165,7 +165,7 @@ double GetNextGridLevelBelow() {
 }
 
 //+------------------------------------------------------------------+
-//| Calculate TP for Trailing Grid (CASCADE_OVERLAP mode)             |
+//| Calculate TP for Trailing Grid (v8.0 Perfect Cascade)             |
 //+------------------------------------------------------------------+
 double CalculateTrailingTP(double trailEntryPrice, bool isBuy, double spacingPips) {
     // FIX: spacingPips è già moltiplicato per Trail_Spacing_Multiplier dal chiamante
@@ -190,7 +190,7 @@ bool InsertNewGridAbove(double newLevel) {
     }
 
     double spacing = currentSpacing_Pips * Trail_Spacing_Multiplier;
-    double hedgeOffset = PipsToPoints(Hedge_Spacing_Pips);
+    // v8.0: Nessun hedge offset
     double lotSize = CalculateGridLotSize(newIndex);
 
     // Grid A: BUY STOP
@@ -206,8 +206,8 @@ bool InsertNewGridAbove(double newLevel) {
         return false;
     }
 
-    // Grid B: SELL LIMIT (hedge a +3 pips)
-    double gridBLevel = NormalizeDouble(newLevel + hedgeOffset, symbolDigits);
+    // v8.0: Grid B: SELL LIMIT (stesso livello)
+    double gridBLevel = newLevel;  // v8.0: nessun offset
     double tpGridB = CalculateTrailingTP(gridBLevel, false, spacing);
     int magicB = GetGridMagic(GRID_B);
     string commentB = "Trail_B_U" + IntegerToString(g_trailExtraGridsAbove + 1);
@@ -260,7 +260,7 @@ bool InsertNewGridBelow(double newLevel) {
     }
 
     double spacing = currentSpacing_Pips * Trail_Spacing_Multiplier;
-    double hedgeOffset = PipsToPoints(Hedge_Spacing_Pips);
+    // v8.0: Nessun hedge offset
     double lotSize = CalculateGridLotSize(newIndex);
 
     // Grid A: BUY LIMIT
@@ -276,8 +276,8 @@ bool InsertNewGridBelow(double newLevel) {
         return false;
     }
 
-    // Grid B: SELL STOP (hedge a +3 pips)
-    double gridBLevel = NormalizeDouble(newLevel + hedgeOffset, symbolDigits);
+    // v8.0: Grid B: SELL STOP (stesso livello)
+    double gridBLevel = newLevel;  // v8.0: nessun offset
     double tpGridB = CalculateTrailingTP(gridBLevel, false, spacing);
     int magicB = GetGridMagic(GRID_B);
     string commentB = "Trail_B_L" + IntegerToString(g_trailExtraGridsBelow + 1);

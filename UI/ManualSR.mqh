@@ -228,10 +228,8 @@ void OnManualSRDrag(string objectName) {
 
             Print("Manual S/R: Resistance moved to ", DoubleToString(newPrice, _Digits));
 
-            // v5.2: Update breakout levels for Shield if in CASCADE_OVERLAP mode
-            if(IsCascadeOverlapMode()) {
-                upperBreakoutLevel = newPrice + Breakout_Buffer_Pips * symbolPoint * 10;
-            }
+            // v8.0: Sempre update breakout levels (struttura default)
+            upperBreakoutLevel = newPrice + Breakout_Buffer_Pips * symbolPoint * 10;
         }
     }
     else if(objectName == SR_LINE_SUPPORT) {
@@ -242,10 +240,8 @@ void OnManualSRDrag(string objectName) {
 
             Print("Manual S/R: Support moved to ", DoubleToString(newPrice, _Digits));
 
-            // v5.2: Update breakout levels for Shield if in CASCADE_OVERLAP mode
-            if(IsCascadeOverlapMode()) {
-                lowerBreakoutLevel = newPrice - Breakout_Buffer_Pips * symbolPoint * 10;
-            }
+            // v8.0: Sempre update breakout levels (struttura default)
+            lowerBreakoutLevel = newPrice - Breakout_Buffer_Pips * symbolPoint * 10;
         }
     }
     else if(objectName == SR_LINE_ACTIVATION) {

@@ -297,12 +297,12 @@ input double    TP_Ratio_Pure = 1.2;                         // 🎯 Ratio TP pe
 // TP = Spacing × Ratio | 1.2 = TP 20% maggiore di spacing
 
 //+------------------------------------------------------------------+
-//| 7️⃣ 🛡️ SHIELD INTELLIGENTE (CASCADE_OVERLAP)                      |
+//| 7️⃣ 🛡️ SHIELD INTELLIGENTE                                        |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  7️⃣  🛡️ SHIELD INTELLIGENTE (CASCADE_OVERLAP Mode)        ║"
+input group "║  7️⃣  🛡️ SHIELD INTELLIGENTE                               ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ╔═ SELEZIONA SHIELD MODE ═══════════════════════════════🔽🔽🔽"
@@ -372,16 +372,15 @@ input group "║  🔟  🎯 PERFECT CASCADE SYSTEM                             
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ╔═ SELEZIONA CASCADE MODE ════════════════════════════════🔽🔽🔽"
-input ENUM_CASCADE_MODE CascadeMode = CASCADE_OVERLAP;       // 📊 Modalità Cascade ▼
+input ENUM_CASCADE_MODE CascadeMode = CASCADE_PERFECT;       // 📊 Modalità Cascade ▼ (v8.0 Default)
 // CASCADE_PERFECT: TP di ogni ordine = Entry del livello successivo
 // Crea una catena perfetta senza gap
 
 input group "    📐 CASCADE PARAMETERS"
 input double    CascadeTP_Ratio = 1.0;                       // 📈 Ratio TP (se CASCADE_RATIO)
 
-input group "    🔀 CASCADE OVERLAP (RIBELLE)"
-input double    Hedge_Spacing_Pips = 3.0;                    // 📏 Distanza STOP ↔ LIMIT (pips) - Solo se CASCADE_OVERLAP
-// TP = Spacing × Ratio (1.0 = uguale a spacing, 1.2 = 20% in più)
+// v8.0: CASCADE_OVERLAP RIMOSSO - Struttura Grid A=BUY / Grid B=SELL ora DEFAULT
+// v8.0: Hedge_Spacing_Pips ELIMINATO - Non più necessario
 input double    FinalLevel_TP_Pips = 15.0;                   // 🎯 TP Ultimo Livello (pips)
 // L'ultimo livello non ha "successivo", usa TP fisso
 
@@ -403,9 +402,11 @@ input ENUM_REOPEN_TRIGGER ReopenTrigger = REOPEN_IMMEDIATE;  // 📊 Trigger Reo
 input group "    📐 CYCLIC PARAMETERS"
 // Cooldown REMOVED v5.8 - Reopen sempre immediato
 input int       MaxCyclesPerLevel = 0;                       // 🔢 Max Cicli per Livello (0=infiniti)
-input bool      EnableReopenOffset = true;                   // ✅ Abilita Offset Bidirezionale
-input double    ReopenOffset_Pips = 5.0;                     // 📏 Offset Bidirezionale (±pips)
-// Riapre ordine quando prezzo torna al livello ± offset (es: 5 pips = zona ±5 pips)
+// v8.0: EnableReopenOffset ELIMINATO - STOP sempre con offset unidirezionale
+input double    ReopenOffset_Pips = 3.0;                     // 📏 Offset STOP Unidirezionale (pips)
+// v8.0 SMART REOPEN: BUY_STOP riapre quando prezzo <= entry - offset
+//                    SELL_STOP riapre quando prezzo >= entry + offset
+//                    LIMIT riapre IMMEDIATAMENTE (intrinsecamente protetti)
 
 input group "    🔄 REOPEN MODE v4.0"
 input ENUM_REOPEN_MODE ReopenMode = REOPEN_MODE_SAME_POINT;  // 📍 Modalità Calcolo Prezzo Reopen ▼
