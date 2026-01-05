@@ -360,6 +360,7 @@ void ProcessGridZeroCycling() {
 
 //+------------------------------------------------------------------+
 //| CHECK IF GRID ZERO CAN REOPEN                                    |
+//| v8.0 FIX: Aggiunto controllo Smart per STOP orders               |
 //+------------------------------------------------------------------+
 bool CanGridZeroReopen(bool isStop) {
     // Check if cycling is enabled globally
@@ -384,6 +385,29 @@ bool CanGridZeroReopen(bool isStop) {
             return false;
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // v8.0 FIX: Controllo Smart per STOP orders
+    // STOP: aspetta che il prezzo sia nella posizione corretta
+    // LIMIT: sempre immediato (broker protegge intrinsecamente)
+    // ═══════════════════════════════════════════════════════════════
+    if(isStop) {
+        ENUM_ORDER_TYPE orderType;
+        if(g_gridZeroBiasUp) {
+            orderType = ORDER_TYPE_SELL_STOP;  // Bias up → SELL STOP @ entryPoint
+        } else {
+            orderType = ORDER_TYPE_BUY_STOP;   // Bias down → BUY STOP @ entryPoint
+        }
+
+        // Usa lo stesso controllo delle grid standard
+        if(!IsPriceAtReopenLevelSmart(entryPoint, orderType)) {
+            if(DetailedLogging) {
+                PrintFormat("[GridZero] STOP reopen WAITING - price not at trigger level");
+            }
+            return false;  // Aspetta che il prezzo sia nella posizione corretta
+        }
+    }
+    // LIMIT: sempre true (broker protegge intrinsecamente)
 
     return true;
 }

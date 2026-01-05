@@ -1000,21 +1000,8 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
 // v8.0: CalculateReopenPrice() ELIMINATO - funzione mai usata
 // Reopen usa sempre il prezzo originale memorizzato negli array
 
-//+------------------------------------------------------------------+
-//| Check Price Level for Reopen Trigger (Legacy - bidirezionale)    |
-//| v8.0: Mantenuto per compatibilità, usare IsPriceAtReopenLevelSmart |
-//+------------------------------------------------------------------+
-bool IsPriceAtReopenLevel(double levelPrice) {
-    if(ReopenTrigger != REOPEN_PRICE_LEVEL) return true;
-
-    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-
-    // v5.x FIX: Strategy Tester - skip check if no price available
-    if(currentPrice <= 0) return false;
-
-    double offsetPrice = PipsToPoints(ReopenOffset_Pips);
-    return (MathAbs(currentPrice - levelPrice) <= offsetPrice);
-}
+// v8.0: IsPriceAtReopenLevel() ELIMINATO - dead code, mai chiamata
+// Usare SOLO IsPriceAtReopenLevelSmart() per tutti i reopen
 
 //+------------------------------------------------------------------+
 //| SMART Reopen Level Check - v8.0                                  |
@@ -1022,8 +1009,9 @@ bool IsPriceAtReopenLevel(double levelPrice) {
 //| STOP: controllo unidirezionale con offset                        |
 //+------------------------------------------------------------------+
 bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
-    // v8.0: Per IMMEDIATE trigger, sempre true
-    if(ReopenTrigger == REOPEN_IMMEDIATE) return true;
+    // v8.0 FIX: Rimossa linea bypass REOPEN_IMMEDIATE
+    // LIMIT: sempre immediato (broker protegge intrinsecamente)
+    // STOP: controllo offset unidirezionale (nessuna protezione broker)
 
     // LIMIT orders: sempre immediato (broker rifiuta se prezzo non valido)
     if(orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_SELL_LIMIT) {
