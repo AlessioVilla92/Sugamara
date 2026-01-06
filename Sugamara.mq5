@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v7.1         |
+//|                                    SUGAMARA RIBELLE v9.0         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 7.1.0 STRADDLE TRENDING + VISUAL PRIORITY              |
+//|  Version: 9.0.0 TRAILING GRID FIX + PERFECT CASCADE              |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -29,8 +29,8 @@
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "7.10"
-#property description "SUGAMARA RIBELLE v7.1 - STRADDLE TRENDING + VISUAL PRIORITY"
+#property version   "9.00"
+#property description "SUGAMARA RIBELLE v9.0 - TRAILING GRID FIX + PERFECT CASCADE"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Straddle = ISOLATO"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -212,7 +212,7 @@ int OnInit() {
     //--- STEP 10.5: Initialize RangeBox (REMOVED - CASCADE_OVERLAP puro) ---
     // RangeBoxManager eliminato - CASCADE SOVRAPPOSTO non lo richiede
 
-    //--- STEP 10.6: v8.0 - Hedge offset rimosso (Perfect Cascade default) ---
+    //--- STEP 10.6: v9.0 - Hedge offset rimosso (Perfect Cascade default) ---
 
     //--- STEP 10.7: Initialize Shield Intelligente ---
     if(ShieldMode != SHIELD_DISABLED) {
@@ -348,7 +348,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v8.0 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.0 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -363,7 +363,7 @@ int OnInit() {
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("-----------------------------------------------------------------------");
-    Print("  v8.0 FEATURES:");
+    Print("  v9.0 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
@@ -760,11 +760,11 @@ void LogV4StatusReport() {
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v8.0 Modules Status
+    // v9.0 Modules Status
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v8.0 MODULES STATUS                                            │");
+    Print("│  v9.0 MODULES STATUS                                            │");
     Print("├─────────────────────────────────────────────────────────────────┤");
-    // v8.0: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
+    // v9.0: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
     Print("│  PERFECT CASCADE: Grid A=BUY, Grid B=SELL (TP=spacing)");
     Print("│  STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("│  GRID ZERO: ", Enable_GridZero ? "ENABLED (Visual Priority 5px)" : "DISABLED");

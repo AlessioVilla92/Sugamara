@@ -52,7 +52,7 @@ bool InitializeShieldZonesVisual()
       return true;
    }
 
-   // v8.0: Rimosso check IsCascadeOverlapMode() - sempre disponibile
+   // v9.0: Rimosso check IsCascadeOverlapMode() - sempre disponibile
 
    Print("=============================================================");
    Print("  INITIALIZING SHIELD ZONES VISUAL");

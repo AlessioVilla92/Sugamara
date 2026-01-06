@@ -12,7 +12,7 @@
 //+------------------------------------------------------------------+
 void PrintSystemConfiguration() {
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA v1.0 - SYSTEM CONFIGURATION");
+    Print("  SUGAMARA v9.0 - SYSTEM CONFIGURATION");
     Print("═══════════════════════════════════════════════════════════════════");
 
     // General

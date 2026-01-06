@@ -62,13 +62,13 @@ string GetGridLevelID(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
 //| Get Order Type for Grid Position                                 |
 //| STANDARD MODE:                                                   |
 //|   Grid A Upper: Buy Limit  | Grid A Lower: Sell Stop             |
-//| v8.0: Grid A = SEMPRE BUY, Grid B = SEMPRE SELL (DEFAULT)       |
+//| v9.0: Grid A = SEMPRE BUY, Grid B = SEMPRE SELL (DEFAULT)       |
 //|   Grid A Upper: BUY STOP   | Grid A Lower: BUY LIMIT            |
 //|   Grid B Upper: SELL LIMIT | Grid B Lower: SELL STOP            |
 //+------------------------------------------------------------------+
 ENUM_ORDER_TYPE GetGridOrderType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
     //═══════════════════════════════════════════════════════════════
-    // v8.0: Grid A = SEMPRE BUY, Grid B = SEMPRE SELL (struttura default)
+    // v9.0: Grid A = SEMPRE BUY, Grid B = SEMPRE SELL (struttura default)
     //═══════════════════════════════════════════════════════════════
     if(side == GRID_A) {
         // Grid A = SOLO ordini BUY
@@ -88,17 +88,17 @@ ENUM_ORDER_TYPE GetGridOrderType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
 }
 
 //+------------------------------------------------------------------+
-//| v8.0: FUNZIONI ELIMINATE                                         |
+//| v9.0: FUNZIONI ELIMINATE                                         |
 //| - IsCascadeOverlapMode() RIMOSSO (struttura ora default)         |
 //| - GetHedgeOffset() RIMOSSO (nessun offset necessario)            |
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 //| Get Position Type When Order Fills                               |
-//| v8.0: Grid A = SEMPRE BUY, Grid B = SEMPRE SELL                  |
+//| v9.0: Grid A = SEMPRE BUY, Grid B = SEMPRE SELL                  |
 //+------------------------------------------------------------------+
 ENUM_POSITION_TYPE GetGridPositionType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
-    // v8.0: Grid A = sempre BUY, Grid B = sempre SELL (struttura default)
+    // v9.0: Grid A = sempre BUY, Grid B = sempre SELL (struttura default)
     // Il parametro zone non è più necessario ma mantenuto per compatibilità
     return (side == GRID_A) ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
 }
@@ -132,13 +132,13 @@ string GetOrderTypeString(ENUM_ORDER_TYPE orderType) {
 
 //+------------------------------------------------------------------+
 //| Calculate Entry Price for Grid Level                             |
-//| v8.0: Nessun hedge offset - tutti i livelli allineati            |
+//| v9.0: Nessun hedge offset - tutti i livelli allineati            |
 //+------------------------------------------------------------------+
 double CalculateGridLevelPrice(double baseEntryPoint, ENUM_GRID_ZONE zone, int level,
                                 double spacingPips, ENUM_GRID_SIDE side = GRID_A) {
     double spacingPrice = PipsToPoints(spacingPips);
 
-    // v8.0: Nessun hedge offset - Grid A e B sullo stesso livello
+    // v9.0: Nessun hedge offset - Grid A e B sullo stesso livello
     if(zone == ZONE_UPPER) {
         // Upper zone: prices above entry point
         return NormalizeDouble(baseEntryPoint + (spacingPrice * (level + 1)), symbolDigits);
@@ -231,7 +231,7 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
         }
     }
 
-    // v8.0: CASCADE_OVERLAP RIMOSSO - Perfect Cascade è default
+    // v9.0: CASCADE_OVERLAP RIMOSSO - Perfect Cascade è default
     // TP = spacing per TUTTI gli ordini (STOP e LIMIT)
 
     // Fallback: Use fixed TP
@@ -861,6 +861,17 @@ bool IsValidLevelIndex(int level) {
 }
 
 //+------------------------------------------------------------------+
+//| v9.0: Validate Trailing Grid Level Index                         |
+//| Permette indici oltre GridLevelsPerSide per trailing grids       |
+//+------------------------------------------------------------------+
+bool IsValidTrailingIndex(int level, bool isUpper) {
+    if(level < 0) return false;
+    int maxTrailing = isUpper ? g_trailExtraGridsAbove : g_trailExtraGridsBelow;
+    int maxLevel = GridLevelsPerSide + maxTrailing;
+    return (level < maxLevel && level < MAX_GRID_LEVELS);
+}
+
+//+------------------------------------------------------------------+
 //| Check if Level Should be Active                                  |
 //+------------------------------------------------------------------+
 bool ShouldLevelBeActive(int level) {
@@ -906,7 +917,7 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     // ═══════════════════════════════════════════════════════════════════
     // v4.0 SAFETY CHECK 1: Block near Shield activation
     // ═══════════════════════════════════════════════════════════════════
-    // v8.0: Rimosso IsCascadeOverlapMode() - struttura è default
+    // v9.0: Rimosso IsCascadeOverlapMode() - struttura è default
     if(PauseReopenNearShield && ShieldMode != SHIELD_DISABLED) {
         double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
         double proximityPoints = PipsToPoints(ShieldProximity_Pips);
@@ -997,14 +1008,14 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     return true;
 }
 
-// v8.0: CalculateReopenPrice() ELIMINATO - funzione mai usata
+// v9.0: CalculateReopenPrice() ELIMINATO - funzione mai usata
 // Reopen usa sempre il prezzo originale memorizzato negli array
 
-// v8.0: IsPriceAtReopenLevel() ELIMINATO - dead code, mai chiamata
+// v9.0: IsPriceAtReopenLevel() ELIMINATO - dead code, mai chiamata
 // Usare SOLO IsPriceAtReopenLevelSmart() per tutti i reopen
 
 //+------------------------------------------------------------------+
-//| v8.1: State tracking per log spam reduction                      |
+//| v9.0: State tracking per log spam reduction                      |
 //| Logga SOLO quando stato cambia (ATTESA↔PRONTO)                   |
 //+------------------------------------------------------------------+
 struct ReopenStateEntry {
@@ -1032,12 +1043,12 @@ int FindOrAddReopenState(double levelPrice) {
 }
 
 //+------------------------------------------------------------------+
-//| SMART Reopen Level Check - v8.0                                  |
+//| SMART Reopen Level Check - v9.0                                  |
 //| LIMIT: sempre immediato (intrinsecamente protetti dal broker)    |
 //| STOP: controllo unidirezionale con offset                        |
 //+------------------------------------------------------------------+
 bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
-    // v8.0 FIX: Rimossa linea bypass REOPEN_IMMEDIATE
+    // v9.0 FIX: Rimossa linea bypass REOPEN_IMMEDIATE
     // LIMIT: sempre immediato (broker protegge intrinsecamente)
     // STOP: controllo offset unidirezionale (nessuna protezione broker)
 
@@ -1082,7 +1093,7 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
             return true;
     }
 
-    // v8.1: Log SOLO quando stato CAMBIA (ATTESA↔PRONTO) - elimina 175K+ log spam
+    // v9.0: Log SOLO quando stato CAMBIA (ATTESA↔PRONTO) - elimina 175K+ log spam
     if(DetailedLogging) {
         int stateIdx = FindOrAddReopenState(levelPrice);
         if(stateIdx >= 0) {

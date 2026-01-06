@@ -228,7 +228,7 @@ void OnManualSRDrag(string objectName) {
 
             Print("Manual S/R: Resistance moved to ", DoubleToString(newPrice, _Digits));
 
-            // v8.0: Sempre update breakout levels (struttura default)
+            // v9.0: Sempre update breakout levels (struttura default)
             upperBreakoutLevel = newPrice + Breakout_Buffer_Pips * symbolPoint * 10;
         }
     }
@@ -240,7 +240,7 @@ void OnManualSRDrag(string objectName) {
 
             Print("Manual S/R: Support moved to ", DoubleToString(newPrice, _Digits));
 
-            // v8.0: Sempre update breakout levels (struttura default)
+            // v9.0: Sempre update breakout levels (struttura default)
             lowerBreakoutLevel = newPrice - Breakout_Buffer_Pips * symbolPoint * 10;
         }
     }

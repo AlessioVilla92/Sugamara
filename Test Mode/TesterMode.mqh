@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //|                                                  TesterMode.mqh  |
-//|                        SUGAMARA v8.1 - Strategy Tester Mode      |
+//|                        SUGAMARA v9.0 - Strategy Tester Mode      |
 //|                                                                  |
 //|  Compatibility layer for reliable backtesting                    |
 //|  Disables incompatible features in Strategy Tester               |

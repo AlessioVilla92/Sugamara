@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
 //|                                                    Dashboard.mqh |
-//|                     SUGAMARA RIBELLE v8.0 - Dashboard Display    |
+//|                     SUGAMARA RIBELLE v9.0 - Dashboard Display    |
 //|                                                                  |
 //|  Visual dashboard for Perfect Cascade (Grid A=BUY, B=SELL)       |
 //|  Color Scheme: DUNE/ARRAKIS DESERT THEME - 2 COLUMN LAYOUT       |
 //|                                                                  |
-//|  v8.0: Perfect Cascade + Smart Reopen                            |
+//|  v9.0: Perfect Cascade + Smart Reopen + Trailing Grid Fix        |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
@@ -250,7 +250,7 @@ bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
     Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA RIBELLE v5.1 - CASCADE SOVRAPPOSTO - DUNE THEME          ");
+    Print("  SUGAMARA RIBELLE v9.0 - CASCADE SOVRAPPOSTO - DUNE THEME          ");
     Print("  \"The Spice Must Flow\" - Grid Trading System 24/7                 ");
     Print("═══════════════════════════════════════════════════════════════════");
 
@@ -437,7 +437,7 @@ void CreateUnifiedDashboard() {
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
     // v5.9.5: Titolo GIALLO, sottotitolo ARANCIONE SCURO
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v8.0", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v9.0", clrYellow, 20, "Arial Black");
     DashLabel("TITLE_SUB", x + totalWidth/2 - 80, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
@@ -462,7 +462,7 @@ void CreateUnifiedDashboard() {
     int leftY = y;
 
     //--- GRID A PANEL (SOLO BUY - Spice Harvesters) ---
-    int gridAHeight = 200;  // v8.1: +20px per 2 righe LIMIT/STOP
+    int gridAHeight = 200;  // v9.0: +20px per 2 righe LIMIT/STOP
     DashRectangle("LEFT_GRIDA_PANEL", leftX, leftY, colWidth, gridAHeight, CLR_PANEL_GRIDA);
 
     int ay = leftY + 8;
@@ -478,7 +478,7 @@ void CreateUnifiedDashboard() {
     ay += 16;
     DashLabel("LEFT_GRIDA_SHORT", leftX + 10, ay, "Short Lots: 0.00", CLR_LOSS, 8);
     ay += 18;
-    // v8.1: LIMIT/STOP monitoring con icone e etichette complete
+    // v9.0: LIMIT/STOP monitoring con icone e etichette complete
     DashLabel("LEFT_GRIDA_LIMIT", leftX + 10, ay, "📈 LIMIT 0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
     ay += 16;
     DashLabel("LEFT_GRIDA_STOP", leftX + 10, ay, "📈 STOP  0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
@@ -515,7 +515,7 @@ void CreateUnifiedDashboard() {
     int rightY = y;
 
     //--- GRID B PANEL (SOLO SELL - Sandworm Riders) ---
-    int gridBHeight = 200;  // v8.1: +20px per 2 righe LIMIT/STOP
+    int gridBHeight = 200;  // v9.0: +20px per 2 righe LIMIT/STOP
     DashRectangle("RIGHT_GRIDB_PANEL", rightX, rightY, colWidth, gridBHeight, CLR_PANEL_GRIDB);
 
     int by = rightY + 8;
@@ -531,7 +531,7 @@ void CreateUnifiedDashboard() {
     by += 16;
     DashLabel("RIGHT_GRIDB_SHORT", rightX + 10, by, "Short Lots: 0.00", CLR_LOSS, 8);
     by += 18;
-    // v8.1: LIMIT/STOP monitoring con icone e etichette complete
+    // v9.0: LIMIT/STOP monitoring con icone e etichette complete
     DashLabel("RIGHT_GRIDB_LIMIT", rightX + 10, by, "📉 LIMIT 0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
     by += 16;
     DashLabel("RIGHT_GRIDB_STOP", rightX + 10, by, "📉 STOP  0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
@@ -918,7 +918,7 @@ void UpdateGridASection() {
     ObjectSetString(0, "LEFT_GRIDA_LOTS", OBJPROP_TEXT, StringFormat("Long Lots: %.2f", longLots));
     ObjectSetString(0, "LEFT_GRIDA_SHORT", OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
 
-    // v8.1: Update LIMIT/STOP counters con etichette complete
+    // v9.0: Update LIMIT/STOP counters con etichette complete
     ObjectSetString(0, "LEFT_GRIDA_LIMIT", OBJPROP_TEXT,
         StringFormat("📈 LIMIT %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
             g_gridA_LimitFilled, GridLevelsPerSide, g_gridA_LimitCycles, g_gridA_LimitReopens));
@@ -957,7 +957,7 @@ void UpdateGridBSection() {
     ObjectSetString(0, "RIGHT_GRIDB_LOTS", OBJPROP_TEXT, StringFormat("Long Lots: %.2f", longLots));
     ObjectSetString(0, "RIGHT_GRIDB_SHORT", OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
 
-    // v8.1: Update LIMIT/STOP counters con etichette complete
+    // v9.0: Update LIMIT/STOP counters con etichette complete
     ObjectSetString(0, "RIGHT_GRIDB_LIMIT", OBJPROP_TEXT,
         StringFormat("📉 LIMIT %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
             g_gridB_LimitFilled, GridLevelsPerSide, g_gridB_LimitCycles, g_gridB_LimitReopens));
@@ -1163,7 +1163,7 @@ void UpdateVolatilityPanel() {
 void UpdateShieldSection() {
     // Shield Mode
     string modeText = "Mode: ";
-    // v8.0: Rimosso check IsCascadeOverlapMode() - Shield sempre disponibile
+    // v9.0: Rimosso check IsCascadeOverlapMode() - Shield sempre disponibile
 
     // Get Shield Mode Name
     switch(ShieldMode) {

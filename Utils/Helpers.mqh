@@ -268,7 +268,7 @@ void LogOrder(string action, ulong ticket, string details) {
     PrintFormat("%s %s %s #%d - %s", GetLogTimestamp(), LOG_CAT_ORDER, action, ticket, details);
 }
 
-// v8.0: LogCascadeOverlap() ELIMINATO - funzione mai usata
+// v9.0: LogCascadeOverlap() ELIMINATO - funzione mai usata
 
 //+------------------------------------------------------------------+
 //| Log Shield Events (3 Phases, Activation, Deactivation)            |
@@ -392,7 +392,7 @@ void LogTrail_Error(string operation, string errorMessage) {
 }
 
 //+------------------------------------------------------------------+
-//| Log Detailed Order Placement (v8.0)                                |
+//| Log Detailed Order Placement (v9.0)                                |
 //+------------------------------------------------------------------+
 void LogOrderPlacement(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
                        ENUM_ORDER_TYPE orderType, double price, double tp, double sl, double lot) {
@@ -410,7 +410,7 @@ void LogOrderPlacement(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level,
         default: typeName = "UNKNOWN"; break;
     }
 
-    // v8.0: Grid A=BUY, Grid B=SELL (struttura default)
+    // v9.0: Grid A=BUY, Grid B=SELL (struttura default)
     string gridDir = (side == GRID_A) ? " [BUY]" : " [SELL]";
 
     PrintFormat("%s %s Grid%s-%s-L%d: %s%s @ %.5f | TP=%.5f | SL=%.5f | Lot=%.2f",
@@ -425,7 +425,7 @@ void LogOrderFill(ulong ticket, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int le
     string gridName = (side == GRID_A) ? "A" : "B";
     string zoneName = (zone == ZONE_UPPER) ? "UP" : "DN";
 
-    // v8.0: Grid A = sempre LONG, Grid B = sempre SHORT
+    // v9.0: Grid A = sempre LONG, Grid B = sempre SHORT
     string direction = (side == GRID_A) ? "LONG" : "SHORT";
 
     PrintFormat("%s %s FILLED #%d | Grid%s-%s-L%d | %s @ %.5f",
@@ -452,8 +452,8 @@ void LogSessionSummary() {
     PrintFormat("  Total Wins: %d | Total Losses: %d", sessionWins, sessionLosses);
     PrintFormat("  Win Rate: %.1f%%", GetWinRate());
     PrintFormat("  Realized P/L: $%.2f", sessionRealizedProfit);
-    // v8.0: Struttura Grid A=BUY, Grid B=SELL è default
-    Print("  Mode: v8.0 Perfect Cascade (Grid A=BUY, Grid B=SELL)");
+    // v9.0: Struttura Grid A=BUY, Grid B=SELL è default
+    Print("  Mode: v9.0 Perfect Cascade (Grid A=BUY, Grid B=SELL)");
     Print("═══════════════════════════════════════════════════════════════════");
 }
 
@@ -466,7 +466,7 @@ void LogGridInitSummary(ENUM_GRID_SIDE side) {
     string gridName = (side == GRID_A) ? "A" : "B";
     string orderTypes = "";
 
-    // v8.0: Struttura Grid A=BUY, Grid B=SELL è default
+    // v9.0: Struttura Grid A=BUY, Grid B=SELL è default
     if(side == GRID_A) {
         orderTypes = "Upper=BUY_STOP, Lower=BUY_LIMIT";
     } else {
@@ -505,16 +505,16 @@ void LogStartupBanner() {
     Print("║     ███████║╚██████╔╝╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║██║  ██║ ║");
     Print("║     ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ║");
     Print("║                                                                   ║");
-    Print("║                      R I B E L L E   v5.1                         ║");
-    Print("║              PERFECT CASCADE v8.0 - DUNE THEME                     ║");
+    Print("║                      R I B E L L E   v9.0                         ║");
+    Print("║              PERFECT CASCADE v9.0 - DUNE THEME                     ║");
     Print("║                  \"The Spice Must Flow\"                            ║");
     Print("║                                                                   ║");
     Print("╚═══════════════════════════════════════════════════════════════════╝");
     Print("");
     PrintFormat("  Symbol: %s | Timeframe: %s", _Symbol, EnumToString((ENUM_TIMEFRAMES)Period()));
     PrintFormat("  Start Time: %s", GetLogTimestamp());
-    // v8.0: Struttura Grid A=BUY, Grid B=SELL è default
-    Print("  Mode: v8.0 Perfect Cascade (Grid A=BUY, Grid B=SELL)");
+    // v9.0: Struttura Grid A=BUY, Grid B=SELL è default
+    Print("  Mode: v9.0 Perfect Cascade (Grid A=BUY, Grid B=SELL)");
     Print("");
 }
 

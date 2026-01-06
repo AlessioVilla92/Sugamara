@@ -105,7 +105,7 @@ enum ENUM_LOT_MODE {
 enum ENUM_CASCADE_MODE {
     CASCADE_PERFECT,            // Perfect - TP = Entry livello precedente (CONSIGLIATO)
     CASCADE_RATIO               // Ratio - TP = Spacing × Ratio
-    // v8.0: CASCADE_OVERLAP RIMOSSO - Struttura Grid A=BUY / Grid B=SELL ora DEFAULT
+    // v9.0: CASCADE_OVERLAP RIMOSSO - Struttura Grid A=BUY / Grid B=SELL ora DEFAULT
 };
 
 //+------------------------------------------------------------------+
@@ -262,7 +262,7 @@ enum ENUM_STRADDLE_MULTIPLIER {
 //+------------------------------------------------------------------+
 //| CONSTANTS - Costanti di sistema                                  |
 //+------------------------------------------------------------------+
-const int MAX_GRID_LEVELS = 20;           // Max livelli per lato (v8.1: Esteso a 20)
+const int MAX_GRID_LEVELS = 20;           // Max livelli per lato (v9.0: Esteso a 20)
 const int MAX_TOTAL_ORDERS = 40;          // Max ordini totali (Grid A + Grid B)
 const double MIN_SPACING_PIPS = 10.0;     // Spacing minimo (pips)
 const double MAX_SPACING_PIPS = 100.0;    // Spacing massimo (pips)

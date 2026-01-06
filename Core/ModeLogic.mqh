@@ -40,7 +40,7 @@ bool IsATREnabled()
 //+------------------------------------------------------------------+
 bool IsHedgingAvailable()
 {
-   // v8.0: Hedging sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
+   // v9.0: Hedging sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
    return EnableHedging;
 }
 
@@ -312,7 +312,7 @@ bool ValidateModeParameters()
 void PrintModeConfiguration()
 {
    Print("═══════════════════════════════════════════════════════════════════");
-   Print("  SUGAMARA v5.2 - CONFIGURAZIONE MODALITÀ");
+   Print("  SUGAMARA v9.0 - CONFIGURAZIONE MODALITÀ");
    Print("═══════════════════════════════════════════════════════════════════");
    PrintFormat("  Modalità: %s", GetModeName());
    PrintFormat("  Descrizione: %s", GetModeDescription());
@@ -338,7 +338,7 @@ void PrintModeConfiguration()
 //+------------------------------------------------------------------+
 bool IsShieldAvailableLogic()
 {
-   // v8.0: Shield sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
+   // v9.0: Shield sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
    return (ShieldMode != SHIELD_DISABLED);
 }
 
@@ -347,7 +347,7 @@ bool IsShieldAvailableLogic()
 //+------------------------------------------------------------------+
 string GetShieldModeNameLogic()
 {
-   // v8.0: Shield sempre disponibile
+   // v9.0: Shield sempre disponibile
    switch(ShieldMode) {
       case SHIELD_DISABLED: return "DISABLED";
       case SHIELD_SIMPLE: return "SIMPLE";

@@ -165,7 +165,7 @@ double GetNextGridLevelBelow() {
 }
 
 //+------------------------------------------------------------------+
-//| Calculate TP for Trailing Grid (v8.0 Perfect Cascade)             |
+//| Calculate TP for Trailing Grid (v9.0 Perfect Cascade)             |
 //+------------------------------------------------------------------+
 double CalculateTrailingTP(double trailEntryPrice, bool isBuy, double spacingPips) {
     // FIX: spacingPips è già moltiplicato per Trail_Spacing_Multiplier dal chiamante
@@ -190,7 +190,7 @@ bool InsertNewGridAbove(double newLevel) {
     }
 
     double spacing = currentSpacing_Pips * Trail_Spacing_Multiplier;
-    // v8.0: Nessun hedge offset
+    // v9.0: Nessun hedge offset
     double lotSize = CalculateGridLotSize(newIndex);
 
     // Grid A: BUY STOP
@@ -206,8 +206,8 @@ bool InsertNewGridAbove(double newLevel) {
         return false;
     }
 
-    // v8.0: Grid B: SELL LIMIT (stesso livello)
-    double gridBLevel = newLevel;  // v8.0: nessun offset
+    // v9.0: Grid B: SELL LIMIT (stesso livello)
+    double gridBLevel = newLevel;  // v9.0: nessun offset
     double tpGridB = CalculateTrailingTP(gridBLevel, false, spacing);
     int magicB = GetGridMagic(GRID_B);
     string commentB = "Trail_B_U" + IntegerToString(g_trailExtraGridsAbove + 1);
@@ -260,7 +260,7 @@ bool InsertNewGridBelow(double newLevel) {
     }
 
     double spacing = currentSpacing_Pips * Trail_Spacing_Multiplier;
-    // v8.0: Nessun hedge offset
+    // v9.0: Nessun hedge offset
     double lotSize = CalculateGridLotSize(newIndex);
 
     // Grid A: BUY LIMIT
@@ -276,8 +276,8 @@ bool InsertNewGridBelow(double newLevel) {
         return false;
     }
 
-    // v8.0: Grid B: SELL STOP (stesso livello)
-    double gridBLevel = newLevel;  // v8.0: nessun offset
+    // v9.0: Grid B: SELL STOP (stesso livello)
+    double gridBLevel = newLevel;  // v9.0: nessun offset
     double tpGridB = CalculateTrailingTP(gridBLevel, false, spacing);
     int magicB = GetGridMagic(GRID_B);
     string commentB = "Trail_B_L" + IntegerToString(g_trailExtraGridsBelow + 1);
@@ -362,6 +362,7 @@ bool RemoveDistantGridBelow() {
     // Log rimozione
     LogTrail_GridRemoved("BELOW", lowestIndex, lowestPrice);
     g_trailLowerRemoved++;
+    g_trailExtraGridsBelow--;  // v9.0 FIX: Decrementa contatore trailing grids
     return true;
 }
 
@@ -410,6 +411,7 @@ bool RemoveDistantGridAbove() {
     // Log rimozione
     LogTrail_GridRemoved("ABOVE", highestIndex, highestPrice);
     g_trailUpperRemoved++;
+    g_trailExtraGridsAbove--;  // v9.0 FIX: Decrementa contatore trailing grids
     return true;
 }
 

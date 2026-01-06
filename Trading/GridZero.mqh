@@ -167,12 +167,12 @@ void InsertGridZeroBearish() {
     PrintFormat("  Current Price: %.5f", SymbolInfoDouble(_Symbol, SYMBOL_BID));
     Print("-------------------------------------------------------------------");
 
-    // v8.0: Nessun hedge offset - Perfect Cascade
+    // v9.0: Nessun hedge offset - Perfect Cascade
     double spacing = PipsToPoints(currentSpacing_Pips);
 
     //--- Order 1: SELL STOP @ entryPoint ---
     double sellStopEntry = entryPoint;
-    double sellStopTP = sellStopEntry - spacing;  // v8.0: Perfect Cascade
+    double sellStopTP = sellStopEntry - spacing;  // v9.0: Perfect Cascade
 
     PrintFormat("  Order 1: SELL STOP");
     PrintFormat("    Entry: %.5f (entryPoint)", sellStopEntry);
@@ -200,9 +200,9 @@ void InsertGridZeroBearish() {
 
     Print("-------------------------------------------------------------------");
 
-    //--- Order 2: BUY LIMIT @ entryPoint (v8.0: stesso livello) ---
-    double buyLimitEntry = entryPoint;  // v8.0: nessun offset
-    double buyLimitTP = buyLimitEntry + spacing;  // v8.0: Perfect Cascade
+    //--- Order 2: BUY LIMIT @ entryPoint (v9.0: stesso livello) ---
+    double buyLimitEntry = entryPoint;  // v9.0: nessun offset
+    double buyLimitTP = buyLimitEntry + spacing;  // v9.0: Perfect Cascade
 
     PrintFormat("  Order 2: BUY LIMIT");
     PrintFormat("    Entry: %.5f (entryPoint)", buyLimitEntry);
@@ -256,12 +256,12 @@ void InsertGridZeroBullish() {
     PrintFormat("  Current Price: %.5f", SymbolInfoDouble(_Symbol, SYMBOL_BID));
     Print("-------------------------------------------------------------------");
 
-    // v8.0: Nessun hedge offset - Perfect Cascade
+    // v9.0: Nessun hedge offset - Perfect Cascade
     double spacing = PipsToPoints(currentSpacing_Pips);
 
     //--- Order 1: BUY STOP @ entryPoint ---
     double buyStopEntry = entryPoint;
-    double buyStopTP = buyStopEntry + spacing;  // v8.0: Perfect Cascade
+    double buyStopTP = buyStopEntry + spacing;  // v9.0: Perfect Cascade
 
     PrintFormat("  Order 1: BUY STOP");
     PrintFormat("    Entry: %.5f (entryPoint)", buyStopEntry);
@@ -289,9 +289,9 @@ void InsertGridZeroBullish() {
 
     Print("-------------------------------------------------------------------");
 
-    //--- Order 2: SELL LIMIT @ entryPoint (v8.0: stesso livello) ---
-    double sellLimitEntry = entryPoint;  // v8.0: nessun offset
-    double sellLimitTP = sellLimitEntry - spacing;  // v8.0: Perfect Cascade
+    //--- Order 2: SELL LIMIT @ entryPoint (v9.0: stesso livello) ---
+    double sellLimitEntry = entryPoint;  // v9.0: nessun offset
+    double sellLimitTP = sellLimitEntry - spacing;  // v9.0: Perfect Cascade
 
     PrintFormat("  Order 2: SELL LIMIT");
     PrintFormat("    Entry: %.5f (entryPoint)", sellLimitEntry);
@@ -360,7 +360,7 @@ void ProcessGridZeroCycling() {
 
 //+------------------------------------------------------------------+
 //| CHECK IF GRID ZERO CAN REOPEN                                    |
-//| v8.0 FIX: Aggiunto controllo Smart per STOP orders               |
+//| v9.0 FIX: Aggiunto controllo Smart per STOP orders               |
 //+------------------------------------------------------------------+
 bool CanGridZeroReopen(bool isStop) {
     // Check if cycling is enabled globally
@@ -387,7 +387,7 @@ bool CanGridZeroReopen(bool isStop) {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // v8.0 FIX: Controllo Smart per STOP orders
+    // v9.0 FIX: Controllo Smart per STOP orders
     // STOP: aspetta che il prezzo sia nella posizione corretta
     // LIMIT: sempre immediato (broker protegge intrinsecamente)
     // ═══════════════════════════════════════════════════════════════
@@ -472,11 +472,11 @@ void ReopenGridZeroLimit() {
     g_gridZero_LimitStatus = ORDER_NONE;
     g_gridZero_LimitTicket = 0;
 
-    // v8.0: Nessun hedge offset - Perfect Cascade
+    // v9.0: Nessun hedge offset - Perfect Cascade
     double spacing = PipsToPoints(currentSpacing_Pips);
 
     if(g_gridZeroBiasUp) {
-        // v8.0: Reopen BUY LIMIT @ entryPoint (stesso livello)
+        // v9.0: Reopen BUY LIMIT @ entryPoint (stesso livello)
         double buyLimitEntry = entryPoint;
         double buyLimitTP = buyLimitEntry + spacing;  // Perfect Cascade
 
@@ -490,7 +490,7 @@ void ReopenGridZeroLimit() {
             GetGridMagic(GRID_A)
         );
     } else {
-        // v8.0: Reopen SELL LIMIT @ entryPoint (stesso livello)
+        // v9.0: Reopen SELL LIMIT @ entryPoint (stesso livello)
         double sellLimitEntry = entryPoint;
         double sellLimitTP = sellLimitEntry - spacing;  // Perfect Cascade
 
@@ -603,7 +603,7 @@ void DrawGridZeroLines() {
     if(!g_gridZeroInserted) return;
     if(entryPoint <= 0) return;
 
-    // v8.0: Nessun hedge offset - STOP e LIMIT sullo stesso livello
+    // v9.0: Nessun hedge offset - STOP e LIMIT sullo stesso livello
 
     // STOP order line (sempre @ entryPoint)
     if(g_gridZero_StopTicket > 0) {
@@ -620,9 +620,9 @@ void DrawGridZeroLines() {
         }
     }
 
-    // v8.0: LIMIT order line (@ entryPoint - stesso livello di STOP)
+    // v9.0: LIMIT order line (@ entryPoint - stesso livello di STOP)
     if(g_gridZero_LimitTicket > 0) {
-        double limitPrice = entryPoint;  // v8.0: stesso livello
+        double limitPrice = entryPoint;  // v9.0: stesso livello
         string limitName = "GRIDZERO_LIMIT";
 
         ObjectDelete(0, limitName);

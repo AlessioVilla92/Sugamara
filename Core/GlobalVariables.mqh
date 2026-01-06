@@ -96,7 +96,7 @@ int g_gridB_PendingCount = 0;                // Grid B pending inserite
 int g_gridZero_ClosedCount = 0;              // Grid Zero chiuse
 int g_gridZero_PendingCount = 0;             // Grid Zero pending inserite
 
-// v8.1: Tracking separato LIMIT/STOP per Grid A e B (Dashboard)
+// v9.0: Tracking separato LIMIT/STOP per Grid A e B (Dashboard)
 int g_gridA_LimitFilled = 0;                 // Grid A LIMIT filled
 int g_gridA_LimitCycles = 0;                 // Grid A LIMIT cycles completati
 int g_gridA_LimitReopens = 0;                // Grid A LIMIT reopens
@@ -114,7 +114,7 @@ int g_gridB_StopReopens = 0;                 // Grid B STOP reopens
 //| GRID STRUCTURE                                                   |
 //| Ogni array ha dimensione [MAX_GRID_LEVELS] = 20 elementi         |
 //| Indice 0 = Level 1 (piu vicino a entry)                          |
-//| v8.1: Esteso da [15] a [20] per supportare più livelli           |
+//| v9.0: Esteso da [15] a [20] per supportare più livelli           |
 //+------------------------------------------------------------------+
 
 // ═══════════════════════════════════════════════════════════════════
@@ -412,7 +412,7 @@ void CalculateNetExposure() {
     totalLongLots = 0;
     totalShortLots = 0;
 
-    // v8.0: Grid A = SEMPRE BUY (tutti LONG when filled)
+    // v9.0: Grid A = SEMPRE BUY (tutti LONG when filled)
     // Grid A Upper (BUY STOP -> LONG when filled)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridA_Upper_Status[i] == ORDER_FILLED) {
@@ -423,11 +423,11 @@ void CalculateNetExposure() {
     // Grid A Lower (BUY LIMIT -> LONG when filled)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridA_Lower_Status[i] == ORDER_FILLED) {
-            totalLongLots += gridA_Lower_Lots[i];  // v8.0 FIX: era totalShortLots!
+            totalLongLots += gridA_Lower_Lots[i];  // v9.0 FIX: era totalShortLots!
         }
     }
 
-    // v8.0: Grid B = SEMPRE SELL (tutti SHORT when filled)
+    // v9.0: Grid B = SEMPRE SELL (tutti SHORT when filled)
     // Grid B Upper (SELL LIMIT -> SHORT when filled)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridB_Upper_Status[i] == ORDER_FILLED) {
@@ -438,7 +438,7 @@ void CalculateNetExposure() {
     // Grid B Lower (SELL STOP -> SHORT when filled)
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridB_Lower_Status[i] == ORDER_FILLED) {
-            totalShortLots += gridB_Lower_Lots[i];  // v8.0 FIX: era totalLongLots!
+            totalShortLots += gridB_Lower_Lots[i];  // v9.0 FIX: era totalLongLots!
         }
     }
 

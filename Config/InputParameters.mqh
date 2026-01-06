@@ -329,15 +329,15 @@ input group "║  🔟  🎯 PERFECT CASCADE SYSTEM                             
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    ╔═ SELEZIONA CASCADE MODE ════════════════════════════════🔽🔽🔽"
-input ENUM_CASCADE_MODE CascadeMode = CASCADE_PERFECT;       // 📊 Modalità Cascade ▼ (v8.0 Default)
+input ENUM_CASCADE_MODE CascadeMode = CASCADE_PERFECT;       // 📊 Modalità Cascade ▼ (v9.0 Default)
 // CASCADE_PERFECT: TP di ogni ordine = Entry del livello successivo
 // Crea una catena perfetta senza gap
 
 input group "    📐 CASCADE PARAMETERS"
 input double    CascadeTP_Ratio = 1.0;                       // 📈 Ratio TP (se CASCADE_RATIO)
 
-// v8.0: CASCADE_OVERLAP RIMOSSO - Struttura Grid A=BUY / Grid B=SELL ora DEFAULT
-// v8.0: Hedge_Spacing_Pips ELIMINATO - Non più necessario
+// v9.0: CASCADE_OVERLAP RIMOSSO - Struttura Grid A=BUY / Grid B=SELL ora DEFAULT
+// v9.0: Hedge_Spacing_Pips ELIMINATO - Non più necessario
 input double    FinalLevel_TP_Pips = 15.0;                   // 🎯 TP Ultimo Livello (pips)
 // L'ultimo livello non ha "successivo", usa TP fisso
 
@@ -359,9 +359,9 @@ input ENUM_REOPEN_TRIGGER ReopenTrigger = REOPEN_IMMEDIATE;  // 📊 Trigger Reo
 input group "    📐 CYCLIC PARAMETERS"
 // Cooldown REMOVED v5.8 - Reopen sempre immediato
 input int       MaxCyclesPerLevel = 0;                       // 🔢 Max Cicli per Livello (0=infiniti)
-// v8.0: EnableReopenOffset ELIMINATO - STOP sempre con offset unidirezionale
+// v9.0: EnableReopenOffset ELIMINATO - STOP sempre con offset unidirezionale
 input double    ReopenOffset_Pips = 3.0;                     // 📏 Offset STOP Unidirezionale (pips)
-// v8.0 SMART REOPEN: BUY_STOP riapre quando prezzo <= entry - offset
+// v9.0 SMART REOPEN: BUY_STOP riapre quando prezzo <= entry - offset
 //                    SELL_STOP riapre quando prezzo >= entry + offset
 //                    LIMIT riapre IMMEDIATAMENTE (intrinsecamente protetti)
 

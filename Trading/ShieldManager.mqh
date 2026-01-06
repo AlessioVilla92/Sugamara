@@ -83,7 +83,7 @@ bool InitializeShield()
 
 //+------------------------------------------------------------------+
 //| Calculate Shield Lot Size = Sum of exposed grid lots              |
-//| v8.0: Grid A=BUY, Grid B=SELL (struttura default)                 |
+//| v9.0: Grid A=BUY, Grid B=SELL (struttura default)                 |
 //|   SHIELD_LONG protegge SHORT = Grid B (Upper + Lower)             |
 //|   SHIELD_SHORT protegge LONG = Grid A (Upper + Lower)             |
 //+------------------------------------------------------------------+
@@ -98,7 +98,7 @@ double CalculateShieldLotSize(ENUM_SHIELD_TYPE shieldType)
    }
 
    if(shieldType == SHIELD_LONG) {
-      // v8.0: Shield LONG protegge SHORT = SOLO Grid B (entrambe le zone)
+      // v9.0: Shield LONG protegge SHORT = SOLO Grid B (entrambe le zone)
       // Grid B Upper = SELL LIMIT, Grid B Lower = SELL STOP
       for(int i = 0; i < GridLevelsPerSide; i++) {
          if(gridB_Upper_Status[i] == ORDER_FILLED) {
@@ -118,7 +118,7 @@ double CalculateShieldLotSize(ENUM_SHIELD_TYPE shieldType)
       }
    }
    else if(shieldType == SHIELD_SHORT) {
-      // v8.0: Shield SHORT protegge LONG = SOLO Grid A (entrambe le zone)
+      // v9.0: Shield SHORT protegge LONG = SOLO Grid A (entrambe le zone)
       // Grid A Upper = BUY STOP, Grid A Lower = BUY LIMIT
       for(int i = 0; i < GridLevelsPerSide; i++) {
          if(gridA_Upper_Status[i] == ORDER_FILLED) {
@@ -960,7 +960,7 @@ void ProcessShield()
       return;
    }
 
-   // v8.0: Rimosso check IsCascadeOverlapMode() - struttura è default
+   // v9.0: Rimosso check IsCascadeOverlapMode() - struttura è default
 
    // Monitor pending STOP orders if using STOP order type
    if(ShieldOrderType == SHIELD_ORDER_STOP) {
@@ -1123,7 +1123,7 @@ void DeinitializeShield()
 //+------------------------------------------------------------------+
 bool IsShieldAvailable()
 {
-   // v8.0: Shield sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
+   // v9.0: Shield sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
    return (ShieldMode != SHIELD_DISABLED);
 }
 
