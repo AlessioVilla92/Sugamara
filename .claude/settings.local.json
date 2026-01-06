@@ -33,7 +33,8 @@
       "Bash(powershell.exe:*)",
       "Bash(timeout:*)",
       "Bash(del \"C:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_log.ps1\")",
-      "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Indicators\\\\CenterCalculator.mqh\")"
+      "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Indicators\\\\CenterCalculator.mqh\")",
+      "Bash(cut:*)"
     ],
     "deny": [],
     "ask": []

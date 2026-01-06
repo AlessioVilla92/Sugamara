@@ -462,7 +462,7 @@ void CreateUnifiedDashboard() {
     int leftY = y;
 
     //--- GRID A PANEL (SOLO BUY - Spice Harvesters) ---
-    int gridAHeight = 180;
+    int gridAHeight = 200;  // v8.1: +20px per 2 righe LIMIT/STOP
     DashRectangle("LEFT_GRIDA_PANEL", leftX, leftY, colWidth, gridAHeight, CLR_PANEL_GRIDA);
 
     int ay = leftY + 8;
@@ -477,10 +477,11 @@ void CreateUnifiedDashboard() {
     DashLabel("LEFT_GRIDA_LOTS", leftX + 10, ay, "Long Lots: 0.00", CLR_GRID_A, 8);
     ay += 16;
     DashLabel("LEFT_GRIDA_SHORT", leftX + 10, ay, "Short Lots: 0.00", CLR_LOSS, 8);
-    ay += 20;
-    DashLabel("LEFT_GRIDA_PROFIT", leftX + 10, ay, "P/L: $0.00", CLR_WHITE, 10, "Arial Bold");
     ay += 18;
-    DashLabel("LEFT_GRIDA_CYCLES", leftX + 10, ay, "Cycles: 0 | Reopens: 0", CLR_SILVER, 8);
+    // v8.1: LIMIT/STOP monitoring con icone e etichette complete
+    DashLabel("LEFT_GRIDA_LIMIT", leftX + 10, ay, "📈 LIMIT 0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
+    ay += 16;
+    DashLabel("LEFT_GRIDA_STOP", leftX + 10, ay, "📈 STOP  0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
 
     leftY += gridAHeight;
 
@@ -514,7 +515,7 @@ void CreateUnifiedDashboard() {
     int rightY = y;
 
     //--- GRID B PANEL (SOLO SELL - Sandworm Riders) ---
-    int gridBHeight = 180;
+    int gridBHeight = 200;  // v8.1: +20px per 2 righe LIMIT/STOP
     DashRectangle("RIGHT_GRIDB_PANEL", rightX, rightY, colWidth, gridBHeight, CLR_PANEL_GRIDB);
 
     int by = rightY + 8;
@@ -529,10 +530,11 @@ void CreateUnifiedDashboard() {
     DashLabel("RIGHT_GRIDB_LOTS", rightX + 10, by, "Long Lots: 0.00", CLR_GRID_A, 8);
     by += 16;
     DashLabel("RIGHT_GRIDB_SHORT", rightX + 10, by, "Short Lots: 0.00", CLR_LOSS, 8);
-    by += 20;
-    DashLabel("RIGHT_GRIDB_PROFIT", rightX + 10, by, "P/L: $0.00", CLR_WHITE, 10, "Arial Bold");
     by += 18;
-    DashLabel("RIGHT_GRIDB_CYCLES", rightX + 10, by, "Cycles: 0 | Reopens: 0", CLR_SILVER, 8);
+    // v8.1: LIMIT/STOP monitoring con icone e etichette complete
+    DashLabel("RIGHT_GRIDB_LIMIT", rightX + 10, by, "📉 LIMIT 0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
+    by += 16;
+    DashLabel("RIGHT_GRIDB_STOP", rightX + 10, by, "📉 STOP  0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
 
     rightY += gridBHeight;
 
@@ -916,9 +918,13 @@ void UpdateGridASection() {
     ObjectSetString(0, "LEFT_GRIDA_LOTS", OBJPROP_TEXT, StringFormat("Long Lots: %.2f", longLots));
     ObjectSetString(0, "LEFT_GRIDA_SHORT", OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
 
-    color profitColor = profit >= 0 ? CLR_PROFIT : CLR_LOSS;
-    ObjectSetString(0, "LEFT_GRIDA_PROFIT", OBJPROP_TEXT, StringFormat("P/L: $%.2f", profit));
-    ObjectSetInteger(0, "LEFT_GRIDA_PROFIT", OBJPROP_COLOR, profitColor);
+    // v8.1: Update LIMIT/STOP counters con etichette complete
+    ObjectSetString(0, "LEFT_GRIDA_LIMIT", OBJPROP_TEXT,
+        StringFormat("📈 LIMIT %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
+            g_gridA_LimitFilled, GridLevelsPerSide, g_gridA_LimitCycles, g_gridA_LimitReopens));
+    ObjectSetString(0, "LEFT_GRIDA_STOP", OBJPROP_TEXT,
+        StringFormat("📈 STOP  %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
+            g_gridA_StopFilled, GridLevelsPerSide, g_gridA_StopCycles, g_gridA_StopReopens));
 }
 
 //+------------------------------------------------------------------+
@@ -951,9 +957,13 @@ void UpdateGridBSection() {
     ObjectSetString(0, "RIGHT_GRIDB_LOTS", OBJPROP_TEXT, StringFormat("Long Lots: %.2f", longLots));
     ObjectSetString(0, "RIGHT_GRIDB_SHORT", OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
 
-    color profitColor = profit >= 0 ? CLR_PROFIT : CLR_LOSS;
-    ObjectSetString(0, "RIGHT_GRIDB_PROFIT", OBJPROP_TEXT, StringFormat("P/L: $%.2f", profit));
-    ObjectSetInteger(0, "RIGHT_GRIDB_PROFIT", OBJPROP_COLOR, profitColor);
+    // v8.1: Update LIMIT/STOP counters con etichette complete
+    ObjectSetString(0, "RIGHT_GRIDB_LIMIT", OBJPROP_TEXT,
+        StringFormat("📉 LIMIT %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
+            g_gridB_LimitFilled, GridLevelsPerSide, g_gridB_LimitCycles, g_gridB_LimitReopens));
+    ObjectSetString(0, "RIGHT_GRIDB_STOP", OBJPROP_TEXT,
+        StringFormat("📉 STOP  %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
+            g_gridB_StopFilled, GridLevelsPerSide, g_gridB_StopCycles, g_gridB_StopReopens));
 }
 
 //+------------------------------------------------------------------+

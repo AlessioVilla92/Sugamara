@@ -96,6 +96,10 @@ void COP_UpdateTracking() {
     // Skip if target already reached
     if(cop_TargetReached) return;
 
+    // v8.1 FIX: Ricalcola RealizedProfit dalla history dei deals
+    // Garantisce che il COP funzioni correttamente dopo restart EA
+    cop_RealizedProfit = GetCurrentPairRealizedProfit();
+
     // Update floating
     cop_FloatingProfit = COP_IncludeFloating ? COP_GetFloatingProfit() : 0;
 

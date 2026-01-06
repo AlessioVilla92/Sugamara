@@ -262,7 +262,7 @@ enum ENUM_STRADDLE_MULTIPLIER {
 //+------------------------------------------------------------------+
 //| CONSTANTS - Costanti di sistema                                  |
 //+------------------------------------------------------------------+
-const int MAX_GRID_LEVELS = 15;           // Max livelli per lato (v5.3: Esteso per Trailing Grid)
+const int MAX_GRID_LEVELS = 20;           // Max livelli per lato (v8.1: Esteso a 20)
 const int MAX_TOTAL_ORDERS = 40;          // Max ordini totali (Grid A + Grid B)
 const double MIN_SPACING_PIPS = 10.0;     // Spacing minimo (pips)
 const double MAX_SPACING_PIPS = 100.0;    // Spacing massimo (pips)

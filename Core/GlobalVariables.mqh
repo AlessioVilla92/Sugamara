@@ -96,11 +96,25 @@ int g_gridB_PendingCount = 0;                // Grid B pending inserite
 int g_gridZero_ClosedCount = 0;              // Grid Zero chiuse
 int g_gridZero_PendingCount = 0;             // Grid Zero pending inserite
 
+// v8.1: Tracking separato LIMIT/STOP per Grid A e B (Dashboard)
+int g_gridA_LimitFilled = 0;                 // Grid A LIMIT filled
+int g_gridA_LimitCycles = 0;                 // Grid A LIMIT cycles completati
+int g_gridA_LimitReopens = 0;                // Grid A LIMIT reopens
+int g_gridA_StopFilled = 0;                  // Grid A STOP filled
+int g_gridA_StopCycles = 0;                  // Grid A STOP cycles completati
+int g_gridA_StopReopens = 0;                 // Grid A STOP reopens
+int g_gridB_LimitFilled = 0;                 // Grid B LIMIT filled
+int g_gridB_LimitCycles = 0;                 // Grid B LIMIT cycles completati
+int g_gridB_LimitReopens = 0;                // Grid B LIMIT reopens
+int g_gridB_StopFilled = 0;                  // Grid B STOP filled
+int g_gridB_StopCycles = 0;                  // Grid B STOP cycles completati
+int g_gridB_StopReopens = 0;                 // Grid B STOP reopens
+
 //+------------------------------------------------------------------+
 //| GRID STRUCTURE                                                   |
-//| Ogni array ha dimensione [MAX_GRID_LEVELS] = 15 elementi         |
+//| Ogni array ha dimensione [MAX_GRID_LEVELS] = 20 elementi         |
 //| Indice 0 = Level 1 (piu vicino a entry)                          |
-//| v5.3: Esteso da [10] a [15] per supportare Trailing Grid         |
+//| v8.1: Esteso da [15] a [20] per supportare più livelli           |
 //+------------------------------------------------------------------+
 
 // ═══════════════════════════════════════════════════════════════════
@@ -108,48 +122,48 @@ int g_gridZero_PendingCount = 0;             // Grid Zero pending inserite
 // ═══════════════════════════════════════════════════════════════════
 
 // Upper Zone (sopra Entry Point) - Buy Limit orders
-ulong gridA_Upper_Tickets[15];              // Ticket ordini pending
-double gridA_Upper_EntryPrices[15];         // Prezzi entry calcolati
-double gridA_Upper_Lots[15];                // Lot size per livello
-double gridA_Upper_TP[15];                  // Take Profit (Cascade)
-double gridA_Upper_SL[15];                  // Stop Loss
-ENUM_ORDER_STATUS gridA_Upper_Status[15];   // Stato ordine
-datetime gridA_Upper_LastClose[15];         // Tempo ultima chiusura (per cyclic)
-int gridA_Upper_Cycles[15];                 // Contatore cicli
+ulong gridA_Upper_Tickets[20];              // Ticket ordini pending
+double gridA_Upper_EntryPrices[20];         // Prezzi entry calcolati
+double gridA_Upper_Lots[20];                // Lot size per livello
+double gridA_Upper_TP[20];                  // Take Profit (Cascade)
+double gridA_Upper_SL[20];                  // Stop Loss
+ENUM_ORDER_STATUS gridA_Upper_Status[20];   // Stato ordine
+datetime gridA_Upper_LastClose[20];         // Tempo ultima chiusura (per cyclic)
+int gridA_Upper_Cycles[20];                 // Contatore cicli
 
 // Lower Zone (sotto Entry Point) - Sell Stop orders
-ulong gridA_Lower_Tickets[15];
-double gridA_Lower_EntryPrices[15];
-double gridA_Lower_Lots[15];
-double gridA_Lower_TP[15];
-double gridA_Lower_SL[15];
-ENUM_ORDER_STATUS gridA_Lower_Status[15];
-datetime gridA_Lower_LastClose[15];
-int gridA_Lower_Cycles[15];
+ulong gridA_Lower_Tickets[20];
+double gridA_Lower_EntryPrices[20];
+double gridA_Lower_Lots[20];
+double gridA_Lower_TP[20];
+double gridA_Lower_SL[20];
+ENUM_ORDER_STATUS gridA_Lower_Status[20];
+datetime gridA_Lower_LastClose[20];
+int gridA_Lower_Cycles[20];
 
 // ═══════════════════════════════════════════════════════════════════
 // GRID B - Short Bias (Sell Limit sopra, Buy Stop sotto)
 // ═══════════════════════════════════════════════════════════════════
 
 // Upper Zone (sopra Entry Point) - Sell Limit orders
-ulong gridB_Upper_Tickets[15];
-double gridB_Upper_EntryPrices[15];
-double gridB_Upper_Lots[15];
-double gridB_Upper_TP[15];
-double gridB_Upper_SL[15];
-ENUM_ORDER_STATUS gridB_Upper_Status[15];
-datetime gridB_Upper_LastClose[15];
-int gridB_Upper_Cycles[15];
+ulong gridB_Upper_Tickets[20];
+double gridB_Upper_EntryPrices[20];
+double gridB_Upper_Lots[20];
+double gridB_Upper_TP[20];
+double gridB_Upper_SL[20];
+ENUM_ORDER_STATUS gridB_Upper_Status[20];
+datetime gridB_Upper_LastClose[20];
+int gridB_Upper_Cycles[20];
 
 // Lower Zone (sotto Entry Point) - Buy Stop orders
-ulong gridB_Lower_Tickets[15];
-double gridB_Lower_EntryPrices[15];
-double gridB_Lower_Lots[15];
-double gridB_Lower_TP[15];
-double gridB_Lower_SL[15];
-ENUM_ORDER_STATUS gridB_Lower_Status[15];
-datetime gridB_Lower_LastClose[15];
-int gridB_Lower_Cycles[15];
+ulong gridB_Lower_Tickets[20];
+double gridB_Lower_EntryPrices[20];
+double gridB_Lower_Lots[20];
+double gridB_Lower_TP[20];
+double gridB_Lower_SL[20];
+ENUM_ORDER_STATUS gridB_Lower_Status[20];
+datetime gridB_Lower_LastClose[20];
+int gridB_Lower_Cycles[20];
 
 //+------------------------------------------------------------------+
 //| NET EXPOSURE                                                     |
@@ -432,7 +446,7 @@ void CalculateNetExposure() {
     netExposure = totalLongLots - totalShortLots;
     isNeutral = (MathAbs(netExposure) < NetExposure_MaxLot);
 
-    if(!isNeutral && DetailedLogging) {
+    if(!isNeutral && DetailedLogging && EnableNetExposureCheck) {
         Print("WARNING: Net exposure ", DoubleToString(netExposure, 2),
               " lot exceeds threshold ", NetExposure_MaxLot);
     }

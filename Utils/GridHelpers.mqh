@@ -1004,6 +1004,34 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
 // Usare SOLO IsPriceAtReopenLevelSmart() per tutti i reopen
 
 //+------------------------------------------------------------------+
+//| v8.1: State tracking per log spam reduction                      |
+//| Logga SOLO quando stato cambia (ATTESA↔PRONTO)                   |
+//+------------------------------------------------------------------+
+struct ReopenStateEntry {
+    double levelPrice;
+    bool   wasReady;      // true = era PRONTO, false = era ATTESA
+};
+ReopenStateEntry g_reopenStates[];
+int g_reopenStatesCount = 0;
+#define MAX_REOPEN_STATES 50
+
+int FindOrAddReopenState(double levelPrice) {
+    // Cerca esistente
+    for(int i = 0; i < g_reopenStatesCount; i++) {
+        if(MathAbs(g_reopenStates[i].levelPrice - levelPrice) < 0.00001)
+            return i;
+    }
+    // Aggiungi nuovo
+    if(g_reopenStatesCount < MAX_REOPEN_STATES) {
+        ArrayResize(g_reopenStates, g_reopenStatesCount + 1);
+        g_reopenStates[g_reopenStatesCount].levelPrice = levelPrice;
+        g_reopenStates[g_reopenStatesCount].wasReady = false;
+        return g_reopenStatesCount++;
+    }
+    return -1;
+}
+
+//+------------------------------------------------------------------+
 //| SMART Reopen Level Check - v8.0                                  |
 //| LIMIT: sempre immediato (intrinsecamente protetti dal broker)    |
 //| STOP: controllo unidirezionale con offset                        |
@@ -1054,17 +1082,23 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
             return true;
     }
 
-    // Log solo quando cambia stato o ogni N tick (evita spam)
-    static datetime lastLogTime = 0;
-    if(DetailedLogging && TimeCurrent() - lastLogTime >= 5) {  // Log ogni 5 secondi max
-        if(canReopen) {
-            PrintFormat("[SmartReopen] %s @ %.5f → PRONTO! %s ✓",
-                        EnumToString(orderType), levelPrice, condition);
-        } else {
-            PrintFormat("[SmartReopen] %s @ %.5f → ATTESA (%.1f pips) %s",
-                        EnumToString(orderType), levelPrice, MathAbs(distancePips), condition);
+    // v8.1: Log SOLO quando stato CAMBIA (ATTESA↔PRONTO) - elimina 175K+ log spam
+    if(DetailedLogging) {
+        int stateIdx = FindOrAddReopenState(levelPrice);
+        if(stateIdx >= 0) {
+            bool wasReady = g_reopenStates[stateIdx].wasReady;
+            // Log SOLO se stato cambia
+            if(canReopen != wasReady) {
+                if(canReopen) {
+                    PrintFormat("[SmartReopen] %s @ %.5f → PRONTO! %s ✓",
+                                EnumToString(orderType), levelPrice, condition);
+                } else {
+                    PrintFormat("[SmartReopen] %s @ %.5f → ATTESA (%.1f pips) %s",
+                                EnumToString(orderType), levelPrice, MathAbs(distancePips), condition);
+                }
+                g_reopenStates[stateIdx].wasReady = canReopen;
+            }
         }
-        lastLogTime = TimeCurrent();
     }
 
     return canReopen;

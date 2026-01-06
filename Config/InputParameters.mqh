@@ -69,8 +69,8 @@ input group "║  📐 GRID CONFIGURATION                                   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📏 GRID STRUCTURE"
-input int       GridLevelsPerSide = 7;                       // 🔢 Livelli per Lato (3-10) [Default: 7]
-// 7 livelli × 2 zone × 2 grid = 28 ordini totali
+input int       GridLevelsPerSide = 10;                      // 🔢 Livelli per Lato (3-20) [Default: 10]
+// 10 livelli × 2 zone × 2 grid = 40 ordini totali
 
 input group "    ╔═ SPACING SETTINGS ════════════════════════════════🔽🔽🔽"
 input ENUM_SPACING_MODE SpacingMode = SPACING_PAIR_AUTO;     // 📏 Modalità Spacing ▼ (DEFAULT: Pair Auto)
@@ -171,49 +171,6 @@ input int    GridZero_Trigger_Level = 2;                    // 🎯 Trigger Leve
 // 1 = Trigger when L1 filled (12 pips from entry)
 // 2 = Trigger when L2 filled (24 pips from entry) - RECOMMENDED
 // 3 = Trigger when L3 filled (36 pips from entry) - Conservative
-
-//+------------------------------------------------------------------+
-//| 📊 ATR MULTI-TIMEFRAME SETTINGS                                  |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  📊 ATR MULTI-TIMEFRAME DASHBOARD (v3.0)                  ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ⏱️ TIMEFRAMES"
-input ENUM_TIMEFRAMES ATR_MTF_TF1 = PERIOD_M5;              // 📊 TF1: M5
-input ENUM_TIMEFRAMES ATR_MTF_TF2 = PERIOD_M15;             // 📊 TF2: M15
-input ENUM_TIMEFRAMES ATR_MTF_TF3 = PERIOD_H1;              // 📊 TF3: H1
-input ENUM_TIMEFRAMES ATR_MTF_TF4 = PERIOD_H4;              // 📊 TF4: H4
-input int       ATR_MTF_Period = 14;                        // 📈 ATR Period per tutti i TF
-
-//+------------------------------------------------------------------+
-//| 📍 MANUAL SUPPORT/RESISTANCE SETTINGS                            |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  📍 MANUAL S/R DRAG & DROP (v3.0)                         ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-// S/R LINE COLORS: Now in VisualTheme.mqh (MANUAL_SR_*)
-
-//+------------------------------------------------------------------+
-//| 🎮 CONTROL BUTTONS SETTINGS                                      |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  🎮 CONTROL BUTTONS (v3.0)                                ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ╔═ SELEZIONA ENTRY MODE DEFAULT ════════════════════════🔽🔽🔽"
-input ENUM_ENTRY_MODE DefaultEntryMode = ENTRY_MARKET;      // 📊 Entry Mode Default ▼
-input double    LimitActivation_Price = 0.0;                // 📍 LIMIT: Prezzo Attivazione (0=manual)
-input double    StopActivation_Price = 0.0;                 // 📍 STOP: Prezzo Breakout (0=manual)
-
-// (VISUAL THEME spostato alla fine del file)
 
 //+------------------------------------------------------------------+
 //| 1️⃣ ⚙️ SYSTEM CONFIGURATION                                      |
@@ -452,48 +409,6 @@ input int       MaxRetries = 3;                              // 🔄 Max Tentati
 input int       RetryDelay_ms = 500;                         // ⏱️ Delay tra Tentativi (ms)
 
 //+------------------------------------------------------------------+
-//| 1️⃣5️⃣ 🎨 DASHBOARD SETTINGS                                       |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  1️⃣5️⃣  🎨 DASHBOARD SETTINGS                              ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    📊 DASHBOARD DISPLAY"
-input bool      ShowDashboard = true;                        // ✅ Mostra Dashboard
-input int       Dashboard_X = 0;                             // 📍 Posizione X Dashboard (v5.9: 0=nessun margine)
-input int       Dashboard_Y = 30;                            // 📍 Posizione Y Dashboard
-input bool      ShowGridLines = true;                        // ✅ Mostra Linee Grid su Chart
-
-//+------------------------------------------------------------------+
-//| 1️⃣6️⃣ 📊 VOLATILITY MONITOR                                       |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  1️⃣6️⃣  📊 VOLATILITY MONITOR                              ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input bool      EnableVolatilityMonitor = true;              // ✅ Enable Volatility Monitor
-
-input group "    ⏱️ DUAL TIMEFRAME SETTINGS"
-input group "    ╔═ SELEZIONA TIMEFRAME ═══════════════════════════════════🔽🔽🔽"
-input ENUM_TIMEFRAMES Vol_TF_Immediate = PERIOD_M5;          // 🔴 Immediate TF ▼
-input ENUM_TIMEFRAMES Vol_TF_Context = PERIOD_CURRENT;       // 🔵 Context TF ▼
-input int       Vol_ATR_Period = 14;                         // 📈 ATR Period (bars)
-
-input group "    🎯 RATING THRESHOLDS (1-9 Scale)"
-input double    Volatility_Rating1 = 0.10;                   // 📊 Rating 1→2 threshold (%)
-input double    Volatility_Rating2 = 0.20;                   // 📊 Rating 2→3 threshold (%)
-input double    Volatility_Rating3 = 0.35;                   // 📊 Rating 3→4 threshold (%)
-input double    Volatility_Rating4 = 0.50;                   // 📊 Rating 4→5 threshold (%)
-input double    Volatility_Rating5 = 0.70;                   // 📊 Rating 5→6 threshold (%)
-input double    Volatility_Rating6 = 1.00;                   // 📊 Rating 6→7 threshold (%)
-input double    Volatility_Rating7 = 1.40;                   // 📊 Rating 7→8 threshold (%)
-input double    Volatility_Rating8 = 2.00;                   // 📊 Rating 8→9 threshold (%)
-
-//+------------------------------------------------------------------+
 //| 1️⃣8️⃣ ⚙️ ADVANCED SETTINGS                                        |
 //+------------------------------------------------------------------+
 
@@ -508,8 +423,23 @@ input bool      SyncGridAB = true;                           // ✅ Sincronizza 
 // Assicura che Grid A e Grid B siano sempre speculari
 
 input group "    ⚖️ NET EXPOSURE"
+input bool      EnableNetExposureCheck = false;              // ✅ Abilita Check Net Exposure (default OFF per eliminare 20K+ log)
 input double    NetExposure_MaxLot = 0.10;                   // 📊 Max Esposizione Netta (lot)
 // Se |LONG - SHORT| > 0.10 lot, sistema in allerta
+
+//+------------------------------------------------------------------+
+//| 💱 FOREX PAIR SETTINGS                                            |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "                                                           "
+input group "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓"
+input group "▓▓                                                     ▓▓"
+input group "▓▓   💱💱💱  FOREX PAIR SETTINGS  💱💱💱                ▓▓"
+input group "▓▓        Impostazioni Specifiche per Pair             ▓▓"
+input group "▓▓                                                     ▓▓"
+input group "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓"
+input group "                                                           "
 
 //+------------------------------------------------------------------+
 //| 1️⃣9️⃣ 🇪🇺🇺🇸 EUR/USD SOTTOSTANTI                                   |
@@ -518,11 +448,11 @@ input double    NetExposure_MaxLot = 0.10;                   // 📊 Max Esposiz
 input group "                                                           "
 input group "╔═══════════════════════════════════════════════════════════╗"
 input group "║  1️⃣9️⃣  🇪🇺🇺🇸 SOTTOSTANTI - EUR/USD                        ║"
-input group "║      Spread: 0.8-1.5 | Range: 60-100 | Spacing: 9 pips   ║"
+input group "║      Spread: 0.8-1.5 | Range: 60-100 | Spacing: 10 pips  ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📐 EUR/USD GRID SETTINGS"
-input double    EURUSD_DefaultSpacing = 9.0;                 // 📏 Spacing Default (pips)
+input double    EURUSD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
 input double    EURUSD_TP_Pips = 18.0;                       // 🎯 TP per livello (pips)
 input double    EURUSD_EstimatedSpread = 1.0;                // 📊 Spread Stimato (pips)
 input double    EURUSD_DailyRange = 80.0;                    // 📈 Range Giornaliero (pips)
@@ -836,4 +766,95 @@ input int       Straddle_Friday_Hour = 19;                 // ⏰ Ora Venerdì (
 input group "    🔁 RIAPERTURA STRADDLE"
 input bool      Straddle_ReopenAfterClose = true;          // 🔁 Riapri Dopo Chiusura
 input int       Straddle_ReopenDelay = 30;                 // ⏱️ Delay Riapertura (secondi)
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//| ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  |
+//|                   SEZIONI SECONDARIE                             |
+//| ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  |
+//|                                                                  |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| 🎨 DASHBOARD SETTINGS                                            |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🎨 DASHBOARD SETTINGS                                   ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    📊 DASHBOARD DISPLAY"
+input bool      ShowDashboard = true;                        // ✅ Mostra Dashboard
+input int       Dashboard_X = 0;                             // 📍 Posizione X Dashboard (v5.9: 0=nessun margine)
+input int       Dashboard_Y = 30;                            // 📍 Posizione Y Dashboard
+input bool      ShowGridLines = true;                        // ✅ Mostra Linee Grid su Chart
+
+//+------------------------------------------------------------------+
+//| 📊 VOLATILITY MONITOR                                            |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  📊 VOLATILITY MONITOR                                   ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input bool      EnableVolatilityMonitor = true;              // ✅ Enable Volatility Monitor
+
+input group "    ⏱️ DUAL TIMEFRAME SETTINGS"
+input group "    ╔═ SELEZIONA TIMEFRAME ═══════════════════════════════════🔽🔽🔽"
+input ENUM_TIMEFRAMES Vol_TF_Immediate = PERIOD_M5;          // 🔴 Immediate TF ▼
+input ENUM_TIMEFRAMES Vol_TF_Context = PERIOD_CURRENT;       // 🔵 Context TF ▼
+input int       Vol_ATR_Period = 14;                         // 📈 ATR Period (bars)
+
+input group "    🎯 RATING THRESHOLDS (1-9 Scale)"
+input double    Volatility_Rating1 = 0.10;                   // 📊 Rating 1→2 threshold (%)
+input double    Volatility_Rating2 = 0.20;                   // 📊 Rating 2→3 threshold (%)
+input double    Volatility_Rating3 = 0.35;                   // 📊 Rating 3→4 threshold (%)
+input double    Volatility_Rating4 = 0.50;                   // 📊 Rating 4→5 threshold (%)
+input double    Volatility_Rating5 = 0.70;                   // 📊 Rating 5→6 threshold (%)
+input double    Volatility_Rating6 = 1.00;                   // 📊 Rating 6→7 threshold (%)
+input double    Volatility_Rating7 = 1.40;                   // 📊 Rating 7→8 threshold (%)
+input double    Volatility_Rating8 = 2.00;                   // 📊 Rating 8→9 threshold (%)
+
+//+------------------------------------------------------------------+
+//| 📊 ATR MULTI-TIMEFRAME DASHBOARD                                 |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  📊 ATR MULTI-TIMEFRAME DASHBOARD                        ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ⏱️ TIMEFRAMES"
+input ENUM_TIMEFRAMES ATR_MTF_TF1 = PERIOD_M5;              // 📊 TF1: M5
+input ENUM_TIMEFRAMES ATR_MTF_TF2 = PERIOD_M15;             // 📊 TF2: M15
+input ENUM_TIMEFRAMES ATR_MTF_TF3 = PERIOD_H1;              // 📊 TF3: H1
+input ENUM_TIMEFRAMES ATR_MTF_TF4 = PERIOD_H4;              // 📊 TF4: H4
+input int       ATR_MTF_Period = 14;                        // 📈 ATR Period per tutti i TF
+
+//+------------------------------------------------------------------+
+//| 🎮 CONTROL BUTTONS                                               |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🎮 CONTROL BUTTONS                                      ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ╔═ SELEZIONA ENTRY MODE DEFAULT ════════════════════════🔽🔽🔽"
+input ENUM_ENTRY_MODE DefaultEntryMode = ENTRY_MARKET;      // 📊 Entry Mode Default ▼
+input double    LimitActivation_Price = 0.0;                // 📍 LIMIT: Prezzo Attivazione (0=manual)
+input double    StopActivation_Price = 0.0;                 // 📍 STOP: Prezzo Breakout (0=manual)
+
+//+------------------------------------------------------------------+
+//| 📍 MANUAL S/R DRAG & DROP                                        |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  📍 MANUAL S/R DRAG & DROP                               ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+// S/R LINE COLORS: Now in VisualTheme.mqh (MANUAL_SR_*)
 
