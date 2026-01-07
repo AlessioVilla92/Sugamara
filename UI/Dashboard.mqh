@@ -339,14 +339,16 @@ bool VerifyDashboardExists() {
 //| Fix for buttons disappearing after parameter changes              |
 //+------------------------------------------------------------------+
 bool VerifyControlButtonsExist() {
-    // Check for START and CLOSE buttons
+    // v9.1: Check for START, CLOSE and RECOVER buttons
     bool startExists = ObjectFind(0, "SUGAMARA_BTN_START") >= 0;
     bool closeExists = ObjectFind(0, "SUGAMARA_BTN_CLOSEALL") >= 0;
+    bool recoverExists = ObjectFind(0, "SUGAMARA_BTN_RECOVER") >= 0;
 
-    if(!startExists || !closeExists) {
-        PrintFormat("Button verification: START=%s, CLOSE=%s",
+    if(!startExists || !closeExists || !recoverExists) {
+        PrintFormat("Button verification: START=%s, CLOSE=%s, RECOVER=%s",
                     startExists ? "OK" : "MISSING",
-                    closeExists ? "OK" : "MISSING");
+                    closeExists ? "OK" : "MISSING",
+                    recoverExists ? "OK" : "MISSING");
         return false;
     }
     return true;
@@ -608,25 +610,26 @@ void CreateUnifiedDashboard() {
 }
 
 //+------------------------------------------------------------------+
-//| Create Control Buttons v3.0 (MARKET/LIMIT/STOP/CLOSE)            |
+//| Create Control Buttons v9.1 (START/CLOSE/RECOVER)                |
 //+------------------------------------------------------------------+
 void CreateControlButtons(int startY, int startX, int panelWidth) {
     int x = startX + 10;
     int y = startY + 10;
-    int btnStartWidth = 140;   // v4.3: START largo
-    int btnCloseWidth = 120;   // v4.3: CLOSE largo
+    int btnStartWidth = 100;   // v9.1: Ridotto per fare spazio a RECOVER
+    int btnCloseWidth = 90;    // v9.1: Ridotto
+    int btnRecoverWidth = 90;  // v9.1: AGGIUNTO
     int btnHeight = 35;
-    int spacing = 10;
+    int spacing = 5;           // v9.1: Ridotto spacing
 
-    // v4.4: Control Buttons ALWAYS active (Simplified: START + CLOSE only)
     // Status Label (matches ControlButtons.mqh BTN_STATUS_V3)
     DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY - Click START", CLR_DASH_TEXT, 10, "Arial Bold");
     y += 22;
 
-    // v4.3: 2 Main Buttons: START | CLOSE (LIMIT/STOP removed - not needed for neutral grid)
-    // Names MUST match ControlButtons.mqh: BTN_START_V3 and BTN_CLOSEALL_V3
+    // v9.1: 3 Main Buttons: START | CLOSE | RECOVER
+    // Names MUST match ControlButtons.mqh
     DashButton("SUGAMARA_BTN_START", x, y, btnStartWidth, btnHeight, "START", C'0,150,80');
     DashButton("SUGAMARA_BTN_CLOSEALL", x + btnStartWidth + spacing, y, btnCloseWidth, btnHeight, "CLOSE", C'180,30,30');
+    DashButton("SUGAMARA_BTN_RECOVER", x + btnStartWidth + spacing + btnCloseWidth + spacing, y, btnRecoverWidth, btnHeight, "RECOVER", C'0,140,140');
     y += btnHeight + 8;
 
     // Entry Mode Status

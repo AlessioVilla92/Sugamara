@@ -133,6 +133,76 @@ bool ValidateStraddleInputs() {
 }
 
 //+------------------------------------------------------------------+
+//| RECOVER STRADDLE ORDERS FROM BROKER (v9.1)                       |
+//| Chiamare dopo StraddleInit() in recovery mode                    |
+//| Straddle usa magic 20260101 (hardcoded)                          |
+//+------------------------------------------------------------------+
+void RecoverStraddleOrdersFromBroker() {
+    if(!Straddle_Enabled) return;
+
+    long magicStraddle = Straddle_MagicNumber;  // 20260101
+
+    // Cerca ordini pendenti Straddle
+    for(int i = OrdersTotal() - 1; i >= 0; i--) {
+        ulong ticket = OrderGetTicket(i);
+        if(ticket == 0) continue;
+        if(OrderGetString(ORDER_SYMBOL) != _Symbol) continue;
+        if(OrderGetInteger(ORDER_MAGIC) != magicStraddle) continue;
+
+        ENUM_ORDER_TYPE type = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
+        double price = OrderGetDouble(ORDER_PRICE_OPEN);
+        double lots = OrderGetDouble(ORDER_VOLUME_CURRENT);
+
+        if(type == ORDER_TYPE_BUY_STOP) {
+            straddle.buyStopTicket = ticket;
+            straddle.buyStopPrice = price;
+            straddle.currentBuyLot = lots;
+        }
+        else if(type == ORDER_TYPE_SELL_STOP) {
+            straddle.sellStopTicket = ticket;
+            straddle.sellStopPrice = price;
+            straddle.currentSellLot = lots;
+        }
+    }
+
+    // Cerca posizioni Straddle aperte
+    for(int i = PositionsTotal() - 1; i >= 0; i--) {
+        ulong ticket = PositionGetTicket(i);
+        if(!PositionSelectByTicket(ticket)) continue;
+        if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
+        if(PositionGetInteger(POSITION_MAGIC) != magicStraddle) continue;
+
+        ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
+        double lots = PositionGetDouble(POSITION_VOLUME);
+
+        if(posType == POSITION_TYPE_BUY) {
+            straddle.totalBuyPositions++;
+            straddle.totalBuyLot += lots;
+        } else {
+            straddle.totalSellPositions++;
+            straddle.totalSellLot += lots;
+        }
+    }
+
+    // Determina se Straddle era attivo
+    bool hasOrders = (straddle.buyStopTicket > 0 || straddle.sellStopTicket > 0);
+    bool hasPositions = (straddle.totalBuyPositions > 0 || straddle.totalSellPositions > 0);
+
+    if(hasOrders || hasPositions) {
+        straddle.isActive = true;
+        // Stima round corrente dal numero di posizioni
+        straddle.currentRound = MathMax(straddle.totalBuyPositions, straddle.totalSellPositions);
+        if(straddle.currentRound == 0 && hasOrders) straddle.currentRound = 0;  // Ordini pending, non fillati
+
+        Print("  [Straddle Recovery] Found:");
+        Print("    BuyStop=#", straddle.buyStopTicket, " SellStop=#", straddle.sellStopTicket);
+        Print("    BuyPositions=", straddle.totalBuyPositions, " (", DoubleToString(straddle.totalBuyLot, 2), " lots)");
+        Print("    SellPositions=", straddle.totalSellPositions, " (", DoubleToString(straddle.totalSellLot, 2), " lots)");
+        Print("    Estimated Round: ", straddle.currentRound);
+    }
+}
+
+//+------------------------------------------------------------------+
 //| FIX 1: OTTIENI DISTANZA STRADDLE (usa input dedicato)            |
 //+------------------------------------------------------------------+
 double GetStraddleDistance() {

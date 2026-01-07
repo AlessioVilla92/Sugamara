@@ -452,3 +452,78 @@ void CalculateNetExposure() {
     }
 }
 
+//+------------------------------------------------------------------+
+//| SYNC GRID COUNTERS FROM BROKER (v9.1)                            |
+//| Sincronizza i contatori con gli ordini reali dal broker          |
+//| Chiamare dopo recovery o all'avvio con ordini esistenti          |
+//+------------------------------------------------------------------+
+void SyncGridCountersFromBroker() {
+    // Reset contatori
+    g_gridA_PendingCount = 0;
+    g_gridB_PendingCount = 0;
+    g_gridA_LimitFilled = 0;
+    g_gridA_StopFilled = 0;
+    g_gridB_LimitFilled = 0;
+    g_gridB_StopFilled = 0;
+
+    long magicA = MagicNumber + MAGIC_OFFSET_GRID_A;  // = MagicNumber
+    long magicB = MagicNumber + MAGIC_OFFSET_GRID_B;  // = MagicNumber + 10000
+
+    // Conta ordini pendenti dal broker
+    for(int i = OrdersTotal() - 1; i >= 0; i--) {
+        ulong ticket = OrderGetTicket(i);
+        if(ticket == 0) continue;
+        if(OrderGetString(ORDER_SYMBOL) != _Symbol) continue;
+
+        long magic = OrderGetInteger(ORDER_MAGIC);
+
+        if(magic == magicA) {
+            g_gridA_PendingCount++;
+        }
+        else if(magic == magicB) {
+            g_gridB_PendingCount++;
+        }
+    }
+
+    // Conta posizioni aperte (filled) dal broker
+    for(int i = PositionsTotal() - 1; i >= 0; i--) {
+        ulong ticket = PositionGetTicket(i);
+        if(!PositionSelectByTicket(ticket)) continue;
+        if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
+
+        long magic = PositionGetInteger(POSITION_MAGIC);
+        ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
+        double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+
+        if(magic == magicA) {
+            // Grid A = SOLO BUY
+            if(posType == POSITION_TYPE_BUY) {
+                // Determina se era LIMIT (sotto entry) o STOP (sopra entry)
+                if(openPrice < entryPoint) {
+                    g_gridA_LimitFilled++;  // BUY LIMIT era sotto entry
+                } else {
+                    g_gridA_StopFilled++;   // BUY STOP era sopra entry
+                }
+            }
+        }
+        else if(magic == magicB) {
+            // Grid B = SOLO SELL
+            if(posType == POSITION_TYPE_SELL) {
+                if(openPrice > entryPoint) {
+                    g_gridB_LimitFilled++;  // SELL LIMIT era sopra entry
+                } else {
+                    g_gridB_StopFilled++;   // SELL STOP era sotto entry
+                }
+            }
+        }
+    }
+
+    Print("[GridSync] Counters synchronized from broker:");
+    Print("  Grid A: Pending=", g_gridA_PendingCount,
+          " LimitFilled=", g_gridA_LimitFilled,
+          " StopFilled=", g_gridA_StopFilled);
+    Print("  Grid B: Pending=", g_gridB_PendingCount,
+          " LimitFilled=", g_gridB_LimitFilled,
+          " StopFilled=", g_gridB_StopFilled);
+}
+

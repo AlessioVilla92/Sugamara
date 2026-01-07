@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.0         |
+//|                                    SUGAMARA RIBELLE v9.5         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.0.0 TRAILING GRID FIX + PERFECT CASCADE              |
+//|  Version: 9.5.0 RIORDINO INPUT PARAMETERS                        |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -29,8 +29,8 @@
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.00"
-#property description "SUGAMARA RIBELLE v9.0 - TRAILING GRID FIX + PERFECT CASCADE"
+#property version   "9.50"
+#property description "SUGAMARA RIBELLE v9.5 - RIORDINO INPUT PARAMETERS"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Straddle = ISOLATO"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -212,7 +212,7 @@ int OnInit() {
     //--- STEP 10.5: Initialize RangeBox (REMOVED - CASCADE_OVERLAP puro) ---
     // RangeBoxManager eliminato - CASCADE SOVRAPPOSTO non lo richiede
 
-    //--- STEP 10.6: v9.0 - Hedge offset rimosso (Perfect Cascade default) ---
+    //--- STEP 10.6: v9.5 - Hedge offset rimosso (Perfect Cascade default) ---
 
     //--- STEP 10.7: Initialize Shield Intelligente ---
     if(ShieldMode != SHIELD_DISABLED) {
@@ -330,10 +330,97 @@ int OnInit() {
 
     } // End of if(!skipGridInit) - v5.9
 
-    // v5.9: If recovery was performed, set state to ACTIVE
+    // v9.1: If recovery was performed, initialize ALL subsystems
     if(skipGridInit) {
         systemState = STATE_ACTIVE;
         Print("  Recovery mode: System set to STATE_ACTIVE");
+
+        // === v9.1 RECOVERY: Inizializzazione COMPLETA di tutti i subsystem ===
+        Print("");
+        Print("=======================================================================");
+        Print("  [Recovery] Initializing all subsystems...");
+        Print("=======================================================================");
+
+        // 1. Shield Manager (chiama CalculateBreakoutLevels internamente)
+        if(ShieldMode != SHIELD_DISABLED) {
+            InitializeShield();
+            // Reset hysteresis flags che InitializeShield non resetta
+            g_preShieldInsideRangeStart = 0;
+            g_shieldTransitionLogCount = 0;
+            g_loggedWarningPhase = false;
+            g_loggedExitWarning = false;
+            g_loggedPreShieldPhase = false;
+            g_loggedCancelPreShield = false;
+            g_loggedShieldActive = false;
+            g_lastShieldHeartbeat = 0;
+            g_lastShieldState = "";
+            Print("  [Recovery] Shield Manager: INITIALIZED");
+        }
+
+        // 2. Calculate Range Boundaries (prerequisito per ShieldZonesVisual)
+        CalculateRangeBoundaries();
+
+        // 3. Shield Zones Visual (BANDE ROSSE) - PULIRE PRIMA per evitare duplicati
+        if(Enable_ShieldZonesVisual) {
+            if(shieldZonesInitialized) {
+                DeinitializeShieldZonesVisual();  // Rimuovi zone esistenti
+            }
+            InitializeShieldZonesVisual();
+            Print("  [Recovery] Shield Zones Visual: INITIALIZED");
+        }
+
+        // 4. ATR Multi-TF (indipendente)
+        if(Enable_ATRMultiTF) {
+            InitializeATRMultiTF();
+            Print("  [Recovery] ATR Multi-TF: INITIALIZED");
+        }
+
+        // 5. Trailing Grid + Ricalcolo livelli da ordini esistenti
+        if(Enable_TrailingGrid) {
+            InitializeTrailingGrid();
+            // Ricalcola max levels da ordini recuperati
+            int actualMaxAbove = GridLevelsPerSide - 1;
+            int actualMaxBelow = GridLevelsPerSide - 1;
+            for(int i = GridLevelsPerSide; i < MAX_GRID_LEVELS; i++) {
+                if(gridA_Upper_Status[i] != ORDER_NONE || gridB_Upper_Status[i] != ORDER_NONE) {
+                    actualMaxAbove = i;
+                }
+                if(gridA_Lower_Status[i] != ORDER_NONE || gridB_Lower_Status[i] != ORDER_NONE) {
+                    actualMaxBelow = i;
+                }
+            }
+            g_currentMaxLevelAbove = actualMaxAbove;
+            g_currentMaxLevelBelow = actualMaxBelow;
+            Print("  [Recovery] Trailing Grid: INITIALIZED (MaxAbove=", actualMaxAbove, " MaxBelow=", actualMaxBelow, ")");
+        }
+
+        // 6. Grid Zero - Init + Recovery ordini esistenti
+        if(Enable_GridZero) {
+            InitGridZero();  // Reset flags
+            RecoverGridZeroOrdersFromBroker();  // Recupera ordini GridZero se esistono
+            Print("  [Recovery] Grid Zero: INITIALIZED");
+        }
+
+        // 7. COP - NON serve fare nulla!
+        // COP_UpdateTracking() già ricalcola dalla history ogni tick (linea 101)
+        if(Enable_CloseOnProfit) {
+            Print("  [Recovery] COP: Will auto-recover from history on first tick");
+        }
+
+        // 8. Straddle - Init + Recovery ordini esistenti
+        if(Straddle_Enabled) {
+            StraddleInit();  // Reset flags e configura trade object
+            RecoverStraddleOrdersFromBroker();  // Recupera ordini Straddle se esistono
+            Print("  [Recovery] Straddle: INITIALIZED");
+        }
+
+        // 9. Sincronizza contatori Grid A/B con ordini reali dal broker
+        SyncGridCountersFromBroker();
+        Print("  [Recovery] Grid Counters: SYNCHRONIZED");
+
+        Print("=======================================================================");
+        Print("  [Recovery] All subsystems initialized successfully");
+        Print("=======================================================================");
     }
 
     //--- STEP 19: Draw Grid Visualization ---
@@ -348,7 +435,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.0 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.5 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -363,7 +450,7 @@ int OnInit() {
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("-----------------------------------------------------------------------");
-    Print("  v9.0 FEATURES:");
+    Print("  v9.5 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
@@ -737,13 +824,13 @@ void HandleKeyPress(int key) {
 }
 
 //+------------------------------------------------------------------+
-//| LOG v7.1 COMPLETE STATUS REPORT                                   |
+//| LOG v9.5 COMPLETE STATUS REPORT                                   |
 //| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
     Print("");
     Print("+=====================================================================+");
-    Print("|       SUGAMARA RIBELLE v7.1 - COMPLETE STATUS REPORT                |");
+    Print("|       SUGAMARA RIBELLE v9.5 - COMPLETE STATUS REPORT                |");
     Print("|       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                        |");
     Print("+=====================================================================+");
     Print("");
@@ -760,11 +847,11 @@ void LogV4StatusReport() {
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v9.0 Modules Status
+    // v9.5 Modules Status
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v9.0 MODULES STATUS                                            │");
+    Print("│  v9.5 MODULES STATUS                                            │");
     Print("├─────────────────────────────────────────────────────────────────┤");
-    // v9.0: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
+    // v9.5: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
     Print("│  PERFECT CASCADE: Grid A=BUY, Grid B=SELL (TP=spacing)");
     Print("│  STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("│  GRID ZERO: ", Enable_GridZero ? "ENABLED (Visual Priority 5px)" : "DISABLED");

@@ -3,7 +3,7 @@
 //|                        Sugamara - Input Parameters               |
 //|                                                                  |
 //|  User-configurable parameters for Double Grid Neutral            |
-//|  v5.8 MULTIMODE - PURE / CASCADE                                 |
+//|  v9.5 RIORDINO SEZIONI                                           |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
@@ -23,6 +23,25 @@ input group "    ✅ FEATURE TOGGLES"
 input bool      Enable_ATRMultiTF = true;                   // ✅ ATR Multi-Timeframe Dashboard
 input bool      Enable_ManualSR = true;                     // ✅ Manual S/R Drag & Drop
 // Enable_AdvancedButtons REMOVED (v4.4) - Buttons are ALWAYS active
+
+//+------------------------------------------------------------------+
+//| ⚙️ SYSTEM CONFIGURATION                                          |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  ⚙️ SYSTEM CONFIGURATION                                  ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    🔧 CORE SETTINGS"
+input int       MagicNumber = 20251205;                      // 🆔 Magic Number (Unique EA ID)
+input bool      EnableSystem = true;                         // ✅ Enable System
+input bool      DetailedLogging = true;                      // 📝 Detailed Logging
+input bool      EnableAlerts = true;                         // 🔔 Enable Alerts
+
+input group "    🚨 EMERGENCY PROTECTION"
+input bool      EnableEmergencyStop = false;                 // ❌ DISABILITATO - RIBELLE TOTALE! Nessun limite automatico
+input double    EmergencyStop_Percent = 20.0;                // 📉 Emergency Stop DD (%) - Non usato se EnableEmergencyStop=false
 
 //+------------------------------------------------------------------+
 //| DEBUG MODE - Strategy Tester Auto-Start                          |
@@ -173,25 +192,7 @@ input int    GridZero_Trigger_Level = 2;                    // 🎯 Trigger Leve
 // 3 = Trigger when L3 filled (36 pips from entry) - Conservative
 
 //+------------------------------------------------------------------+
-//| 1️⃣ ⚙️ SYSTEM CONFIGURATION                                      |
-//+------------------------------------------------------------------+
-
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  1️⃣  ⚙️ SYSTEM CONFIGURATION                              ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    🔧 CORE SETTINGS"
-input int       MagicNumber = 20251205;                      // 🆔 Magic Number (Unique EA ID)
-input bool      EnableSystem = true;                         // ✅ Enable System
-input bool      DetailedLogging = true;                      // 📝 Detailed Logging
-input bool      EnableAlerts = true;                         // 🔔 Enable Alerts
-
-input group "    🚨 EMERGENCY PROTECTION"
-input bool      EnableEmergencyStop = false;                 // ❌ DISABILITATO - RIBELLE TOTALE! Nessun limite automatico
-input double    EmergencyStop_Percent = 20.0;                // 📉 Emergency Stop DD (%) - Non usato se EnableEmergencyStop=false
-
-//+------------------------------------------------------------------+
-//| 2️⃣ ⭐ MODALITÀ GRIDBOT ⭐                                        |
+//| ⭐ MODALITÀ GRIDBOT ⭐                                            |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
@@ -205,25 +206,7 @@ input ENUM_NEUTRAL_MODE NeutralMode = NEUTRAL_CASCADE;       // 📊 Modalità G
 // NEUTRAL_CASCADE  = TP=Entry precedente, ATR opzionale (CONSIGLIATO)
 
 //+------------------------------------------------------------------+
-//| 3️⃣ 📊 ATR SETTINGS                                               |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  3️⃣  📊 ATR SETTINGS (CASCADE Mode)                       ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ⚡ ATR ACTIVATION"
-input bool      UseATR = false;                              // ⭐ Abilita ATR (default FALSE per usare Fixed_Spacing_Pips)
-
-input group "    ⏱️ ATR INDICATOR SETTINGS"
-input group "    ╔═ SELEZIONA TIMEFRAME ATR ═══════════════════════════════🔽🔽🔽"
-input ENUM_TIMEFRAMES ATR_Timeframe = PERIOD_M5;             // 📊 ATR Timeframe ▼
-input int       ATR_Period = 14;                             // 📈 ATR Period (bars)
-// v5.8: ATR usato solo per monitoraggio volatilità nel dashboard
-
-//+------------------------------------------------------------------+
-//| 3️⃣.8️⃣ 📝 TRAILING GRID LOGGING v5.5                               |
+//| 📝 TRAILING GRID LOGGING v5.5                                     |
 //+------------------------------------------------------------------+
 
 input group "                                                           "
@@ -857,4 +840,22 @@ input group "║  📍 MANUAL S/R DRAG & DROP                               ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 // S/R LINE COLORS: Now in VisualTheme.mqh (MANUAL_SR_*)
+
+//+------------------------------------------------------------------+
+//| 📊 ATR SETTINGS (In fondo - solo monitoraggio)                   |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  📊 ATR SETTINGS (Solo Monitoraggio)                      ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ⚡ ATR ACTIVATION"
+input bool      UseATR = false;                              // ⭐ Abilita ATR (default FALSE per usare Fixed_Spacing_Pips)
+
+input group "    ⏱️ ATR INDICATOR SETTINGS"
+input group "    ╔═ SELEZIONA TIMEFRAME ATR ═══════════════════════════════🔽🔽🔽"
+input ENUM_TIMEFRAMES ATR_Timeframe = PERIOD_M5;             // 📊 ATR Timeframe ▼
+input int       ATR_Period = 14;                             // 📈 ATR Period (bars)
+// v5.8: ATR usato solo per monitoraggio volatilità nel dashboard
 

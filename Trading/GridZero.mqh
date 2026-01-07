@@ -108,6 +108,61 @@ void ResetGridZeroFlags() {
 }
 
 //+------------------------------------------------------------------+
+//| RECOVER GRID ZERO ORDERS FROM BROKER (v9.1)                      |
+//| Chiamare dopo InitGridZero() in recovery mode                    |
+//| GridZero usa magic Grid A/B, identificato dal prezzo vicino      |
+//| all'entry point (entro 50% dello spacing)                        |
+//+------------------------------------------------------------------+
+void RecoverGridZeroOrdersFromBroker() {
+    if(!Enable_GridZero) return;
+
+    long magicA = MagicNumber + MAGIC_OFFSET_GRID_A;
+    long magicB = MagicNumber + MAGIC_OFFSET_GRID_B;
+
+    // Tolerance: ordine è GridZero se prezzo è entro 50% dello spacing dall'entry
+    double tolerance = currentSpacing_Pips * symbolPoint * 10 * 0.5;
+
+    // Cerca ordini pendenti vicini all'entry point
+    for(int i = OrdersTotal() - 1; i >= 0; i--) {
+        ulong ticket = OrderGetTicket(i);
+        if(ticket == 0) continue;
+        if(OrderGetString(ORDER_SYMBOL) != _Symbol) continue;
+
+        long magic = OrderGetInteger(ORDER_MAGIC);
+        if(magic != magicA && magic != magicB) continue;
+
+        double orderPrice = OrderGetDouble(ORDER_PRICE_OPEN);
+        ENUM_ORDER_TYPE type = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
+
+        // GridZero è molto vicino all'entry point
+        if(MathAbs(orderPrice - entryPoint) < tolerance) {
+            if(type == ORDER_TYPE_BUY_STOP || type == ORDER_TYPE_SELL_STOP) {
+                g_gridZero_StopTicket = ticket;
+                g_gridZero_StopStatus = ORDER_PENDING;
+                // Determina bias dalla direzione dell'ordine
+                if(type == ORDER_TYPE_BUY_STOP) {
+                    g_gridZeroBiasDown = true;  // Bearish bias → Bullish structure
+                } else {
+                    g_gridZeroBiasUp = true;    // Bullish bias → Bearish structure
+                }
+            }
+            else if(type == ORDER_TYPE_BUY_LIMIT || type == ORDER_TYPE_SELL_LIMIT) {
+                g_gridZero_LimitTicket = ticket;
+                g_gridZero_LimitStatus = ORDER_PENDING;
+            }
+        }
+    }
+
+    // Se abbiamo trovato ordini GridZero, segna come inserito
+    if(g_gridZero_StopTicket > 0 || g_gridZero_LimitTicket > 0) {
+        g_gridZeroInserted = true;
+        Print("  [GridZero Recovery] Found: STOP=#", g_gridZero_StopTicket,
+              " LIMIT=#", g_gridZero_LimitTicket,
+              " BiasUp=", g_gridZeroBiasUp, " BiasDown=", g_gridZeroBiasDown);
+    }
+}
+
+//+------------------------------------------------------------------+
 //| CHECK AND INSERT GRID ZERO (called from OnTick)                  |
 //+------------------------------------------------------------------+
 void CheckAndInsertGridZero() {
