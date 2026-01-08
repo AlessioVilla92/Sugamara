@@ -439,7 +439,7 @@ void CreateUnifiedDashboard() {
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
     // v5.9.5: Titolo GIALLO, sottotitolo ARANCIONE SCURO
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v9.0", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v9.7", clrYellow, 20, "Arial Black");
     DashLabel("TITLE_SUB", x + totalWidth/2 - 80, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 

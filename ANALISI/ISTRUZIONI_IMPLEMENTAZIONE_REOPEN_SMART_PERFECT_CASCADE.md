@@ -79,7 +79,7 @@ bool IsPriceAtReopenLevel(double levelPrice) {
         return (MathAbs(currentPrice - levelPrice) <= minOffset);
     }
     
-    double offsetPrice = PipsToPoints(ReopenOffset_Pips);
+    double offsetPrice = PipsToPoints(ReopenOffset_Pips_STOP_ORDERS);
     return (MathAbs(currentPrice - levelPrice) <= offsetPrice);
 }
 ```
@@ -120,7 +120,7 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
     double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
     if(currentPrice <= 0) return false;
     
-    double offsetPoints = PipsToPoints(ReopenOffset_Pips);  // Default: 3 pips
+    double offsetPoints = PipsToPoints(ReopenOffset_Pips_STOP_ORDERS);  // Default: 3 pips
     
     switch(orderType) {
         case ORDER_TYPE_BUY_STOP:
@@ -482,7 +482,7 @@ input ENUM_REOPEN_TRIGGER ReopenTrigger = REOPEN_IMMEDIATE;  // [LEGACY] Non usa
 
 input group "    🎯 SMART REOPEN v8.0 (Solo per STOP)"
 
-input double    ReopenOffset_Pips = 3.0;                     // 📏 Offset per STOP (pips)
+input double    ReopenOffset_Pips_STOP_ORDERS = 3.0;                     // 📏 Offset per STOP (pips)
 // BUY STOP: inserisce quando prezzo <= entry - offset
 // SELL STOP: inserisce quando prezzo >= entry + offset
 // LIMIT: Ignorato (sempre immediato)

@@ -260,7 +260,7 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
     double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
     if(currentPrice <= 0) return false;
     
-    double offsetPoints = PipsToPoints(ReopenOffset_Pips);  // Default: 3 pips
+    double offsetPoints = PipsToPoints(ReopenOffset_Pips_STOP_ORDERS);  // Default: 3 pips
     bool canReopen = false;
     double triggerPrice = 0;
     

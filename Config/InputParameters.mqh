@@ -252,9 +252,9 @@ input ENUM_SHIELD_MODE ShieldMode = SHIELD_3_PHASES;         // 🛡️ Modalita
 // SHIELD_3_PHASES  = Warning -> Pre-Shield -> Active (CONSIGLIATO)
 
 input group "    ╔═ SELEZIONA TIPO ORDINE SHIELD ════════════════════════🔽🔽🔽"
-input ENUM_SHIELD_ORDER_TYPE ShieldOrderType = SHIELD_ORDER_MARKET; // 🛡️ Tipo Ordine Shield ▼
-// SHIELD_ORDER_MARKET = Esecuzione immediata a mercato (CONSIGLIATO)
-// SHIELD_ORDER_STOP   = Pending STOP order al livello breakout
+input ENUM_SHIELD_ORDER_TYPE ShieldOrderType = SHIELD_ORDER_STOP; // 🛡️ Tipo Ordine Shield ▼
+// SHIELD_ORDER_MARKET = Esecuzione immediata a mercato
+// SHIELD_ORDER_STOP   = Pending STOP order al livello breakout (CONSIGLIATO)
 
 input group "    📐 SHIELD BREAKOUT PARAMETERS"
 input double    Breakout_Buffer_Pips = 20.0;                 // 📏 Buffer Breakout oltre ultimo grid (pips)
@@ -343,7 +343,7 @@ input group "    📐 CYCLIC PARAMETERS"
 // Cooldown REMOVED v5.8 - Reopen sempre immediato
 input int       MaxCyclesPerLevel = 0;                       // 🔢 Max Cicli per Livello (0=infiniti)
 // v9.0: EnableReopenOffset ELIMINATO - STOP sempre con offset unidirezionale
-input double    ReopenOffset_Pips = 3.0;                     // 📏 Offset STOP Unidirezionale (pips)
+input double    ReopenOffset_Pips_STOP_ORDERS = 3.0;         // 📏 Offset STOP Unidirezionale (pips)
 // v9.0 SMART REOPEN: BUY_STOP riapre quando prezzo <= entry - offset
 //                    SELL_STOP riapre quando prezzo >= entry + offset
 //                    LIMIT riapre IMMEDIATAMENTE (intrinsecamente protetti)
@@ -436,7 +436,6 @@ input group "╚═════════════════════�
 
 input group "    📐 EUR/USD GRID SETTINGS"
 input double    EURUSD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    EURUSD_TP_Pips = 18.0;                       // 🎯 TP per livello (pips)
 input double    EURUSD_EstimatedSpread = 1.0;                // 📊 Spread Stimato (pips)
 input double    EURUSD_DailyRange = 80.0;                    // 📈 Range Giornaliero (pips)
 input double    EURUSD_ATR_Typical = 25.0;                   // 📊 ATR Tipico (pips)
@@ -453,7 +452,6 @@ input group "╚═════════════════════�
 
 input group "    📐 USD/CAD GRID SETTINGS"
 input double    USDCAD_DefaultSpacing = 12.0;                // 📏 Spacing Default (pips) - v4.6 aumentato per spread
-input double    USDCAD_TP_Pips = 20.0;                       // 🎯 TP per livello (pips) - v4.6 aumentato per compensare
 input double    USDCAD_EstimatedSpread = 1.3;                // 📊 Spread Stimato (pips)
 input double    USDCAD_DailyRange = 65.0;                    // 📈 Range Giornaliero (pips)
 input double    USDCAD_ATR_Typical = 22.0;                   // 📊 ATR Tipico (pips)
@@ -470,7 +468,6 @@ input group "╚═════════════════════�
 
 input group "    📐 AUD/NZD GRID SETTINGS"
 input double    AUDNZD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    AUDNZD_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
 input double    AUDNZD_EstimatedSpread = 3.0;                // 📊 Spread Stimato (pips)
 input double    AUDNZD_DailyRange = 65.0;                    // 📈 Range Giornaliero (pips)
 input double    AUDNZD_ATR_Typical = 18.0;                   // 📊 ATR Tipico (pips)
@@ -487,7 +484,6 @@ input group "╚═════════════════════�
 
 input group "    📐 EUR/CHF GRID SETTINGS"
 input double    EURCHF_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    EURCHF_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
 input double    EURCHF_EstimatedSpread = 1.5;                // 📊 Spread Stimato (pips)
 input double    EURCHF_DailyRange = 50.0;                    // 📈 Range Giornaliero (pips)
 input double    EURCHF_ATR_Typical = 15.0;                   // 📊 ATR Tipico (pips)
@@ -504,7 +500,6 @@ input group "╚═════════════════════�
 
 input group "    📐 AUD/CAD GRID SETTINGS"
 input double    AUDCAD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    AUDCAD_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
 input double    AUDCAD_EstimatedSpread = 2.5;                // 📊 Spread Stimato (pips)
 input double    AUDCAD_DailyRange = 75.0;                    // 📈 Range Giornaliero (pips)
 input double    AUDCAD_ATR_Typical = 22.0;                   // 📊 ATR Tipico (pips)
@@ -521,7 +516,6 @@ input group "╚═════════════════════�
 
 input group "    📐 NZD/CAD GRID SETTINGS"
 input double    NZDCAD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    NZDCAD_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
 input double    NZDCAD_EstimatedSpread = 3.0;                // 📊 Spread Stimato (pips)
 input double    NZDCAD_DailyRange = 70.0;                    // 📈 Range Giornaliero (pips)
 input double    NZDCAD_ATR_Typical = 20.0;                   // 📊 ATR Tipico (pips)
@@ -538,7 +532,6 @@ input group "╚═════════════════════�
 
 input group "    📐 EUR/GBP GRID SETTINGS"
 input double    EURGBP_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    EURGBP_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
 input double    EURGBP_EstimatedSpread = 1.5;                // 📊 Spread Stimato (pips)
 input double    EURGBP_DailyRange = 55.0;                    // 📈 Range Giornaliero (pips)
 input double    EURGBP_ATR_Typical = 16.0;                   // 📊 ATR Tipico (pips)
@@ -555,7 +548,6 @@ input group "╚═════════════════════�
 
 input group "    📐 GBP/USD GRID SETTINGS"
 input double    GBPUSD_DefaultSpacing = 12.0;                // 📏 Spacing Default (pips)
-input double    GBPUSD_TP_Pips = 20.0;                       // 🎯 TP per livello (pips)
 input double    GBPUSD_EstimatedSpread = 1.2;                // 📊 Spread Stimato (pips)
 input double    GBPUSD_DailyRange = 100.0;                   // 📈 Range Giornaliero (pips)
 input double    GBPUSD_ATR_Typical = 28.0;                   // 📊 ATR Tipico (pips)
@@ -572,7 +564,6 @@ input group "╚═════════════════════�
 
 input group "    📐 USD/CHF GRID SETTINGS"
 input double    USDCHF_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    USDCHF_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
 input double    USDCHF_EstimatedSpread = 1.5;                // 📊 Spread Stimato (pips)
 input double    USDCHF_DailyRange = 60.0;                    // 📈 Range Giornaliero (pips)
 input double    USDCHF_ATR_Typical = 18.0;                   // 📊 ATR Tipico (pips)
@@ -589,7 +580,6 @@ input group "╚═════════════════════�
 
 input group "    📐 USD/JPY GRID SETTINGS"
 input double    USDJPY_DefaultSpacing = 12.0;                // 📏 Spacing Default (pips)
-input double    USDJPY_TP_Pips = 20.0;                       // 🎯 TP per livello (pips)
 input double    USDJPY_EstimatedSpread = 1.0;                // 📊 Spread Stimato (pips)
 input double    USDJPY_DailyRange = 95.0;                    // 📈 Range Giornaliero (pips)
 input double    USDJPY_ATR_Typical = 28.0;                   // 📊 ATR Tipico (pips)
@@ -606,7 +596,6 @@ input group "╚═════════════════════�
 
 input group "    📐 EUR/JPY GRID SETTINGS"
 input double    EURJPY_DefaultSpacing = 12.0;                // 📏 Spacing Default (pips)
-input double    EURJPY_TP_Pips = 18.0;                       // 🎯 TP per livello (pips)
 input double    EURJPY_EstimatedSpread = 1.4;                // 📊 Spread Stimato (pips)
 input double    EURJPY_DailyRange = 100.0;                   // 📈 Range Giornaliero (pips)
 input double    EURJPY_ATR_Typical = 30.0;                   // 📊 ATR Tipico (pips)
@@ -623,7 +612,6 @@ input group "╚═════════════════════�
 
 input group "    📐 AUD/USD GRID SETTINGS"
 input double    AUDUSD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    AUDUSD_TP_Pips = 15.0;                       // 🎯 TP per livello (pips)
 input double    AUDUSD_EstimatedSpread = 1.0;                // 📊 Spread Stimato (pips)
 input double    AUDUSD_DailyRange = 75.0;                    // 📈 Range Giornaliero (pips)
 input double    AUDUSD_ATR_Typical = 22.0;                   // 📊 ATR Tipico (pips)
@@ -640,7 +628,6 @@ input group "╚═════════════════════�
 
 input group "    📐 NZD/USD GRID SETTINGS"
 input double    NZDUSD_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
-input double    NZDUSD_TP_Pips = 14.0;                       // 🎯 TP per livello (pips)
 input double    NZDUSD_EstimatedSpread = 1.5;                // 📊 Spread Stimato (pips)
 input double    NZDUSD_DailyRange = 65.0;                    // 📈 Range Giornaliero (pips)
 input double    NZDUSD_ATR_Typical = 20.0;                   // 📊 ATR Tipico (pips)

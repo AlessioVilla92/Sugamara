@@ -1064,7 +1064,7 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
     double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
     if(currentPrice <= 0) return false;
 
-    double offsetPoints = PipsToPoints(ReopenOffset_Pips);
+    double offsetPoints = PipsToPoints(ReopenOffset_Pips_STOP_ORDERS);
     bool canReopen = false;
     string condition = "";
     double targetPrice = 0;
@@ -1077,7 +1077,7 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
             canReopen = (currentPrice <= targetPrice);
             distancePips = PointsToPips(currentPrice - targetPrice);
             condition = StringFormat("price %.5f <= %.5f (entry-%.1f)",
-                                     currentPrice, targetPrice, ReopenOffset_Pips);
+                                     currentPrice, targetPrice, ReopenOffset_Pips_STOP_ORDERS);
             break;
 
         case ORDER_TYPE_SELL_STOP:
@@ -1086,7 +1086,7 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
             canReopen = (currentPrice >= targetPrice);
             distancePips = PointsToPips(targetPrice - currentPrice);
             condition = StringFormat("price %.5f >= %.5f (entry+%.1f)",
-                                     currentPrice, targetPrice, ReopenOffset_Pips);
+                                     currentPrice, targetPrice, ReopenOffset_Pips_STOP_ORDERS);
             break;
 
         default:
