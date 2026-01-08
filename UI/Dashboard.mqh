@@ -768,6 +768,8 @@ void CreateCOPPanel() {
     int copWidth = 175;
     int copHeight = 155;  // Increased for new fields
 
+    // v9.7: Bordo giallo sottile attorno al pannello COP per maggiore visibilità
+    DashRectangle("COP_BORDER", copX - 2, copY - 2, copWidth + 4, copHeight + 4, clrGold);
     DashRectangle("COP_PANEL", copX, copY, copWidth, copHeight, C'28,35,28');
 
     int ly = copY + 8;

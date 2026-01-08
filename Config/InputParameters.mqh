@@ -3,7 +3,7 @@
 //|                        Sugamara - Input Parameters               |
 //|                                                                  |
 //|  User-configurable parameters for Double Grid Neutral            |
-//|  v9.5 RIORDINO SEZIONI                                           |
+//|  v9.7 - Cleanup & Fixes                                          |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"

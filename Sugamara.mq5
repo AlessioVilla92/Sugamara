@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.5         |
+//|                                    SUGAMARA RIBELLE v9.7         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.5.0 RIORDINO INPUT PARAMETERS                        |
+//|  Version: 9.7.0 - Cleanup & Fixes                                |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -29,8 +29,8 @@
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.50"
-#property description "SUGAMARA RIBELLE v9.5 - RIORDINO INPUT PARAMETERS"
+#property version   "9.70"
+#property description "SUGAMARA RIBELLE v9.7 - Cleanup & Fixes"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Straddle = ISOLATO"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict

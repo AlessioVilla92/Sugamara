@@ -312,7 +312,7 @@ bool ValidateModeParameters()
 void PrintModeConfiguration()
 {
    Print("═══════════════════════════════════════════════════════════════════");
-   Print("  SUGAMARA v9.0 - CONFIGURAZIONE MODALITÀ");
+   Print("  SUGAMARA v9.7 - CONFIGURAZIONE MODALITÀ");
    Print("═══════════════════════════════════════════════════════════════════");
    PrintFormat("  Modalità: %s", GetModeName());
    PrintFormat("  Descrizione: %s", GetModeDescription());
