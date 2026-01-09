@@ -88,8 +88,8 @@ color GetThemeDashboardAccent() { return THEME_DASHBOARD_ACCENT; }
 //+------------------------------------------------------------------+
 //| DASHBOARD CONSTANTS                                              |
 //+------------------------------------------------------------------+
-#define PANEL_WIDTH       315
-#define TOTAL_WIDTH       630
+#define PANEL_WIDTH       345
+#define TOTAL_WIDTH       690
 #define PANEL_HEADER      28
 #define LINE_HEIGHT       18
 #define SECTION_MARGIN    10
@@ -102,7 +102,7 @@ color GetThemeDashboardAccent() { return THEME_DASHBOARD_ACCENT; }
 //+------------------------------------------------------------------+
 int g_btnY = 0;       // Button panel Y position
 int g_leftX = 10;     // Left column X position
-int g_colWidth = 315; // Column width
+int g_colWidth = 345; // Column width
 
 //+------------------------------------------------------------------+
 //| Handle Button Click Events                                       |

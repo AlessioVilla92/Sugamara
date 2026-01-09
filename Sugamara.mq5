@@ -435,7 +435,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.5 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.7 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -450,7 +450,7 @@ int OnInit() {
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("-----------------------------------------------------------------------");
-    Print("  v9.5 FEATURES:");
+    Print("  v9.7 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
@@ -830,7 +830,7 @@ void HandleKeyPress(int key) {
 void LogV4StatusReport() {
     Print("");
     Print("+=====================================================================+");
-    Print("|       SUGAMARA RIBELLE v9.5 - COMPLETE STATUS REPORT                |");
+    Print("|       SUGAMARA RIBELLE v9.7 - COMPLETE STATUS REPORT                |");
     Print("|       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                        |");
     Print("+=====================================================================+");
     Print("");
@@ -847,11 +847,11 @@ void LogV4StatusReport() {
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v9.5 Modules Status
+    // v9.7 Modules Status
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v9.5 MODULES STATUS                                            │");
+    Print("│  v9.7 MODULES STATUS                                            │");
     Print("├─────────────────────────────────────────────────────────────────┤");
-    // v9.5: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
+    // v9.7: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
     Print("│  PERFECT CASCADE: Grid A=BUY, Grid B=SELL (TP=spacing)");
     Print("│  STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("│  GRID ZERO: ", Enable_GridZero ? "ENABLED (Visual Priority 5px)" : "DISABLED");
