@@ -64,29 +64,6 @@ datetime        g_lastLoggedATRChange = 0;              // Ultimo log ATR
 string          g_lastATRStepName = "";                 // Nome ultimo step loggato
 
 //+------------------------------------------------------------------+
-//| 🔄 TRAILING GRID STATE VARIABLES v5.3                             |
-//+------------------------------------------------------------------+
-
-// Contatori grid extra inserite per lato
-int g_trailExtraGridsAbove = 0;              // Grid extra inserite sopra
-int g_trailExtraGridsBelow = 0;              // Grid extra inserite sotto
-
-// Tracking livello massimo attivo (0-based index)
-int g_currentMaxLevelAbove = 0;              // Livello max attivo sopra
-int g_currentMaxLevelBelow = 0;              // Livello max attivo sotto
-
-// Stato sistema trailing
-bool g_trailActiveAbove = false;             // Trailing attivo verso l'alto
-bool g_trailActiveBelow = false;             // Trailing attivo verso il basso
-datetime g_lastTrailInsertTime = 0;          // Timestamp ultimo inserimento
-
-// Statistiche sessione per Dashboard
-int g_trailUpperAdded = 0;                   // Contatore UPPER ADDED
-int g_trailUpperRemoved = 0;                 // Contatore UPPER REMOVED
-int g_trailLowerAdded = 0;                   // Contatore LOWER ADDED
-int g_trailLowerRemoved = 0;                 // Contatore LOWER REMOVED
-
-//+------------------------------------------------------------------+
 //| 📊 GRID COUNTER v5.9.3 - Track closed vs pending grids           |
 //+------------------------------------------------------------------+
 int g_gridA_ClosedCount = 0;                 // Grid A chiuse (TP hit)

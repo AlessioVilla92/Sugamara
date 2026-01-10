@@ -233,7 +233,7 @@ void LogGridStatus(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, string s
 #define LOG_CAT_ATR       "[ATR]"
 #define LOG_CAT_CYCLE     "[CYCLE]"
 #define LOG_CAT_REOPEN    "[REOPEN]"
-#define LOG_CAT_TRAIL     "[TRAIL]"
+// LOG_CAT_TRAIL removed in v9.9 (Trailing Grid deprecated)
 
 //+------------------------------------------------------------------+
 //| Get Current Timestamp String                                      |
@@ -312,84 +312,7 @@ void LogReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, string reaso
                 GetLogTimestamp(), LOG_CAT_REOPEN, gridName, zoneName, level+1, reason);
 }
 
-//+------------------------------------------------------------------+
-//| TRAILING GRID LOGGING FUNCTIONS v5.5                              |
-//+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| Log Trail Initialization                                          |
-//+------------------------------------------------------------------+
-void LogTrail_Init(int triggerLevel, double spacingMult, int maxExtra, bool syncShield) {
-    if(!Trail_DetailedLogging) return;
-    PrintFormat("%s %s INIT | Trigger:L%d | SpacingMult:%.2f | MaxExtra:%d | SyncShield:%s",
-                GetLogTimestamp(), LOG_CAT_TRAIL, triggerLevel, spacingMult, maxExtra,
-                syncShield ? "YES" : "NO");
-}
-
-//+------------------------------------------------------------------+
-//| Log Trail Trigger Check (Debug)                                   |
-//+------------------------------------------------------------------+
-void LogTrail_TriggerCheck(string direction, int pendingCount, int triggerLevel, double currentPrice) {
-    if(!Trail_LogTriggerChecks) return;
-    PrintFormat("%s %s CHECK %s | Pending:%d (trigger<=%d) | Price:%.5f",
-                GetLogTimestamp(), LOG_CAT_TRAIL, direction, pendingCount, triggerLevel, currentPrice);
-}
-
-//+------------------------------------------------------------------+
-//| Log Trail Grid Insertion                                          |
-//+------------------------------------------------------------------+
-void LogTrail_GridInserted(string direction, int newIndex, double gridAPrice, double gridBPrice,
-                           double lotSize, double tpA, double tpB) {
-    if(!Trail_DetailedLogging || !Trail_LogInsertions) return;
-    PrintFormat("%s %s ➕ INSERT %s [%d] | GridA@%.5f (TP:%.5f) | GridB@%.5f (TP:%.5f) | Lot:%.2f",
-                GetLogTimestamp(), LOG_CAT_TRAIL, direction, newIndex,
-                gridAPrice, tpA, gridBPrice, tpB, lotSize);
-}
-
-//+------------------------------------------------------------------+
-//| Log Trail Grid Removal                                            |
-//+------------------------------------------------------------------+
-void LogTrail_GridRemoved(string direction, int index, double price) {
-    if(!Trail_DetailedLogging || !Trail_LogRemovals) return;
-    PrintFormat("%s %s ➖ REMOVE %s [%d] @ %.5f",
-                GetLogTimestamp(), LOG_CAT_TRAIL, direction, index, price);
-}
-
-//+------------------------------------------------------------------+
-//| Log Trail Shield Zone Update                                      |
-//+------------------------------------------------------------------+
-void LogTrail_ShieldUpdate(double newResistance, double newSupport, double rangeHeight) {
-    if(!Trail_DetailedLogging || !Trail_LogShieldSync) return;
-    PrintFormat("%s %s 🛡️ SHIELD SYNC | R:%.5f | S:%.5f | Range:%.1f pips",
-                GetLogTimestamp(), LOG_CAT_TRAIL, newResistance, newSupport, rangeHeight);
-}
-
-//+------------------------------------------------------------------+
-//| Log Trail Trigger Event                                           |
-//+------------------------------------------------------------------+
-void LogTrail_Triggered(string direction, int pendingCount, double newLevel, int extraCount) {
-    if(!Trail_DetailedLogging) return;
-    PrintFormat("%s %s TRIGGER %s | Pending:%d | NewLevel:%.5f | ExtraGrids:%d",
-                GetLogTimestamp(), LOG_CAT_TRAIL, direction, pendingCount, newLevel, extraCount);
-}
-
-//+------------------------------------------------------------------+
-//| Log Trail Statistics                                              |
-//+------------------------------------------------------------------+
-void LogTrail_Statistics(int upperAdded, int upperRemoved, int lowerAdded, int lowerRemoved) {
-    if(!Trail_DetailedLogging) return;
-    PrintFormat("%s %s STATS | Upper: +%d/-%d | Lower: +%d/-%d",
-                GetLogTimestamp(), LOG_CAT_TRAIL, upperAdded, upperRemoved, lowerAdded, lowerRemoved);
-}
-
-//+------------------------------------------------------------------+
-//| Log Trail Error                                                   |
-//+------------------------------------------------------------------+
-void LogTrail_Error(string operation, string errorMessage) {
-    // Always log errors
-    PrintFormat("%s %s ERROR in %s: %s",
-                GetLogTimestamp(), LOG_CAT_TRAIL, operation, errorMessage);
-}
+// v9.9: TRAILING GRID LOGGING FUNCTIONS removed (feature deprecated)
 
 //+------------------------------------------------------------------+
 //| Log Detailed Order Placement (v9.0)                                |

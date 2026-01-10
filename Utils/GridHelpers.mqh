@@ -924,14 +924,13 @@ bool IsValidLevelIndex(int level) {
 }
 
 //+------------------------------------------------------------------+
-//| v9.0: Validate Trailing Grid Level Index                         |
-//| Permette indici oltre GridLevelsPerSide per trailing grids       |
+//| v9.9: Validate Grid Level Index                                   |
+//| v9.9: Trailing Grid removed - just check GridLevelsPerSide       |
 //+------------------------------------------------------------------+
 bool IsValidTrailingIndex(int level, bool isUpper) {
     if(level < 0) return false;
-    int maxTrailing = isUpper ? g_trailExtraGridsAbove : g_trailExtraGridsBelow;
-    int maxLevel = GridLevelsPerSide + maxTrailing;
-    return (level < maxLevel && level < MAX_GRID_LEVELS);
+    // v9.9: Trailing Grid removed - no extra levels
+    return (level < GridLevelsPerSide && level < MAX_GRID_LEVELS);
 }
 
 //+------------------------------------------------------------------+

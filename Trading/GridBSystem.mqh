@@ -218,20 +218,17 @@ bool PlaceGridBLowerOrder(int level) {
 //| Update Grid B Order Statuses                                     |
 //+------------------------------------------------------------------+
 void UpdateGridBStatuses() {
-    // v9.0: Estendi loop per includere trailing grids
-    int maxLevelUpper = GridLevelsPerSide + g_trailExtraGridsAbove;
-    if(maxLevelUpper > MAX_GRID_LEVELS) maxLevelUpper = MAX_GRID_LEVELS;
-
-    int maxLevelLower = GridLevelsPerSide + g_trailExtraGridsBelow;
-    if(maxLevelLower > MAX_GRID_LEVELS) maxLevelLower = MAX_GRID_LEVELS;
+    // v9.9: Trailing Grid removed - use GridLevelsPerSide directly
+    int maxLevel = GridLevelsPerSide;
+    if(maxLevel > MAX_GRID_LEVELS) maxLevel = MAX_GRID_LEVELS;
 
     // Update Upper Zone
-    for(int i = 0; i < maxLevelUpper; i++) {
+    for(int i = 0; i < maxLevel; i++) {
         UpdateGridBUpperStatus(i);
     }
 
     // Update Lower Zone
-    for(int i = 0; i < maxLevelLower; i++) {
+    for(int i = 0; i < maxLevel; i++) {
         UpdateGridBLowerStatus(i);
     }
 }
@@ -337,22 +334,19 @@ void ProcessGridBCyclicReopen() {
     if(!EnableCyclicReopen) return;
     if(IsMarketTooVolatile()) return;
 
-    // v9.0: Estendi loop per includere trailing grids
-    int maxLevelUpper = GridLevelsPerSide + g_trailExtraGridsAbove;
-    if(maxLevelUpper > MAX_GRID_LEVELS) maxLevelUpper = MAX_GRID_LEVELS;
-
-    int maxLevelLower = GridLevelsPerSide + g_trailExtraGridsBelow;
-    if(maxLevelLower > MAX_GRID_LEVELS) maxLevelLower = MAX_GRID_LEVELS;
+    // v9.9: Trailing Grid removed - use GridLevelsPerSide directly
+    int maxLevel = GridLevelsPerSide;
+    if(maxLevel > MAX_GRID_LEVELS) maxLevel = MAX_GRID_LEVELS;
 
     // Upper Zone
-    for(int i = 0; i < maxLevelUpper; i++) {
+    for(int i = 0; i < maxLevel; i++) {
         if(ShouldReopenGridBUpper(i)) {
             ReopenGridBUpper(i);
         }
     }
 
     // Lower Zone
-    for(int i = 0; i < maxLevelLower; i++) {
+    for(int i = 0; i < maxLevel; i++) {
         if(ShouldReopenGridBLower(i)) {
             ReopenGridBLower(i);
         }

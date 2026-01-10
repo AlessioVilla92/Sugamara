@@ -282,7 +282,6 @@ bool InitializeDashboard() {
     CreateShieldPanel();
     CreateGridLegendPanel();
     CreateCOPPanel();  // v5.1: Close On Profit Panel
-    CreateTrailingGridPanel();  // v5.3: Trailing Grid Panel
 
     // Mark dashboard as initialized
     g_dashboardInitialized = true;
@@ -374,7 +373,6 @@ void RecreateEntireDashboard() {
     CreateShieldPanel();
     CreateGridLegendPanel();
     CreateCOPPanel();  // v5.1: Close On Profit Panel
-    CreateTrailingGridPanel();  // v5.3: Trailing Grid Panel
 
     // v4.4: Control buttons ALWAYS active
     // FIX v4.5: Corrected parameter order (startX, startY, panelWidth)
@@ -439,7 +437,7 @@ void CreateUnifiedDashboard() {
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
     // v5.9.5: Titolo GIALLO, sottotitolo ARANCIONE SCURO
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v9.7", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v9.9", clrYellow, 20, "Arial Black");
     DashLabel("TITLE_SUB", x + totalWidth/2 - 80, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
@@ -781,44 +779,6 @@ void CreateCOPPanel() {
 }
 
 //+------------------------------------------------------------------+
-//| Create Trailing Grid Panel (v5.3)                                 |
-//| v5.9: Moved up (ATR Monitor reduced)                              |
-//+------------------------------------------------------------------+
-void CreateTrailingGridPanel() {
-    if(!Enable_TrailingGrid) return;
-
-    int tgX = Dashboard_X + TOTAL_WIDTH + 10;
-    int tgY = Dashboard_Y + 440;  // v5.9: Sotto COP panel (280 + 155 + 5 gap)
-    int tgWidth = 175;
-    int tgHeight = 130;
-
-    DashRectangle("TG_PANEL", tgX, tgY, tgWidth, tgHeight, C'30,35,40');
-
-    int ly = tgY + 8;
-    DashLabel("TG_TITLE", tgX + 10, ly, "TRAILING GRID", CLR_GOLD, 9, "Arial Bold");
-    ly += 20;
-    DashLabel("TG_SEPARATOR", tgX + 10, ly, "------------------------", clrGray, 7);
-    ly += 15;
-
-    // Status
-    DashLabel("TG_STATUS", tgX + 10, ly, "Status: ACTIVE", CLR_PROFIT, 8);
-    ly += 18;
-
-    // UPPER ADDED / REMOVED
-    DashLabel("TG_UPPER_ADD", tgX + 10, ly, "Upper Added: 0", CLR_GRID_A, 8);
-    ly += 15;
-    DashLabel("TG_UPPER_REM", tgX + 10, ly, "Upper Removed: 0", CLR_LOSS, 8);
-    ly += 18;
-
-    // LOWER ADDED / REMOVED
-    DashLabel("TG_LOWER_ADD", tgX + 10, ly, "Lower Added: 0", CLR_GRID_A, 8);
-    ly += 15;
-    DashLabel("TG_LOWER_REM", tgX + 10, ly, "Lower Removed: 0", CLR_LOSS, 8);
-
-    Print("SUCCESS: Trailing Grid Panel created (v5.3)");
-}
-
-//+------------------------------------------------------------------+
 //| Update All Dashboard Values                                      |
 //+------------------------------------------------------------------+
 void UpdateDashboard() {
@@ -840,7 +800,6 @@ void UpdateDashboard() {
     UpdateVolatilityPanel();
     UpdateShieldSection();
     UpdateCOPSection();  // v5.1: Close On Profit Section
-    UpdateTrailingGridSection();  // v5.3: Trailing Grid Section
 
     ChartRedraw(0);
 }
@@ -1308,55 +1267,6 @@ void UpdateCOPSection() {
 }
 
 //+------------------------------------------------------------------+
-//| Update Trailing Grid Section (v5.3)                               |
-//+------------------------------------------------------------------+
-void UpdateTrailingGridSection() {
-    if(!Enable_TrailingGrid) return;
-
-    // Status
-    string statusText = "Status: ";
-    color statusColor = clrGray;
-
-    if(systemState == STATE_ACTIVE) {
-        if(g_trailActiveAbove || g_trailActiveBelow) {
-            statusText += "TRAILING";
-            statusColor = CLR_ACTIVE;
-        } else {
-            statusText += "WATCHING";
-            statusColor = CLR_PROFIT;
-        }
-    } else {
-        statusText += "IDLE";
-    }
-    ObjectSetString(0, "TG_STATUS", OBJPROP_TEXT, statusText);
-    ObjectSetInteger(0, "TG_STATUS", OBJPROP_COLOR, statusColor);
-
-    // UPPER ADDED
-    ObjectSetString(0, "TG_UPPER_ADD", OBJPROP_TEXT,
-                    StringFormat("Upper Added: %d", g_trailUpperAdded));
-    ObjectSetInteger(0, "TG_UPPER_ADD", OBJPROP_COLOR,
-                    g_trailUpperAdded > 0 ? CLR_GRID_A : clrGray);
-
-    // UPPER REMOVED
-    ObjectSetString(0, "TG_UPPER_REM", OBJPROP_TEXT,
-                    StringFormat("Upper Removed: %d", g_trailUpperRemoved));
-    ObjectSetInteger(0, "TG_UPPER_REM", OBJPROP_COLOR,
-                    g_trailUpperRemoved > 0 ? CLR_LOSS : clrGray);
-
-    // LOWER ADDED
-    ObjectSetString(0, "TG_LOWER_ADD", OBJPROP_TEXT,
-                    StringFormat("Lower Added: %d", g_trailLowerAdded));
-    ObjectSetInteger(0, "TG_LOWER_ADD", OBJPROP_COLOR,
-                    g_trailLowerAdded > 0 ? CLR_GRID_A : clrGray);
-
-    // LOWER REMOVED
-    ObjectSetString(0, "TG_LOWER_REM", OBJPROP_TEXT,
-                    StringFormat("Lower Removed: %d", g_trailLowerRemoved));
-    ObjectSetInteger(0, "TG_LOWER_REM", OBJPROP_COLOR,
-                    g_trailLowerRemoved > 0 ? CLR_LOSS : clrGray);
-}
-
-//+------------------------------------------------------------------+
 //| Helper: Get ATR Value for Timeframe                              |
 //+------------------------------------------------------------------+
 double GetATRValue(ENUM_TIMEFRAMES tf) {
@@ -1466,7 +1376,6 @@ void RemoveDashboard() {
     DeleteObjectsByPrefix("GRID_LEGEND_");
     DeleteObjectsByPrefix("SHIELD_");
     DeleteObjectsByPrefix("COP_");  // v5.1: Close On Profit Panel
-    DeleteObjectsByPrefix("TG_");   // v5.3: Trailing Grid Panel
     ChartRedraw(0);
 }
 

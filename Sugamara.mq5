@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.8         |
+//|                                    SUGAMARA RIBELLE v9.9         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.8.0 - Entry Spacing Mode + Grid Zero Removed         |
+//|  Version: 9.9.0 - Trailing Grid Removed                          |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,22 +16,20 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v9.8 ENTRY SPACING MODE:                                        |
+//|  v9.9 CHANGES:                                                   |
+//|  - Trailing Grid RIMOSSO (feature deprecated)                    |
+//|                                                                  |
+//|  v9.8 ENTRY SPACING MODE (mantenuto):                            |
 //|  - HALF: Prima grid a metà spacing (PERFECT CASCADE!)            |
 //|  - FULL: Prima grid a spacing completo (legacy)                  |
 //|  - MANUAL: Prima grid a distanza personalizzata                  |
-//|  - Grid Zero RIMOSSO (sostituito da Entry Spacing)               |
-//|                                                                  |
-//|  v5.9 RECOVERY (mantenuto):                                      |
-//|  - Auto-Recovery ordini dopo riavvio MT5/VPS                     |
-//|  - Entry Point salvato in GlobalVariable (persistente)           |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.80"
-#property description "SUGAMARA RIBELLE v9.8 - Entry Spacing Mode"
-#property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Grid Zero REMOVED"
+#property version   "9.90"
+#property description "SUGAMARA RIBELLE v9.9 - Trailing Grid Removed"
+#property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Simplified"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
 
@@ -74,10 +72,8 @@
 // v5.1 NEW Trading Modules
 #include "Trading/CloseOnProfitManager.mqh"
 
-// v5.3 NEW Trading Modules
-#include "Trading/TrailingGridManager.mqh"
-
 // v5.8 GridZero.mqh REMOVED in v9.8 - replaced by Entry Spacing Mode
+// v9.9 TrailingGridManager.mqh REMOVED - feature deprecated
 
 // v6.0 Straddle Trending Intelligente (MODULO ISOLATO)
 #include "Trading/StraddleTrendingManager.mqh"
@@ -258,12 +254,7 @@ int OnInit() {
     //--- STEP 13.8b: Initialize Close On Profit (v5.1) ---
     InitializeCloseOnProfit();
 
-    //--- STEP 13.8c: Initialize Trailing Grid Intelligente (v5.3) ---
-    if(!InitializeTrailingGrid()) {
-        Print("WARNING: Failed to initialize Trailing Grid");
-    }
-
-    //--- STEP 13.8d: Log Entry Spacing Config (v9.8) ---
+    //--- STEP 13.8c: Log Entry Spacing Config (v9.8) ---
     LogEntrySpacingConfig();
 
     //--- STEP 13.8e: Initialize Straddle Trending (v6.0 - MODULO ISOLATO) ---
@@ -374,25 +365,7 @@ int OnInit() {
             Print("  [Recovery] ATR Multi-TF: INITIALIZED");
         }
 
-        // 5. Trailing Grid + Ricalcolo livelli da ordini esistenti
-        if(Enable_TrailingGrid) {
-            InitializeTrailingGrid();
-            // Ricalcola max levels da ordini recuperati
-            int actualMaxAbove = GridLevelsPerSide - 1;
-            int actualMaxBelow = GridLevelsPerSide - 1;
-            for(int i = GridLevelsPerSide; i < MAX_GRID_LEVELS; i++) {
-                if(gridA_Upper_Status[i] != ORDER_NONE || gridB_Upper_Status[i] != ORDER_NONE) {
-                    actualMaxAbove = i;
-                }
-                if(gridA_Lower_Status[i] != ORDER_NONE || gridB_Lower_Status[i] != ORDER_NONE) {
-                    actualMaxBelow = i;
-                }
-            }
-            g_currentMaxLevelAbove = actualMaxAbove;
-            g_currentMaxLevelBelow = actualMaxBelow;
-            Print("  [Recovery] Trailing Grid: INITIALIZED (MaxAbove=", actualMaxAbove, " MaxBelow=", actualMaxBelow, ")");
-        }
-
+        // 5. Trailing Grid - REMOVED in v9.9 (feature deprecated)
         // 6. Grid Zero - REMOVED in v9.8 (replaced by Entry Spacing Mode)
 
         // 7. COP - NON serve fare nulla!
@@ -429,7 +402,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.7 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.9 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -444,12 +417,11 @@ int OnInit() {
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("-----------------------------------------------------------------------");
-    Print("  v9.7 FEATURES:");
+    Print("  v9.9 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
     Print("  [+] PERFECT CASCADE: Grid A=BUY, Grid B=SELL (TP=spacing)");
-    Print("  [+] Trailing Grid: ", Enable_TrailingGrid ? "ENABLED (L" + IntegerToString(Trail_Trigger_Level) + " trigger)" : "DISABLED");
     Print("  [+] Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
     Print("  [+] Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
     Print("  [+] Entry Spacing: ", GetEntrySpacingModeName(), " (", DoubleToString(GetEntrySpacingPips(currentSpacing_Pips), 1), " pips)");
@@ -531,9 +503,7 @@ void OnDeinit(const int reason) {
     COP_ResetDaily();  // Reset COP counter on EA removal/chart close
     DeinitializeCloseOnProfit();
 
-    // v5.3: Deinitialize Trailing Grid
-    DeinitializeTrailingGrid();
-
+    // v5.3 Trailing Grid Deinit - REMOVED in v9.9 (feature deprecated)
     // v5.8 Grid Zero Deinit - REMOVED in v9.8 (replaced by Entry Spacing Mode)
 
     // v6.0: Deinitialize Straddle Trending (MODULO ISOLATO)
@@ -647,11 +617,7 @@ void OnTick() {
     //--- v3.0: PARTIAL TAKE PROFIT REMOVED (v5.x cleanup) ---
     // ProcessPartialTPs(); // Dannoso per Cyclic Reopen
 
-    //--- v5.3: TRAILING GRID INTELLIGENTE PROCESSING ---
-    if(Enable_TrailingGrid && systemState == STATE_ACTIVE) {
-        ProcessTrailingGridCheck();
-    }
-
+    //--- v5.3 Trailing Grid - REMOVED in v9.9 (feature deprecated) ---
     //--- v5.8 Grid Zero - REMOVED in v9.8 (replaced by Entry Spacing Mode) ---
 
     //--- v6.0: STRADDLE TRENDING INTELLIGENTE (MODULO ISOLATO) ---
@@ -819,7 +785,7 @@ void HandleKeyPress(int key) {
 void LogV4StatusReport() {
     Print("");
     Print("+=====================================================================+");
-    Print("|       SUGAMARA RIBELLE v9.7 - COMPLETE STATUS REPORT                |");
+    Print("|       SUGAMARA RIBELLE v9.9 - COMPLETE STATUS REPORT                |");
     Print("|       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                        |");
     Print("+=====================================================================+");
     Print("");

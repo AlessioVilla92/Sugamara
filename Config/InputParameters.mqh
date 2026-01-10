@@ -140,37 +140,6 @@ input bool      COP_DeletePending = true;                   // 🗑️ Cancella 
 input bool      COP_PauseTrading = true;                    // ⏸️ Pausa Trading dopo Target
 
 
-//+------------------------------------------------------------------+
-//| 🔄 TRAILING GRID INTELLIGENTE v5.3                                |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  🔄 TRAILING GRID INTELLIGENTE (v5.3)                     ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ✅ ATTIVAZIONE"
-input bool   Enable_TrailingGrid = true;                    // ✅ Abilita Trailing Grid (v5.4 default ON)
-// Quando abilitato, il sistema aggiunge automaticamente nuove grid
-// seguendo il movimento del mercato (drift)
-
-input group "    📊 CONFIGURAZIONE"
-input int    Trail_Trigger_Level = 2;                       // 🎯 Trigger Level (1=ultima, 2=penultima)
-// 1 = Trigger quando l'ultima grid si attiva (breve finestra scoperta)
-// 2 = Trigger quando la penultima si attiva (RACCOMANDATO - 1 grid buffer)
-// 3 = Trigger quando la terzultima si attiva (2 grid buffer)
-
-input double Trail_Spacing_Multiplier = 1.0;                // 📏 Moltiplicatore Spacing (1.0-2.0)
-// 1.0 = Stesso spacing delle grid normali
-// 1.5 = 50% piu largo (piu conservativo)
-
-input int    Trail_Max_Extra_Grids = 4;                     // 🔢 Max Grid Extra per Lato (1-4)
-// Con GridLevelsPerSide=7: max 7+4=11 grid totali per lato
-// 0 = Nessun limite (ATTENZIONE: puo raggiungere limite array!)
-
-input group "    🔧 OPZIONI AVANZATE"
-input bool   Trail_Remove_Distant = true;                   // 🗑️ Elimina Grid Lontane (lato opposto)
-input bool   Trail_Sync_Shield = true;                      // 🛡️ Sincronizza Shield Zone
 
 //+------------------------------------------------------------------+
 //| ⭐ MODALITÀ GRIDBOT ⭐                                            |
@@ -186,23 +155,6 @@ input ENUM_NEUTRAL_MODE NeutralMode = NEUTRAL_CASCADE;       // 📊 Modalità G
 // NEUTRAL_PURE     = Spacing fisso, TP fisso, NO ATR (learning)
 // NEUTRAL_CASCADE  = TP=Entry precedente, ATR opzionale (CONSIGLIATO)
 
-//+------------------------------------------------------------------+
-//| 📝 TRAILING GRID LOGGING v5.5                                     |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  3️⃣.8️⃣  📝 TRAILING GRID LOGGING v5.5                     ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    📝 TRAILING GRID LOGGING"
-input bool      Trail_DetailedLogging = true;                // ✅ Log Dettagliato Trailing Grid
-input bool      Trail_LogInsertions = true;                  // ➕ Log Inserimenti Nuove Grid
-input bool      Trail_LogRemovals = true;                    // ➖ Log Rimozioni Grid Distanti
-input bool      Trail_LogTriggerChecks = false;              // 🔍 Log Check Trigger (Debug - HEAVY!)
-input bool      Trail_LogShieldSync = true;                  // 🛡️ Log Sync Shield Zone
-
-// (FOREX PAIR SELECTION e GRID CONFIGURATION spostati in alto dopo DEBUG MODE)
 
 //+------------------------------------------------------------------+
 //| 🎯 TP SETTINGS (Solo PURE)                                       |
