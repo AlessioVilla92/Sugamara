@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.9         |
+//|                                    SUGAMARA RIBELLE v9.10        |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.9.0 - Trailing Grid Removed                          |
+//|  Version: 9.10.0 - Grid Visual System                            |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,20 +16,21 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v9.9 CHANGES:                                                   |
-//|  - Trailing Grid RIMOSSO (feature deprecated)                    |
+//|  v9.10 CHANGES:                                                  |
+//|  - Grid Visual System: colori configurabili per tipo ordine      |
+//|  - Pixel offset separazione BUY/SELL                             |
+//|  - Tooltip al passaggio mouse                                    |
+//|  - Entry Line separata con toggle dedicato                       |
 //|                                                                  |
-//|  v9.8 ENTRY SPACING MODE (mantenuto):                            |
-//|  - HALF: Prima grid a metà spacing (PERFECT CASCADE!)            |
-//|  - FULL: Prima grid a spacing completo (legacy)                  |
-//|  - MANUAL: Prima grid a distanza personalizzata                  |
+//|  v9.9: Trailing Grid RIMOSSO (feature deprecated)                |
+//|  v9.8 ENTRY SPACING MODE (mantenuto)                             |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.90"
-#property description "SUGAMARA RIBELLE v9.9 - Trailing Grid Removed"
-#property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Simplified"
+#property version   "9.100"
+#property description "SUGAMARA RIBELLE v9.10 - Grid Visual System"
+#property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Configurable Colors"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
 
@@ -402,7 +403,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.9 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.10 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -417,7 +418,7 @@ int OnInit() {
         Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
     }
     Print("-----------------------------------------------------------------------");
-    Print("  v9.9 FEATURES:");
+    Print("  v9.10 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
@@ -692,8 +693,14 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
     }
 
     // v3.0: ROBUST DASHBOARD - Ensure dashboard exists after chart changes
+    // v9.10: Redraw grid lines on chart zoom/scroll
     if(id == CHARTEVENT_CHART_CHANGE) {
         EnsureDashboardOnChartEvent();
+
+        // v9.10: Redraw grid lines to maintain pixel offset after zoom/scroll
+        if(ShowGridLines && systemState == STATE_ACTIVE) {
+            DrawGridVisualization();
+        }
     }
 
     // v3.0: Handle object delete - recreate dashboard if critical object deleted
@@ -779,13 +786,13 @@ void HandleKeyPress(int key) {
 }
 
 //+------------------------------------------------------------------+
-//| LOG v9.5 COMPLETE STATUS REPORT                                   |
+//| LOG v9.10 COMPLETE STATUS REPORT                                  |
 //| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
     Print("");
     Print("+=====================================================================+");
-    Print("|       SUGAMARA RIBELLE v9.9 - COMPLETE STATUS REPORT                |");
+    Print("|       SUGAMARA RIBELLE v9.10 - COMPLETE STATUS REPORT               |");
     Print("|       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                        |");
     Print("+=====================================================================+");
     Print("");
@@ -802,11 +809,11 @@ void LogV4StatusReport() {
     Print("└─────────────────────────────────────────────────────────────────┘");
     Print("");
 
-    // v9.7 Modules Status
+    // v9.10 Modules Status
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v9.8 MODULES STATUS                                            │");
+    Print("│  v9.10 MODULES STATUS                                           │");
     Print("├─────────────────────────────────────────────────────────────────┤");
-    // v9.7: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
+    // v9.10: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
     Print("│  PERFECT CASCADE: Grid A=BUY, Grid B=SELL (TP=spacing)");
     Print("│  STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("│  ENTRY SPACING: ", GetEntrySpacingModeName(), " (", DoubleToString(GetEntrySpacingPips(currentSpacing_Pips), 1), " pips)");

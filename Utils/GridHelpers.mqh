@@ -772,27 +772,60 @@ double GetNetExposureLots() {
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//| Get Color for Grid Line v3.0 - Based on Order Type               |
+//| Get Color for Grid Line v9.10 - Based on Order Type               |
+//| v9.10: Uses configurable input colors instead of hardcoded        |
 //+------------------------------------------------------------------+
 color GetGridLineColor(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
     // Get the order type for this grid position
     ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
 
-    // v3.0: Color based on order type
+    // v9.10: Use configurable input colors
     switch(orderType) {
-        case ORDER_TYPE_BUY_STOP:   return COLOR_GRIDLINE_BUY_STOP;    // Verde scuro
-        case ORDER_TYPE_BUY_LIMIT:  return COLOR_GRIDLINE_BUY_LIMIT;   // Verde chiaro
-        case ORDER_TYPE_SELL_STOP:  return COLOR_GRIDLINE_SELL_STOP;   // Rosso
-        case ORDER_TYPE_SELL_LIMIT: return COLOR_GRIDLINE_SELL_LIMIT;  // Arancione
+        case ORDER_TYPE_BUY_STOP:   return Color_BuyStop;     // Lime (Verde brillante)
+        case ORDER_TYPE_BUY_LIMIT:  return Color_BuyLimit;    // SeaGreen (Verde scuro)
+        case ORDER_TYPE_SELL_STOP:  return Color_SellStop;    // Crimson (Rosso scuro)
+        case ORDER_TYPE_SELL_LIMIT: return Color_SellLimit;   // Coral (Arancio/Corallo)
         default: break;
     }
 
-    // Fallback to legacy colors
-    if(side == GRID_A) {
-        return (zone == ZONE_UPPER) ? COLOR_GRID_A_UPPER : COLOR_GRID_A_LOWER;
-    } else {
-        return (zone == ZONE_UPPER) ? COLOR_GRID_B_UPPER : COLOR_GRID_B_LOWER;
+    // Fallback to input defaults
+    return (side == GRID_A) ? Color_BuyStop : Color_SellLimit;
+}
+
+//+------------------------------------------------------------------+
+//| v9.10: Get Pixel Offset for BUY/SELL visual separation            |
+//| BUY orders: offset verso il basso (-pixel)                        |
+//| SELL orders: offset verso l'alto (+pixel)                         |
+//+------------------------------------------------------------------+
+int GetPixelOffset(ENUM_ORDER_TYPE orderType) {
+    if(GridLine_PixelOffset == 0) return 0;
+
+    switch(orderType) {
+        case ORDER_TYPE_BUY_STOP:
+        case ORDER_TYPE_BUY_LIMIT:
+            return -GridLine_PixelOffset;  // BUY verso il basso
+        case ORDER_TYPE_SELL_STOP:
+        case ORDER_TYPE_SELL_LIMIT:
+            return +GridLine_PixelOffset;  // SELL verso l'alto
+        default:
+            return 0;
     }
+}
+
+//+------------------------------------------------------------------+
+//| v9.10: Convert Pixel offset to Price offset                       |
+//| Calcola quanto prezzo corrisponde a N pixel sul chart             |
+//+------------------------------------------------------------------+
+double PixelsToPrice(int pixels) {
+    if(pixels == 0) return 0;
+
+    int chartHeight = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
+    double priceMax = ChartGetDouble(0, CHART_PRICE_MAX);
+    double priceMin = ChartGetDouble(0, CHART_PRICE_MIN);
+
+    if(chartHeight <= 0) return 0;
+    double pricePerPixel = (priceMax - priceMin) / chartHeight;
+    return pixels * pricePerPixel;
 }
 
 //+------------------------------------------------------------------+
@@ -806,45 +839,59 @@ string GetGridObjectPrefix(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
 }
 
 //+------------------------------------------------------------------+
-//| Create Grid Level Line on Chart v5.9                             |
-//| Stesso spessore per tutte le linee                               |
-//| v5.9: Labels in colonna fissa vicino ai pannelli laterali        |
+//| Create Grid Level Line on Chart v9.10                            |
+//| v9.10: Pixel offset per separazione BUY/SELL                     |
+//| v9.10: Spessore configurabile + Tooltip                          |
 //+------------------------------------------------------------------+
 void CreateGridLevelLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, double price) {
     if(!ShowGridLines) return;
 
     string name = GetGridObjectPrefix(side, zone) + "L" + IntegerToString(level + 1);
     color clr = GetGridLineColor(side, zone);
-
-    // v3.0: Stesso spessore per tutte le linee (GRIDLINE_WIDTH)
-    CreateHLine(name, price, clr, GRIDLINE_WIDTH, STYLE_SOLID);
-
-    // Add order type label
     ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
-    string orderTypeLabel = GetOrderTypeString(orderType);
-    string labelName = name + "_LBL";
 
-    // v5.9: Convert price to Y pixel coordinate for fixed position
-    int chartHeight = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
-    double priceMax = ChartGetDouble(0, CHART_PRICE_MAX);
-    double priceMin = ChartGetDouble(0, CHART_PRICE_MIN);
-    int yPixel = (int)((priceMax - price) / (priceMax - priceMin) * chartHeight);
+    // v9.10: Apply pixel offset for BUY/SELL visual separation
+    int pixelOffset = GetPixelOffset(orderType);
+    double priceOffset = PixelsToPrice(pixelOffset);
+    double visualPrice = price + priceOffset;
 
-    // v5.9: Fixed X position near side panels (Dashboard ends at ~630px)
-    int xPixel = Dashboard_X + 620;
+    // v9.10: Use configurable width
+    CreateHLine(name, visualPrice, clr, GridLine_Width, STYLE_SOLID);
 
-    ObjectDelete(0, labelName);
-    if(ObjectCreate(0, labelName, OBJ_LABEL, 0, 0, 0)) {
-        ObjectSetInteger(0, labelName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-        ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, xPixel);
-        ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, yPixel);
-        ObjectSetString(0, labelName, OBJPROP_TEXT, orderTypeLabel);
-        ObjectSetInteger(0, labelName, OBJPROP_COLOR, clr);
-        ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 7);
-        ObjectSetString(0, labelName, OBJPROP_FONT, "Arial");
-        ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_RIGHT);
-        ObjectSetInteger(0, labelName, OBJPROP_BACK, false);
-        ObjectSetInteger(0, labelName, OBJPROP_ZORDER, 9500);
+    // v9.10: Add tooltip on hover
+    if(GridLine_ShowTooltip) {
+        string tooltip = StringFormat("%s | Level %d | %.5f",
+                         GetOrderTypeString(orderType), level + 1, price);
+        ObjectSetString(0, name, OBJPROP_TOOLTIP, tooltip);
+    }
+
+    // v9.10: Only show labels if enabled (default: false)
+    if(GridLine_ShowLabels) {
+        string orderTypeLabel = GetOrderTypeString(orderType);
+        string labelName = name + "_LBL";
+
+        // v5.9: Convert price to Y pixel coordinate for fixed position
+        int chartHeight = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
+        double priceMax = ChartGetDouble(0, CHART_PRICE_MAX);
+        double priceMin = ChartGetDouble(0, CHART_PRICE_MIN);
+        int yPixel = (int)((priceMax - visualPrice) / (priceMax - priceMin) * chartHeight);
+
+        // v5.9: Fixed X position near side panels (Dashboard ends at ~630px)
+        int xPixel = Dashboard_X + 620;
+
+        ObjectDelete(0, labelName);
+        if(ObjectCreate(0, labelName, OBJ_LABEL, 0, 0, 0)) {
+            ObjectSetInteger(0, labelName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+            ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, xPixel);
+            ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, yPixel);
+            ObjectSetString(0, labelName, OBJPROP_TEXT, orderTypeLabel);
+            ObjectSetInteger(0, labelName, OBJPROP_COLOR, clr);
+            ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 7);
+            ObjectSetString(0, labelName, OBJPROP_FONT, "Arial");
+            ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_RIGHT);
+            ObjectSetInteger(0, labelName, OBJPROP_BACK, false);
+            ObjectSetInteger(0, labelName, OBJPROP_ZORDER, 9500);
+        }
     }
 }
 
@@ -904,12 +951,20 @@ void DeleteAllGridObjects() {
 }
 
 //+------------------------------------------------------------------+
-//| Draw Entry Point Line                                            |
+//| Draw Entry Point Line v9.10                                       |
+//| v9.10: Toggle separato + colore/spessore configurabili           |
 //+------------------------------------------------------------------+
 void DrawEntryPointLine() {
-    if(!ShowGridLines) return;
+    if(!ShowGridLines || !ShowEntryLine) return;
 
-    CreateHLine("SUGAMARA_ENTRY", entryPoint, COLOR_ENTRY_POINT, 2, STYLE_SOLID);
+    // v9.10: Use configurable color and width
+    CreateHLine("SUGAMARA_ENTRY", entryPoint, Color_EntryLine, EntryLine_Width, STYLE_SOLID);
+
+    // v9.10: Add tooltip on hover
+    if(GridLine_ShowTooltip) {
+        ObjectSetString(0, "SUGAMARA_ENTRY", OBJPROP_TOOLTIP,
+                       StringFormat("ENTRY POINT | %.5f", entryPoint));
+    }
 }
 
 //+------------------------------------------------------------------+

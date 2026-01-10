@@ -437,7 +437,7 @@ void CreateUnifiedDashboard() {
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
     // v5.9.5: Titolo GIALLO, sottotitolo ARANCIONE SCURO
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v9.9", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v9.10", clrYellow, 20, "Arial Black");
     DashLabel("TITLE_SUB", x + totalWidth/2 - 80, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
@@ -720,14 +720,14 @@ void CreateGridLegendPanel() {
     int col1 = legendX + 8;
     int col2 = legendX + legendWidth/2 + 5;
 
-    // Row 1
-    DashLabel("LEGEND_BL", col1, ly, "■ BUY LMT (GA↑)", COLOR_GRIDLINE_BUY_LIMIT, 7);
-    DashLabel("LEGEND_SS", col2, ly, "■ SELL STP (GA↓)", COLOR_GRIDLINE_SELL_STOP, 7);
+    // v9.10: Row 1 - Grid A (BUY only) with configurable input colors
+    DashLabel("LEGEND_BS", col1, ly, "■ BUY STOP (GA↑)", Color_BuyStop, 7);
+    DashLabel("LEGEND_BL", col2, ly, "■ BUY LMT (GA↓)", Color_BuyLimit, 7);
     ly += 14;
 
-    // Row 2
-    DashLabel("LEGEND_SL", col1, ly, "■ SELL LMT (GB↑)", COLOR_GRIDLINE_SELL_LIMIT, 7);
-    DashLabel("LEGEND_BS", col2, ly, "■ BUY STP (GB↓)", COLOR_GRIDLINE_BUY_STOP, 7);
+    // v9.10: Row 2 - Grid B (SELL only) with configurable input colors
+    DashLabel("LEGEND_SL", col1, ly, "■ SELL LMT (GB↑)", Color_SellLimit, 7);
+    DashLabel("LEGEND_SS", col2, ly, "■ SELL STP (GB↓)", Color_SellStop, 7);
 
     Print("SUCCESS: Grid Legend Panel created (under Performance)");
 }
@@ -1426,24 +1426,6 @@ void DrawGridBLines() {
             CreateGridLevelLine(GRID_B, ZONE_LOWER, i, gridB_Lower_EntryPrices[i]);
         }
     }
-}
-
-//+------------------------------------------------------------------+
-//| Get Gradient Color                                               |
-//+------------------------------------------------------------------+
-color GetGradientColor(color baseColor, int level, int maxLevels) {
-    int r = (baseColor >> 16) & 0xFF;
-    int g = (baseColor >> 8) & 0xFF;
-    int b = baseColor & 0xFF;
-
-    double factor = 1.0 - (level * 0.08);
-    if(factor < 0.5) factor = 0.5;
-
-    r = (int)(r * factor);
-    g = (int)(g * factor);
-    b = (int)(b * factor);
-
-    return (color)((r << 16) | (g << 8) | b);
 }
 
 //+------------------------------------------------------------------+

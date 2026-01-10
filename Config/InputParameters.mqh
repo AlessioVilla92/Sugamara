@@ -582,8 +582,8 @@ input double    Custom_ATR_Typical = 25.0;                   // 📊 ATR Tipico 
 input double    Custom_MinLot = 0.01;                        // 💵 Lot Minimo
 input double    Custom_DefaultSpacing = 10.0;                // 📏 Spacing Default (pips)
 
-// LEGACY COLOR SCHEME REMOVED - Now in VisualTheme.mqh
-// COLOR_ENTRY_POINT, COLOR_GRID_A_*, COLOR_GRID_B_* are now #define constants
+// v9.10: Grid line colors are now configurable via input parameters (Color_BuyStop, etc.)
+// Legacy COLOR_ENTRY_POINT, COLOR_GRID_A_*, COLOR_GRID_B_* constants removed
 
 //+------------------------------------------------------------------+
 //| 3️⃣1️⃣ ⏰ AUTOMATIC HOUR SESSION v4.6                              |
@@ -618,8 +618,8 @@ input group "╚═════════════════════�
 input bool      ShowTPLines = true;                          // ✅ Show TP Lines on Chart
 // TP LINE COLORS: Now in VisualTheme.mqh (TP_LINE_*)
 
-// VISUAL THEME REMOVED - Now in VisualTheme.mqh
-// THEME_CHART_*, THEME_CANDLE_*, THEME_DASHBOARD_*, COLOR_GRIDLINE_* are now #define constants
+// VISUAL THEME - VisualTheme.mqh contains: THEME_*, TP_LINE_*, MANUAL_SR_*, SHIELD_* constants
+// v9.10: COLOR_GRIDLINE_* removed - grid colors are now input parameters
 
 //+------------------------------------------------------------------+
 //| 3️⃣3️⃣ 🎯 STRADDLE TRENDING INTELLIGENTE v6.0                       |
@@ -691,7 +691,36 @@ input group "    📊 DASHBOARD DISPLAY"
 input bool      ShowDashboard = true;                        // ✅ Mostra Dashboard
 input int       Dashboard_X = 0;                             // 📍 Posizione X Dashboard (v5.9: 0=nessun margine)
 input int       Dashboard_Y = 30;                            // 📍 Posizione Y Dashboard
+
+//+------------------------------------------------------------------+
+//| 🎨 GRID LINES VISUAL v9.10                                        |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  🎨 GRID LINES VISUAL v9.10                              ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    ✅ ATTIVAZIONE"
 input bool      ShowGridLines = true;                        // ✅ Mostra Linee Grid su Chart
+input bool      ShowEntryLine = true;                        // ✅ Mostra Linea Entry Point
+
+input group "    🎨 COLORI GRID LINES"
+input color     Color_BuyStop = clrLime;                     // 🟢 BUY STOP (Verde brillante)
+input color     Color_BuyLimit = clrSeaGreen;                // 🟢 BUY LIMIT (Verde scuro)
+input color     Color_SellLimit = clrCoral;                  // 🔴 SELL LIMIT (Arancio/Corallo)
+input color     Color_SellStop = clrCrimson;                 // 🔴 SELL STOP (Rosso scuro)
+input color     Color_EntryLine = clrGold;                   // 🟡 Entry Point (Oro)
+
+input group "    📐 DIMENSIONI"
+input int       GridLine_Width = 2;                          // 📏 Spessore Linee Grid (pixel)
+input int       EntryLine_Width = 3;                         // 📏 Spessore Entry Line (pixel)
+input int       GridLine_PixelOffset = 1;                    // 📐 Offset Separazione BUY/SELL (pixel)
+
+input group "    🎯 OPZIONI AVANZATE"
+input bool      GridLine_ShowLabels = false;                 // 🏷️ Mostra Etichette (A+1, B+1, ecc.)
+input bool      GridLine_ShowTooltip = true;                 // 💬 Mostra Tooltip al passaggio mouse
+input bool      GridLine_DifferentStyleFilled = false;       // 🔄 Stile diverso per FILLED (tratteggiata)
 
 //+------------------------------------------------------------------+
 //| 📊 VOLATILITY MONITOR                                            |
