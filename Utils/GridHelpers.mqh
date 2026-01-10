@@ -127,24 +127,87 @@ string GetOrderTypeString(ENUM_ORDER_TYPE orderType) {
 }
 
 //+------------------------------------------------------------------+
+//| 📐 ENTRY SPACING FUNCTIONS v9.8                                  |
+//| Configura la distanza tra Entry Point e prima griglia            |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Get Entry Spacing in Pips                                        |
+//| FULL:   entrySpacing = spacing (gap centro = 2×spacing)          |
+//| HALF:   entrySpacing = spacing/2 (gap centro = spacing) PERFECT! |
+//| MANUAL: entrySpacing = custom (gap centro = 2×custom)            |
+//+------------------------------------------------------------------+
+double GetEntrySpacingPips(double spacingPips) {
+    switch(EntrySpacingMode) {
+        case ENTRY_SPACING_FULL:
+            return spacingPips;                    // Gap centro = 2×spacing
+        case ENTRY_SPACING_HALF:
+            return spacingPips / 2.0;              // Gap centro = spacing (PERFECT CASCADE!)
+        case ENTRY_SPACING_MANUAL:
+            return Entry_Spacing_Manual_Pips;      // Gap centro = 2×manual
+        default:
+            return spacingPips / 2.0;              // Default = HALF
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Get Entry Spacing Mode Name (for Dashboard/Logs)                 |
+//+------------------------------------------------------------------+
+string GetEntrySpacingModeName() {
+    switch(EntrySpacingMode) {
+        case ENTRY_SPACING_FULL:   return "FULL";
+        case ENTRY_SPACING_HALF:   return "HALF";
+        case ENTRY_SPACING_MANUAL: return "MANUAL";
+        default:                   return "UNKNOWN";
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Log Entry Spacing Configuration (call in OnInit)                 |
+//+------------------------------------------------------------------+
+void LogEntrySpacingConfig() {
+    double entrySpacing = GetEntrySpacingPips(currentSpacing_Pips);
+    double gapCentro = entrySpacing * 2.0;
+    Print("═══════════════════════════════════════════════════════════════════");
+    Print("  📐 ENTRY SPACING CONFIG v9.8");
+    Print("═══════════════════════════════════════════════════════════════════");
+    PrintFormat("  Mode: %s", GetEntrySpacingModeName());
+    PrintFormat("  Grid Spacing: %.1f pips", currentSpacing_Pips);
+    PrintFormat("  Entry Spacing: %.1f pips (distanza Entry → L1)", entrySpacing);
+    PrintFormat("  Gap Centro: %.1f pips (buco tra L1 BUY e L1 SELL)", gapCentro);
+    if(EntrySpacingMode == ENTRY_SPACING_HALF) {
+        Print("  ✓ PERFECT CASCADE: Gap centro = spacing normale");
+    }
+    Print("═══════════════════════════════════════════════════════════════════");
+}
+
+//+------------------------------------------------------------------+
 //| GRID PRICE CALCULATION FUNCTIONS                                 |
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
 //| Calculate Entry Price for Grid Level                             |
-//| v9.0: Nessun hedge offset - tutti i livelli allineati            |
+//| v9.8: Entry Spacing Mode - distanza configurabile Entry → L1     |
+//| Level 0: usa entrySpacing (HALF/FULL/MANUAL)                     |
+//| Level N: usa entrySpacing + (N × gridSpacing)                    |
 //+------------------------------------------------------------------+
 double CalculateGridLevelPrice(double baseEntryPoint, ENUM_GRID_ZONE zone, int level,
                                 double spacingPips, ENUM_GRID_SIDE side = GRID_A) {
-    double spacingPrice = PipsToPoints(spacingPips);
+    double spacingPoints = PipsToPoints(spacingPips);
+    double entrySpacingPips = GetEntrySpacingPips(spacingPips);
+    double entrySpacingPoints = PipsToPoints(entrySpacingPips);
 
-    // v9.0: Nessun hedge offset - Grid A e B sullo stesso livello
+    // v9.8: Formula Entry Spacing
+    // Level 0: distanza = entrySpacing
+    // Level N: distanza = entrySpacing + (N × spacing)
+    double totalDistance = entrySpacingPoints + (level * spacingPoints);
+
     if(zone == ZONE_UPPER) {
         // Upper zone: prices above entry point
-        return NormalizeDouble(baseEntryPoint + (spacingPrice * (level + 1)), symbolDigits);
+        return NormalizeDouble(baseEntryPoint + totalDistance, symbolDigits);
     } else {
         // Lower zone: prices below entry point
-        return NormalizeDouble(baseEntryPoint - (spacingPrice * (level + 1)), symbolDigits);
+        return NormalizeDouble(baseEntryPoint - totalDistance, symbolDigits);
     }
 }
 

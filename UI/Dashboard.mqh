@@ -579,31 +579,10 @@ void CreateUnifiedDashboard() {
     // Grid B contatori
     DashLabel("COUNTER_B_CLOSED", rightX + 110, cy, "B Closed: 0", CLR_GRID_B, 8);
     DashLabel("COUNTER_B_PENDING", rightX + 110, cy + 14, "B Pending: 0", CLR_GRID_B, 8);
-    // Grid Zero contatori
-    DashLabel("COUNTER_ZERO", rightX + 210, cy, "Zero: 0/0", CLR_SILVER, 8);
     // Totale
-    DashLabel("COUNTER_TOTAL", rightX + 210, cy + 14, "Tot: 0/0", CLR_WHITE, 8);
+    DashLabel("COUNTER_TOTAL", rightX + 210, cy, "Tot: 0/0", CLR_WHITE, 8);
 
     rightY += counterHeight;
-
-    //--- GRID ZERO PANEL (v5.8 + v5.9.4 legenda colore) ---
-    if(Enable_GridZero) {
-        int gzHeight = 55;
-        DashRectangle("GZ_PANEL", rightX, rightY, colWidth, gzHeight, C'35,40,30');
-
-        int gz = rightY + 6;
-        DashLabel("GZ_TITLE", rightX + 10, gz, "GRID ZERO", CLR_GOLD, 9, "Arial Bold");
-        // v5.9.4: Quadratino legenda colore chartreuse
-        DashRectangle("GZ_COLOR_LEGEND", rightX + 85, gz + 2, 10, 10, clrChartreuse);
-        DashLabel("GZ_STATUS", rightX + 100, gz, "Status: ---", clrGray, 8);
-        DashLabel("GZ_BIAS", rightX + 200, gz, "Bias: ---", clrGray, 8);
-        gz += 18;
-        DashLabel("GZ_STOP", rightX + 10, gz, "STOP: ---", clrGray, 8);
-        DashLabel("GZ_LIMIT", rightX + 100, gz, "LIMIT: ---", clrGray, 8);
-        DashLabel("GZ_CYCLES", rightX + 200, gz, "Cycles: 0", clrGray, 8);
-
-        rightY += gzHeight;
-    }
 
     ChartRedraw(0);
     Print("SUCCESS: Unified Dashboard created with 2-column layout");
@@ -726,11 +705,10 @@ void CreateShieldPanel() {
 //| v5.8: Moved under Performance, horizontal layout 2x2              |
 //+------------------------------------------------------------------+
 void CreateGridLegendPanel() {
-    // v5.8: Position under Performance (and Grid Zero if enabled) in right column
+    // v5.8: Position under Performance in right column
     int legendX = Dashboard_X + PANEL_WIDTH;  // Right column X
-    // Calculate Y: After GridB (180) + GridInfo (55) + Performance (190) + GridZero (55 if enabled)
+    // Calculate Y: After GridB (180) + GridInfo (55) + Performance (190)
     int legendY = Dashboard_Y + 180 + 55 + 190;
-    if(Enable_GridZero) legendY += 55;        // Add Grid Zero panel height
     int legendWidth = PANEL_WIDTH;            // Same width as Performance (315)
     int legendHeight = 55;                    // Compact height for 2 rows
 
@@ -859,7 +837,6 @@ void UpdateDashboard() {
     // v5.9.3: UpdateGridInfoSection removed (info moved to Mode row)
     UpdatePerformanceSection();
     UpdateGridCounterSection();  // v5.9.3: Grid Counter Section
-    UpdateGridZeroSection();  // v5.8: Grid Zero Section
     UpdateVolatilityPanel();
     UpdateShieldSection();
     UpdateCOPSection();  // v5.1: Close On Profit Section
@@ -1018,13 +995,9 @@ void UpdateGridCounterSection() {
     ObjectSetString(0, "COUNTER_B_PENDING", OBJPROP_TEXT,
                     StringFormat("B Pending: %d", g_gridB_PendingCount));
 
-    // Grid Zero counters (closed/pending)
-    ObjectSetString(0, "COUNTER_ZERO", OBJPROP_TEXT,
-                    StringFormat("Zero: %d/%d", g_gridZero_ClosedCount, g_gridZero_PendingCount));
-
     // Totals
-    int totalClosed = g_gridA_ClosedCount + g_gridB_ClosedCount + g_gridZero_ClosedCount;
-    int totalPending = g_gridA_PendingCount + g_gridB_PendingCount + g_gridZero_PendingCount;
+    int totalClosed = g_gridA_ClosedCount + g_gridB_ClosedCount;
+    int totalPending = g_gridA_PendingCount + g_gridB_PendingCount;
     ObjectSetString(0, "COUNTER_TOTAL", OBJPROP_TEXT,
                     StringFormat("Tot: %d/%d", totalClosed, totalPending));
 
@@ -1077,63 +1050,6 @@ void UpdatePerformanceSection() {
     ObjectSetString(0, "RIGHT_PERF_WINRATE", OBJPROP_TEXT,
                     StringFormat("Win Rate: %.0f%% (%dW/%dL)", winRate, sessionWins, sessionLosses));
     ObjectSetString(0, "RIGHT_PERF_TRADES", OBJPROP_TEXT, StringFormat("Total Trades: %d", trades));
-}
-
-//+------------------------------------------------------------------+
-//| Update Grid Zero Section (v5.8)                                   |
-//+------------------------------------------------------------------+
-void UpdateGridZeroSection() {
-    if(!Enable_GridZero) return;
-
-    // Status
-    string statusText = "Status: ";
-    color statusColor = clrGray;
-
-    if(!g_gridZeroInserted) {
-        statusText += "WAITING";
-        statusColor = CLR_AZURE_3;
-    } else if(g_gridZero_StopStatus == ORDER_PENDING ||
-              g_gridZero_LimitStatus == ORDER_PENDING) {
-        statusText += "ACTIVE";
-        statusColor = CLR_PROFIT;
-    } else if(g_gridZero_StopStatus == ORDER_FILLED ||
-              g_gridZero_LimitStatus == ORDER_FILLED) {
-        statusText += "IN TRADE";
-        statusColor = CLR_ACTIVE;
-    } else {
-        statusText += "CYCLING";
-        statusColor = CLR_NEUTRAL;
-    }
-    ObjectSetString(0, "GZ_STATUS", OBJPROP_TEXT, statusText);
-    ObjectSetInteger(0, "GZ_STATUS", OBJPROP_COLOR, statusColor);
-
-    // Bias
-    string biasText = "Bias: ";
-    color biasColor = clrGray;
-
-    if(g_gridZeroBiasUp) {
-        biasText += "BULLISH";
-        biasColor = CLR_GRID_A;
-    } else if(g_gridZeroBiasDown) {
-        biasText += "BEARISH";
-        biasColor = CLR_GRID_B;
-    } else {
-        biasText += "NONE";
-    }
-    ObjectSetString(0, "GZ_BIAS", OBJPROP_TEXT, biasText);
-    ObjectSetInteger(0, "GZ_BIAS", OBJPROP_COLOR, biasColor);
-
-    // STOP Status
-    string stopText = "STOP: " + GetOrderStatusName(g_gridZero_StopStatus);
-    ObjectSetString(0, "GZ_STOP", OBJPROP_TEXT, stopText);
-
-    // LIMIT Status
-    string limitText = "LIMIT: " + GetOrderStatusName(g_gridZero_LimitStatus);
-    ObjectSetString(0, "GZ_LIMIT", OBJPROP_TEXT, limitText);
-
-    // Cycles
-    int totalCycles = g_gridZero_StopCycles + g_gridZero_LimitCycles;
-    ObjectSetString(0, "GZ_CYCLES", OBJPROP_TEXT, StringFormat("Cycles: %d", totalCycles));
 }
 
 //+------------------------------------------------------------------+
@@ -1551,7 +1467,6 @@ void RemoveDashboard() {
     DeleteObjectsByPrefix("SHIELD_");
     DeleteObjectsByPrefix("COP_");  // v5.1: Close On Profit Panel
     DeleteObjectsByPrefix("TG_");   // v5.3: Trailing Grid Panel
-    DeleteObjectsByPrefix("GZ_");   // v5.8: Grid Zero Panel
     ChartRedraw(0);
 }
 

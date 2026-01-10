@@ -91,6 +91,16 @@ enum ENUM_SPACING_MODE {
 };
 
 //+------------------------------------------------------------------+
+//| 📐 ENTRY SPACING MODE v9.8 - Distanza Entry → Grid±1             |
+//| Configura la distanza tra Entry Point e prima griglia            |
+//+------------------------------------------------------------------+
+enum ENUM_ENTRY_SPACING_MODE {
+    ENTRY_SPACING_FULL = 0,     // FULL - Prima grid a spacing completo (buco = 2×spacing)
+    ENTRY_SPACING_HALF = 1,     // HALF - Prima grid a metà spacing (PERFECT CASCADE!)
+    ENTRY_SPACING_MANUAL = 2    // MANUAL - Prima grid a distanza personalizzata
+};
+
+//+------------------------------------------------------------------+
 //| 💰 LOT MODE - Modalità calcolo lot size                          |
 //+------------------------------------------------------------------+
 enum ENUM_LOT_MODE {

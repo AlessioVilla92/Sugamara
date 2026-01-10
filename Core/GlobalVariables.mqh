@@ -93,8 +93,6 @@ int g_gridA_ClosedCount = 0;                 // Grid A chiuse (TP hit)
 int g_gridA_PendingCount = 0;                // Grid A pending inserite
 int g_gridB_ClosedCount = 0;                 // Grid B chiuse (TP hit)
 int g_gridB_PendingCount = 0;                // Grid B pending inserite
-int g_gridZero_ClosedCount = 0;              // Grid Zero chiuse
-int g_gridZero_PendingCount = 0;             // Grid Zero pending inserite
 
 // v9.0: Tracking separato LIMIT/STOP per Grid A e B (Dashboard)
 int g_gridA_LimitFilled = 0;                 // Grid A LIMIT filled

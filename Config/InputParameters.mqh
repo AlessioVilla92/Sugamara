@@ -3,7 +3,7 @@
 //|                        Sugamara - Input Parameters               |
 //|                                                                  |
 //|  User-configurable parameters for Double Grid Neutral            |
-//|  v9.7 - Cleanup & Fixes                                          |
+//|  v9.8 - Entry Spacing Mode + Grid Zero Removed                   |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
@@ -94,6 +94,8 @@ input int       GridLevelsPerSide = 10;                      // 🔢 Livelli per
 input group "    ╔═ SPACING SETTINGS ════════════════════════════════🔽🔽🔽"
 input ENUM_SPACING_MODE SpacingMode = SPACING_PAIR_AUTO;     // 📏 Modalità Spacing ▼ (DEFAULT: Pair Auto)
 input double    Fixed_Spacing_Pips = 11.0;                   // 📐 Spacing Fisso (pips) - usato solo se SPACING_FIXED
+input ENUM_ENTRY_SPACING_MODE EntrySpacingMode = ENTRY_SPACING_HALF; // 📐 Entry Spacing Mode ▼ (HALF = Perfect Cascade)
+input double    Entry_Spacing_Manual_Pips = 5.0;             // 📐 Entry Spacing Manuale (pips) - usato solo se MANUAL
 
 //+------------------------------------------------------------------+
 //| 🔒 BREAK ON PROFIT (BOP) v5.1                                    |
@@ -169,27 +171,6 @@ input int    Trail_Max_Extra_Grids = 4;                     // 🔢 Max Grid Ext
 input group "    🔧 OPZIONI AVANZATE"
 input bool   Trail_Remove_Distant = true;                   // 🗑️ Elimina Grid Lontane (lato opposto)
 input bool   Trail_Sync_Shield = true;                      // 🛡️ Sincronizza Shield Zone
-
-//+------------------------------------------------------------------+
-//| 🎯 GRID ZERO v5.8 - Center Gap Filler                            |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  🎯 GRID ZERO v5.8 - Center Gap Filler                    ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ✅ ATTIVAZIONE"
-input bool   Enable_GridZero = true;                        // ✅ Abilita Grid Zero (Mean Reversion)
-// Grid Zero fills the 27-pip gap at the center of the grid
-// Triggered when L2 is filled (price moved 24+ pips from entry)
-// Inserts counter-trend orders for mean-reversion strategy
-
-input group "    📊 CONFIGURAZIONE"
-input int    GridZero_Trigger_Level = 2;                    // 🎯 Trigger Level (L2 = default)
-// 1 = Trigger when L1 filled (12 pips from entry)
-// 2 = Trigger when L2 filled (24 pips from entry) - RECOMMENDED
-// 3 = Trigger when L3 filled (36 pips from entry) - Conservative
 
 //+------------------------------------------------------------------+
 //| ⭐ MODALITÀ GRIDBOT ⭐                                            |

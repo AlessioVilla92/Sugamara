@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.7         |
+//|                                    SUGAMARA RIBELLE v9.8         |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.7.0 - Cleanup & Fixes                                |
+//|  Version: 9.8.0 - Entry Spacing Mode + Grid Zero Removed         |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,11 +16,11 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v7.1 STRADDLE TRENDING INTELLIGENTE:                            |
-//|  - Modulo Straddle completamente isolato (Magic 20260101)        |
-//|  - BUY STOP + SELL STOP con moltiplicatore whipsaw               |
-//|  - COP Straddle separato da CASCADE                              |
-//|  - Grid Zero linee con priorità visiva (spessore 5px)            |
+//|  v9.8 ENTRY SPACING MODE:                                        |
+//|  - HALF: Prima grid a metà spacing (PERFECT CASCADE!)            |
+//|  - FULL: Prima grid a spacing completo (legacy)                  |
+//|  - MANUAL: Prima grid a distanza personalizzata                  |
+//|  - Grid Zero RIMOSSO (sostituito da Entry Spacing)               |
 //|                                                                  |
 //|  v5.9 RECOVERY (mantenuto):                                      |
 //|  - Auto-Recovery ordini dopo riavvio MT5/VPS                     |
@@ -29,9 +29,9 @@
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.70"
-#property description "SUGAMARA RIBELLE v9.7 - Cleanup & Fixes"
-#property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Straddle = ISOLATO"
+#property version   "9.80"
+#property description "SUGAMARA RIBELLE v9.8 - Entry Spacing Mode"
+#property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Grid Zero REMOVED"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
 
@@ -77,8 +77,7 @@
 // v5.3 NEW Trading Modules
 #include "Trading/TrailingGridManager.mqh"
 
-// v5.8 NEW Trading Modules
-#include "Trading/GridZero.mqh"
+// v5.8 GridZero.mqh REMOVED in v9.8 - replaced by Entry Spacing Mode
 
 // v6.0 Straddle Trending Intelligente (MODULO ISOLATO)
 #include "Trading/StraddleTrendingManager.mqh"
@@ -264,8 +263,8 @@ int OnInit() {
         Print("WARNING: Failed to initialize Trailing Grid");
     }
 
-    //--- STEP 13.8d: Initialize Grid Zero (v5.8) ---
-    InitGridZero();
+    //--- STEP 13.8d: Log Entry Spacing Config (v9.8) ---
+    LogEntrySpacingConfig();
 
     //--- STEP 13.8e: Initialize Straddle Trending (v6.0 - MODULO ISOLATO) ---
     StraddleInit();
@@ -394,12 +393,7 @@ int OnInit() {
             Print("  [Recovery] Trailing Grid: INITIALIZED (MaxAbove=", actualMaxAbove, " MaxBelow=", actualMaxBelow, ")");
         }
 
-        // 6. Grid Zero - Init + Recovery ordini esistenti
-        if(Enable_GridZero) {
-            InitGridZero();  // Reset flags
-            RecoverGridZeroOrdersFromBroker();  // Recupera ordini GridZero se esistono
-            Print("  [Recovery] Grid Zero: INITIALIZED");
-        }
+        // 6. Grid Zero - REMOVED in v9.8 (replaced by Entry Spacing Mode)
 
         // 7. COP - NON serve fare nulla!
         // COP_UpdateTracking() già ricalcola dalla history ogni tick (linea 101)
@@ -458,7 +452,7 @@ int OnInit() {
     Print("  [+] Trailing Grid: ", Enable_TrailingGrid ? "ENABLED (L" + IntegerToString(Trail_Trigger_Level) + " trigger)" : "DISABLED");
     Print("  [+] Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
     Print("  [+] Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
-    Print("  [+] Grid Zero: ", Enable_GridZero ? ("ENABLED (L" + IntegerToString(GridZero_Trigger_Level) + " trigger)") : "DISABLED");
+    Print("  [+] Entry Spacing: ", GetEntrySpacingModeName(), " (", DoubleToString(GetEntrySpacingPips(currentSpacing_Pips), 1), " pips)");
     Print("-----------------------------------------------------------------------");
     Print("  ATR FEATURES:");
     Print("  [+] ATR Indicator: ", UseATR ? "ENABLED" : "DISABLED");
@@ -540,8 +534,7 @@ void OnDeinit(const int reason) {
     // v5.3: Deinitialize Trailing Grid
     DeinitializeTrailingGrid();
 
-    // v5.8: Deinitialize Grid Zero
-    DeinitializeGridZero();
+    // v5.8 Grid Zero Deinit - REMOVED in v9.8 (replaced by Entry Spacing Mode)
 
     // v6.0: Deinitialize Straddle Trending (MODULO ISOLATO)
     StraddleDeinit();
@@ -659,11 +652,7 @@ void OnTick() {
         ProcessTrailingGridCheck();
     }
 
-    //--- v5.8: GRID ZERO - CHECK AND INSERT + CYCLING ---
-    if(Enable_GridZero && systemState == STATE_ACTIVE) {
-        CheckAndInsertGridZero();
-        ProcessGridZeroCycling();
-    }
+    //--- v5.8 Grid Zero - REMOVED in v9.8 (replaced by Entry Spacing Mode) ---
 
     //--- v6.0: STRADDLE TRENDING INTELLIGENTE (MODULO ISOLATO) ---
     StraddleOnTick();
@@ -849,12 +838,12 @@ void LogV4StatusReport() {
 
     // v9.7 Modules Status
     Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v9.7 MODULES STATUS                                            │");
+    Print("│  v9.8 MODULES STATUS                                            │");
     Print("├─────────────────────────────────────────────────────────────────┤");
     // v9.7: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
     Print("│  PERFECT CASCADE: Grid A=BUY, Grid B=SELL (TP=spacing)");
     Print("│  STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
-    Print("│  GRID ZERO: ", Enable_GridZero ? "ENABLED (Visual Priority 5px)" : "DISABLED");
+    Print("│  ENTRY SPACING: ", GetEntrySpacingModeName(), " (", DoubleToString(GetEntrySpacingPips(currentSpacing_Pips), 1), " pips)");
 
     // ATR Indicator (monitoring only)
     if(UseATR) {

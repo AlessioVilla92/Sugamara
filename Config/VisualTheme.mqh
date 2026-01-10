@@ -30,9 +30,7 @@
 #define COLOR_GRIDLINE_BUY_STOP   clrBlue           // BUY STOP: Blu
 #define COLOR_GRIDLINE_SELL_LIMIT clrOrange         // SELL LIMIT: Arancione
 #define COLOR_GRIDLINE_SELL_STOP  clrPlum           // SELL STOP: Viola Chiaro
-#define COLOR_GRIDZERO_LINE       clrChartreuse     // v7.1: Grid Zero - Giallo-verde fluorescente
 #define GRIDLINE_WIDTH            3                  // Spessore Linee Grid
-#define GRIDZERO_LINE_WIDTH       5                  // v7.1: Spessore Linee Grid Zero (priorità visiva)
 
 //+------------------------------------------------------------------+
 //| LEGACY GRID COLORS (Grid A/B zones)                               |
