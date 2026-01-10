@@ -376,55 +376,48 @@ double GetDrawdownFromPeak() {
 //| Generate Risk Report                                             |
 //+------------------------------------------------------------------+
 void LogRiskReport() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  RISK MANAGEMENT REPORT");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("RISK MANAGEMENT REPORT");
 
     // Account
-    Print("--- ACCOUNT STATUS ---");
-    Print("  Equity: ", FormatMoney(GetEquity()));
-    Print("  Balance: ", FormatMoney(GetBalance()));
-    Print("  Free Margin: ", FormatMoney(GetFreeMargin()));
-    Print("  Margin Level: ", FormatPercent(GetMarginLevel()));
-    Print("");
+    Log_SubHeader("ACCOUNT STATUS");
+    Log_KeyValue("Equity", FormatMoney(GetEquity()));
+    Log_KeyValue("Balance", FormatMoney(GetBalance()));
+    Log_KeyValue("Free Margin", FormatMoney(GetFreeMargin()));
+    Log_KeyValue("Margin Level", FormatPercent(GetMarginLevel()));
 
     // Drawdown
-    Print("--- DRAWDOWN ---");
-    Print("  Current Drawdown: ", FormatPercent(GetCurrentDrawdown()));
-    Print("  Drawdown from Peak: ", FormatPercent(GetDrawdownFromPeak()));
-    Print("  Max Drawdown (Session): ", FormatPercent(maxDrawdownReached));
-    Print("  Emergency Stop Level: ", FormatPercent(EmergencyStop_Percent));
-    Print("");
+    Log_SubHeader("DRAWDOWN");
+    Log_KeyValue("Current Drawdown", FormatPercent(GetCurrentDrawdown()));
+    Log_KeyValue("Drawdown from Peak", FormatPercent(GetDrawdownFromPeak()));
+    Log_KeyValue("Max DD (Session)", FormatPercent(maxDrawdownReached));
+    Log_KeyValue("Emergency Stop Level", FormatPercent(EmergencyStop_Percent));
 
     // Exposure
-    Print("--- EXPOSURE ---");
+    Log_SubHeader("EXPOSURE");
     CalculateTotalExposure();
-    Print("  Total Long: ", DoubleToString(totalLongLots, 2), " lot");
-    Print("  Total Short: ", DoubleToString(totalShortLots, 2), " lot");
-    Print("  Net Exposure: ", DoubleToString(netExposure, 2), " lot");
-    Print("  Max Net Allowed: ", DoubleToString(NetExposure_MaxLot, 2), " lot");
-    Print("  Status: ", isNeutral ? "NEUTRAL (OK)" : "IMBALANCED (WARN)");
-    Print("");
+    Log_KeyValueNum("Total Long (lot)", totalLongLots, 2);
+    Log_KeyValueNum("Total Short (lot)", totalShortLots, 2);
+    Log_KeyValueNum("Net Exposure (lot)", netExposure, 2);
+    Log_KeyValueNum("Max Net Allowed (lot)", NetExposure_MaxLot, 2);
+    Log_KeyValue("Status", isNeutral ? "NEUTRAL (OK)" : "IMBALANCED (WARN)");
 
     // Volatility
-    Print("--- VOLATILITY ---");
+    Log_SubHeader("VOLATILITY");
     double atrPips = GetATRPips();
-    Print("  ATR: ", DoubleToString(atrPips, 1), " pips");
-    Print("  Condition: ", GetATRConditionName(GetATRCondition(atrPips)));
-    // v5.8: High ATR Threshold removed - ATR for monitoring only
-    Print("");
+    Log_KeyValueNum("ATR (pips)", atrPips, 1);
+    Log_KeyValue("Condition", GetATRConditionName(GetATRCondition(atrPips)));
 
     // Daily Status
     if(EnableDailyTarget) {
-        Print("--- DAILY LIMITS ---");
-        Print("  Daily P/L: ", FormatMoney(GetDailyProfitLoss()));
-        Print("  Profit Target: ", FormatMoney(DailyProfitTarget_USD));
-        Print("  Loss Limit: ", FormatMoney(DailyLossLimit_USD));
-        Print("  Target Reached: ", isDailyTargetReached ? "YES" : "NO");
-        Print("  Loss Limit Hit: ", isDailyLossLimitReached ? "YES" : "NO");
+        Log_SubHeader("DAILY LIMITS");
+        Log_KeyValue("Daily P/L", FormatMoney(GetDailyProfitLoss()));
+        Log_KeyValue("Profit Target", FormatMoney(DailyProfitTarget_USD));
+        Log_KeyValue("Loss Limit", FormatMoney(DailyLossLimit_USD));
+        Log_KeyValue("Target Reached", isDailyTargetReached ? "YES" : "NO");
+        Log_KeyValue("Loss Limit Hit", isDailyLossLimitReached ? "YES" : "NO");
     }
 
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+

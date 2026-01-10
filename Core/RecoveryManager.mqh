@@ -76,73 +76,45 @@ bool HasExistingOrders() {
 //| Returns true if recovery successful (at least 1 item recovered)  |
 //+------------------------------------------------------------------+
 bool RecoverExistingOrders() {
-    Print("");
-    Print("=======================================================================");
-    Print("  RECOVERY MODE ACTIVATED");
-    Print("=======================================================================");
-    Print("  Symbol: ", _Symbol);
-    Print("  MagicNumber Base: ", MagicNumber);
-    Print("  Grid A Magic: ", MagicNumber + MAGIC_OFFSET_GRID_A);
-    Print("  Grid B Magic: ", MagicNumber + MAGIC_OFFSET_GRID_B);
-    Print("-----------------------------------------------------------------------");
+    Log_RecoveryStart(OrdersTotal(), PositionsTotal());
 
-    // Reset counters
     g_recoveredOrdersCount = 0;
     g_recoveredPositionsCount = 0;
 
-    // First, initialize arrays to clean state
-    // (but NOT with InitializeArrays() - we'll populate them ourselves)
     ResetArraysForRecovery();
 
-    // Recover pending orders
     bool ordersRecovered = RecoverPendingOrders();
-
-    // Recover open positions
     bool positionsRecovered = RecoverOpenPositions();
 
-    // Calculate entry point from recovered orders
     double recoveredEntry = CalculateEntryPointFromRecoveredOrders();
-
-    // Try to load saved entry point from GlobalVariable
     double savedEntry = LoadEntryPointFromGlobal();
 
-    // Determine which entry point to use
     if(savedEntry > 0) {
         entryPoint = savedEntry;
-        Print("  Entry Point loaded from GlobalVariable: ", DoubleToString(entryPoint, symbolDigits));
+        Log_Debug("Recovery", StringFormat("Entry from GlobalVar: %.5f", entryPoint));
     } else if(recoveredEntry > 0) {
         entryPoint = recoveredEntry;
-        Print("  Entry Point calculated from orders: ", DoubleToString(entryPoint, symbolDigits));
+        Log_Debug("Recovery", StringFormat("Entry from orders: %.5f", entryPoint));
     } else {
-        // Fallback to current price
         entryPoint = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-        Print("  Entry Point set to current price: ", DoubleToString(entryPoint, symbolDigits));
+        Log_Debug("Recovery", StringFormat("Entry from current price: %.5f", entryPoint));
     }
 
     entryPointTime = TimeCurrent();
 
-    // Check if any recovery happened
     int totalRecovered = g_recoveredOrdersCount + g_recoveredPositionsCount;
 
     if(totalRecovered > 0) {
         g_recoveryPerformed = true;
         g_lastRecoveryTime = TimeCurrent();
 
-        // Recalculate breakout levels based on recovered entry point
         CalculateBreakoutLevels();
 
-        Print("-----------------------------------------------------------------------");
-        Print("  RECOVERY SUCCESSFUL!");
-        Print("  Pending Orders Recovered: ", g_recoveredOrdersCount);
-        Print("  Open Positions Recovered: ", g_recoveredPositionsCount);
-        Print("  Entry Point: ", DoubleToString(entryPoint, symbolDigits));
-        Print("=======================================================================");
-
+        Log_RecoveryComplete(g_recoveredOrdersCount, g_recoveredPositionsCount, entryPoint);
         return true;
     }
 
-    Print("  WARNING: No orders/positions found to recover");
-    Print("=======================================================================");
+    Log_SystemWarning("Recovery", "No orders/positions found");
     return false;
 }
 
@@ -200,7 +172,6 @@ bool RecoverPendingOrders() {
     int recovered = 0;
 
     int totalOrders = OrdersTotal();
-    Print("  Scanning ", totalOrders, " pending orders...");
 
     for(int i = 0; i < totalOrders; i++) {
         ulong ticket = OrderGetTicket(i);
@@ -212,29 +183,23 @@ bool RecoverPendingOrders() {
         long magic = OrderGetInteger(ORDER_MAGIC);
         string comment = OrderGetString(ORDER_COMMENT);
 
-        // Filter by symbol
         if(symbol != _Symbol) continue;
-
-        // Filter by magic number
         if(magic != magicA && magic != magicB) continue;
 
-        // Parse comment to get grid level
         ENUM_GRID_SIDE side;
         ENUM_GRID_ZONE zone;
         int level = ParseGridLevelFromComment(comment, side, zone);
 
         if(level < 0 || level >= MAX_GRID_LEVELS) {
-            Print("  WARNING: Could not parse order comment: '", comment, "' - skipping");
+            Log_Debug("Recovery", StringFormat("Cannot parse comment: %s", comment));
             continue;
         }
 
-        // Get order data
         double entryPrice = OrderGetDouble(ORDER_PRICE_OPEN);
         double lot = OrderGetDouble(ORDER_VOLUME_CURRENT);
         double tp = OrderGetDouble(ORDER_TP);
         double sl = OrderGetDouble(ORDER_SL);
 
-        // Populate correct array
         if(side == GRID_A) {
             if(zone == ZONE_UPPER) {
                 gridA_Upper_Tickets[level] = ticket;
@@ -270,13 +235,11 @@ bool RecoverPendingOrders() {
         }
 
         recovered++;
-        Print("    + Recovered PENDING: ", comment, " @ ", DoubleToString(entryPrice, symbolDigits),
-              " [Ticket: ", ticket, ", Lot: ", DoubleToString(lot, 2), "]");
+        Log_Debug("Recovery", StringFormat("PENDING %s ticket=%d price=%.5f lot=%.2f",
+                  comment, ticket, entryPrice, lot));
     }
 
     g_recoveredOrdersCount = recovered;
-    Print("  Pending orders recovered: ", recovered);
-
     return (recovered > 0);
 }
 
@@ -289,7 +252,6 @@ bool RecoverOpenPositions() {
     int recovered = 0;
 
     int totalPositions = PositionsTotal();
-    Print("  Scanning ", totalPositions, " open positions...");
 
     for(int i = 0; i < totalPositions; i++) {
         ulong ticket = PositionGetTicket(i);
@@ -301,30 +263,24 @@ bool RecoverOpenPositions() {
         long magic = PositionGetInteger(POSITION_MAGIC);
         string comment = PositionGetString(POSITION_COMMENT);
 
-        // Filter by symbol
         if(symbol != _Symbol) continue;
-
-        // Filter by magic number
         if(magic != magicA && magic != magicB) continue;
 
-        // Parse comment to get grid level
         ENUM_GRID_SIDE side;
         ENUM_GRID_ZONE zone;
         int level = ParseGridLevelFromComment(comment, side, zone);
 
         if(level < 0 || level >= MAX_GRID_LEVELS) {
-            Print("  WARNING: Could not parse position comment: '", comment, "' - skipping");
+            Log_Debug("Recovery", StringFormat("Cannot parse comment: %s", comment));
             continue;
         }
 
-        // Get position data
         double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
         double lot = PositionGetDouble(POSITION_VOLUME);
         double tp = PositionGetDouble(POSITION_TP);
         double sl = PositionGetDouble(POSITION_SL);
         double profit = PositionGetDouble(POSITION_PROFIT);
 
-        // Populate correct array
         if(side == GRID_A) {
             if(zone == ZONE_UPPER) {
                 gridA_Upper_Tickets[level] = ticket;
@@ -360,13 +316,11 @@ bool RecoverOpenPositions() {
         }
 
         recovered++;
-        Print("    + Recovered POSITION: ", comment, " @ ", DoubleToString(entryPrice, symbolDigits),
-              " [Ticket: ", ticket, ", Lot: ", DoubleToString(lot, 2), ", P/L: $", DoubleToString(profit, 2), "]");
+        Log_Debug("Recovery", StringFormat("POSITION %s ticket=%d price=%.5f lot=%.2f profit=%.2f",
+                  comment, ticket, entryPrice, lot, profit));
     }
 
     g_recoveredPositionsCount = recovered;
-    Print("  Open positions recovered: ", recovered);
-
     return (recovered > 0);
 }
 
@@ -480,9 +434,7 @@ void SaveEntryPointToGlobal() {
     GlobalVariableSet(keyEntry, entryPoint);
     GlobalVariableSet(keyTime, (double)entryPointTime);
 
-    if(DetailedLogging) {
-        Print("[Recovery] Entry point saved to GlobalVariable: ", DoubleToString(entryPoint, symbolDigits));
-    }
+    Log_Debug("Recovery", StringFormat("Entry saved to GlobalVar: %.5f", entryPoint));
 }
 
 //+------------------------------------------------------------------+
@@ -505,14 +457,12 @@ double LoadEntryPointFromGlobal() {
         return 0;
     }
 
-    // Optional: Check if saved time is recent (within last 7 days)
     if(GlobalVariableCheck(keyTime)) {
         datetime savedTime = (datetime)GlobalVariableGet(keyTime);
         datetime now = TimeCurrent();
 
-        // If saved more than 7 days ago, consider it stale
         if(now - savedTime > 7 * 24 * 60 * 60) {
-            Print("[Recovery] Saved entry point is older than 7 days - ignoring");
+            Log_Debug("Recovery", "Saved entry older than 7 days - ignoring");
             return 0;
         }
     }
@@ -540,14 +490,8 @@ void ClearEntryPointGlobal() {
 //| Same as RecoverExistingOrders but can be called anytime          |
 //+------------------------------------------------------------------+
 bool ForceRecoveryFromBroker() {
-    Print("");
-    Print("=======================================================================");
-    Print("  MANUAL RECOVERY TRIGGERED");
-    Print("=======================================================================");
-
-    // Reset system state if needed
     if(systemState == STATE_ACTIVE) {
-        Print("  WARNING: System is already active - will sync with broker");
+        Log_Debug("Recovery", "Manual recovery - system already active");
     }
 
     return RecoverExistingOrders();
@@ -557,66 +501,51 @@ bool ForceRecoveryFromBroker() {
 //| Log Detailed Recovery Report                                     |
 //+------------------------------------------------------------------+
 void LogRecoveryReport() {
-    Print("");
-    Print("+=====================================================================+");
-    Print("|           RECOVERY COMPLETED SUCCESSFULLY                           |");
-    Print("+=====================================================================+");
-    Print("");
-    Print("+-------------------------------------------------------------------+");
-    Print("|  RECOVERY SUMMARY                                                 |");
-    Print("+-------------------------------------------------------------------+");
-    Print("|  Symbol: ", _Symbol);
-    Print("|  Pending Orders Recovered: ", g_recoveredOrdersCount);
-    Print("|  Open Positions Recovered: ", g_recoveredPositionsCount);
-    Print("|  Entry Point: ", DoubleToString(entryPoint, symbolDigits));
-    Print("|  Recovery Time: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
-    Print("+-------------------------------------------------------------------+");
-    Print("");
+    Log_Header("RECOVERY REPORT");
+    Log_KeyValue("Symbol", _Symbol);
+    Log_KeyValueNum("Pending Orders", g_recoveredOrdersCount, 0);
+    Log_KeyValueNum("Open Positions", g_recoveredPositionsCount, 0);
+    Log_KeyValueNum("Entry Point", entryPoint, symbolDigits);
+    Log_Separator();
 
-    // Grid A Details
-    Print("+-------------------------------------------------------------------+");
-    Print("|  GRID A (BUY) - Recovered Levels                                  |");
-    Print("+-------------------------------------------------------------------+");
+    // Grid A
+    Log_SubHeader("GRID A (BUY)");
     bool hasGridA = false;
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridA_Upper_Tickets[i] > 0) {
             hasGridA = true;
-            Print("|  Upper L", i+1, ": Ticket ", gridA_Upper_Tickets[i],
-                  " @ ", DoubleToString(gridA_Upper_EntryPrices[i], symbolDigits),
-                  " [", GetRecoveryStatusName(gridA_Upper_Status[i]), "]");
+            Log_KeyValue(StringFormat("Upper L%d", i+1),
+                        StringFormat("#%d @ %.5f [%s]", gridA_Upper_Tickets[i],
+                                    gridA_Upper_EntryPrices[i], GetRecoveryStatusName(gridA_Upper_Status[i])));
         }
         if(gridA_Lower_Tickets[i] > 0) {
             hasGridA = true;
-            Print("|  Lower L", i+1, ": Ticket ", gridA_Lower_Tickets[i],
-                  " @ ", DoubleToString(gridA_Lower_EntryPrices[i], symbolDigits),
-                  " [", GetRecoveryStatusName(gridA_Lower_Status[i]), "]");
+            Log_KeyValue(StringFormat("Lower L%d", i+1),
+                        StringFormat("#%d @ %.5f [%s]", gridA_Lower_Tickets[i],
+                                    gridA_Lower_EntryPrices[i], GetRecoveryStatusName(gridA_Lower_Status[i])));
         }
     }
-    if(!hasGridA) Print("|  (No Grid A orders recovered)");
-    Print("+-------------------------------------------------------------------+");
+    if(!hasGridA) Log_KeyValue("Status", "No orders recovered");
 
-    // Grid B Details
-    Print("+-------------------------------------------------------------------+");
-    Print("|  GRID B (SELL) - Recovered Levels                                 |");
-    Print("+-------------------------------------------------------------------+");
+    // Grid B
+    Log_SubHeader("GRID B (SELL)");
     bool hasGridB = false;
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridB_Upper_Tickets[i] > 0) {
             hasGridB = true;
-            Print("|  Upper L", i+1, ": Ticket ", gridB_Upper_Tickets[i],
-                  " @ ", DoubleToString(gridB_Upper_EntryPrices[i], symbolDigits),
-                  " [", GetRecoveryStatusName(gridB_Upper_Status[i]), "]");
+            Log_KeyValue(StringFormat("Upper L%d", i+1),
+                        StringFormat("#%d @ %.5f [%s]", gridB_Upper_Tickets[i],
+                                    gridB_Upper_EntryPrices[i], GetRecoveryStatusName(gridB_Upper_Status[i])));
         }
         if(gridB_Lower_Tickets[i] > 0) {
             hasGridB = true;
-            Print("|  Lower L", i+1, ": Ticket ", gridB_Lower_Tickets[i],
-                  " @ ", DoubleToString(gridB_Lower_EntryPrices[i], symbolDigits),
-                  " [", GetRecoveryStatusName(gridB_Lower_Status[i]), "]");
+            Log_KeyValue(StringFormat("Lower L%d", i+1),
+                        StringFormat("#%d @ %.5f [%s]", gridB_Lower_Tickets[i],
+                                    gridB_Lower_EntryPrices[i], GetRecoveryStatusName(gridB_Lower_Status[i])));
         }
     }
-    if(!hasGridB) Print("|  (No Grid B orders recovered)");
-    Print("+=====================================================================+");
-    Print("");
+    if(!hasGridB) Log_KeyValue("Status", "No orders recovered");
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+

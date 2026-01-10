@@ -11,69 +11,65 @@
 //| Print System Configuration                                       |
 //+------------------------------------------------------------------+
 void PrintSystemConfiguration() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA v9.7 - SYSTEM CONFIGURATION");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("SUGAMARA v9.10 - SYSTEM CONFIGURATION");
 
     // General
-    Print("\n[GENERAL]");
-    Print("  Magic Number: ", MagicNumber);
-    Print("  Symbol: ", _Symbol);
-    Print("  Selected Pair: ", GetPairDisplayName(SelectedPair));
-    Print("  Risk Level: ", GetPairRiskLevel(SelectedPair));
+    Log_SubHeader("GENERAL");
+    Log_KeyValueNum("Magic Number", MagicNumber, 0);
+    Log_KeyValue("Symbol", _Symbol);
+    Log_KeyValue("Pair", GetPairDisplayName(SelectedPair));
+    Log_KeyValue("Risk Level", GetPairRiskLevel(SelectedPair));
 
     // Grid Configuration
-    Print("\n[GRID CONFIGURATION]");
-    Print("  Levels per Side: ", GridLevelsPerSide);
-    Print("  Total Orders: ", GridLevelsPerSide * 4, " (", GridLevelsPerSide, " x 2 zones x 2 grids)");
-    Print("  Spacing Mode: ", EnumToString(SpacingMode));
+    Log_SubHeader("GRID CONFIGURATION");
+    Log_KeyValueNum("Levels/Side", GridLevelsPerSide, 0);
+    Log_KeyValueNum("Total Orders", GridLevelsPerSide * 4, 0);
+    Log_KeyValue("Spacing Mode", EnumToString(SpacingMode));
 
     if(SpacingMode == SPACING_FIXED) {
-        Print("  Fixed Spacing: ", Fixed_Spacing_Pips, " pips");
+        Log_KeyValueNum("Fixed Spacing", Fixed_Spacing_Pips, 1);
     } else if(SpacingMode == SPACING_PAIR_AUTO) {
-        Print("  Pair Auto Spacing: ", GetPairDefaultSpacing(), " pips (from ", EnumToString(SelectedPair), ")");
+        Log_KeyValueNum("Auto Spacing", GetPairDefaultSpacing(), 1);
     }
 
     // Lot Configuration
-    Print("\n[LOT SIZING]");
-    Print("  Lot Mode: ", EnumToString(LotMode));
-    Print("  Base Lot: ", BaseLot);
+    Log_SubHeader("LOT SIZING");
+    Log_KeyValue("Lot Mode", EnumToString(LotMode));
+    Log_KeyValueNum("Base Lot", BaseLot, 2);
     if(LotMode == LOT_PROGRESSIVE) {
-        Print("  Lot Multiplier: ", LotMultiplier);
-        Print("  Max Lot per Level: ", MaxLotPerLevel);
+        Log_KeyValueNum("Multiplier", LotMultiplier, 2);
+        Log_KeyValueNum("Max Lot/Level", MaxLotPerLevel, 2);
     }
 
     // Cascade Configuration
-    Print("\n[PERFECT CASCADE]");
-    Print("  Cascade Mode: ", EnumToString(CascadeMode));
+    Log_SubHeader("PERFECT CASCADE");
+    Log_KeyValue("Mode", EnumToString(CascadeMode));
     if(CascadeMode == CASCADE_RATIO) {
-        Print("  TP Ratio: ", CascadeTP_Ratio);
+        Log_KeyValueNum("TP Ratio", CascadeTP_Ratio, 2);
     }
-    Print("  Final Level TP: ", FinalLevel_TP_Pips, " pips");
+    Log_KeyValueNum("Final TP", FinalLevel_TP_Pips, 1);
 
     // Cyclic Reopening
-    Print("\n[CYCLIC REOPENING]");
-    Print("  Enabled: ", EnableCyclicReopen ? "YES" : "NO");
+    Log_SubHeader("CYCLIC REOPENING");
+    Log_KeyValue("Enabled", EnableCyclicReopen ? "YES" : "NO");
     if(EnableCyclicReopen) {
-        Print("  Trigger: ", EnumToString(ReopenTrigger));
-        // Cooldown REMOVED v5.8 - Reopen sempre immediato
-        Print("  Max Cycles: ", MaxCyclesPerLevel == 0 ? "Unlimited" : IntegerToString(MaxCyclesPerLevel));
+        Log_KeyValue("Trigger", EnumToString(ReopenTrigger));
+        Log_KeyValue("Max Cycles", MaxCyclesPerLevel == 0 ? "Unlimited" : IntegerToString(MaxCyclesPerLevel));
     }
 
     // Risk Management
-    Print("\n[RISK MANAGEMENT]");
-    Print("  Emergency Stop: ", EnableEmergencyStop ? "YES" : "NO");
+    Log_SubHeader("RISK MANAGEMENT");
+    Log_KeyValue("Emergency Stop", EnableEmergencyStop ? "YES" : "NO");
     if(EnableEmergencyStop) {
-        Print("  Emergency Threshold: ", EmergencyStop_Percent, "% equity");
+        Log_KeyValueNum("Threshold", EmergencyStop_Percent, 1);
     }
-    // v5.8: PauseOnHighATR removed
 
     // Performance Targets
-    Print("\n[PERFORMANCE TARGETS]");
-    Print("  Target ROI: ", activePair_TargetROI, "% monthly");
-    Print("  Max Drawdown: ", activePair_MaxDrawdown, "%");
+    Log_SubHeader("PERFORMANCE TARGETS");
+    Log_KeyValueNum("Target ROI", activePair_TargetROI, 1);
+    Log_KeyValueNum("Max Drawdown", activePair_MaxDrawdown, 1);
 
-    Print("\n═══════════════════════════════════════════════════════════════════");
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+
@@ -123,14 +119,12 @@ void InitializeEntryPoint() {
     entryPoint = NormalizeDouble((ask + bid) / 2.0, symbolDigits);
     entryPointTime = TimeCurrent();
 
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  ENTRY POINT INITIALIZED");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  Bid: ", bid);
-    Print("  Ask: ", ask);
-    Print("  Entry Point: ", entryPoint);
-    Print("  Time: ", TimeToString(entryPointTime, TIME_DATE|TIME_MINUTES));
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("ENTRY POINT INITIALIZED");
+    Log_KeyValueNum("Bid", bid, symbolDigits);
+    Log_KeyValueNum("Ask", ask, symbolDigits);
+    Log_KeyValueNum("Entry", entryPoint, symbolDigits);
+    Log_KeyValue("Time", TimeToString(entryPointTime, TIME_DATE|TIME_MINUTES));
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+
@@ -138,7 +132,7 @@ void InitializeEntryPoint() {
 //+------------------------------------------------------------------+
 void CalculateRangeBoundaries() {
     if(entryPoint <= 0 || currentSpacing_Pips <= 0) {
-        Print("ERROR: Cannot calculate range - entry or spacing not set");
+        Log_SystemError("Init", 0, "Cannot calculate range - entry or spacing not set");
         return;
     }
 
@@ -149,15 +143,13 @@ void CalculateRangeBoundaries() {
     rangeLowerBound = entryPoint - totalRangePoints;
     totalRangePips = currentSpacing_Pips * GridLevelsPerSide * 2;
 
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  RANGE BOUNDARIES CALCULATED");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  Entry Point: ", entryPoint);
-    Print("  Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
-    Print("  Levels per Side: ", GridLevelsPerSide);
-    Print("  Upper Bound: ", rangeUpperBound);
-    Print("  Lower Bound: ", rangeLowerBound);
-    Print("  Total Range: ", DoubleToString(totalRangePips, 1), " pips");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("RANGE BOUNDARIES CALCULATED");
+    Log_KeyValueNum("Entry", entryPoint, symbolDigits);
+    Log_KeyValueNum("Spacing", currentSpacing_Pips, 1);
+    Log_KeyValueNum("Levels/Side", GridLevelsPerSide, 0);
+    Log_KeyValueNum("Upper", rangeUpperBound, symbolDigits);
+    Log_KeyValueNum("Lower", rangeLowerBound, symbolDigits);
+    Log_KeyValueNum("Total Range", totalRangePips, 1);
+    Log_Separator();
 }
 

@@ -17,7 +17,8 @@
 //+------------------------------------------------------------------+
 void InitializeCloseOnProfit() {
     COP_ResetDaily();
-    Print("[COP] ✅ Close On Profit initialized | Target: $", DoubleToString(COP_DailyTarget_USD, 2));
+    Log_InitConfigNum("COP.Target", COP_DailyTarget_USD);
+    Log_InitComplete("COP");
 }
 
 //+------------------------------------------------------------------+
@@ -33,7 +34,7 @@ void COP_ResetDaily() {
     cop_TotalLotsToday = 0.0;
     cop_LastResetDate = TimeCurrent();
 
-    Print("[COP] 🔄 Daily reset completed at ", TimeToString(cop_LastResetDate, TIME_DATE|TIME_MINUTES));
+    Log_COPReset("DAILY");
 }
 
 //+------------------------------------------------------------------+
@@ -122,23 +123,14 @@ bool COP_CheckTarget() {
     // Update tracking first
     COP_UpdateTracking();
 
-    // Check if target reached
     if(cop_NetProfit >= COP_DailyTarget_USD) {
         cop_TargetReached = true;
 
-        Print("[COP] ✅ TARGET REACHED! Net: $", DoubleToString(cop_NetProfit, 2),
-              " | Target: $", DoubleToString(COP_DailyTarget_USD, 2));
-        Print("[COP]    Realized: $", DoubleToString(cop_RealizedProfit, 2),
-              " | Floating: $", DoubleToString(cop_FloatingProfit, 2),
-              " | Commissions: $", DoubleToString(cop_TotalCommissions, 2));
+        Log_COPTargetReached(cop_NetProfit, COP_DailyTarget_USD);
 
-        // v5.x: Alert popup quando COP chiude
         Alert("SUGAMARA COP: Target $", DoubleToString(COP_DailyTarget_USD, 2),
-              " raggiunto! Net: $", DoubleToString(cop_NetProfit, 2),
-              " | Real: $", DoubleToString(cop_RealizedProfit, 2),
-              " | Float: $", DoubleToString(cop_FloatingProfit, 2));
+              " reached! Net=$", DoubleToString(cop_NetProfit, 2));
 
-        // Execute target actions
         COP_ExecuteTargetActions();
 
         return true;
@@ -151,25 +143,20 @@ bool COP_CheckTarget() {
 //| EXECUTE TARGET ACTIONS                                           |
 //+------------------------------------------------------------------+
 void COP_ExecuteTargetActions() {
-    // Close all positions
     if(COP_ClosePositions) {
         COP_CloseAllPositions();
     }
 
-    // Delete all pending orders
     if(COP_DeletePending) {
         COP_DeleteAllPending();
     }
 
-    // Pause trading
     if(COP_PauseTrading) {
         systemState = STATE_PAUSED;
-        Print("[COP] ⏸️ Trading PAUSED until next day");
+        Log_Debug("COP", "Trading PAUSED until next day");
     }
 
-    // Reset COP counter after target reached (ready for next cycle)
     COP_ResetDaily();
-    Print("[COP] 🔄 Counter reset - ready for next cycle");
 }
 
 //+------------------------------------------------------------------+
@@ -191,11 +178,8 @@ void COP_CloseAllPositions() {
 
         if(trade.PositionClose(ticket)) {
             closed++;
+            Log_PositionClosed(ticket, "COP_TARGET", 0, 0);
         }
-    }
-
-    if(closed > 0) {
-        Print("[COP] ❌ Closed ", closed, " positions");
     }
 }
 
@@ -218,11 +202,8 @@ void COP_DeleteAllPending() {
 
         if(trade.OrderDelete(ticket)) {
             deleted++;
+            Log_OrderCancelled(ticket, "COP_TARGET");
         }
-    }
-
-    if(deleted > 0) {
-        Print("[COP] 🗑️ Deleted ", deleted, " pending orders");
     }
 }
 
@@ -232,18 +213,12 @@ void COP_DeleteAllPending() {
 void COP_RecordTrade(double profit, double lots) {
     if(!Enable_CloseOnProfit) return;
 
-    // Add to realized profit
     cop_RealizedProfit += profit;
-
-    // Track trades and lots for commission calculation
     cop_TradesToday++;
     cop_TotalLotsToday += lots;
 
-    if(DetailedLogging) {
-        Print("[COP] 💵 Trade recorded: ", (profit >= 0 ? "+" : ""), "$", DoubleToString(profit, 2),
-              " | Total Realized: $", DoubleToString(cop_RealizedProfit, 2),
-              " | Lots today: ", DoubleToString(cop_TotalLotsToday, 2));
-    }
+    Log_Debug("COP", StringFormat("Trade recorded profit=%.2f total_realized=%.2f lots_today=%.2f",
+              profit, cop_RealizedProfit, cop_TotalLotsToday));
 }
 
 //+------------------------------------------------------------------+
@@ -282,10 +257,7 @@ bool COP_ShouldBlockTrading() {
 //| COP DEINITIALIZATION                                             |
 //+------------------------------------------------------------------+
 void DeinitializeCloseOnProfit() {
-    Print("[COP] 📊 Session Summary:");
-    Print("[COP]    Realized: $", DoubleToString(cop_RealizedProfit, 2));
-    Print("[COP]    Trades: ", cop_TradesToday, " | Lots: ", DoubleToString(cop_TotalLotsToday, 2));
-    Print("[COP]    Commissions: $", DoubleToString(cop_TotalCommissions, 2));
-    Print("[COP]    Net Profit: $", DoubleToString(cop_NetProfit, 2));
-    Print("[COP]    Target Reached: ", cop_TargetReached ? "YES" : "NO");
+    Log_Debug("COP", StringFormat("DEINIT realized=%.2f trades=%d lots=%.2f net=%.2f target=%s",
+              cop_RealizedProfit, cop_TradesToday, cop_TotalLotsToday, cop_NetProfit,
+              cop_TargetReached ? "YES" : "NO"));
 }

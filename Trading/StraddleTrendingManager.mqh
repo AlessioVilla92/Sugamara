@@ -57,29 +57,25 @@ bool g_straddleSellJustFilled = false;
 //+------------------------------------------------------------------+
 bool StraddleInit() {
     if(!Straddle_Enabled) {
-        Print("[STRADDLE] Sistema DISABILITATO");
+        Log_InitConfig("Straddle", "DISABLED");
         return true;
     }
 
-    // Validazione input
     if(!ValidateStraddleInputs()) {
-        Print("[STRADDLE] ERRORE: Validazione input fallita");
+        Log_InitFailed("Straddle", "input_validation");
         return false;
     }
 
-    // Reset stato
     ZeroMemory(straddle);
     straddle.isActive = false;
     straddle.currentRound = 0;
     straddle.inCoverMode = false;
     straddle.lastCloseTime = 0;
 
-    // Configura trade object con magic separato
     straddleTrade.SetExpertMagicNumber(Straddle_MagicNumber);
     straddleTrade.SetDeviationInPoints(30);
 
-    // FIX 3: Filling type dinamico per broker
-    ENUM_ORDER_TYPE_FILLING filling = ORDER_FILLING_FOK;  // Default sicuro
+    ENUM_ORDER_TYPE_FILLING filling = ORDER_FILLING_FOK;
     long fillingMode = SymbolInfoInteger(Symbol(), SYMBOL_FILLING_MODE);
 
     if((fillingMode & SYMBOL_FILLING_IOC) != 0) {
@@ -89,18 +85,11 @@ bool StraddleInit() {
     }
     straddleTrade.SetTypeFilling(filling);
 
-    // Log inizializzazione
-    Print("");
-    Print("=======================================================================");
-    Print("  STRADDLE TRENDING INTELLIGENTE v6.0 - INIZIALIZZATO");
-    Print("=======================================================================");
-    PrintFormat("  Magic Number: %d (ISOLATO da CASCADE)", Straddle_MagicNumber);
-    PrintFormat("  Spacing: %.1f pips", Straddle_Spacing_Pips);
-    PrintFormat("  Base Lot: %.2f", Straddle_BaseLot);
-    PrintFormat("  Multiplier: %s", Straddle_LotMultiplier == STRADDLE_MULT_2X ? "2x" : "1.5x");
-    PrintFormat("  Max Whipsaw: %d", Straddle_MaxWhipsaw);
-    PrintFormat("  Filling Mode: %s", EnumToString(filling));
-    Print("=======================================================================");
+    Log_InitConfig("Straddle.Magic", IntegerToString(Straddle_MagicNumber));
+    Log_InitConfigNum("Straddle.Spacing", Straddle_Spacing_Pips);
+    Log_InitConfigNum("Straddle.BaseLot", Straddle_BaseLot);
+    Log_InitConfig("Straddle.Multiplier", (Straddle_LotMultiplier == STRADDLE_MULT_2X ? "2x" : "1.5x"));
+    Log_InitComplete("Straddle");
 
     return true;
 }
@@ -110,23 +99,23 @@ bool StraddleInit() {
 //+------------------------------------------------------------------+
 bool ValidateStraddleInputs() {
     if(Straddle_Spacing_Pips < 5.0) {
-        Print("[STRADDLE] ERROR: Spacing troppo basso (< 5 pips)");
+        Log_SystemError("Straddle", 0, "Spacing < 5 pips");
         return false;
     }
     if(Straddle_Spacing_Pips > 100.0) {
-        Print("[STRADDLE] ERROR: Spacing troppo alto (> 100 pips)");
+        Log_SystemError("Straddle", 0, "Spacing > 100 pips");
         return false;
     }
     if(Straddle_BaseLot < 0.01) {
-        Print("[STRADDLE] ERROR: BaseLot troppo basso (< 0.01)");
+        Log_SystemError("Straddle", 0, "BaseLot < 0.01");
         return false;
     }
     if(Straddle_MaxWhipsaw < 1 || Straddle_MaxWhipsaw > 10) {
-        Print("[STRADDLE] ERROR: MaxWhipsaw deve essere 1-10");
+        Log_SystemError("Straddle", 0, "MaxWhipsaw out of range 1-10");
         return false;
     }
     if(Straddle_MaxLot < Straddle_BaseLot) {
-        Print("[STRADDLE] ERROR: MaxLot deve essere >= BaseLot");
+        Log_SystemError("Straddle", 0, "MaxLot < BaseLot");
         return false;
     }
     return true;
@@ -184,21 +173,20 @@ void RecoverStraddleOrdersFromBroker() {
         }
     }
 
-    // Determina se Straddle era attivo
     bool hasOrders = (straddle.buyStopTicket > 0 || straddle.sellStopTicket > 0);
     bool hasPositions = (straddle.totalBuyPositions > 0 || straddle.totalSellPositions > 0);
 
     if(hasOrders || hasPositions) {
         straddle.isActive = true;
-        // Stima round corrente dal numero di posizioni
         straddle.currentRound = MathMax(straddle.totalBuyPositions, straddle.totalSellPositions);
-        if(straddle.currentRound == 0 && hasOrders) straddle.currentRound = 0;  // Ordini pending, non fillati
+        if(straddle.currentRound == 0 && hasOrders) straddle.currentRound = 0;
 
-        Print("  [Straddle Recovery] Found:");
-        Print("    BuyStop=#", straddle.buyStopTicket, " SellStop=#", straddle.sellStopTicket);
-        Print("    BuyPositions=", straddle.totalBuyPositions, " (", DoubleToString(straddle.totalBuyLot, 2), " lots)");
-        Print("    SellPositions=", straddle.totalSellPositions, " (", DoubleToString(straddle.totalSellLot, 2), " lots)");
-        Print("    Estimated Round: ", straddle.currentRound);
+        Log_RecoveryComplete(
+            (straddle.buyStopTicket > 0 ? 1 : 0) + (straddle.sellStopTicket > 0 ? 1 : 0),
+            straddle.totalBuyPositions + straddle.totalSellPositions,
+            straddle.entryPrice);
+        Log_Debug("Straddle", StringFormat("Recovery round=%d buy_lot=%.2f sell_lot=%.2f",
+                  straddle.currentRound, straddle.totalBuyLot, straddle.totalSellLot));
     }
 }
 
@@ -409,27 +397,22 @@ void OpenNewStraddle() {
     // Normalizza lot
     double lot = NormalizeStraddleLot(Straddle_BaseLot);
 
-    // Piazza BUY STOP
     if(straddleTrade.BuyStop(lot, buyStopPrice, Symbol(), 0, buyTP,
                              ORDER_TIME_GTC, 0, "Straddle BUY R0")) {
         straddle.buyStopTicket = straddleTrade.ResultOrder();
-        PrintFormat("[STRADDLE] BUY STOP piazzato @ %.5f, Lot: %.2f, TP: %.5f",
-                    buyStopPrice, lot, buyTP);
+        Log_OrderPlaced("STRADDLE", "UP", 0, "BUY_STOP", straddle.buyStopTicket, buyStopPrice, buyTP, 0, lot);
     } else {
-        PrintFormat("[STRADDLE] ERRORE BUY STOP: %d", GetLastError());
+        Log_SystemError("Straddle", GetLastError(), "BUY_STOP placement failed");
     }
 
-    // Piazza SELL STOP
     if(straddleTrade.SellStop(lot, sellStopPrice, Symbol(), 0, sellTP,
                               ORDER_TIME_GTC, 0, "Straddle SELL R0")) {
         straddle.sellStopTicket = straddleTrade.ResultOrder();
-        PrintFormat("[STRADDLE] SELL STOP piazzato @ %.5f, Lot: %.2f, TP: %.5f",
-                    sellStopPrice, lot, sellTP);
+        Log_OrderPlaced("STRADDLE", "DN", 0, "SELL_STOP", straddle.sellStopTicket, sellStopPrice, sellTP, 0, lot);
     } else {
-        PrintFormat("[STRADDLE] ERRORE SELL STOP: %d", GetLastError());
+        Log_SystemError("Straddle", GetLastError(), "SELL_STOP placement failed");
     }
 
-    // Aggiorna stato
     straddle.isActive = true;
     straddle.currentRound = 0;
     straddle.inCoverMode = false;
@@ -442,8 +425,7 @@ void OpenNewStraddle() {
     double distancePips = distance / point;
     if(digits == 5 || digits == 3) distancePips /= 10.0;
 
-    PrintFormat("[STRADDLE] Nuovo Straddle aperto - Centro: %.5f, Distanza: %.1f pips",
-                center, distancePips);
+    Log_StraddleOpened(center, distancePips, lot);
 }
 
 //+------------------------------------------------------------------+
@@ -500,29 +482,25 @@ void OnStraddleBuyFilled() {
     straddle.currentRound++;
     straddle.lastFillType = POSITION_TYPE_BUY;
 
-    PrintFormat("[STRADDLE] BUY FILLATO - Round: %d", straddle.currentRound);
+    Log_StraddleFilled("BUY", straddle.currentRound, straddle.buyStopPrice, straddle.currentBuyLot);
 
     if(straddle.inCoverMode) {
-        PrintFormat("[STRADDLE] COVER BUY fillato - Hedge raggiunto");
+        Log_Debug("Straddle", "COVER BUY filled - hedge reached");
         return;
     }
 
-    // Check se raggiunto max whipsaw
     if(straddle.currentRound > Straddle_MaxWhipsaw) {
         EnterCoverMode();
         return;
     }
 
-    // Aumenta lot per prossimo SELL STOP
     double newLot = CalculateNextLot(straddle.currentSellLot);
 
-    // Cancella vecchio SELL STOP se esiste
     if(straddle.sellStopTicket > 0) {
         straddleTrade.OrderDelete(straddle.sellStopTicket);
         straddle.sellStopTicket = 0;
     }
 
-    // Piazza nuovo SELL STOP con lot aumentato
     double sellTP = 0;
     if(Straddle_UseTP && Straddle_TP_GridLevel > 1) {
         double distance = GetStraddleDistance();
@@ -535,8 +513,8 @@ void OnStraddleBuyFilled() {
                               ORDER_TIME_GTC, 0, "Straddle SELL R" + IntegerToString(straddle.currentRound))) {
         straddle.sellStopTicket = straddleTrade.ResultOrder();
         straddle.currentSellLot = newLot;
-        PrintFormat("[STRADDLE] Nuovo SELL STOP @ %.5f, Lot: %.2f (Round %d)",
-                    straddle.sellStopPrice, newLot, straddle.currentRound);
+        Log_OrderPlaced("STRADDLE", "DN", straddle.currentRound, "SELL_STOP",
+                       straddle.sellStopTicket, straddle.sellStopPrice, sellTP, 0, newLot);
     }
 }
 
@@ -547,10 +525,10 @@ void OnStraddleSellFilled() {
     straddle.currentRound++;
     straddle.lastFillType = POSITION_TYPE_SELL;
 
-    PrintFormat("[STRADDLE] SELL FILLATO - Round: %d", straddle.currentRound);
+    Log_StraddleFilled("SELL", straddle.currentRound, straddle.sellStopPrice, straddle.currentSellLot);
 
     if(straddle.inCoverMode) {
-        PrintFormat("[STRADDLE] COVER SELL fillato - Hedge raggiunto");
+        Log_Debug("Straddle", "COVER SELL filled - hedge reached");
         return;
     }
 
@@ -559,16 +537,13 @@ void OnStraddleSellFilled() {
         return;
     }
 
-    // Aumenta lot per prossimo BUY STOP
     double newLot = CalculateNextLot(straddle.currentBuyLot);
 
-    // Cancella vecchio BUY STOP se esiste
     if(straddle.buyStopTicket > 0) {
         straddleTrade.OrderDelete(straddle.buyStopTicket);
         straddle.buyStopTicket = 0;
     }
 
-    // Piazza nuovo BUY STOP con lot aumentato
     double buyTP = 0;
     if(Straddle_UseTP && Straddle_TP_GridLevel > 1) {
         double distance = GetStraddleDistance();
@@ -581,8 +556,8 @@ void OnStraddleSellFilled() {
                              ORDER_TIME_GTC, 0, "Straddle BUY R" + IntegerToString(straddle.currentRound))) {
         straddle.buyStopTicket = straddleTrade.ResultOrder();
         straddle.currentBuyLot = newLot;
-        PrintFormat("[STRADDLE] Nuovo BUY STOP @ %.5f, Lot: %.2f (Round %d)",
-                    straddle.buyStopPrice, newLot, straddle.currentRound);
+        Log_OrderPlaced("STRADDLE", "UP", straddle.currentRound, "BUY_STOP",
+                       straddle.buyStopTicket, straddle.buyStopPrice, buyTP, 0, newLot);
     }
 }
 
@@ -593,11 +568,10 @@ double CalculateNextLot(double currentLot) {
     double multiplier = (Straddle_LotMultiplier == STRADDLE_MULT_2X) ? 2.0 : 1.5;
     double newLot = currentLot * multiplier;
 
-    // FIX 5: Normalizza con lotStep broker
     newLot = NormalizeStraddleLot(newLot);
 
     if(newLot >= Straddle_MaxLot) {
-        PrintFormat("[STRADDLE] Max Lot raggiunto: %.2f", Straddle_MaxLot);
+        Log_Debug("Straddle", StringFormat("MaxLot reached: %.2f", Straddle_MaxLot));
     }
 
     return newLot;
@@ -609,36 +583,31 @@ double CalculateNextLot(double currentLot) {
 void EnterCoverMode() {
     straddle.inCoverMode = true;
 
-    PrintFormat("[STRADDLE] COVER MODE - Max Whipsaw raggiunto (%d)", Straddle_MaxWhipsaw);
+    Log_Debug("Straddle", StringFormat("COVER MODE - MaxWhipsaw=%d reached", Straddle_MaxWhipsaw));
 
-    // Calcola esposizione netta
     UpdateStraddleState();
     double straddleNetExposure = straddle.totalBuyLot - straddle.totalSellLot;
 
     if(MathAbs(straddleNetExposure) < 0.001) {
-        PrintFormat("[STRADDLE] Gia in hedge perfetto");
+        Log_Debug("Straddle", "Already in perfect hedge");
         return;
     }
 
-    // FIX 5: Normalizza cover lot con lotStep
     double coverLot = NormalizeStraddleLot(MathAbs(straddleNetExposure));
 
-    // Piazza ordine di copertura
     if(straddleNetExposure > 0) {
-        // Long netto -> piazza SELL STOP per coprire
         if(straddleTrade.SellStop(coverLot, straddle.sellStopPrice, Symbol(), 0, 0,
                                   ORDER_TIME_GTC, 0, "Straddle COVER")) {
             straddle.sellStopTicket = straddleTrade.ResultOrder();
-            PrintFormat("[STRADDLE] COVER SELL STOP @ %.5f, Lot: %.2f",
-                        straddle.sellStopPrice, coverLot);
+            Log_OrderPlaced("STRADDLE", "DN", 0, "SELL_STOP_COVER",
+                           straddle.sellStopTicket, straddle.sellStopPrice, 0, 0, coverLot);
         }
     } else {
-        // Short netto -> piazza BUY STOP per coprire
         if(straddleTrade.BuyStop(coverLot, straddle.buyStopPrice, Symbol(), 0, 0,
                                  ORDER_TIME_GTC, 0, "Straddle COVER")) {
             straddle.buyStopTicket = straddleTrade.ResultOrder();
-            PrintFormat("[STRADDLE] COVER BUY STOP @ %.5f, Lot: %.2f",
-                        straddle.buyStopPrice, coverLot);
+            Log_OrderPlaced("STRADDLE", "UP", 0, "BUY_STOP_COVER",
+                           straddle.buyStopTicket, straddle.buyStopPrice, 0, 0, coverLot);
         }
     }
 }
@@ -675,9 +644,8 @@ bool CheckStraddleCOP() {
     double netProfit = CalcStraddleNetProfit();
 
     if(netProfit >= Straddle_COP_Target) {
-        PrintFormat("[STRADDLE] COP TARGET RAGGIUNTO! NetProfit: $%.2f >= Target: $%.2f",
-                    netProfit, Straddle_COP_Target);
-        CloseAllStraddlePositions("COP Target");
+        Log_COPTargetReached(netProfit, Straddle_COP_Target);
+        CloseAllStraddlePositions("COP_TARGET");
         return true;
     }
 
@@ -689,15 +657,14 @@ bool CheckStraddleCOP() {
 //+------------------------------------------------------------------+
 bool CheckStraddleBreakevenExit() {
     if(!Straddle_BE_Enabled) return false;
-    if(straddle.currentRound < 2) return false;  // Solo dopo almeno 1 whipsaw
+    if(straddle.currentRound < 2) return false;
     if(straddle.totalBuyPositions == 0 && straddle.totalSellPositions == 0) return false;
 
     double netProfit = CalcStraddleNetProfit();
 
     if(netProfit >= -Straddle_BE_Buffer) {
-        PrintFormat("[STRADDLE] BREAKEVEN EXIT! NetProfit: $%.2f >= Buffer: -$%.2f",
-                    netProfit, Straddle_BE_Buffer);
-        CloseAllStraddlePositions("Breakeven Exit");
+        Log_Debug("Straddle", StringFormat("BE_EXIT profit=%.2f buffer=%.2f", netProfit, Straddle_BE_Buffer));
+        CloseAllStraddlePositions("BE_EXIT");
         return true;
     }
 
@@ -713,23 +680,19 @@ bool CheckStraddleEOD() {
     MqlDateTime dt;
     TimeToStruct(TimeGMT(), dt);
 
-    // Venerdi anticipato
     if(Straddle_CloseFriday && dt.day_of_week == 5) {
         if(dt.hour >= Straddle_Friday_Hour) {
             if(straddle.isActive) {
-                PrintFormat("[STRADDLE] Chiusura Venerdi anticipata - Ora: %d:00 GMT", dt.hour);
-                CloseAllStraddlePositions("Friday Close");
+                CloseAllStraddlePositions("FRIDAY_CLOSE");
                 CancelAllStraddlePendingOrders();
             }
             return true;
         }
     }
 
-    // EOD normale
     if(dt.hour >= Straddle_EOD_Hour) {
         if(straddle.isActive) {
-            PrintFormat("[STRADDLE] Chiusura EOD - Ora: %d:00 GMT", dt.hour);
-            CloseAllStraddlePositions("EOD Close");
+            CloseAllStraddlePositions("EOD_CLOSE");
             CancelAllStraddlePendingOrders();
         }
         return true;
@@ -743,6 +706,7 @@ bool CheckStraddleEOD() {
 //+------------------------------------------------------------------+
 void CloseAllStraddlePositions(string reason) {
     int closed = 0;
+    double totalProfit = 0;
 
     for(int i = PositionsTotal() - 1; i >= 0; i--) {
         ulong ticket = PositionGetTicket(i);
@@ -752,17 +716,15 @@ void CloseAllStraddlePositions(string reason) {
             if(PositionGetString(POSITION_SYMBOL) != Symbol()) continue;
             if(PositionGetInteger(POSITION_MAGIC) != Straddle_MagicNumber) continue;
 
+            totalProfit += PositionGetDouble(POSITION_PROFIT);
             if(straddleTrade.PositionClose(ticket)) {
-                PrintFormat("[STRADDLE] Chiusa posizione #%d - Motivo: %s", ticket, reason);
                 closed++;
             }
         }
     }
 
-    // Cancella ordini pending
     CancelAllStraddlePendingOrders();
 
-    // Reset stato
     straddle.lastCloseTime = TimeCurrent();
     straddle.isActive = false;
     straddle.currentRound = 0;
@@ -770,7 +732,7 @@ void CloseAllStraddlePositions(string reason) {
     straddle.buyStopTicket = 0;
     straddle.sellStopTicket = 0;
 
-    PrintFormat("[STRADDLE] Chiuse %d posizioni - Motivo: %s", closed, reason);
+    Log_StraddleClosed(reason, totalProfit, closed);
 }
 
 //+------------------------------------------------------------------+
@@ -788,6 +750,7 @@ void CancelAllStraddlePendingOrders() {
             if(OrderGetInteger(ORDER_MAGIC) != Straddle_MagicNumber) continue;
 
             if(straddleTrade.OrderDelete(ticket)) {
+                Log_OrderCancelled(ticket, "STRADDLE_CLEANUP");
                 cancelled++;
             }
         }
@@ -795,10 +758,6 @@ void CancelAllStraddlePendingOrders() {
 
     straddle.buyStopTicket = 0;
     straddle.sellStopTicket = 0;
-
-    if(cancelled > 0) {
-        PrintFormat("[STRADDLE] Cancellati %d ordini pending", cancelled);
-    }
 }
 
 //+------------------------------------------------------------------+
@@ -824,18 +783,18 @@ string GetStraddleInfo() {
 void LogStraddleStatus() {
     if(!Straddle_Enabled) return;
 
-    Print("");
-    Print("+-------------------------------------------------------------------+");
-    Print("|  STRADDLE TRENDING STATUS                                        |");
-    Print("+-------------------------------------------------------------------+");
-    PrintFormat("|  Active: %s", straddle.isActive ? "YES" : "NO");
-    PrintFormat("|  Round: %d / %d", straddle.currentRound, Straddle_MaxWhipsaw);
-    PrintFormat("|  Cover Mode: %s", straddle.inCoverMode ? "YES" : "NO");
-    PrintFormat("|  BUY Positions: %d (%.2f lot)", straddle.totalBuyPositions, straddle.totalBuyLot);
-    PrintFormat("|  SELL Positions: %d (%.2f lot)", straddle.totalSellPositions, straddle.totalSellLot);
-    PrintFormat("|  Net Exposure: %.2f lot", straddle.totalBuyLot - straddle.totalSellLot);
-    PrintFormat("|  Net Profit: $%.2f", CalcStraddleNetProfit());
-    Print("+-------------------------------------------------------------------+");
+    Log_Header("STRADDLE STATUS");
+    Log_KeyValue("Active", straddle.isActive ? "YES" : "NO");
+    Log_KeyValueNum("Round", straddle.currentRound, 0);
+    Log_KeyValueNum("MaxWhipsaw", Straddle_MaxWhipsaw, 0);
+    Log_KeyValue("Cover Mode", straddle.inCoverMode ? "YES" : "NO");
+    Log_KeyValueNum("BUY Positions", straddle.totalBuyPositions, 0);
+    Log_KeyValueNum("BUY Lots", straddle.totalBuyLot, 2);
+    Log_KeyValueNum("SELL Positions", straddle.totalSellPositions, 0);
+    Log_KeyValueNum("SELL Lots", straddle.totalSellLot, 2);
+    Log_KeyValueNum("Net Exposure", straddle.totalBuyLot - straddle.totalSellLot, 2);
+    Log_KeyValueNum("Net Profit", CalcStraddleNetProfit(), 2);
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+
@@ -844,18 +803,8 @@ void LogStraddleStatus() {
 void StraddleDeinit() {
     if(!Straddle_Enabled) return;
 
-    Print("");
-    Print("=======================================================================");
-    Print("  STRADDLE TRENDING DEINIT");
-    Print("=======================================================================");
-
-    // Log stato finale
     if(straddle.isActive) {
-        PrintFormat("  Posizioni BUY: %d (%.2f lot)", straddle.totalBuyPositions, straddle.totalBuyLot);
-        PrintFormat("  Posizioni SELL: %d (%.2f lot)", straddle.totalSellPositions, straddle.totalSellLot);
-        PrintFormat("  Net Profit: $%.2f", CalcStraddleNetProfit());
+        Log_Debug("Straddle", StringFormat("DEINIT active=true buy_pos=%d sell_pos=%d profit=%.2f",
+                  straddle.totalBuyPositions, straddle.totalSellPositions, CalcStraddleNetProfit()));
     }
-
-    Print("  NOTA: Posizioni Straddle NON chiuse automaticamente");
-    Print("=======================================================================");
 }

@@ -35,23 +35,19 @@ color volatilityColor_Context = clrGray;
 //+------------------------------------------------------------------+
 bool InitializeVolatilityMonitor() {
     if(!EnableVolatilityMonitor) {
-        Print("[Indicators] Volatility Monitor is DISABLED");
+        Log_InitConfig("Volatility", "DISABLED");
         return true;
     }
 
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  INITIALIZING VOLATILITY MONITOR - DUAL TIMEFRAME                ");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("VOLATILITY MONITOR INIT");
 
     // Initialize Immediate Timeframe ATR
     atrHandle_Immediate = iATR(_Symbol, Vol_TF_Immediate, Vol_ATR_Period);
     if(atrHandle_Immediate == INVALID_HANDLE) {
-        Print("[Indicators] ERROR: Failed to create ATR for Immediate TF: ",
-              EnumToString(Vol_TF_Immediate));
+        Log_InitFailed("ATR_Immediate", StringFormat("TF: %s", EnumToString(Vol_TF_Immediate)));
         return false;
     }
-    Print("[Indicators] SUCCESS: ATR Immediate initialized - TF: ",
-          EnumToString(Vol_TF_Immediate), " Period: ", Vol_ATR_Period);
+    Log_InitConfig("ATR Immediate", StringFormat("%s period=%d", EnumToString(Vol_TF_Immediate), Vol_ATR_Period));
 
     // Initialize Context Timeframe ATR
     ENUM_TIMEFRAMES contextTF = Vol_TF_Context;
@@ -61,16 +57,12 @@ bool InitializeVolatilityMonitor() {
 
     atrHandle_Context = iATR(_Symbol, contextTF, Vol_ATR_Period);
     if(atrHandle_Context == INVALID_HANDLE) {
-        Print("[Indicators] ERROR: Failed to create ATR for Context TF: ",
-              EnumToString(contextTF));
+        Log_InitFailed("ATR_Context", StringFormat("TF: %s", EnumToString(contextTF)));
         return false;
     }
-    Print("[Indicators] SUCCESS: ATR Context initialized - TF: ",
-          EnumToString(contextTF), " Period: ", Vol_ATR_Period);
+    Log_InitConfig("ATR Context", StringFormat("%s period=%d", EnumToString(contextTF), Vol_ATR_Period));
 
-    Print("[Indicators] SUCCESS: Volatility Monitor initialized!");
-    Print("═══════════════════════════════════════════════════════════════════");
-
+    Log_InitComplete("Volatility Monitor");
     return true;
 }
 
@@ -307,13 +299,11 @@ ENUM_TIMEFRAMES atrTF_MTF[4];           // Timeframes
 //+------------------------------------------------------------------+
 bool InitializeATRMultiTF() {
     if(!Enable_ATRMultiTF) {
-        Print("[Indicators] ATR Multi-TF is DISABLED");
+        Log_InitConfig("ATR Multi-TF", "DISABLED");
         return true;
     }
 
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  INITIALIZING ATR MULTI-TIMEFRAME v3.0");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("ATR MULTI-TIMEFRAME INIT");
 
     // Store timeframes
     atrTF_MTF[0] = ATR_MTF_TF1;  // M5
@@ -326,7 +316,7 @@ bool InitializeATRMultiTF() {
         atrHandle_MTF[i] = iATR(_Symbol, atrTF_MTF[i], ATR_MTF_Period);
 
         if(atrHandle_MTF[i] == INVALID_HANDLE) {
-            Print("[Indicators] ERROR: Failed to create ATR for TF: ", EnumToString(atrTF_MTF[i]));
+            Log_InitFailed("ATR_MTF", StringFormat("TF: %s", EnumToString(atrTF_MTF[i])));
             return false;
         }
 
@@ -337,11 +327,10 @@ bool InitializeATRMultiTF() {
         atrStatus_MTF[i] = "INIT";
         atrColor_MTF[i] = clrGray;
 
-        Print("[Indicators] SUCCESS: ATR ", GetTimeframeName(atrTF_MTF[i]),
-              " initialized - Period: ", ATR_MTF_Period);
+        Log_Debug("ATR", StringFormat("ATR %s period=%d OK", GetTimeframeName(atrTF_MTF[i]), ATR_MTF_Period));
     }
 
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_InitComplete("ATR Multi-TF");
     return true;
 }
 

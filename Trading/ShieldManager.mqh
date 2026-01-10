@@ -50,13 +50,9 @@ string GetShieldOrderTypeName()
 bool InitializeShield()
 {
    if(ShieldMode == SHIELD_DISABLED) {
-      Print("[Shield] Shield Intelligente: DISABLED");
+      Log_InitConfig("Shield", "DISABLED");
       return true;
    }
-
-   Print("=== Initializing Shield Intelligente ===");
-   Print("  Mode: ", (ShieldMode == SHIELD_SIMPLE ? "SIMPLE (1 Phase)" : "3 PHASES"));
-   Print("  Order Type: ", GetShieldOrderTypeName());
 
    // Reset pending shield variables
    shieldPendingTicket = 0;
@@ -72,11 +68,13 @@ bool InitializeShield()
 
    // Calculate breakout levels from grid edges
    if(!CalculateBreakoutLevels()) {
-      Print("ERROR: Failed to calculate breakout levels");
+      Log_InitFailed("Shield", "breakout_levels_calculation");
       return false;
    }
 
-   Print("  Shield System: READY");
+   Log_InitConfig("Shield.Mode", (ShieldMode == SHIELD_SIMPLE ? "SIMPLE" : "3_PHASES"));
+   Log_InitConfig("Shield.OrderType", GetShieldOrderTypeName());
+   Log_InitComplete("Shield");
 
    return true;
 }
@@ -90,69 +88,41 @@ bool InitializeShield()
 double CalculateShieldLotSize(ENUM_SHIELD_TYPE shieldType)
 {
    double totalLots = 0;
-   int shortPositions = 0;
-   int longPositions = 0;
-
-   if(DetailedLogging) {
-      Print("[Shield] CalculateShieldLotSize() - Type: ", (shieldType == SHIELD_LONG ? "LONG" : "SHORT"));
-   }
+   int positionsCount = 0;
 
    if(shieldType == SHIELD_LONG) {
-      // v9.0: Shield LONG protegge SHORT = SOLO Grid B (entrambe le zone)
-      // Grid B Upper = SELL LIMIT, Grid B Lower = SELL STOP
+      // Shield LONG protegge SHORT = SOLO Grid B (entrambe le zone)
       for(int i = 0; i < GridLevelsPerSide; i++) {
          if(gridB_Upper_Status[i] == ORDER_FILLED) {
-            totalLots += gridB_Upper_Lots[i];  // SELL LIMIT = SHORT
-            shortPositions++;
-            if(DetailedLogging) {
-               PrintFormat("[Shield]   Grid B Upper[%d]: %.2f lots (SELL LIMIT)", i, gridB_Upper_Lots[i]);
-            }
+            totalLots += gridB_Upper_Lots[i];
+            positionsCount++;
          }
          if(gridB_Lower_Status[i] == ORDER_FILLED) {
-            totalLots += gridB_Lower_Lots[i];  // SELL STOP = SHORT
-            shortPositions++;
-            if(DetailedLogging) {
-               PrintFormat("[Shield]   Grid B Lower[%d]: %.2f lots (SELL STOP)", i, gridB_Lower_Lots[i]);
-            }
+            totalLots += gridB_Lower_Lots[i];
+            positionsCount++;
          }
       }
    }
    else if(shieldType == SHIELD_SHORT) {
-      // v9.0: Shield SHORT protegge LONG = SOLO Grid A (entrambe le zone)
-      // Grid A Upper = BUY STOP, Grid A Lower = BUY LIMIT
+      // Shield SHORT protegge LONG = SOLO Grid A (entrambe le zone)
       for(int i = 0; i < GridLevelsPerSide; i++) {
          if(gridA_Upper_Status[i] == ORDER_FILLED) {
-            totalLots += gridA_Upper_Lots[i];  // BUY STOP = LONG
-            longPositions++;
-            if(DetailedLogging) {
-               PrintFormat("[Shield]   Grid A Upper[%d]: %.2f lots (BUY STOP)", i, gridA_Upper_Lots[i]);
-            }
+            totalLots += gridA_Upper_Lots[i];
+            positionsCount++;
          }
          if(gridA_Lower_Status[i] == ORDER_FILLED) {
-            totalLots += gridA_Lower_Lots[i];  // BUY LIMIT = LONG
-            longPositions++;
-            if(DetailedLogging) {
-               PrintFormat("[Shield]   Grid A Lower[%d]: %.2f lots (BUY LIMIT)", i, gridA_Lower_Lots[i]);
-            }
+            totalLots += gridA_Lower_Lots[i];
+            positionsCount++;
          }
       }
    }
 
    double rawLots = totalLots;
-
-   // Normalize
    totalLots = NormalizeLotSize(totalLots);
-
-   // Minimum 0.01
    if(totalLots < symbolMinLot) totalLots = symbolMinLot;
 
-   if(DetailedLogging) {
-      PrintFormat("[Shield] Lot Calculation Summary:");
-      PrintFormat("[Shield]   Positions to cover: %d", (shieldType == SHIELD_LONG ? shortPositions : longPositions));
-      PrintFormat("[Shield]   Raw lot sum: %.4f", rawLots);
-      PrintFormat("[Shield]   Normalized lot: %.2f", totalLots);
-      PrintFormat("[Shield]   Min lot applied: %s", (rawLots < symbolMinLot ? "YES" : "NO"));
-   }
+   Log_Debug("Shield", StringFormat("LotCalc type=%s positions=%d raw=%.4f normalized=%.2f",
+             (shieldType == SHIELD_LONG ? "LONG" : "SHORT"), positionsCount, rawLots, totalLots));
 
    return totalLots;
 }
@@ -166,17 +136,7 @@ double CalculateShieldLotSize(ENUM_SHIELD_TYPE shieldType)
 //+------------------------------------------------------------------+
 void ProcessShieldSimple(double currentPrice)
 {
-   if(DetailedLogging) {
-      PrintFormat("[Shield] ProcessShieldSimple() - Price: %.5f, Active: %s",
-                  currentPrice, (shield.isActive ? "YES" : "NO"));
-   }
-
    if(shield.isActive) {
-      // Shield already active - manage it
-      if(DetailedLogging) {
-         PrintFormat("[Shield]   Managing active shield - Type: %s, P/L: %.2f",
-                     (shield.type == SHIELD_LONG ? "LONG" : "SHORT"), shield.current_pl);
-      }
       ManageActiveShield(currentPrice);
       return;
    }
@@ -185,19 +145,13 @@ void ProcessShieldSimple(double currentPrice)
    ENUM_BREAKOUT_DIRECTION direction;
    bool breakoutDetected = CheckBreakoutConditionShield(currentPrice, direction);
 
-   if(DetailedLogging) {
-      PrintFormat("[Shield]   Breakout check: %s, Direction: %s",
-                  (breakoutDetected ? "DETECTED" : "None"),
-                  (direction == BREAKOUT_UP ? "UP" : (direction == BREAKOUT_DOWN ? "DOWN" : "NONE")));
-   }
-
    if(breakoutDetected) {
       if(direction == BREAKOUT_UP) {
-         Print("[Shield] BREAKOUT UP detected - Activating Shield SHORT");
+         Log_ShieldPhaseChange("NORMAL", "BREAKOUT_UP", currentPrice);
          ActivateShieldShort("SIMPLE");
       }
       else if(direction == BREAKOUT_DOWN) {
-         Print("[Shield] BREAKOUT DOWN detected - Activating Shield LONG");
+         Log_ShieldPhaseChange("NORMAL", "BREAKOUT_DOWN", currentPrice);
          ActivateShieldLong("SIMPLE");
       }
    }
@@ -212,112 +166,51 @@ void ProcessShieldSimple(double currentPrice)
 //+------------------------------------------------------------------+
 void ProcessShield3Phases(double currentPrice)
 {
-   // Get price position in range
    ENUM_SYSTEM_STATE priceState = GetPricePositionInRange(currentPrice);
-
-   // v5.7: Throttled logging - heartbeat 1x/hour when INSIDE_RANGE, immediate on state change
-   if(DetailedLogging) {
-      string phaseStr = GetShieldPhaseString();
-      string stateStr = "";
-      switch(priceState) {
-         case STATE_INSIDE_RANGE: stateStr = "INSIDE_RANGE"; break;
-         case STATE_WARNING_UP: stateStr = "WARNING_UP"; break;
-         case STATE_WARNING_DOWN: stateStr = "WARNING_DOWN"; break;
-         default: stateStr = "OTHER"; break;
-      }
-
-      string currentState = phaseStr + "_" + stateStr;
-      bool shouldLog = false;
-      string logReason = "";
-
-      // State change - ALWAYS log immediately
-      if(currentState != g_lastShieldState) {
-         shouldLog = true;
-         logReason = "STATE_CHANGE";
-         g_lastShieldState = currentState;
-         g_lastShieldHeartbeat = TimeCurrent();
-      }
-      // Heartbeat - log 1x/hour when INSIDE_RANGE (normal operation)
-      else if(priceState == STATE_INSIDE_RANGE && shield.phase == PHASE_NORMAL &&
-              TimeCurrent() - g_lastShieldHeartbeat >= g_shieldHeartbeatSec) {
-         shouldLog = true;
-         logReason = "HEARTBEAT_1H";
-         g_lastShieldHeartbeat = TimeCurrent();
-      }
-
-      if(shouldLog) {
-         PrintFormat("[Shield] %s | Phase: %s | State: %s | Price: %.5f",
-                     logReason, phaseStr, stateStr, currentPrice);
-      }
-   }
 
    switch(shield.phase) {
 
-      //-------------------------------------------------------------
-      // PHASE 0: NORMAL - Inside range
-      //-------------------------------------------------------------
+      //--- PHASE 0: NORMAL - Inside range
       case PHASE_NORMAL:
          if(priceState == STATE_WARNING_UP) {
-            Print("[Shield] Phase transition: NORMAL -> WARNING (UP)");
             EnterWarningPhase(BREAKOUT_UP);
          }
          else if(priceState == STATE_WARNING_DOWN) {
-            Print("[Shield] Phase transition: NORMAL -> WARNING (DOWN)");
             EnterWarningPhase(BREAKOUT_DOWN);
          }
          break;
 
-      //-------------------------------------------------------------
-      // PHASE 1: WARNING - Price near edge
-      //-------------------------------------------------------------
+      //--- PHASE 1: WARNING - Price near edge
       case PHASE_WARNING:
-         // If back inside, reset
          if(priceState == STATE_INSIDE_RANGE) {
-            Print("[Shield] Phase transition: WARNING -> NORMAL (returned to range)");
             ExitWarningPhase();
          }
-         // If past last grid level, enter Pre-Shield
          else if(priceState == STATE_WARNING_UP && currentPrice >= GetLastGridBLevel()) {
-            PrintFormat("[Shield] Phase transition: WARNING -> PRE-SHIELD (price %.5f >= lastGridB)", currentPrice);
             EnterPreShieldPhase(BREAKOUT_UP);
          }
          else if(priceState == STATE_WARNING_DOWN && currentPrice <= GetLastGridALevel()) {
-            PrintFormat("[Shield] Phase transition: WARNING -> PRE-SHIELD (price %.5f <= lastGridA)", currentPrice);
             EnterPreShieldPhase(BREAKOUT_DOWN);
          }
          break;
 
-      //-------------------------------------------------------------
-      // PHASE 2: PRE-SHIELD - Pending order ready
-      // v5.5 FIX: Only cancel if FULLY inside range, NOT if still in warning zone!
-      // WARNING zone is still a danger zone - don't cancel PRE-SHIELD there
-      //-------------------------------------------------------------
+      //--- PHASE 2: PRE-SHIELD - Pending order ready
       case PHASE_PRE_SHIELD:
-         // v5.5: Cancel ONLY if back FULLY inside safe range
-         // WARNING zones are still danger zones - keep PRE-SHIELD active!
          if(priceState == STATE_INSIDE_RANGE) {
-            // v5.5: Track when price first entered INSIDE_RANGE
             if(g_preShieldInsideRangeStart == 0) {
                g_preShieldInsideRangeStart = TimeCurrent();
             }
-
-            // v5.5: Hysteresis - require 30 seconds CONTINUOUSLY inside range before cancelling
+            // Hysteresis: require 30 seconds inside range before cancelling
             datetime timeSinceInsideRange = TimeCurrent() - g_preShieldInsideRangeStart;
-            if(timeSinceInsideRange >= 30) {  // 30 second cooldown
-               PrintFormat("[Shield] PRE-SHIELD -> NORMAL (inside range for %d sec)", (int)timeSinceInsideRange);
+            if(timeSinceInsideRange >= 30) {
                CancelPreShield();
-               g_preShieldInsideRangeStart = 0;  // Reset for next time
+               g_preShieldInsideRangeStart = 0;
             }
-            // Else: still inside range but cooldown not elapsed - keep PRE-SHIELD active
          }
          else {
-            // Price left INSIDE_RANGE (still in WARNING or beyond) - reset timer
             g_preShieldInsideRangeStart = 0;
-
             // Check for breakout confirmation
             ENUM_BREAKOUT_DIRECTION direction;
             if(CheckBreakoutConditionShield(currentPrice, direction)) {
-               Print("[Shield] PRE-SHIELD -> SHIELD_ACTIVE (breakout confirmed)");
                if(direction == BREAKOUT_UP) {
                   ActivateShieldShort("3_PHASES");
                }
@@ -328,13 +221,8 @@ void ProcessShield3Phases(double currentPrice)
          }
          break;
 
-      //-------------------------------------------------------------
-      // PHASE 3: SHIELD ACTIVE - Protection in progress
-      //-------------------------------------------------------------
+      //--- PHASE 3: SHIELD ACTIVE - Protection in progress
       case PHASE_SHIELD_ACTIVE:
-         if(DetailedLogging) {
-            PrintFormat("[Shield] SHIELD_ACTIVE - Managing shield, Current P/L: %.2f", shield.current_pl);
-         }
          ManageActiveShield(currentPrice);
          break;
    }
@@ -342,45 +230,31 @@ void ProcessShield3Phases(double currentPrice)
 
 //+------------------------------------------------------------------+
 //| Enter Warning Phase (Phase 1)                                     |
-//| v5.5b: Log ONLY first occurrence, never again                     |
 //+------------------------------------------------------------------+
 void EnterWarningPhase(ENUM_BREAKOUT_DIRECTION direction)
 {
    shield.phase = PHASE_WARNING;
    lastBreakoutDirection = direction;
-   g_shieldTransitionLogCount++;
 
-   // v5.5b: Log ONLY first occurrence, never again
+   // Log only first occurrence
    if(!g_loggedWarningPhase) {
       double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      double dist = (direction == BREAKOUT_UP) ?
-                    PointsToPips(shieldZone.resistance - currentPrice) :
-                    PointsToPips(currentPrice - shieldZone.support);
-      PrintFormat("[Shield] NORMAL->WARNING | %s | Price:%.5f | Dist:%.1f pips",
-                  (direction == BREAKOUT_UP ? "UP" : "DOWN"),
-                  currentPrice, dist);
-      g_loggedWarningPhase = true;  // Never log again
+      Log_ShieldPhaseChange("NORMAL", (direction == BREAKOUT_UP ? "WARNING_UP" : "WARNING_DOWN"), currentPrice);
+      g_loggedWarningPhase = true;
    }
 
-   // v5.6: Alert rimosso per Warning Zone - solo log (riduzione alert a 2 essenziali)
-
-   // Update system state
    currentSystemState = (direction == BREAKOUT_UP ? STATE_WARNING_UP : STATE_WARNING_DOWN);
 }
 
 //+------------------------------------------------------------------+
 //| Exit Warning Phase (return to normal)                             |
-//| v5.5b: Log ONLY first occurrence, never again                     |
 //+------------------------------------------------------------------+
 void ExitWarningPhase()
 {
-   g_shieldTransitionLogCount++;
-
-   // v5.5b: Log ONLY first occurrence, never again
    if(!g_loggedExitWarning) {
       double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      PrintFormat("[Shield] WARNING->NORMAL | Price:%.5f", currentPrice);
-      g_loggedExitWarning = true;  // Never log again
+      Log_ShieldPhaseChange("WARNING", "NORMAL", currentPrice);
+      g_loggedExitWarning = true;
    }
 
    shield.phase = PHASE_NORMAL;
@@ -390,32 +264,21 @@ void ExitWarningPhase()
 
 //+------------------------------------------------------------------+
 //| Enter Pre-Shield Phase (Phase 2)                                  |
-//| v5.5b: Log ONLY first occurrence, never again                     |
 //+------------------------------------------------------------------+
 void EnterPreShieldPhase(ENUM_BREAKOUT_DIRECTION direction)
 {
    shield.phase = PHASE_PRE_SHIELD;
    lastBreakoutDirection = direction;
-   g_shieldTransitionLogCount++;
-   g_preShieldInsideRangeStart = 0;  // v5.5: Reset hysteresis timer
+   g_preShieldInsideRangeStart = 0;
 
-   // v5.5b: Log ONLY first occurrence, never again
    if(!g_loggedPreShieldPhase) {
       double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      double breakoutLevel = (direction == BREAKOUT_UP) ? upperBreakoutLevel : lowerBreakoutLevel;
-      double dist = (direction == BREAKOUT_UP) ?
-                    PointsToPips(breakoutLevel - currentPrice) :
-                    PointsToPips(currentPrice - breakoutLevel);
-      PrintFormat("[Shield] WARNING->PRE-SHIELD | %s | Price:%.5f | Dist:%.1f pips | Type:%s",
-                  (direction == BREAKOUT_UP ? "UP" : "DOWN"),
-                  currentPrice, dist, GetShieldOrderTypeName());
-      g_loggedPreShieldPhase = true;  // Never log again
+      Log_ShieldPhaseChange("WARNING", (direction == BREAKOUT_UP ? "PRE-SHIELD_UP" : "PRE-SHIELD_DOWN"), currentPrice);
+      g_loggedPreShieldPhase = true;
    }
 
-   // v5.6: ALERT 1 - Pre-Shield (breakout imminente)
    if(EnableAlerts) {
-      Alert("SUGAMARA: ⚠️ Shield sta per attivarsi! Breakout ",
-            (direction == BREAKOUT_UP ? "UP" : "DOWN"), " imminente");
+      Alert("SUGAMARA: Shield pending - Breakout ", (direction == BREAKOUT_UP ? "UP" : "DOWN"), " imminent");
    }
 
    currentSystemState = STATE_SHIELD_PENDING;
@@ -423,30 +286,23 @@ void EnterPreShieldPhase(ENUM_BREAKOUT_DIRECTION direction)
 
 //+------------------------------------------------------------------+
 //| Cancel Pre-Shield (returned to range)                             |
-//| v5.5b: Log ONLY first occurrence, never again                     |
 //+------------------------------------------------------------------+
 void CancelPreShield()
 {
-   g_shieldTransitionLogCount++;
-
-   // v5.5b: Log ONLY first occurrence, never again
    if(!g_loggedCancelPreShield) {
       double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      PrintFormat("[Shield] PRE-SHIELD->NORMAL (cancelled) | Price:%.5f", currentPrice);
-      g_loggedCancelPreShield = true;  // Never log again
+      Log_ShieldPhaseChange("PRE-SHIELD", "NORMAL", currentPrice);
+      g_loggedCancelPreShield = true;
    }
 
-   // Cancel pending STOP order if exists (keep this logging - order operations are important)
+   // Cancel pending STOP order if exists
    if(ShieldOrderType == SHIELD_ORDER_STOP && shieldPendingTicket > 0) {
       if(trade.OrderDelete(shieldPendingTicket)) {
-         PrintFormat("[Shield] Pending order #%d cancelled", shieldPendingTicket);
+         Log_OrderCancelled(shieldPendingTicket, "PRE-SHIELD_CANCELLED");
       }
       else {
-         PrintFormat("[Shield] WARN: Failed to cancel order #%d: %d",
-                     shieldPendingTicket, trade.ResultRetcode());
+         Log_SystemError("Shield", trade.ResultRetcode(), "Failed to cancel pending order");
       }
-
-      // Reset pending variables
       shieldPendingTicket = 0;
       shieldPendingType = SHIELD_NONE;
       shieldPendingPrice = 0;
@@ -456,7 +312,7 @@ void CancelPreShield()
    shield.phase = PHASE_NORMAL;
    lastBreakoutDirection = BREAKOUT_NONE;
    currentSystemState = STATE_INSIDE_RANGE;
-   g_preShieldInsideRangeStart = 0;  // v5.5: Reset hysteresis timer
+   g_preShieldInsideRangeStart = 0;
 }
 
 //+------------------------------------------------------------------+
@@ -468,15 +324,10 @@ void MonitorPendingShieldOrders()
       return;
    }
 
-   // Check if pending order still exists
    if(!OrderSelect(shieldPendingTicket)) {
       // Order not found as pending - check if it was executed
       if(PositionSelectByTicket(shieldPendingTicket)) {
-         // Order was executed - update shield structure
-         Print("═══════════════════════════════════════════════════════════════════");
-         Print("  PENDING SHIELD ORDER EXECUTED!");
-         Print("═══════════════════════════════════════════════════════════════════");
-
+         // Order was executed
          shield.ticket = shieldPendingTicket;
          shield.isActive = true;
          shield.type = shieldPendingType;
@@ -490,19 +341,16 @@ void MonitorPendingShieldOrders()
          totalShieldActivations++;
          currentSystemState = (shieldPendingType == SHIELD_LONG ? STATE_SHIELD_LONG : STATE_SHIELD_SHORT);
 
-         Print("  ✅ [STOP] Shield ", (shieldPendingType == SHIELD_LONG ? "LONG" : "SHORT"), " NOW ACTIVE");
-         PrintFormat("     Ticket: %d", shield.ticket);
-         PrintFormat("     Executed Price: %.5f", shield.entry_price);
-         PrintFormat("     Lot: %.2f", shield.lot_size);
-         Print("═══════════════════════════════════════════════════════════════════");
+         // Calculate exposure covered
+         double exposure = (shieldPendingType == SHIELD_LONG) ? totalShortLots : totalLongLots;
+         Log_ShieldActivated((shieldPendingType == SHIELD_LONG ? "LONG" : "SHORT"),
+                            shield.ticket, shield.entry_price, shield.lot_size, exposure);
 
-         // v5.6: ALERT 2 - Shield ATTIVO (ordine STOP eseguito)
          if(EnableAlerts) {
-            Alert("SUGAMARA: ✅ Shield ", (shieldPendingType == SHIELD_LONG ? "LONG" : "SHORT"),
-                  " ATTIVO - Ordine STOP eseguito a ", DoubleToString(shield.entry_price, symbolDigits));
+            Alert("SUGAMARA: Shield ", (shieldPendingType == SHIELD_LONG ? "LONG" : "SHORT"),
+                  " ACTIVE @ ", DoubleToString(shield.entry_price, symbolDigits));
          }
 
-         // Reset pending variables
          shieldPendingTicket = 0;
          shieldPendingType = SHIELD_NONE;
          shieldPendingPrice = 0;
@@ -510,20 +358,11 @@ void MonitorPendingShieldOrders()
       }
       else {
          // Order was cancelled or expired
-         Print("[Shield] Pending order ", shieldPendingTicket, " no longer exists (cancelled/expired)");
+         Log_OrderCancelled(shieldPendingTicket, "EXPIRED_OR_CANCELLED");
          shieldPendingTicket = 0;
          shieldPendingType = SHIELD_NONE;
          shieldPendingPrice = 0;
          shieldPendingLot = 0;
-      }
-   }
-   else {
-      // Order still pending - log status if detailed logging
-      if(DetailedLogging) {
-         double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-         double distancePips = MathAbs(currentPrice - shieldPendingPrice) / symbolPoint / 10;
-         PrintFormat("[Shield] Pending order #%d still waiting - Distance: %.1f pips",
-                     shieldPendingTicket, distancePips);
       }
    }
 }
@@ -533,34 +372,16 @@ void MonitorPendingShieldOrders()
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//| Activate Shield LONG (Breakout DOWN - protects LONGs)             |
+//| Activate Shield LONG (Breakout DOWN - protects SHORTs)            |
 //+------------------------------------------------------------------+
 void ActivateShieldLong(string source)
 {
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  ACTIVATING SHIELD LONG");
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  Source: ", source);
-   Print("  Order Type: ", GetShieldOrderTypeName());
-
    double shieldLot = CalculateShieldLotSize(SHIELD_LONG);
    int shieldMagic = MagicNumber + MAGIC_SHIELD_LONG;
    trade.SetExpertMagicNumber(shieldMagic);
 
-   bool success = false;
-
-   //------------------------------------------------------------------
-   // MARKET ORDER - Esecuzione immediata
-   //------------------------------------------------------------------
    if(ShieldOrderType == SHIELD_ORDER_MARKET) {
       double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
-
-      Print("───────────────────────────────────────────────────────────────────");
-      Print("  [MARKET] Sending BUY order at market");
-      PrintFormat("  [MARKET]   Ask Price: %.5f", currentPrice);
-      PrintFormat("  [MARKET]   Lot Size: %.2f", shieldLot);
-      PrintFormat("  [MARKET]   Magic: %d", shieldMagic);
-      Print("───────────────────────────────────────────────────────────────────");
 
       if(trade.Buy(shieldLot, _Symbol, 0, 0, 0, "SUGAMARA_SHIELD_LONG")) {
          shield.ticket = trade.ResultOrder();
@@ -575,41 +396,19 @@ void ActivateShieldLong(string source)
 
          totalShieldActivations++;
          currentSystemState = STATE_SHIELD_LONG;
-         success = true;
 
-         Print("  ✅ [MARKET] Shield LONG EXECUTED");
-         PrintFormat("     Ticket: %d", shield.ticket);
-         PrintFormat("     Executed Price: %.5f", shield.entry_price);
-         PrintFormat("     Slippage: %.1f pips", MathAbs(shield.entry_price - currentPrice) / symbolPoint / 10);
-         PrintFormat("     Lot: %.2f", shieldLot);
-         PrintFormat("     Covering Short exposure: %.2f lots", totalShortLots);
+         Log_ShieldActivated("LONG", shield.ticket, shield.entry_price, shieldLot, totalShortLots);
 
-         // v5.6: ALERT 2 - Shield ATTIVO (ordine MARKET eseguito)
          if(EnableAlerts) {
-            Alert("SUGAMARA: ✅ Shield LONG ATTIVO - Posizione BUY eseguita a ",
-                  DoubleToString(shield.entry_price, symbolDigits));
+            Alert("SUGAMARA: Shield LONG ACTIVE @ ", DoubleToString(shield.entry_price, symbolDigits));
          }
       }
       else {
-         Print("  ❌ [MARKET] Order FAILED");
-         PrintFormat("     Error Code: %d", trade.ResultRetcode());
-         PrintFormat("     Description: %s", trade.ResultRetcodeDescription());
+         Log_SystemError("Shield", trade.ResultRetcode(), trade.ResultRetcodeDescription());
       }
    }
-   //------------------------------------------------------------------
-   // STOP ORDER - Pending order al livello breakout
-   //------------------------------------------------------------------
    else if(ShieldOrderType == SHIELD_ORDER_STOP) {
-      double stopPrice = lowerBreakoutLevel;  // Breakout level inferiore
-      stopPrice = NormalizeDouble(stopPrice, symbolDigits);
-
-      Print("───────────────────────────────────────────────────────────────────");
-      Print("  [STOP] Placing BUY STOP pending order");
-      PrintFormat("  [STOP]   Stop Price: %.5f", stopPrice);
-      PrintFormat("  [STOP]   Current Bid: %.5f", SymbolInfoDouble(_Symbol, SYMBOL_BID));
-      PrintFormat("  [STOP]   Lot Size: %.2f", shieldLot);
-      PrintFormat("  [STOP]   Magic: %d", shieldMagic);
-      Print("───────────────────────────────────────────────────────────────────");
+      double stopPrice = NormalizeDouble(lowerBreakoutLevel, symbolDigits);
 
       if(trade.BuyStop(shieldLot, stopPrice, _Symbol, 0, 0, ORDER_TIME_GTC, 0, "SUGAMARA_SHIELD_LONG_STOP")) {
          shieldPendingTicket = trade.ResultOrder();
@@ -619,57 +418,26 @@ void ActivateShieldLong(string source)
 
          shield.phase = PHASE_PRE_SHIELD;
          currentSystemState = STATE_SHIELD_PENDING;
-         success = true;
 
-         Print("  ✅ [STOP] BUY STOP order PLACED");
-         PrintFormat("     Pending Ticket: %d", shieldPendingTicket);
-         PrintFormat("     Trigger Price: %.5f", stopPrice);
-         PrintFormat("     Lot: %.2f", shieldLot);
-         Print("     Waiting for price to hit stop level...");
+         Log_OrderPlaced("SHIELD", "PENDING", 0, "BUY_STOP", shieldPendingTicket, stopPrice, 0, 0, shieldLot);
       }
       else {
-         Print("  ❌ [STOP] Pending order FAILED");
-         PrintFormat("     Error Code: %d", trade.ResultRetcode());
-         PrintFormat("     Description: %s", trade.ResultRetcodeDescription());
+         Log_SystemError("Shield", trade.ResultRetcode(), trade.ResultRetcodeDescription());
       }
    }
-
-   Print("═══════════════════════════════════════════════════════════════════");
-
-   // v5.6: Alert rimosso qui - già gestito:
-   // - MARKET: alert dopo esecuzione (linee 557-561)
-   // - STOP: alert in MonitorPendingShieldOrders quando eseguito
 }
 
 //+------------------------------------------------------------------+
-//| Activate Shield SHORT (Breakout UP - protects SHORTs)             |
+//| Activate Shield SHORT (Breakout UP - protects LONGs)              |
 //+------------------------------------------------------------------+
 void ActivateShieldShort(string source)
 {
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  ACTIVATING SHIELD SHORT");
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  Source: ", source);
-   Print("  Order Type: ", GetShieldOrderTypeName());
-
    double shieldLot = CalculateShieldLotSize(SHIELD_SHORT);
    int shieldMagic = MagicNumber + MAGIC_SHIELD_SHORT;
    trade.SetExpertMagicNumber(shieldMagic);
 
-   bool success = false;
-
-   //------------------------------------------------------------------
-   // MARKET ORDER - Esecuzione immediata
-   //------------------------------------------------------------------
    if(ShieldOrderType == SHIELD_ORDER_MARKET) {
       double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-
-      Print("───────────────────────────────────────────────────────────────────");
-      Print("  [MARKET] Sending SELL order at market");
-      PrintFormat("  [MARKET]   Bid Price: %.5f", currentPrice);
-      PrintFormat("  [MARKET]   Lot Size: %.2f", shieldLot);
-      PrintFormat("  [MARKET]   Magic: %d", shieldMagic);
-      Print("───────────────────────────────────────────────────────────────────");
 
       if(trade.Sell(shieldLot, _Symbol, 0, 0, 0, "SUGAMARA_SHIELD_SHORT")) {
          shield.ticket = trade.ResultOrder();
@@ -684,41 +452,19 @@ void ActivateShieldShort(string source)
 
          totalShieldActivations++;
          currentSystemState = STATE_SHIELD_SHORT;
-         success = true;
 
-         Print("  ✅ [MARKET] Shield SHORT EXECUTED");
-         PrintFormat("     Ticket: %d", shield.ticket);
-         PrintFormat("     Executed Price: %.5f", shield.entry_price);
-         PrintFormat("     Slippage: %.1f pips", MathAbs(shield.entry_price - currentPrice) / symbolPoint / 10);
-         PrintFormat("     Lot: %.2f", shieldLot);
-         PrintFormat("     Covering Long exposure: %.2f lots", totalLongLots);
+         Log_ShieldActivated("SHORT", shield.ticket, shield.entry_price, shieldLot, totalLongLots);
 
-         // v5.6: ALERT 2 - Shield ATTIVO (ordine MARKET eseguito)
          if(EnableAlerts) {
-            Alert("SUGAMARA: ✅ Shield SHORT ATTIVO - Posizione SELL eseguita a ",
-                  DoubleToString(shield.entry_price, symbolDigits));
+            Alert("SUGAMARA: Shield SHORT ACTIVE @ ", DoubleToString(shield.entry_price, symbolDigits));
          }
       }
       else {
-         Print("  ❌ [MARKET] Order FAILED");
-         PrintFormat("     Error Code: %d", trade.ResultRetcode());
-         PrintFormat("     Description: %s", trade.ResultRetcodeDescription());
+         Log_SystemError("Shield", trade.ResultRetcode(), trade.ResultRetcodeDescription());
       }
    }
-   //------------------------------------------------------------------
-   // STOP ORDER - Pending order al livello breakout
-   //------------------------------------------------------------------
    else if(ShieldOrderType == SHIELD_ORDER_STOP) {
-      double stopPrice = upperBreakoutLevel;  // Breakout level superiore
-      stopPrice = NormalizeDouble(stopPrice, symbolDigits);
-
-      Print("───────────────────────────────────────────────────────────────────");
-      Print("  [STOP] Placing SELL STOP pending order");
-      PrintFormat("  [STOP]   Stop Price: %.5f", stopPrice);
-      PrintFormat("  [STOP]   Current Ask: %.5f", SymbolInfoDouble(_Symbol, SYMBOL_ASK));
-      PrintFormat("  [STOP]   Lot Size: %.2f", shieldLot);
-      PrintFormat("  [STOP]   Magic: %d", shieldMagic);
-      Print("───────────────────────────────────────────────────────────────────");
+      double stopPrice = NormalizeDouble(upperBreakoutLevel, symbolDigits);
 
       if(trade.SellStop(shieldLot, stopPrice, _Symbol, 0, 0, ORDER_TIME_GTC, 0, "SUGAMARA_SHIELD_SHORT_STOP")) {
          shieldPendingTicket = trade.ResultOrder();
@@ -728,26 +474,13 @@ void ActivateShieldShort(string source)
 
          shield.phase = PHASE_PRE_SHIELD;
          currentSystemState = STATE_SHIELD_PENDING;
-         success = true;
 
-         Print("  ✅ [STOP] SELL STOP order PLACED");
-         PrintFormat("     Pending Ticket: %d", shieldPendingTicket);
-         PrintFormat("     Trigger Price: %.5f", stopPrice);
-         PrintFormat("     Lot: %.2f", shieldLot);
-         Print("     Waiting for price to hit stop level...");
+         Log_OrderPlaced("SHIELD", "PENDING", 0, "SELL_STOP", shieldPendingTicket, stopPrice, 0, 0, shieldLot);
       }
       else {
-         Print("  ❌ [STOP] Pending order FAILED");
-         PrintFormat("     Error Code: %d", trade.ResultRetcode());
-         PrintFormat("     Description: %s", trade.ResultRetcodeDescription());
+         Log_SystemError("Shield", trade.ResultRetcode(), trade.ResultRetcodeDescription());
       }
    }
-
-   Print("═══════════════════════════════════════════════════════════════════");
-
-   // v5.6: Alert rimosso qui - già gestito:
-   // - MARKET: alert dopo esecuzione (linee 666-670)
-   // - STOP: alert in MonitorPendingShieldOrders quando eseguito
 }
 
 //+------------------------------------------------------------------+
@@ -760,51 +493,28 @@ void ActivateShieldShort(string source)
 void ManageActiveShield(double currentPrice)
 {
    if(!shield.isActive || shield.ticket == 0) {
-      if(DetailedLogging) {
-         Print("[Shield] ManageActiveShield() - No active shield to manage");
-      }
       return;
    }
 
    // Verify position still exists
    if(!PositionSelectByTicket(shield.ticket)) {
-      Print("[Shield] Position not found - may have been closed by SL/TP");
-      PrintFormat("[Shield]   Ticket: %d, Type: %s", shield.ticket, (shield.type == SHIELD_LONG ? "LONG" : "SHORT"));
-      PrintFormat("[Shield]   Last known P/L: %.2f", shield.current_pl);
+      // Position closed externally (SL/TP hit)
+      int duration = (int)(TimeCurrent() - shield.activation_time);
+      Log_ShieldClosed(shield.ticket, "SL_TP_HIT", shield.current_pl, duration);
       ResetShield();
       return;
    }
 
    // Update current P/L
-   double previousPL = shield.current_pl;
    shield.current_pl = PositionGetDouble(POSITION_PROFIT);
-   double currentSL = PositionGetDouble(POSITION_SL);
-   double currentTP = PositionGetDouble(POSITION_TP);
-
-   if(DetailedLogging) {
-      PrintFormat("[Shield] ManageActiveShield() - Ticket: %d, Type: %s",
-                  shield.ticket, (shield.type == SHIELD_LONG ? "LONG" : "SHORT"));
-      PrintFormat("[Shield]   Entry: %.5f, Current: %.5f", shield.entry_price, currentPrice);
-      PrintFormat("[Shield]   P/L: %.2f (prev: %.2f), SL: %.5f", shield.current_pl, previousPL, currentSL);
-      PrintFormat("[Shield]   Duration: %d sec", (int)(TimeCurrent() - shield.activation_time));
-   }
 
    // Apply trailing if enabled
    if(Shield_Use_Trailing) {
-      if(DetailedLogging) {
-         Print("[Shield]   Checking trailing stop conditions...");
-      }
       ApplyShieldTrailing(currentPrice);
    }
 
    // Check reentry condition
-   bool reentryCondition = CheckReentryConditionShield(currentPrice);
-   if(DetailedLogging) {
-      PrintFormat("[Shield]   Reentry condition: %s", (reentryCondition ? "TRUE" : "FALSE"));
-   }
-
-   if(reentryCondition) {
-      Print("[Shield] Reentry condition met - Closing shield");
+   if(CheckReentryConditionShield(currentPrice)) {
       CloseShield("REENTRY");
    }
 }
@@ -815,9 +525,6 @@ void ManageActiveShield(double currentPrice)
 void ApplyShieldTrailing(double currentPrice)
 {
    if(!PositionSelectByTicket(shield.ticket)) {
-      if(DetailedLogging) {
-         PrintFormat("[Shield] ApplyShieldTrailing() - Position %d not found", shield.ticket);
-      }
       return;
    }
 
@@ -826,58 +533,30 @@ void ApplyShieldTrailing(double currentPrice)
    double trailingStart = PipsToPoints(Shield_Trailing_Start);
    double trailingStep = PipsToPoints(Shield_Trailing_Step);
 
-   if(DetailedLogging) {
-      PrintFormat("[Shield] ApplyShieldTrailing() - Open: %.5f, Current: %.5f, SL: %.5f",
-                  openPrice, currentPrice, currentSL);
-      PrintFormat("[Shield]   Trailing Start: %.5f, Step: %.5f", trailingStart, trailingStep);
-   }
+   double newSL = 0;
+   bool shouldModify = false;
 
    if(shield.type == SHIELD_LONG) {
-      // LONG: trailing SL upwards
       double profit = currentPrice - openPrice;
-      if(DetailedLogging) {
-         PrintFormat("[Shield]   LONG profit points: %.5f, Required: %.5f", profit, trailingStart);
-      }
-
       if(profit >= trailingStart) {
-         double newSL = NormalizeDouble(currentPrice - trailingStep, symbolDigits);
-         if(DetailedLogging) {
-            PrintFormat("[Shield]   Calculated new SL: %.5f, Current SL: %.5f", newSL, currentSL);
-         }
-
-         if(newSL > currentSL || currentSL == 0) {
-            if(trade.PositionModify(shield.ticket, newSL, 0)) {
-               shield.trailing_sl = newSL;
-               PrintFormat("[Shield] Trailing SL UPDATED: %.5f -> %.5f (profit: %.5f)", currentSL, newSL, profit);
-            } else {
-               PrintFormat("[Shield] Trailing SL FAILED: Error %d - %s",
-                          trade.ResultRetcode(), trade.ResultRetcodeDescription());
-            }
-         }
+         newSL = NormalizeDouble(currentPrice - trailingStep, symbolDigits);
+         shouldModify = (newSL > currentSL || currentSL == 0);
       }
    }
    else if(shield.type == SHIELD_SHORT) {
-      // SHORT: trailing SL downwards
       double profit = openPrice - currentPrice;
-      if(DetailedLogging) {
-         PrintFormat("[Shield]   SHORT profit points: %.5f, Required: %.5f", profit, trailingStart);
-      }
-
       if(profit >= trailingStart) {
-         double newSL = NormalizeDouble(currentPrice + trailingStep, symbolDigits);
-         if(DetailedLogging) {
-            PrintFormat("[Shield]   Calculated new SL: %.5f, Current SL: %.5f", newSL, currentSL);
-         }
+         newSL = NormalizeDouble(currentPrice + trailingStep, symbolDigits);
+         shouldModify = (newSL < currentSL || currentSL == 0);
+      }
+   }
 
-         if(newSL < currentSL || currentSL == 0) {
-            if(trade.PositionModify(shield.ticket, newSL, 0)) {
-               shield.trailing_sl = newSL;
-               PrintFormat("[Shield] Trailing SL UPDATED: %.5f -> %.5f (profit: %.5f)", currentSL, newSL, profit);
-            } else {
-               PrintFormat("[Shield] Trailing SL FAILED: Error %d - %s",
-                          trade.ResultRetcode(), trade.ResultRetcodeDescription());
-            }
-         }
+   if(shouldModify && newSL > 0) {
+      if(trade.PositionModify(shield.ticket, newSL, 0)) {
+         shield.trailing_sl = newSL;
+         Log_PositionModified(shield.ticket, "SL", currentSL, newSL);
+      } else {
+         Log_SystemError("Shield.Trailing", trade.ResultRetcode(), trade.ResultRetcodeDescription());
       }
    }
 }
@@ -889,27 +568,17 @@ void CloseShield(string reason)
 {
    if(!shield.isActive || shield.ticket == 0) return;
 
-   Print("=== CLOSING SHIELD ===");
-   Print("  Reason: ", reason);
-
    if(PositionSelectByTicket(shield.ticket)) {
       double pl = PositionGetDouble(POSITION_PROFIT);
+      int duration = (int)(TimeCurrent() - shield.activation_time);
 
       if(trade.PositionClose(shield.ticket)) {
          totalShieldPL += pl;
          lastShieldClosure = TimeCurrent();
-
-         Print("  [OK] Shield CLOSED");
-         Print("  P/L: ", pl);
-         Print("  Total Shield P/L: ", totalShieldPL);
-         Print("  Duration: ", (int)(TimeCurrent() - shield.activation_time), " seconds");
-
-         // v5.6: Alert rimosso per CloseShield - solo log dettagliato
-         PrintFormat("[Shield] Closed - Reason: %s - P/L: %.2f - Duration: %d sec",
-                     reason, pl, (int)(TimeCurrent() - shield.activation_time));
+         Log_ShieldClosed(shield.ticket, reason, pl, duration);
       }
       else {
-         Print("  [ERROR] Closing Shield: ", trade.ResultRetcode());
+         Log_SystemError("Shield.Close", trade.ResultRetcode(), trade.ResultRetcodeDescription());
       }
    }
 
@@ -921,11 +590,6 @@ void CloseShield(string reason)
 //+------------------------------------------------------------------+
 void ResetShield()
 {
-   // Save previous state for logging
-   bool wasActive = shield.isActive;
-   ENUM_SHIELD_TYPE prevType = shield.type;
-   ulong prevTicket = shield.ticket;
-
    shield.isActive = false;
    shield.type = SHIELD_NONE;
    shield.phase = PHASE_NORMAL;
@@ -938,13 +602,11 @@ void ResetShield()
    lastBreakoutDirection = BREAKOUT_NONE;
    currentSystemState = STATE_INSIDE_RANGE;
 
-   Print("[Shield] Reset - System returns to normal operation");
-   if(wasActive) {
-      PrintFormat("[Shield]   Previous state: Type=%s, Ticket=%d",
-                  (prevType == SHIELD_LONG ? "LONG" : "SHORT"), prevTicket);
-   }
-   PrintFormat("[Shield]   Total activations this session: %d", totalShieldActivations);
-   PrintFormat("[Shield]   Total P/L this session: %.2f", totalShieldPL);
+   // Reset phase logging flags for next cycle
+   g_loggedWarningPhase = false;
+   g_loggedExitWarning = false;
+   g_loggedPreShieldPhase = false;
+   g_loggedCancelPreShield = false;
 }
 
 //+------------------------------------------------------------------+
@@ -985,50 +647,36 @@ void ProcessShield()
 //+------------------------------------------------------------------+
 void LogShieldReport()
 {
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  SHIELD INTELLIGENT SYSTEM REPORT");
-   Print("═══════════════════════════════════════════════════════════════════");
-   PrintFormat("  Mode: %s", GetShieldModeName());
-   PrintFormat("  Order Type: %s", GetShieldOrderTypeName());
-   PrintFormat("  Available: %s", (IsShieldAvailable() ? "YES" : "NO"));
-   PrintFormat("  Status: %s", GetShieldStatusString());
-   PrintFormat("  Phase: %s", GetShieldPhaseString());
-   Print("───────────────────────────────────────────────────────────────────");
+   Log_Header("SHIELD SYSTEM REPORT");
+   Log_KeyValue("Mode", GetShieldModeName());
+   Log_KeyValue("Order Type", GetShieldOrderTypeName());
+   Log_KeyValue("Status", GetShieldStatusString());
+   Log_KeyValue("Phase", GetShieldPhaseString());
+   Log_Separator();
 
-   // Pending order info (for STOP order type)
    if(ShieldOrderType == SHIELD_ORDER_STOP && shieldPendingTicket > 0) {
-      Print("  PENDING SHIELD ORDER:");
-      PrintFormat("    Order Type: %s", (shieldPendingType == SHIELD_LONG ? "BUY STOP" : "SELL STOP"));
-      PrintFormat("    Ticket: %d", shieldPendingTicket);
-      PrintFormat("    Trigger Price: %.5f", shieldPendingPrice);
-      PrintFormat("    Lot Size: %.2f", shieldPendingLot);
-      double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      double distancePips = MathAbs(currentPrice - shieldPendingPrice) / symbolPoint / 10;
-      PrintFormat("    Distance to trigger: %.1f pips", distancePips);
-      Print("───────────────────────────────────────────────────────────────────");
+      Log_KeyValue("Pending Order", (shieldPendingType == SHIELD_LONG ? "BUY_STOP" : "SELL_STOP"));
+      Log_KeyValueNum("Pending Ticket", shieldPendingTicket, 0);
+      Log_KeyValueNum("Trigger Price", shieldPendingPrice, 5);
+      Log_KeyValueNum("Lot Size", shieldPendingLot, 2);
+      Log_Separator();
    }
 
    if(shield.isActive) {
-      Print("  ACTIVE SHIELD:");
-      PrintFormat("    Type: %s", (shield.type == SHIELD_LONG ? "LONG" : "SHORT"));
-      PrintFormat("    Execution: %s", GetShieldOrderTypeName());
-      PrintFormat("    Ticket: %d", shield.ticket);
-      PrintFormat("    Lot Size: %.2f", shield.lot_size);
-      PrintFormat("    Entry Price: %.5f", shield.entry_price);
-      PrintFormat("    Current P/L: %.2f", shield.current_pl);
-      PrintFormat("    Trailing SL: %.5f", shield.trailing_sl);
-      PrintFormat("    Activation Time: %s", TimeToString(shield.activation_time, TIME_DATE|TIME_MINUTES));
-      PrintFormat("    Duration: %d seconds", (int)(TimeCurrent() - shield.activation_time));
+      Log_KeyValue("Active Type", (shield.type == SHIELD_LONG ? "LONG" : "SHORT"));
+      Log_KeyValueNum("Ticket", shield.ticket, 0);
+      Log_KeyValueNum("Entry Price", shield.entry_price, 5);
+      Log_KeyValueNum("Current P/L", shield.current_pl, 2);
+      Log_KeyValueNum("Trailing SL", shield.trailing_sl, 5);
+      Log_KeyValueNum("Duration (sec)", (int)(TimeCurrent() - shield.activation_time), 0);
    } else {
-      Print("  No active shield");
+      Log_KeyValue("Active Shield", "NONE");
    }
 
-   Print("───────────────────────────────────────────────────────────────────");
-   Print("  SESSION STATISTICS:");
-   PrintFormat("    Total Activations: %d", totalShieldActivations);
-   PrintFormat("    Total P/L: %.2f", totalShieldPL);
-   PrintFormat("    Activation Count (this shield): %d", shield.activation_count);
-   Print("═══════════════════════════════════════════════════════════════════");
+   Log_Separator();
+   Log_KeyValueNum("Total Activations", totalShieldActivations, 0);
+   Log_KeyValueNum("Total P/L", totalShieldPL, 2);
+   Log_Separator();
 }
 
 //+------------------------------------------------------------------+
@@ -1083,22 +731,11 @@ void EmergencyCloseShield()
 //+------------------------------------------------------------------+
 void DeinitializeShield()
 {
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  DEINITIALIZING SHIELD SYSTEM");
-   Print("═══════════════════════════════════════════════════════════════════");
-
    // Cancel pending STOP order if exists
    if(ShieldOrderType == SHIELD_ORDER_STOP && shieldPendingTicket > 0) {
-      Print("  [STOP] Cancelling pending Shield order on deinit...");
-      PrintFormat("  [STOP]   Ticket: %d", shieldPendingTicket);
-
       if(trade.OrderDelete(shieldPendingTicket)) {
-         Print("  ✅ [STOP] Pending order cancelled");
+         Log_OrderCancelled(shieldPendingTicket, "DEINIT");
       }
-      else {
-         Print("  ⚠️ [STOP] Failed to cancel pending order");
-      }
-
       shieldPendingTicket = 0;
       shieldPendingType = SHIELD_NONE;
       shieldPendingPrice = 0;
@@ -1110,12 +747,8 @@ void DeinitializeShield()
       CloseShield("DEINIT");
    }
 
-   Print("───────────────────────────────────────────────────────────────────");
-   Print("  FINAL STATISTICS:");
-   PrintFormat("    Order Type Used: %s", GetShieldOrderTypeName());
-   PrintFormat("    Total Activations: %d", totalShieldActivations);
-   PrintFormat("    Total Shield P/L: %.2f", totalShieldPL);
-   Print("═══════════════════════════════════════════════════════════════════");
+   // Log final stats
+   Log_Debug("Shield", StringFormat("DEINIT activations=%d total_pl=%.2f", totalShieldActivations, totalShieldPL));
 }
 
 //+------------------------------------------------------------------+

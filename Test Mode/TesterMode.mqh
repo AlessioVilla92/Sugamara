@@ -27,27 +27,11 @@ void InitializeTesterMode() {
     g_testerInitComplete = false;
     
     if(g_isTester) {
-        Print("");
-        Print("╔═══════════════════════════════════════════════════════════════════╗");
-        Print("║  🧪 STRATEGY TESTER MODE DETECTED - v8.1 Compatibility            ║");
-        Print("╠═══════════════════════════════════════════════════════════════════╣");
-        Print("║                                                                   ║");
-        Print("║  The following features are DISABLED for reliable backtesting:   ║");
-        Print("║                                                                   ║");
-        Print("║  ❌ GlobalVariables (isolated in tester - would fail)            ║");
-        Print("║  ❌ Recovery Mode (no persistence - fresh start)                 ║");
-        Print("║  ❌ Session Manager (trade all hours for complete test)          ║");
-        Print("║  ❌ Dashboard/UI (not visible in tester)                         ║");
-        Print("║  ❌ Control Buttons (not clickable in tester)                    ║");
-        Print("║  ❌ Alerts (would block execution)                               ║");
-        Print("║  ❌ Volatility Check (disabled for consistent cycling)           ║");
-        Print("║                                                                   ║");
-        Print("║  ✅ Grid will AUTO-START on first tick                           ║");
-        Print("║  ✅ All 28 orders will be placed immediately                     ║");
-        Print("║  ✅ Cyclic Reopen will work without restrictions                 ║");
-        Print("║                                                                   ║");
-        Print("╚═══════════════════════════════════════════════════════════════════╝");
-        Print("");
+        Log_Header("STRATEGY TESTER MODE");
+        Log_KeyValue("Mode", "BACKTEST");
+        Log_KeyValue("Disabled", "GlobalVars, Recovery, Session, Dashboard, Alerts");
+        Log_KeyValue("Enabled", "AutoStart, CyclicReopen, AllHours");
+        Log_Separator();
     }
     
     if(g_isOptimization) {
@@ -152,30 +136,19 @@ void TesterForceGridStart() {
     // Only if system is idle (waiting for start)
     if(systemState != STATE_IDLE) return;
     
-    // Mark as started
     g_testerGridStarted = true;
-    
-    Print("");
-    Print("╔═══════════════════════════════════════════════════════════════════╗");
-    Print("║  🚀 TESTER: AUTO-STARTING GRID SYSTEM                             ║");
-    Print("╠═══════════════════════════════════════════════════════════════════╣");
-    Print("║  Time: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
-    Print("║  Entry Point: ", DoubleToString(entryPoint, symbolDigits));
-    Print("║  Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
-    Print("║  Levels: ", GridLevelsPerSide, " per side (", GridLevelsPerSide * 4, " total orders)");
-    Print("╚═══════════════════════════════════════════════════════════════════╝");
-    Print("");
-    
-    // Call the actual start function (from ControlButtons.mqh)
+
+    Log_SubHeader("TESTER AUTO-START");
+    Log_KeyValueNum("Entry", entryPoint, symbolDigits);
+    Log_KeyValueNum("Spacing", currentSpacing_Pips, 1);
+    Log_KeyValueNum("Levels", GridLevelsPerSide, 0);
+
     StartGridSystem();
-    
-    // Log success
+
     if(systemState == STATE_ACTIVE) {
-        Print("[TESTER] ✅ Grid system started successfully!");
-        Print("[TESTER] Grid A Pending: ", GetGridAPendingOrders());
-        Print("[TESTER] Grid B Pending: ", GetGridBPendingOrders());
+        Log_Debug("Tester", StringFormat("Started gridA=%d gridB=%d", GetGridAPendingOrders(), GetGridBPendingOrders()));
     } else {
-        Print("[TESTER] ⚠️ Grid start may have failed - check logs above");
+        Log_SystemWarning("Tester", "Grid start may have failed");
     }
 }
 
@@ -212,19 +185,15 @@ string GetTesterStatusString() {
 //+------------------------------------------------------------------+
 void LogTesterStatistics() {
     if(!g_isTester) return;
-    
-    Print("");
-    Print("╔═══════════════════════════════════════════════════════════════════╗");
-    Print("║  📊 STRATEGY TESTER - FINAL STATISTICS                            ║");
-    Print("╠═══════════════════════════════════════════════════════════════════╣");
-    Print("║  Grid Started: ", g_testerGridStarted ? "YES ✅" : "NO ❌");
-    Print("║  Session P/L: ", FormatMoney(sessionRealizedProfit + GetTotalOpenProfit()));
-    Print("║  Total Trades: ", sessionWins + sessionLosses);
-    Print("║  Win Rate: ", FormatPercent(GetWinRate()));
-    Print("║  Grid A Cycles: ", GetTotalGridACycles());
-    Print("║  Grid B Cycles: ", GetTotalGridBCycles());
-    Print("╚═══════════════════════════════════════════════════════════════════╝");
-    Print("");
+
+    Log_Header("TESTER FINAL STATISTICS");
+    Log_KeyValue("Grid Started", g_testerGridStarted ? "YES" : "NO");
+    Log_KeyValueNum("Session P/L", sessionRealizedProfit + GetTotalOpenProfit(), 2);
+    Log_KeyValueNum("Total Trades", sessionWins + sessionLosses, 0);
+    Log_KeyValueNum("Win Rate", GetWinRate(), 1);
+    Log_KeyValueNum("Grid A Cycles", GetTotalGridACycles(), 0);
+    Log_KeyValueNum("Grid B Cycles", GetTotalGridBCycles(), 0);
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+

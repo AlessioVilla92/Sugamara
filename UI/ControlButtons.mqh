@@ -38,9 +38,7 @@ bool waitingForActivation = false;
 //+------------------------------------------------------------------+
 bool InitializeControlButtons(int startX, int startY, int panelWidth) {
     // v5.9: Buttons are ALWAYS active + RECOVER button added
-    Print("=======================================================================");
-    Print("  INITIALIZING CONTROL BUTTONS v5.9 (Always Active + Recovery)");
-    Print("=======================================================================");
+    Log_Header("CONTROL BUTTONS v5.9 (Always Active + Recovery)");
 
     int x = startX + 10;
     int y = startY + 10;
@@ -67,8 +65,7 @@ bool InitializeControlButtons(int startX, int startY, int panelWidth) {
     currentEntryMode = ENTRY_MARKET;
     buttonState = BTN_STATE_IDLE;
 
-    Print("  Layout: START (", btnStartWidth, "px) | CLOSE (", btnCloseWidth, "px) | RECOVER (", btnRecoverWidth, "px)");
-    Print("=======================================================================");
+    Log_Debug("ControlButtons", StringFormat("Layout: START (%dpx) | CLOSE (%dpx) | RECOVER (%dpx)", btnStartWidth, btnCloseWidth, btnRecoverWidth));
 
     ChartRedraw(0);
     return true;
@@ -81,7 +78,7 @@ void CreateControlButton(string name, int x, int y, int width, int height, strin
     ObjectDelete(0, name);
 
     if(!ObjectCreate(0, name, OBJ_BUTTON, 0, 0, 0)) {
-        Print("ERROR: Failed to create button ", name);
+        Log_SystemError("ControlButtons", 0, StringFormat("Failed to create button %s", name));
         return;
     }
 
@@ -133,9 +130,7 @@ void HandleControlButtonClick(string objectName) {
     // START Button
     //══════════════════════════════════════════════════════════════
     if(objectName == BTN_START_V3) {
-        Print("═══════════════════════════════════════════════════════════════════");
-        Print("  START BUTTON CLICKED - Starting Grid Immediately");
-        Print("═══════════════════════════════════════════════════════════════════");
+        Log_Header("START BUTTON CLICKED");
 
         currentEntryMode = ENTRY_MARKET;
         buttonState = BTN_STATE_ACTIVE;
@@ -155,9 +150,7 @@ void HandleControlButtonClick(string objectName) {
     // CLOSE ALL Button
     //══════════════════════════════════════════════════════════════
     if(objectName == BTN_CLOSEALL_V3) {
-        Print("=======================================================================");
-        Print("  CLOSE ALL REQUESTED");
-        Print("=======================================================================");
+        Log_Header("CLOSE ALL REQUESTED");
 
         CloseAllSugamaraOrders();
 
@@ -183,9 +176,7 @@ void HandleControlButtonClick(string objectName) {
     // RECOVER Button - v5.9 Manual Recovery
     //══════════════════════════════════════════════════════════════
     if(objectName == BTN_RECOVER_V3) {
-        Print("=======================================================================");
-        Print("  MANUAL RECOVERY REQUESTED");
-        Print("=======================================================================");
+        Log_Header("MANUAL RECOVERY REQUESTED");
 
         UpdateStatusLabel("RECOVERING...");
         ChartRedraw(0);
@@ -257,10 +248,10 @@ void StartGridSystem() {
         PlaceAllGridAOrders();
         PlaceAllGridBOrders();
 
-        Print("SUCCESS: Grid system started");
+        Log_InitComplete("GridSystem");
         UpdateStatusLabel("ACTIVE - Grid Running");
     } else {
-        Print("ERROR: Failed to start grid system");
+        Log_InitFailed("GridSystem", "Failed to start");
         UpdateStatusLabel("ERROR - Check logs");
         systemState = STATE_ERROR;
     }
@@ -347,7 +338,7 @@ void RemoveControlButtons() {
 //+------------------------------------------------------------------+
 void DeinitializeControlButtons() {
     RemoveControlButtons();
-    Print("Control Buttons: Deinitialized");
+    Log_Debug("ControlButtons", "Deinitialized");
 }
 
 //+------------------------------------------------------------------+

@@ -476,43 +476,38 @@ int GetTotalActiveOrders() {
 //| Log Detailed Position Report                                     |
 //+------------------------------------------------------------------+
 void LogPositionReport() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  POSITION REPORT");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("POSITION REPORT");
 
     // Summary
-    Print("Total Positions: ", GetTotalActivePositions());
-    Print("Total Pending: ", GetTotalPendingOrders());
-    Print("Open P/L: ", FormatMoney(GetTotalOpenProfit()));
-    Print("");
+    Log_KeyValueNum("Total Positions", GetTotalActivePositions(), 0);
+    Log_KeyValueNum("Total Pending", GetTotalPendingOrders(), 0);
+    Log_KeyValue("Open P/L", FormatMoney(GetTotalOpenProfit()));
 
     // Grid A Details
-    Print("--- GRID A (Long Bias) ---");
-    Print("  Positions: ", GetGridAActivePositions());
-    Print("  Pending: ", GetGridAPendingOrders());
-    Print("  Long Lots: ", DoubleToString(GetGridALongLots(), 2));
-    Print("  Short Lots: ", DoubleToString(GetGridAShortLots(), 2));
-    Print("  P/L: ", FormatMoney(GetGridAOpenProfit()));
-    Print("");
+    Log_SubHeader("GRID A (Long Bias)");
+    Log_KeyValueNum("Positions", GetGridAActivePositions(), 0);
+    Log_KeyValueNum("Pending", GetGridAPendingOrders(), 0);
+    Log_KeyValueNum("Long Lots", GetGridALongLots(), 2);
+    Log_KeyValueNum("Short Lots", GetGridAShortLots(), 2);
+    Log_KeyValue("P/L", FormatMoney(GetGridAOpenProfit()));
 
     // Grid B Details
-    Print("--- GRID B (Short Bias) ---");
-    Print("  Positions: ", GetGridBActivePositions());
-    Print("  Pending: ", GetGridBPendingOrders());
-    Print("  Long Lots: ", DoubleToString(GetGridBLongLots(), 2));
-    Print("  Short Lots: ", DoubleToString(GetGridBShortLots(), 2));
-    Print("  P/L: ", FormatMoney(GetGridBOpenProfit()));
-    Print("");
+    Log_SubHeader("GRID B (Short Bias)");
+    Log_KeyValueNum("Positions", GetGridBActivePositions(), 0);
+    Log_KeyValueNum("Pending", GetGridBPendingOrders(), 0);
+    Log_KeyValueNum("Long Lots", GetGridBLongLots(), 2);
+    Log_KeyValueNum("Short Lots", GetGridBShortLots(), 2);
+    Log_KeyValue("P/L", FormatMoney(GetGridBOpenProfit()));
 
     // Exposure
     CalculateTotalExposure();
-    Print("--- EXPOSURE ---");
-    Print("  Total Long: ", DoubleToString(totalLongLots, 2), " lot");
-    Print("  Total Short: ", DoubleToString(totalShortLots, 2), " lot");
-    Print("  Net Exposure: ", DoubleToString(netExposure, 2), " lot");
-    Print("  Status: ", isNeutral ? "NEUTRAL" : "IMBALANCED");
+    Log_SubHeader("EXPOSURE");
+    Log_KeyValueNum("Total Long (lot)", totalLongLots, 2);
+    Log_KeyValueNum("Total Short (lot)", totalShortLots, 2);
+    Log_KeyValueNum("Net Exposure (lot)", netExposure, 2);
+    Log_KeyValue("Status", isNeutral ? "NEUTRAL" : "IMBALANCED");
 
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+
@@ -675,13 +670,9 @@ void CheckBreakOnProfit() {
 
             if(shouldModify) {
                 if(trade.PositionModify(ticket, newSL, tp)) {
-                    Print("[BOP] ✅ Ticket #", ticket, " | SL moved to ", DoubleToString(newSL, _Digits),
-                          " | Locked ", DoubleToString(BOP_LockPercent, 0), "% of ", DoubleToString(currentDistance / symbolPoint * 10, 1), " pips profit");
+                    Log_PositionModified(ticket, "SL_BOP", currentSL, newSL);
                 } else {
-                    // v5.10: Position likely closed by TP - not an error, skip silently
-                    if(DetailedLogging) {
-                        Print("[BOP] Position #", ticket, " already closed at TP (100% profit captured) - skipping SL modification");
-                    }
+                    Log_Debug("BOP", StringFormat("Position #%d likely closed at TP", ticket));
                 }
             }
         }

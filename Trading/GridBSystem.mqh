@@ -17,10 +17,8 @@
 //| Initialize Grid B Arrays with Calculated Values                  |
 //+------------------------------------------------------------------+
 bool InitializeGridB() {
-    LogMessage(LOG_INFO, "Initializing Grid B (Short Bias)...");
-
     if(entryPoint <= 0 || currentSpacing_Pips <= 0) {
-        LogMessage(LOG_ERROR, "Cannot initialize Grid B: Invalid entry point or spacing");
+        Log_InitFailed("GridB", "Invalid entry point or spacing");
         return false;
     }
 
@@ -55,40 +53,13 @@ bool InitializeGridB() {
 }
 
 //+------------------------------------------------------------------+
-//| Log Grid B Configuration (Enhanced v5.0)                         |
+//| Log Grid B Configuration                                          |
 //+------------------------------------------------------------------+
 void LogGridBConfiguration() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  GRID B CONFIGURATION - SOLO SELL (v9.0 DEFAULT)");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("Entry Point: ", FormatPrice(entryPoint));
-    Print("Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
-    Print("Levels per Zone: ", GridLevelsPerSide);
-    Print("Mode: Perfect Cascade (TP = spacing)");
-    Print("");
-
-    // Upper Zone - v9.0: sempre SELL LIMIT
-    Print("--- UPPER ZONE (SELL LIMIT) ---");
-    for(int i = 0; i < GridLevelsPerSide; i++) {
-        Print("  L", i+1, ": Entry=", FormatPrice(gridB_Upper_EntryPrices[i]),
-              " TP=", FormatPrice(gridB_Upper_TP[i]),
-              " Lot=", DoubleToString(gridB_Upper_Lots[i], 2));
-    }
-
-    Print("");
-
-    // Lower Zone - v9.0: sempre SELL STOP
-    Print("--- LOWER ZONE (SELL STOP) ---");
-    for(int i = 0; i < GridLevelsPerSide; i++) {
-        Print("  L", i+1, ": Entry=", FormatPrice(gridB_Lower_EntryPrices[i]),
-              " TP=", FormatPrice(gridB_Lower_TP[i]),
-              " Lot=", DoubleToString(gridB_Lower_Lots[i], 2));
-    }
-
-    Print("═══════════════════════════════════════════════════════════════════");
-
-    // Log enhanced summary
-    LogGridInitSummary(GRID_B);
+    Log_GridStart("B", entryPoint, currentSpacing_Pips, GridLevelsPerSide);
+    Log_InitConfig("GridB.Mode", "SELL_ONLY");
+    Log_InitConfig("GridB.Upper", "SELL_LIMIT");
+    Log_InitConfig("GridB.Lower", "SELL_STOP");
 }
 
 //+------------------------------------------------------------------+
@@ -407,74 +378,48 @@ bool ShouldReopenGridBLower(int level) {
 //+------------------------------------------------------------------+
 //| Reopen Grid B Upper Level                                        |
 //| FIX v5.9: SAVE/RESET/TRY/RESTORE pattern for guaranteed retry    |
-//| PlaceGridBUpperOrder requires ORDER_NONE, so we must reset first |
-//| On failure, restore previous status to trigger automatic retry   |
 //+------------------------------------------------------------------+
 void ReopenGridBUpper(int level) {
-    // 1. SAVE current status for rollback on failure
     ENUM_ORDER_STATUS prevStatus = gridB_Upper_Status[level];
     ulong prevTicket = gridB_Upper_Tickets[level];
 
-    // 2. RESET to ORDER_NONE (required by PlaceGridBUpperOrder line 149)
     gridB_Upper_Status[level] = ORDER_NONE;
     gridB_Upper_Tickets[level] = 0;
 
-    // v9.0: Log Smart Reopen type
-    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_UPPER);
-    string reopenType = (orderType == ORDER_TYPE_SELL_LIMIT) ? "LIMIT+IMMEDIATO" : "STOP+OFFSET";
-
-    // 3. ATTEMPT to place order
     if(PlaceGridBUpperOrder(level)) {
-        // SUCCESS! PlaceGridBUpperOrder already set:
-        // - gridB_Upper_Status[level] = ORDER_PENDING (line 176)
-        // - gridB_Upper_Tickets[level] = ticket (line 175)
-        PrintFormat("[SmartReopen] ✓ GridB-UP-L%d REOPENED | %s | Cycle %d | Entry %.5f",
-                    level+1, reopenType, gridB_Upper_Cycles[level], gridB_Upper_EntryPrices[level]);
+        ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_UPPER);
+        string typeName = (orderType == ORDER_TYPE_SELL_LIMIT) ? "SELL_LIMIT" : "SELL_STOP";
+        Log_OrderPlaced("B", "UP", level+1, typeName, gridB_Upper_Tickets[level],
+                       gridB_Upper_EntryPrices[level], gridB_Upper_TP[level], 0, gridB_Upper_Lots[level]);
         IncrementCycleCount(GRID_B, ZONE_UPPER, level);
     } else {
-        // 4. FAILED! Restore previous status for automatic retry next tick
         gridB_Upper_Status[level] = prevStatus;
         gridB_Upper_Tickets[level] = prevTicket;
-        if(DetailedLogging) {
-            PrintFormat("[SmartReopen] ✗ GridB-UP-L%d FAILED - retry next tick", level+1);
-        }
+        Log_Debug("Reopen", StringFormat("GridB-UP-L%d failed, retry next tick", level+1));
     }
 }
 
 //+------------------------------------------------------------------+
 //| Reopen Grid B Lower Level                                        |
 //| FIX v5.9: SAVE/RESET/TRY/RESTORE pattern for guaranteed retry    |
-//| PlaceGridBLowerOrder requires ORDER_NONE, so we must reset first |
-//| On failure, restore previous status to trigger automatic retry   |
 //+------------------------------------------------------------------+
 void ReopenGridBLower(int level) {
-    // 1. SAVE current status for rollback on failure
     ENUM_ORDER_STATUS prevStatus = gridB_Lower_Status[level];
     ulong prevTicket = gridB_Lower_Tickets[level];
 
-    // 2. RESET to ORDER_NONE (required by PlaceGridBLowerOrder line 190)
     gridB_Lower_Status[level] = ORDER_NONE;
     gridB_Lower_Tickets[level] = 0;
 
-    // v9.0: Log Smart Reopen type
-    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_LOWER);
-    string reopenType = (orderType == ORDER_TYPE_SELL_STOP) ? "STOP+OFFSET" : "LIMIT+IMMEDIATO";
-
-    // 3. ATTEMPT to place order
     if(PlaceGridBLowerOrder(level)) {
-        // SUCCESS! PlaceGridBLowerOrder already set:
-        // - gridB_Lower_Status[level] = ORDER_PENDING (line 217)
-        // - gridB_Lower_Tickets[level] = ticket (line 216)
-        PrintFormat("[SmartReopen] ✓ GridB-DN-L%d REOPENED | %s | Cycle %d | Entry %.5f",
-                    level+1, reopenType, gridB_Lower_Cycles[level], gridB_Lower_EntryPrices[level]);
+        ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_LOWER);
+        string typeName = (orderType == ORDER_TYPE_SELL_STOP) ? "SELL_STOP" : "SELL_LIMIT";
+        Log_OrderPlaced("B", "DN", level+1, typeName, gridB_Lower_Tickets[level],
+                       gridB_Lower_EntryPrices[level], gridB_Lower_TP[level], 0, gridB_Lower_Lots[level]);
         IncrementCycleCount(GRID_B, ZONE_LOWER, level);
     } else {
-        // 4. FAILED! Restore previous status for automatic retry next tick
         gridB_Lower_Status[level] = prevStatus;
         gridB_Lower_Tickets[level] = prevTicket;
-        if(DetailedLogging) {
-            PrintFormat("[SmartReopen] ✗ GridB-DN-L%d FAILED - retry next tick", level+1);
-        }
+        Log_Debug("Reopen", StringFormat("GridB-DN-L%d failed, retry next tick", level+1));
     }
 }
 

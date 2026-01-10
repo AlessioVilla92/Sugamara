@@ -13,16 +13,14 @@
 //| Populates global variables with broker symbol info               |
 //+------------------------------------------------------------------+
 bool LoadBrokerSpecifications() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  LOADING BROKER SPECIFICATIONS");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("LOADING BROKER SPECIFICATIONS");
 
     // Symbol basic info
     symbolPoint = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
     symbolDigits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
 
     if(symbolPoint <= 0) {
-        Print("ERROR: Invalid symbol point value: ", symbolPoint);
+        Log_SystemError("Broker", 0, StringFormat("Invalid symbol point: %f", symbolPoint));
         return false;
     }
 
@@ -40,27 +38,26 @@ bool LoadBrokerSpecifications() {
 
     // Validation
     if(symbolMinLot <= 0) {
-        Print("ERROR: Invalid minimum lot: ", symbolMinLot);
+        Log_SystemError("Broker", 0, StringFormat("Invalid min lot: %f", symbolMinLot));
         return false;
     }
 
     if(symbolLotStep <= 0) {
-        Print("ERROR: Invalid lot step: ", symbolLotStep);
+        Log_SystemError("Broker", 0, StringFormat("Invalid lot step: %f", symbolLotStep));
         return false;
     }
 
     // Log specifications
-    Print("Symbol: ", _Symbol);
-    Print("Point: ", symbolPoint);
-    Print("Digits: ", symbolDigits);
-    Print("Stops Level: ", symbolStopsLevel, " points");
-    Print("Freeze Level: ", symbolFreezeLevel, " points");
-    Print("Min Lot: ", symbolMinLot);
-    Print("Max Lot: ", symbolMaxLot);
-    Print("Lot Step: ", symbolLotStep);
-    Print("Current Spread: ", symbolSpreadPoints, " points (",
-          DoubleToString(PointsToPips(symbolSpreadPoints * symbolPoint), 1), " pips)");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_KeyValue("Symbol", _Symbol);
+    Log_KeyValueNum("Point", symbolPoint, symbolDigits);
+    Log_KeyValueNum("Digits", symbolDigits, 0);
+    Log_KeyValueNum("Stops Level", symbolStopsLevel, 0);
+    Log_KeyValueNum("Freeze Level", symbolFreezeLevel, 0);
+    Log_KeyValueNum("Min Lot", symbolMinLot, 2);
+    Log_KeyValueNum("Max Lot", symbolMaxLot, 2);
+    Log_KeyValueNum("Lot Step", symbolLotStep, 2);
+    Log_KeyValue("Spread", StringFormat("%d pts (%.1f pips)", symbolSpreadPoints, PointsToPips(symbolSpreadPoints * symbolPoint)));
+    Log_Separator();
 
     return true;
 }
@@ -70,147 +67,115 @@ bool LoadBrokerSpecifications() {
 //| Checks user inputs are within acceptable ranges                  |
 //+------------------------------------------------------------------+
 bool ValidateInputParameters() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  VALIDATING INPUT PARAMETERS");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("VALIDATING INPUT PARAMETERS");
 
     int errors = 0;
     int warnings = 0;
 
-    // ====================================================================
     // CHECK 1: Grid Levels
-    // ====================================================================
     if(GridLevelsPerSide < 3 || GridLevelsPerSide > MAX_GRID_LEVELS) {
-        Print("ERROR: GridLevelsPerSide must be 3-", MAX_GRID_LEVELS,
-              " (current: ", GridLevelsPerSide, ")");
+        Log_SystemError("Validation", 0, StringFormat("GridLevelsPerSide must be 3-%d (current: %d)", MAX_GRID_LEVELS, GridLevelsPerSide));
         errors++;
     }
 
-    // ====================================================================
     // CHECK 2: Base Lot
-    // ====================================================================
     if(BaseLot < symbolMinLot) {
-        Print("ERROR: BaseLot ", BaseLot, " below broker minimum ", symbolMinLot);
+        Log_SystemError("Validation", 0, StringFormat("BaseLot %.2f below broker min %.2f", BaseLot, symbolMinLot));
         errors++;
     }
 
     if(BaseLot > symbolMaxLot) {
-        Print("ERROR: BaseLot ", BaseLot, " exceeds broker maximum ", symbolMaxLot);
+        Log_SystemError("Validation", 0, StringFormat("BaseLot %.2f exceeds broker max %.2f", BaseLot, symbolMaxLot));
         errors++;
     }
 
-    // ====================================================================
     // CHECK 3: Spacing
-    // ====================================================================
     if(SpacingMode == SPACING_FIXED) {
         if(Fixed_Spacing_Pips < MIN_SPACING_PIPS) {
-            Print("WARNING: Fixed_Spacing_Pips ", Fixed_Spacing_Pips,
-                  " below recommended minimum ", MIN_SPACING_PIPS);
+            Log_SystemWarning("Validation", StringFormat("Spacing %.1f below recommended min %.1f", Fixed_Spacing_Pips, MIN_SPACING_PIPS));
             warnings++;
         }
         if(Fixed_Spacing_Pips > MAX_SPACING_PIPS) {
-            Print("WARNING: Fixed_Spacing_Pips ", Fixed_Spacing_Pips,
-                  " above recommended maximum ", MAX_SPACING_PIPS);
+            Log_SystemWarning("Validation", StringFormat("Spacing %.1f above recommended max %.1f", Fixed_Spacing_Pips, MAX_SPACING_PIPS));
             warnings++;
         }
     }
 
-    // ====================================================================
     // CHECK 4: Lot Multiplier (Progressive mode)
-    // ====================================================================
     if(LotMode == LOT_PROGRESSIVE) {
         if(LotMultiplier < 1.0) {
-            Print("ERROR: LotMultiplier must be >= 1.0 (current: ", LotMultiplier, ")");
+            Log_SystemError("Validation", 0, StringFormat("LotMultiplier must be >= 1.0 (current: %.2f)", LotMultiplier));
             errors++;
         }
         if(LotMultiplier > 2.0) {
-            Print("WARNING: LotMultiplier ", LotMultiplier,
-                  " is aggressive - may cause margin issues");
+            Log_SystemWarning("Validation", StringFormat("LotMultiplier %.2f is aggressive", LotMultiplier));
             warnings++;
         }
 
         // Check if progression exceeds max lot
         double projectedMaxLot = BaseLot * MathPow(LotMultiplier, GridLevelsPerSide - 1);
         if(projectedMaxLot > MaxLotPerLevel) {
-            Print("INFO: Lot progression capped at ", MaxLotPerLevel,
-                  " (projected: ", DoubleToString(projectedMaxLot, 2), ")");
+            Log_Debug("Validation", StringFormat("Lot progression capped at %.2f (projected: %.2f)", MaxLotPerLevel, projectedMaxLot));
         }
     }
 
-    // ====================================================================
     // CHECK 6: Emergency Stop
-    // ====================================================================
     if(EnableEmergencyStop) {
         if(EmergencyStop_Percent < 5 || EmergencyStop_Percent > 50) {
-            Print("WARNING: EmergencyStop_Percent ", EmergencyStop_Percent,
-                  "% outside typical range 5-50%");
+            Log_SystemWarning("Validation", StringFormat("EmergencyStop %.1f%% outside typical 5-50%%", EmergencyStop_Percent));
             warnings++;
         }
     }
 
-    // ====================================================================
     // CHECK 7: Broker Minimum Distance
-    // ====================================================================
     double brokerMinPips = PointsToPips(symbolStopsLevel * symbolPoint);
-    if(brokerMinPips < 0.1) brokerMinPips = 5.0;  // Default if broker doesn't specify
+    if(brokerMinPips < 0.1) brokerMinPips = 5.0;
 
     if(SpacingMode == SPACING_FIXED && Fixed_Spacing_Pips < brokerMinPips) {
-        Print("WARNING: Fixed_Spacing_Pips ", Fixed_Spacing_Pips,
-              " below broker stop level ", DoubleToString(brokerMinPips, 1), " pips");
-        Print("         Orders may be rejected");
+        Log_SystemWarning("Validation", StringFormat("Spacing %.1f < broker min %.1f pips - orders may reject", Fixed_Spacing_Pips, brokerMinPips));
         warnings++;
     }
 
-    // ====================================================================
     // CHECK 8: Hedging Mode Required
-    // ====================================================================
     if(AllowHedging) {
         ENUM_ACCOUNT_MARGIN_MODE marginMode =
             (ENUM_ACCOUNT_MARGIN_MODE)AccountInfoInteger(ACCOUNT_MARGIN_MODE);
 
         if(marginMode != ACCOUNT_MARGIN_MODE_RETAIL_HEDGING) {
-            Print("ERROR: Double Grid Neutral requires HEDGING account mode!");
-            Print("       Current mode: ", EnumToString(marginMode));
-            Print("       Please switch to a hedging account");
+            Log_SystemError("Validation", 0, StringFormat("Requires HEDGING mode (current: %s)", EnumToString(marginMode)));
             errors++;
         } else {
-            Print("SUCCESS: Account is in HEDGING mode");
+            Log_Debug("Validation", "Account in HEDGING mode - OK");
         }
     }
 
-    // ====================================================================
     // CHECK 9: Magic Number
-    // ====================================================================
     if(MagicNumber <= 0) {
-        Print("ERROR: MagicNumber must be positive (current: ", MagicNumber, ")");
+        Log_SystemError("Validation", 0, StringFormat("MagicNumber must be positive (current: %d)", MagicNumber));
         errors++;
     }
 
-    // ====================================================================
     // SUMMARY
-    // ====================================================================
-    Print("\n═══════════════════════════════════════════════════════════════════");
-    Print("  VALIDATION SUMMARY");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("Errors: ", errors);
-    Print("Warnings: ", warnings);
+    Log_SubHeader("VALIDATION SUMMARY");
+    Log_KeyValueNum("Errors", errors, 0);
+    Log_KeyValueNum("Warnings", warnings, 0);
 
     if(errors > 0) {
-        Print("RESULT: FAILED - ", errors, " error(s) must be fixed");
+        Log_KeyValue("Result", StringFormat("FAILED - %d error(s)", errors));
         if(EnableAlerts) {
             Alert("SUGAMARA: Input validation FAILED - check Expert Log");
         }
+        Log_Separator();
         return false;
     }
 
     if(warnings > 0) {
-        Print("RESULT: PASSED with ", warnings, " warning(s)");
-        Print("        EA will start but review warnings for optimal performance");
+        Log_KeyValue("Result", StringFormat("PASSED with %d warning(s)", warnings));
     } else {
-        Print("RESULT: PASSED - All parameters valid");
+        Log_KeyValue("Result", "PASSED - All parameters valid");
     }
 
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Separator();
     return true;
 }
 
@@ -218,9 +183,7 @@ bool ValidateInputParameters() {
 //| Validate Broker Minimums (LOG-ONLY - Never blocks)               |
 //+------------------------------------------------------------------+
 bool ValidateBrokerMinimums() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  BROKER DISTANCE CHECK - INFORMATIVE ONLY");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_SubHeader("BROKER DISTANCE CHECK");
 
     double brokerStopsPips = PointsToPips(symbolStopsLevel * symbolPoint);
     double brokerFreezePips = PointsToPips(symbolFreezeLevel * symbolPoint);
@@ -228,24 +191,21 @@ bool ValidateBrokerMinimums() {
 
     if(brokerMinimum < 0.1) {
         brokerMinimum = 5.0;
-        Print("INFO: Broker has no minimum distance - using 5.0 pips default");
+        Log_Debug("Broker", "No min distance from broker - using 5.0 pips default");
     }
 
-    Print("Broker Stops Level: ", DoubleToString(brokerStopsPips, 1), " pips");
-    Print("Broker Freeze Level: ", DoubleToString(brokerFreezePips, 1), " pips");
-    Print("Effective Minimum: ", DoubleToString(brokerMinimum, 1), " pips");
+    Log_KeyValueNum("Stops Level", brokerStopsPips, 1);
+    Log_KeyValueNum("Freeze Level", brokerFreezePips, 1);
+    Log_KeyValueNum("Effective Min", brokerMinimum, 1);
 
     // Check current spacing against broker minimum
     if(currentSpacing_Pips > 0 && currentSpacing_Pips < brokerMinimum) {
-        Print("WARNING: Current spacing ", DoubleToString(currentSpacing_Pips, 1),
-              " pips < broker minimum ", DoubleToString(brokerMinimum, 1), " pips");
-        Print("         Some orders may be rejected");
+        Log_SystemWarning("Broker", StringFormat("Spacing %.1f < broker min %.1f - orders may reject", currentSpacing_Pips, brokerMinimum));
     } else if(currentSpacing_Pips > 0) {
-        Print("SUCCESS: Spacing ", DoubleToString(currentSpacing_Pips, 1),
-              " pips >= broker minimum");
+        Log_Debug("Broker", StringFormat("Spacing %.1f >= broker min - OK", currentSpacing_Pips));
     }
 
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Separator();
 
     // Always return true - this is informative only
     return true;

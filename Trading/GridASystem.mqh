@@ -15,21 +15,12 @@
 
 //+------------------------------------------------------------------+
 //| Initialize Grid A Arrays with Calculated Values                  |
-//| v5.0 FIX: Aggiunto sanity check per prezzi unici                 |
 //+------------------------------------------------------------------+
 bool InitializeGridA() {
-    LogMessage(LOG_INFO, "Initializing Grid A (Long Bias)...");
-
     if(entryPoint <= 0 || currentSpacing_Pips <= 0) {
-        LogMessage(LOG_ERROR, "Cannot initialize Grid A: Invalid entry point or spacing");
-        PrintFormat("[GridA] DEBUG: entryPoint=%.5f, currentSpacing_Pips=%.1f", entryPoint, currentSpacing_Pips);
+        Log_InitFailed("GridA", "Invalid entry point or spacing");
         return false;
     }
-
-    // v5.0 DEBUG: Log input parameters
-    PrintFormat("[GridA] Initializing with: entry=%.5f, spacing=%.1f pips, levels=%d",
-                entryPoint, currentSpacing_Pips, GridLevelsPerSide);
-    PrintFormat("[GridA] v9.0: Grid A = SOLO BUY (struttura default)");
 
     // Calculate and store values for Upper Zone
     // v9.0: BUY STOP (Grid A = sempre BUY)
@@ -57,35 +48,21 @@ bool InitializeGridA() {
         gridA_Lower_LastClose[i] = 0;
     }
 
-    // ═══════════════════════════════════════════════════════════════════
-    // v5.0 FIX: SANITY CHECK - Verify prices are unique
-    // If all prices are the same, there's a bug in spacing calculation
-    // ═══════════════════════════════════════════════════════════════════
+    // Sanity check - verify prices are unique
     bool pricesValid = true;
-
-    // Check Upper Zone prices are unique and properly spaced
     for(int i = 1; i < GridLevelsPerSide; i++) {
         if(MathAbs(gridA_Upper_EntryPrices[i] - gridA_Upper_EntryPrices[i-1]) < symbolPoint) {
-            PrintFormat("[GridA] ⚠️ BUG DETECTED: Upper L%d (%.5f) = Upper L%d (%.5f) - SAME PRICE!",
-                        i+1, gridA_Upper_EntryPrices[i], i, gridA_Upper_EntryPrices[i-1]);
+            Log_SystemError("GridA", 0, StringFormat("Upper L%d = L%d (same price)", i+1, i));
             pricesValid = false;
         }
-    }
-
-    // Check Lower Zone prices are unique and properly spaced
-    for(int i = 1; i < GridLevelsPerSide; i++) {
         if(MathAbs(gridA_Lower_EntryPrices[i] - gridA_Lower_EntryPrices[i-1]) < symbolPoint) {
-            PrintFormat("[GridA] ⚠️ BUG DETECTED: Lower L%d (%.5f) = Lower L%d (%.5f) - SAME PRICE!",
-                        i+1, gridA_Lower_EntryPrices[i], i, gridA_Lower_EntryPrices[i-1]);
+            Log_SystemError("GridA", 0, StringFormat("Lower L%d = L%d (same price)", i+1, i));
             pricesValid = false;
         }
     }
 
     if(!pricesValid) {
-        PrintFormat("[GridA] ❌ CRITICAL: Price spacing validation FAILED!");
-        PrintFormat("[GridA] DEBUG: PipsToPoints(%.1f) = %.5f", currentSpacing_Pips, PipsToPoints(currentSpacing_Pips));
-        PrintFormat("[GridA] DEBUG: symbolPoint = %.5f, symbolDigits = %d", symbolPoint, symbolDigits);
-        // Don't return false - still allow initialization but log the issue
+        Log_SystemError("GridA", 0, "Price spacing validation FAILED");
     }
 
     LogGridAConfiguration();
@@ -93,40 +70,13 @@ bool InitializeGridA() {
 }
 
 //+------------------------------------------------------------------+
-//| Log Grid A Configuration (Enhanced v5.0)                         |
+//| Log Grid A Configuration                                          |
 //+------------------------------------------------------------------+
 void LogGridAConfiguration() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  GRID A CONFIGURATION - SOLO BUY (v9.0 DEFAULT)");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("Entry Point: ", FormatPrice(entryPoint));
-    Print("Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
-    Print("Levels per Zone: ", GridLevelsPerSide);
-    Print("Mode: Perfect Cascade (TP = spacing)");
-    Print("");
-
-    // Upper Zone - v9.0: sempre BUY STOP
-    Print("--- UPPER ZONE (BUY STOP) ---");
-    for(int i = 0; i < GridLevelsPerSide; i++) {
-        Print("  L", i+1, ": Entry=", FormatPrice(gridA_Upper_EntryPrices[i]),
-              " TP=", FormatPrice(gridA_Upper_TP[i]),
-              " Lot=", DoubleToString(gridA_Upper_Lots[i], 2));
-    }
-
-    Print("");
-
-    // Lower Zone - v9.0: sempre BUY LIMIT
-    Print("--- LOWER ZONE (BUY LIMIT) ---");
-    for(int i = 0; i < GridLevelsPerSide; i++) {
-        Print("  L", i+1, ": Entry=", FormatPrice(gridA_Lower_EntryPrices[i]),
-              " TP=", FormatPrice(gridA_Lower_TP[i]),
-              " Lot=", DoubleToString(gridA_Lower_Lots[i], 2));
-    }
-
-    Print("═══════════════════════════════════════════════════════════════════");
-
-    // Log enhanced summary
-    LogGridInitSummary(GRID_A);
+    Log_GridStart("A", entryPoint, currentSpacing_Pips, GridLevelsPerSide);
+    Log_InitConfig("GridA.Mode", "BUY_ONLY");
+    Log_InitConfig("GridA.Upper", "BUY_STOP");
+    Log_InitConfig("GridA.Lower", "BUY_LIMIT");
 }
 
 //+------------------------------------------------------------------+
@@ -450,75 +400,43 @@ bool ShouldReopenGridALower(int level) {
 
 //+------------------------------------------------------------------+
 //| Reopen Grid A Upper Level                                        |
-//| FIX v5.9: SAVE/RESET/TRY/RESTORE pattern for guaranteed retry    |
-//| PlaceGridAUpperOrder requires ORDER_NONE, so we must reset first |
-//| On failure, restore previous status to trigger automatic retry   |
 //+------------------------------------------------------------------+
 void ReopenGridAUpper(int level) {
-    // 1. SAVE current status for rollback on failure
     ENUM_ORDER_STATUS prevStatus = gridA_Upper_Status[level];
     ulong prevTicket = gridA_Upper_Tickets[level];
 
-    // 2. RESET to ORDER_NONE (required by PlaceGridAUpperOrder line 187)
     gridA_Upper_Status[level] = ORDER_NONE;
     gridA_Upper_Tickets[level] = 0;
 
-    // v9.0: Log Smart Reopen type
-    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_A, ZONE_UPPER);
-    string reopenType = (orderType == ORDER_TYPE_BUY_STOP) ? "STOP+OFFSET" : "LIMIT+IMMEDIATO";
-
-    // 3. ATTEMPT to place order
     if(PlaceGridAUpperOrder(level)) {
-        // SUCCESS! PlaceGridAUpperOrder already set:
-        // - gridA_Upper_Status[level] = ORDER_PENDING (line 213)
-        // - gridA_Upper_Tickets[level] = ticket (line 212)
-        PrintFormat("[SmartReopen] ✓ GridA-UP-L%d REOPENED | %s | Cycle %d | Entry %.5f",
-                    level+1, reopenType, gridA_Upper_Cycles[level], gridA_Upper_EntryPrices[level]);
+        Log_OrderPlaced("A", "UP", level+1, "BUY_STOP", gridA_Upper_Tickets[level],
+                       gridA_Upper_EntryPrices[level], gridA_Upper_TP[level], 0, gridA_Upper_Lots[level]);
         IncrementCycleCount(GRID_A, ZONE_UPPER, level);
     } else {
-        // 4. FAILED! Restore previous status for automatic retry next tick
         gridA_Upper_Status[level] = prevStatus;
         gridA_Upper_Tickets[level] = prevTicket;
-        if(DetailedLogging) {
-            PrintFormat("[SmartReopen] ✗ GridA-UP-L%d FAILED - retry next tick", level+1);
-        }
+        Log_Debug("Reopen", StringFormat("GridA-UP-L%d FAILED", level+1));
     }
 }
 
 //+------------------------------------------------------------------+
 //| Reopen Grid A Lower Level                                        |
-//| FIX v5.9: SAVE/RESET/TRY/RESTORE pattern for guaranteed retry    |
-//| PlaceGridALowerOrder requires ORDER_NONE, so we must reset first |
-//| On failure, restore previous status to trigger automatic retry   |
 //+------------------------------------------------------------------+
 void ReopenGridALower(int level) {
-    // 1. SAVE current status for rollback on failure
     ENUM_ORDER_STATUS prevStatus = gridA_Lower_Status[level];
     ulong prevTicket = gridA_Lower_Tickets[level];
 
-    // 2. RESET to ORDER_NONE (required by PlaceGridALowerOrder line 227)
     gridA_Lower_Status[level] = ORDER_NONE;
     gridA_Lower_Tickets[level] = 0;
 
-    // v9.0: Log Smart Reopen type
-    ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_A, ZONE_LOWER);
-    string reopenType = (orderType == ORDER_TYPE_BUY_LIMIT) ? "LIMIT+IMMEDIATO" : "STOP+OFFSET";
-
-    // 3. ATTEMPT to place order
     if(PlaceGridALowerOrder(level)) {
-        // SUCCESS! PlaceGridALowerOrder already set:
-        // - gridA_Lower_Status[level] = ORDER_PENDING (line 254)
-        // - gridA_Lower_Tickets[level] = ticket (line 253)
-        PrintFormat("[SmartReopen] ✓ GridA-DN-L%d REOPENED | %s | Cycle %d | Entry %.5f",
-                    level+1, reopenType, gridA_Lower_Cycles[level], gridA_Lower_EntryPrices[level]);
+        Log_OrderPlaced("A", "DN", level+1, "BUY_LIMIT", gridA_Lower_Tickets[level],
+                       gridA_Lower_EntryPrices[level], gridA_Lower_TP[level], 0, gridA_Lower_Lots[level]);
         IncrementCycleCount(GRID_A, ZONE_LOWER, level);
     } else {
-        // 4. FAILED! Restore previous status for automatic retry next tick
         gridA_Lower_Status[level] = prevStatus;
         gridA_Lower_Tickets[level] = prevTicket;
-        if(DetailedLogging) {
-            PrintFormat("[SmartReopen] ✗ GridA-DN-L%d FAILED - retry next tick", level+1);
-        }
+        Log_Debug("Reopen", StringFormat("GridA-DN-L%d FAILED", level+1));
     }
 }
 

@@ -268,20 +268,18 @@ string GetATRTrendDescription() {
 //| Log Full ATR Report                                              |
 //+------------------------------------------------------------------+
 void LogATRReport() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  ATR ANALYSIS REPORT");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("ATR ANALYSIS REPORT");
 
     double currentATR = GetATRPips();
     double avgATR = GetAverageATR(20);
     ENUM_ATR_CONDITION condition = GetATRCondition(currentATR);
 
-    Print("Current ATR: ", DoubleToString(currentATR, 1), " pips");
-    Print("Average ATR (20): ", DoubleToString(avgATR, 1), " pips");
-    Print("Condition: ", GetATRConditionName(condition));
-    Print("Trend: ", GetATRTrendDescription());
-    Print("Current Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips (Fixed)");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_KeyValueNum("Current ATR (pips)", currentATR, 1);
+    Log_KeyValueNum("Average ATR 20 (pips)", avgATR, 1);
+    Log_KeyValue("Condition", GetATRConditionName(condition));
+    Log_KeyValue("Trend", GetATRTrendDescription());
+    Log_KeyValueNum("Current Spacing (pips)", currentSpacing_Pips, 1);
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+

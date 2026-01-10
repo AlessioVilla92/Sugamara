@@ -62,25 +62,22 @@ bool InitializeDebugMode() {
         }
     }
 
-    Print("===================================================================");
-    Print("  DEBUG MODE ENABLED");
+    Log_Header("DEBUG MODE ENABLED");
+    Log_KeyValue("Mode", DebugImmediateEntry ? "IMMEDIATE (First Tick)" : "SCHEDULED");
 
-    if(DebugImmediateEntry) {
-        Print("  Mode: IMMEDIATE (First Tick)");
-    } else {
-        Print("  Mode: SCHEDULED");
-        Print("  Entry Time: ", DebugEntryTime);
+    if(!DebugImmediateEntry) {
+        Log_KeyValue("Entry Time", DebugEntryTime);
     }
 
     // Parse close time if provided
     if(StringLen(DebugCloseTime) > 0 && DebugCloseTime != "") {
         debugCloseTargetTime = ParseDebugEntryTime(DebugCloseTime);
         if(debugCloseTargetTime > 0) {
-            Print("  Close Time: ", DebugCloseTime);
+            Log_KeyValue("Close Time", DebugCloseTime);
         }
     }
 
-    Print("===================================================================");
+    Log_Separator();
 
     return true;
 }
@@ -89,32 +86,26 @@ bool InitializeDebugMode() {
 //| Check and Trigger Debug Entry                                    |
 //+------------------------------------------------------------------+
 void CheckDebugModeEntry() {
-    // ========== DIAGNOSTIC LOG (v5.2) ==========
-    // Questo log viene stampato UNA SOLA VOLTA al primo tick
-    // per mostrare esattamente quale condizione blocca il Debug Mode
+    // Diagnostic log: first tick only
     static bool diagnosticLoggedOnce = false;
     if(!diagnosticLoggedOnce) {
-        Print("═══════════════════════════════════════════════════════════════════");
-        Print("  [DEBUG DIAGNOSTIC] CheckDebugModeEntry() - First Tick Analysis");
-        Print("═══════════════════════════════════════════════════════════════════");
-        PrintFormat("  EnableDebugMode: %s", EnableDebugMode ? "TRUE ✓" : "FALSE ✗ (BLOCKING!)");
-        PrintFormat("  DebugImmediateEntry: %s", DebugImmediateEntry ? "TRUE" : "FALSE");
-        PrintFormat("  debugEntryTriggered: %s", debugEntryTriggered ? "TRUE ✗ (already triggered)" : "FALSE ✓");
-        PrintFormat("  systemState: %d (%s)", systemState,
-                    systemState == STATE_IDLE ? "IDLE ✓" :
-                    systemState == STATE_ACTIVE ? "ACTIVE ✗" :
-                    systemState == STATE_ERROR ? "ERROR ✗" : "OTHER ✗");
-        Print("───────────────────────────────────────────────────────────────────");
+        Log_Header("DEBUG DIAGNOSTIC - First Tick");
+        Log_KeyValue("EnableDebugMode", EnableDebugMode ? "TRUE" : "FALSE (BLOCKING)");
+        Log_KeyValue("DebugImmediateEntry", DebugImmediateEntry ? "TRUE" : "FALSE");
+        Log_KeyValue("debugEntryTriggered", debugEntryTriggered ? "TRUE (already)" : "FALSE");
+        string stateStr = (systemState == STATE_IDLE) ? "IDLE" :
+                         (systemState == STATE_ACTIVE) ? "ACTIVE" :
+                         (systemState == STATE_ERROR) ? "ERROR" : "OTHER";
+        Log_KeyValue("systemState", stateStr);
+        Log_Separator();
         if(!EnableDebugMode) {
-            Print("  ⚠️ FIX: Set EnableDebugMode = true in EA parameters");
+            Log_SystemWarning("Debug", "FIX: Set EnableDebugMode=true in EA parameters");
         }
         if(systemState != STATE_IDLE) {
-            Print("  ⚠️ FIX: Check OnInit() completed successfully (look for CRITICAL errors)");
+            Log_SystemWarning("Debug", "FIX: Check OnInit() completed (look for CRITICAL errors)");
         }
-        Print("═══════════════════════════════════════════════════════════════════");
         diagnosticLoggedOnce = true;
     }
-    // ============================================
 
     // Solo se: debug abilitato, non ancora triggered, sistema idle
     if(!EnableDebugMode || debugEntryTriggered || systemState != STATE_IDLE) {
@@ -142,11 +133,10 @@ void CheckDebugModeEntry() {
     if(shouldTrigger) {
         debugEntryTriggered = true;
 
-        Print("===================================================================");
-        Print("  DEBUG MODE: Auto-starting grid system");
-        Print("  Time: ", TimeToString(TimeCurrent()));
-        Print("  Mode: ", (DebugImmediateEntry ? "IMMEDIATE" : "SCHEDULED"));
-        Print("===================================================================");
+        Log_Header("DEBUG MODE AUTO-START");
+        Log_KeyValue("Time", TimeToString(TimeCurrent()));
+        Log_KeyValue("Mode", DebugImmediateEntry ? "IMMEDIATE" : "SCHEDULED");
+        Log_Separator();
 
         // Avvia il sistema griglia (chiama StartGridSystem da ControlButtons.mqh)
         StartGridSystem();
@@ -177,11 +167,10 @@ void CheckDebugModeClose() {
 
         debugCloseTriggered = true;
 
-        Print("===================================================================");
-        Print("  DEBUG MODE: Auto-closing all positions (Intraday Exit)");
-        Print("  Time: ", TimeToString(TimeCurrent()));
-        Print("  Close Time Setting: ", DebugCloseTime);
-        Print("===================================================================");
+        Log_Header("DEBUG MODE AUTO-CLOSE");
+        Log_KeyValue("Time", TimeToString(TimeCurrent()));
+        Log_KeyValue("Close Setting", DebugCloseTime);
+        Log_Separator();
 
         // Chiudi tutte le posizioni (usa funzione esistente in OrderManager.mqh)
         CloseAllSugamaraOrders();

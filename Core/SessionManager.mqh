@@ -57,11 +57,10 @@ bool IsWithinTradingSession() {
     int startMinutes = ParseTimeToMinutes(SessionStartTime);
     int closeMinutes = ParseTimeToMinutes(SessionCloseTime);
 
-    // Validate parsed times
     if(startMinutes < 0 || closeMinutes < 0) {
-        Print("WARNING: Invalid session time format. Using 09:30-17:00 defaults.");
-        startMinutes = 9 * 60 + 30;   // 09:30
-        closeMinutes = 17 * 60;        // 17:00
+        Log_SystemWarning("Session", "Invalid time format, using 09:30-17:00");
+        startMinutes = 9 * 60 + 30;
+        closeMinutes = 17 * 60;
     }
 
     // Check if session start is enabled
@@ -110,14 +109,13 @@ void ResetDailySessionFlags() {
     MqlDateTime dt;
     TimeToStruct(TimeCurrent(), dt);
 
-    // If it's a new day, reset the flags
     if(dt.day_of_year != lastSessionDay) {
         sessionStartTriggered = false;
         sessionCloseTriggered = false;
         lastSessionDay = dt.day_of_year;
 
         if(EnableAutoSession) {
-            Print("SESSION MANAGER: Daily flags reset for day ", dt.day_of_year);
+            Log_SessionDailyReset();
         }
     }
 }
@@ -139,38 +137,23 @@ void CheckSessionClose() {
     // Check if it's close time
     if(!IsAtSessionCloseTime()) return;
 
-    // Mark as triggered to prevent multiple executions
     sessionCloseTriggered = true;
-
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SESSION MANAGER: AUTOMATIC SESSION CLOSE TRIGGERED");
-    Print("  Time: ", SessionCloseTime);
-    Print("═══════════════════════════════════════════════════════════════════");
 
     int closedPositions = 0;
     int deletedOrders = 0;
 
-    // Close all positions if enabled
     if(CloseAllOnSessionEnd) {
-        Print("  Closing all positions...");
         closedPositions = CloseAllPositionsForSession();
     }
 
-    // Delete all pending orders if enabled
     if(DeletePendingOnEnd) {
-        Print("  Deleting all pending orders...");
         deletedOrders = DeleteAllPendingOrdersForSession();
     }
 
-    Print("  SESSION CLOSE COMPLETE:");
-    Print("    Positions Closed: ", closedPositions);
-    Print("    Pending Orders Deleted: ", deletedOrders);
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_SessionEnd(closedPositions, deletedOrders, sessionRealizedProfit, 0);
 
     if(EnableAlerts) {
-        Alert("SUGAMARA: Session closed at ", SessionCloseTime,
-              " | Closed: ", closedPositions, " positions, ",
-              deletedOrders, " pending orders");
+        Alert("SUGAMARA: Session closed - positions=", closedPositions, " orders=", deletedOrders);
     }
 }
 
@@ -192,12 +175,11 @@ int CloseAllPositionsForSession() {
         // Only close positions on current symbol
         if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
 
-        // Close the position
         if(trade.PositionClose(ticket)) {
             closed++;
-            Print("    Closed position #", ticket);
+            Log_PositionClosed(ticket, "SESSION_END", 0, 0);
         } else {
-            Print("    ERROR closing position #", ticket, ": ", GetLastError());
+            Log_SystemError("Session", GetLastError(), StringFormat("Close position #%d failed", ticket));
         }
     }
 
@@ -222,12 +204,11 @@ int DeleteAllPendingOrdersForSession() {
         // Only delete orders on current symbol
         if(OrderGetString(ORDER_SYMBOL) != _Symbol) continue;
 
-        // Delete the order
         if(trade.OrderDelete(ticket)) {
             deleted++;
-            Print("    Deleted order #", ticket);
+            Log_OrderCancelled(ticket, "SESSION_END");
         } else {
-            Print("    ERROR deleting order #", ticket, ": ", GetLastError());
+            Log_SystemError("Session", GetLastError(), StringFormat("Delete order #%d failed", ticket));
         }
     }
 
@@ -263,42 +244,27 @@ string GetSessionStatus() {
 //+------------------------------------------------------------------+
 void InitializeSessionManager() {
     if(!EnableAutoSession) {
-        Print("SESSION MANAGER: Disabled");
+        Log_InitConfig("Session", "DISABLED");
         return;
     }
 
-    // Reset daily flags
     MqlDateTime dt;
     TimeToStruct(TimeCurrent(), dt);
     lastSessionDay = dt.day_of_year;
     sessionStartTriggered = false;
     sessionCloseTriggered = false;
 
-    // Validate time formats
     int startMin = ParseTimeToMinutes(SessionStartTime);
     int closeMin = ParseTimeToMinutes(SessionCloseTime);
 
     if(startMin < 0 || closeMin < 0) {
-        Print("WARNING: Invalid session time format!");
-        Print("  Expected format: HH:MM (e.g., 09:30)");
+        Log_SystemWarning("Session", "Invalid time format HH:MM");
     }
 
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SESSION MANAGER INITIALIZED");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  Auto Session: ", EnableAutoSession ? "ENABLED" : "DISABLED");
-
-    if(EnableSessionStart) {
-        Print("  Start Time: ", SessionStartTime, " (", startMin / 60, ":", startMin % 60, ")");
-    }
-
-    if(EnableSessionClose) {
-        Print("  Close Time: ", SessionCloseTime, " (", closeMin / 60, ":", closeMin % 60, ")");
-        Print("  Close Positions: ", CloseAllOnSessionEnd ? "YES" : "NO");
-        Print("  Delete Pending: ", DeletePendingOnEnd ? "YES" : "NO");
-    }
-
-    Print("  Current Status: ", GetSessionStatus());
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_InitConfig("Session.Start", SessionStartTime);
+    Log_InitConfig("Session.Close", SessionCloseTime);
+    Log_InitConfig("Session.ClosePositions", CloseAllOnSessionEnd ? "YES" : "NO");
+    Log_InitConfig("Session.DeletePending", DeletePendingOnEnd ? "YES" : "NO");
+    Log_InitComplete("Session");
 }
 

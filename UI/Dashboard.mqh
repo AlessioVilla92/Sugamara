@@ -123,31 +123,31 @@ void HandleButtonClick(string clickedObject) {
     // BUY BUTTONS - Grid A (Long Bias)
     //==============================================================
     if(clickedObject == "BTN_BUY_MARKET") {
-        Print("INFO: BUY MARKET requested - Starting Grid A");
+        Log_Debug("Dashboard", "BUY MARKET requested - Starting Grid A");
         systemState = STATE_ACTIVE;
         if(InitializeGridA()) {
             PlaceAllGridAOrders();
-            Print("SUCCESS: Grid A started (MARKET)");
+            Log_GridStart("A", entryPoint, currentSpacing_Pips, GridLevelsPerSide);
         }
         return;
     }
 
     if(clickedObject == "BTN_BUY_LIMIT") {
-        Print("INFO: BUY LIMIT requested - Starting Grid A");
+        Log_Debug("Dashboard", "BUY LIMIT requested - Starting Grid A");
         systemState = STATE_ACTIVE;
         if(InitializeGridA()) {
             PlaceAllGridAOrders();
-            Print("SUCCESS: Grid A started (LIMIT)");
+            Log_GridStart("A", entryPoint, currentSpacing_Pips, GridLevelsPerSide);
         }
         return;
     }
 
     if(clickedObject == "BTN_BUY_STOP") {
-        Print("INFO: BUY STOP requested - Starting Grid A");
+        Log_Debug("Dashboard", "BUY STOP requested - Starting Grid A");
         systemState = STATE_ACTIVE;
         if(InitializeGridA()) {
             PlaceAllGridAOrders();
-            Print("SUCCESS: Grid A started (STOP)");
+            Log_GridStart("A", entryPoint, currentSpacing_Pips, GridLevelsPerSide);
         }
         return;
     }
@@ -156,31 +156,31 @@ void HandleButtonClick(string clickedObject) {
     // SELL BUTTONS - Grid B (Short Bias)
     //==============================================================
     if(clickedObject == "BTN_SELL_MARKET") {
-        Print("INFO: SELL MARKET requested - Starting Grid B");
+        Log_Debug("Dashboard", "SELL MARKET requested - Starting Grid B");
         systemState = STATE_ACTIVE;
         if(InitializeGridB()) {
             PlaceAllGridBOrders();
-            Print("SUCCESS: Grid B started (MARKET)");
+            Log_GridStart("B", entryPoint, currentSpacing_Pips, GridLevelsPerSide);
         }
         return;
     }
 
     if(clickedObject == "BTN_SELL_LIMIT") {
-        Print("INFO: SELL LIMIT requested - Starting Grid B");
+        Log_Debug("Dashboard", "SELL LIMIT requested - Starting Grid B");
         systemState = STATE_ACTIVE;
         if(InitializeGridB()) {
             PlaceAllGridBOrders();
-            Print("SUCCESS: Grid B started (LIMIT)");
+            Log_GridStart("B", entryPoint, currentSpacing_Pips, GridLevelsPerSide);
         }
         return;
     }
 
     if(clickedObject == "BTN_SELL_STOP") {
-        Print("INFO: SELL STOP requested - Starting Grid B");
+        Log_Debug("Dashboard", "SELL STOP requested - Starting Grid B");
         systemState = STATE_ACTIVE;
         if(InitializeGridB()) {
             PlaceAllGridBOrders();
-            Print("SUCCESS: Grid B started (STOP)");
+            Log_GridStart("B", entryPoint, currentSpacing_Pips, GridLevelsPerSide);
         }
         return;
     }
@@ -189,14 +189,14 @@ void HandleButtonClick(string clickedObject) {
     // START BOTH GRIDS - Neutral Strategy
     //==============================================================
     if(clickedObject == "BTN_START_NEUTRAL") {
-        Print("INFO: NEUTRAL START requested - Starting Both Grids");
+        Log_Debug("Dashboard", "NEUTRAL START requested");
         systemState = STATE_ACTIVE;
         InitializeEntryPoint();
         CalculateCurrentSpacing();
         if(InitializeGridA() && InitializeGridB()) {
             PlaceAllGridAOrders();
             PlaceAllGridBOrders();
-            Print("SUCCESS: Both Grids started (NEUTRAL)");
+            Log_SessionStart(_Symbol, "NEUTRAL");
             if(EnableAlerts) Alert("Sugamara: NEUTRAL Grid System STARTED");
         }
         return;
@@ -208,11 +208,11 @@ void HandleButtonClick(string clickedObject) {
     if(clickedObject == "BTN_PAUSE") {
         if(systemState == STATE_PAUSED) {
             systemState = STATE_ACTIVE;
-            Print("INFO: System RESUMED");
+            Log_Debug("Dashboard", "System RESUMED");
             UpdatePauseButton();
         } else if(systemState == STATE_ACTIVE) {
             systemState = STATE_PAUSED;
-            Print("INFO: System PAUSED");
+            Log_Debug("Dashboard", "System PAUSED");
             UpdatePauseButton();
         }
         return;
@@ -222,7 +222,7 @@ void HandleButtonClick(string clickedObject) {
     // CLOSE ALL
     //==============================================================
     if(clickedObject == "BTN_CLOSE_ALL") {
-        Print("WARNING: CLOSE ALL requested");
+        Log_SystemWarning("Dashboard", "CLOSE ALL requested");
         CloseAllSugamaraOrders();
         // v5.8 FIX: COP_ResetDaily() RIMOSSO - profitti devono accumularsi
         // Il reset avviene solo al cambio giorno (COP_IsNewDay) o target raggiunto
@@ -249,19 +249,22 @@ void UpdatePauseButton() {
 bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  SUGAMARA RIBELLE v9.0 - CASCADE SOVRAPPOSTO - DUNE THEME          ");
-    Print("  \"The Spice Must Flow\" - Grid Trading System 24/7                 ");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("SUGAMARA RIBELLE v9.10 - DUNE THEME");
 
     // Check if dashboard already exists and is complete
     if(VerifyDashboardExists()) {
-        Print("Dashboard already exists - verifying control buttons...");
+        Log_Debug("Dashboard", "Already exists - verifying control buttons");
 
         // v5.4: Verify and recreate control buttons if missing
         if(!VerifyControlButtonsExist()) {
             Print("Control buttons missing - recreating...");
             InitializeControlButtons(g_leftX, g_btnY, g_colWidth);
+        }
+
+        // v9.11 Fix: Ensure Grid Visualization is also restored if missing
+        if(ShowGridLines && !VerifyGridLinesExist()) {
+            Print("Grid lines missing - recreating visualization...");
+            DrawGridVisualization();
         }
 
         g_dashboardInitialized = true;
@@ -354,17 +357,32 @@ bool VerifyControlButtonsExist() {
 }
 
 //+------------------------------------------------------------------+
+//| Verify Grid Lines Exist v9.11 (Basic Check)                       |
+//+------------------------------------------------------------------+
+bool VerifyGridLinesExist() {
+    if(!ShowGridLines) return true;
+    
+    // Check for just one expected object (Entry Line or a Grid Level)
+    // Entry Point Line is the most consistent object to check
+    if(ShowEntryLine && entryPoint > 0) {
+        if(ObjectFind(0, "SUGAMARA_ENTRY") < 0) return false;
+    }
+    
+    // Warning: checking all grid lines might be intensive, so we do a light check
+    return true;
+}
+
+//+------------------------------------------------------------------+
 //| Recreate Entire Dashboard - Force complete rebuild                |
 //+------------------------------------------------------------------+
 void RecreateEntireDashboard() {
     if(!ShowDashboard) return;
 
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  RECREATING DASHBOARD (Auto-Recovery)                             ");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header(\"RECREATING DASHBOARD (Auto-Recovery)\");
 
     // Remove any partial objects
     RemoveDashboard();
+    RemoveGridVisualization(); // v9.11: Ensure grid lines are cleaned
     Sleep(100);
 
     // Recreate all components
@@ -377,6 +395,12 @@ void RecreateEntireDashboard() {
     // v4.4: Control buttons ALWAYS active
     // FIX v4.5: Corrected parameter order (startX, startY, panelWidth)
     InitializeControlButtons(g_leftX, g_btnY, g_colWidth);
+
+    // v9.11: Redraw Grid Visualization
+    if(ShowGridLines) {
+        DrawGridVisualization();
+        Print("SUCCESS: Grid Visualization restored (v9.11)");
+    }
 
     g_dashboardInitialized = true;
     g_lastDashboardCheck = TimeCurrent();
@@ -404,7 +428,11 @@ void CheckDashboardPersistence() {
 
     // Quick check: verify main panel exists
     if(ObjectFind(0, "TITLE_PANEL") < 0) {
+        // v9.11: Enhanced Debug Logging for "Dashboard Missing" event
         Print("WARNING: Dashboard missing - auto-recreating...");
+        PrintFormat("DEBUG: ObjectsTotal=%d | ChartID=%lld | Symbol=%s",
+                    ObjectsTotal(0), ChartID(), _Symbol);
+        
         RecreateEntireDashboard();
     }
 }

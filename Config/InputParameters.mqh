@@ -36,7 +36,7 @@ input group "╚═════════════════════�
 input group "    🔧 CORE SETTINGS"
 input int       MagicNumber = 20251205;                      // 🆔 Magic Number (Unique EA ID)
 input bool      EnableSystem = true;                         // ✅ Enable System
-input bool      DetailedLogging = true;                      // 📝 Detailed Logging
+input bool      DetailedLogging = false;                     // 📝 Detailed Logging
 input bool      EnableAlerts = true;                         // 🔔 Enable Alerts
 
 input group "    🚨 EMERGENCY PROTECTION"

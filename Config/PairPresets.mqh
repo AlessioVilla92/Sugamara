@@ -62,7 +62,7 @@ void ApplyPairPresets() {
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT), NY (13:00-21:00 GMT)";
 
-            Print("PRESET LOADED: EUR/USD - Standard Configuration");
+            Log_InitConfig("Preset", "EUR/USD - Standard Configuration");
             break;
 
         //==============================================================
@@ -87,7 +87,7 @@ void ApplyPairPresets() {
             // Sessions
             activePair_BestSessions = "NY (13:00-21:00 GMT), London-NY Overlap";
 
-            Print("PRESET LOADED: USD/CAD - North American Configuration");
+            Log_InitConfig("Preset", "USD/CAD - North American Configuration");
             break;
 
         //==============================================================
@@ -112,7 +112,7 @@ void ApplyPairPresets() {
             // Sessions
             activePair_BestSessions = "Asia (22:00-08:00 GMT), Sydney overlap";
 
-            Print("PRESET LOADED: AUD/NZD - BEST FOR NEUTRAL");
+            Log_InitConfig("Preset", "AUD/NZD - BEST FOR NEUTRAL");
             break;
 
         //==============================================================
@@ -137,7 +137,7 @@ void ApplyPairPresets() {
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT)";
 
-            Print("PRESET LOADED: EUR/CHF - Ultra-Low Volatility");
+            Log_InitConfig("Preset", "EUR/CHF - Ultra-Low Volatility");
             break;
 
         //==============================================================
@@ -162,7 +162,7 @@ void ApplyPairPresets() {
             // Sessions
             activePair_BestSessions = "Asia-London overlap, NY session";
 
-            Print("PRESET LOADED: AUD/CAD - Commodity Pair");
+            Log_InitConfig("Preset", "AUD/CAD - Commodity Pair");
             break;
 
         //==============================================================
@@ -187,7 +187,7 @@ void ApplyPairPresets() {
             // Sessions
             activePair_BestSessions = "Asia session, early London";
 
-            Print("PRESET LOADED: NZD/CAD - Secondary Range Pair");
+            Log_InitConfig("Preset", "NZD/CAD - Secondary Range Pair");
             break;
 
         //==============================================================
@@ -212,7 +212,7 @@ void ApplyPairPresets() {
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT)";
 
-            Print("PRESET LOADED: EUR/GBP - Excellent Mean Reverting");
+            Log_InitConfig("Preset", "EUR/GBP - Excellent Mean Reverting");
             break;
 
         //==============================================================
@@ -237,7 +237,7 @@ void ApplyPairPresets() {
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT), London-NY Overlap";
 
-            Print("PRESET LOADED: GBP/USD - Mean Reverting");
+            Log_InitConfig("Preset", "GBP/USD - Mean Reverting");
             break;
 
         //==============================================================
@@ -262,7 +262,7 @@ void ApplyPairPresets() {
             // Sessions
             activePair_BestSessions = "London (08:00-16:00 GMT), NY session";
 
-            Print("PRESET LOADED: USD/CHF - Safe Haven");
+            Log_InitConfig("Preset", "USD/CHF - Safe Haven");
             break;
 
         //==============================================================
@@ -287,8 +287,8 @@ void ApplyPairPresets() {
             // Sessions - Tokyo open and London-NY overlap best for breakouts
             activePair_BestSessions = "Tokyo (00:00-08:00 GMT), London-NY Overlap (13:00-17:00 GMT)";
 
-            Print("PRESET LOADED: USD/JPY - Test Breakout Configuration");
-            Print("   NOTE: Optimized for candle breakout testing!");
+            Log_InitConfig("Preset", "USD/JPY - Test Breakout");
+            Log_Debug("Pair", "Optimized for candle breakout testing");
             break;
 
         //==============================================================
@@ -313,7 +313,7 @@ void ApplyPairPresets() {
             // Sessions - London and Tokyo overlap
             activePair_BestSessions = "Tokyo-London Overlap (07:00-09:00 GMT), London (08:00-16:00 GMT)";
 
-            Print("PRESET LOADED: EUR/JPY - Cross Major Configuration");
+            Log_InitConfig("Preset", "EUR/JPY - Cross Major Configuration");
             break;
 
         //==============================================================
@@ -338,7 +338,7 @@ void ApplyPairPresets() {
             // Sessions - Sydney and London
             activePair_BestSessions = "Sydney (22:00-07:00 GMT), London (08:00-16:00 GMT)";
 
-            Print("PRESET LOADED: AUD/USD - Commodity Major Configuration");
+            Log_InitConfig("Preset", "AUD/USD - Commodity Major Configuration");
             break;
 
         //==============================================================
@@ -363,7 +363,7 @@ void ApplyPairPresets() {
             // Sessions - Asian session
             activePair_BestSessions = "Wellington-Sydney (21:00-07:00 GMT), London (08:00-16:00 GMT)";
 
-            Print("PRESET LOADED: NZD/USD - Commodity Pair Configuration");
+            Log_InitConfig("Preset", "NZD/USD - Commodity Pair Configuration");
             break;
 
         //==============================================================
@@ -387,25 +387,23 @@ void ApplyPairPresets() {
 
             activePair_BestSessions = "Verify manually for your pair";
 
-            Print("PRESET LOADED: CUSTOM - Manual Configuration");
-            Print("   WARNING: Verify all parameters manually!");
+            Log_InitConfig("Preset", "CUSTOM - Manual Configuration");
+            Log_SystemWarning("Pair", "Verify all parameters manually");
             break;
     }
 
     // Log final configuration
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  PAIR PRESET SUMMARY");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  Spread: ", activePair_Spread, " pips");
-    Print("  Daily Range: ", activePair_DailyRange, " pips");
-    Print("  ATR Typical: ", activePair_ATR_Typical, " pips");
-    Print("  Recommended Spacing: ", activePair_RecommendedSpacing, " pips");
-    Print("  Recommended Levels: ", activePair_RecommendedLevels, " per side");
-    Print("  Base Lot: ", activePair_RecommendedBaseLot, " (standard 0.01)");
-    Print("  Target ROI: ", activePair_TargetROI, "% monthly");
-    Print("  Max Drawdown: ", activePair_MaxDrawdown, "%");
-    Print("  Best Sessions: ", activePair_BestSessions);
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("PAIR PRESET SUMMARY");
+    Log_KeyValueNum("Spread", activePair_Spread, 1);
+    Log_KeyValueNum("Daily Range", activePair_DailyRange, 1);
+    Log_KeyValueNum("ATR Typical", activePair_ATR_Typical, 1);
+    Log_KeyValueNum("Recommended Spacing", activePair_RecommendedSpacing, 1);
+    Log_KeyValueNum("Recommended Levels", activePair_RecommendedLevels, 0);
+    Log_KeyValueNum("Base Lot", activePair_RecommendedBaseLot, 2);
+    Log_KeyValueNum("Target ROI", activePair_TargetROI, 1);
+    Log_KeyValueNum("Max Drawdown", activePair_MaxDrawdown, 1);
+    Log_KeyValue("Best Sessions", activePair_BestSessions);
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+
@@ -464,22 +462,18 @@ bool ValidatePairSymbolMatch() {
     // Check if chart symbol contains expected pair
     // Handles broker suffixes like "EURUSDm", "EURUSD.raw", etc.
     if(StringFind(chartSymbol, expectedSymbol) >= 0) {
-        Print("SUCCESS: Chart symbol ", chartSymbol, " matches selected pair ", expectedSymbol);
+        Log_Debug("Pair", StringFormat("Chart %s matches %s", chartSymbol, expectedSymbol));
         return true;
     }
 
     // Mismatch detected
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  ERROR: PAIR MISMATCH DETECTED!");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  Selected Pair: ", EnumToString(SelectedPair), " (", expectedSymbol, ")");
-    Print("  Chart Symbol: ", chartSymbol);
-    Print("  ");
-    Print("  Please either:");
-    Print("  1. Attach EA to correct chart (", expectedSymbol, ")");
-    Print("  2. Change SelectedPair parameter to match chart");
-    Print("  3. Use PAIR_CUSTOM for manual configuration");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("ERROR: PAIR MISMATCH");
+    Log_KeyValue("Selected Pair", expectedSymbol);
+    Log_KeyValue("Chart Symbol", chartSymbol);
+    Log_KeyValue("Fix Option 1", "Attach EA to " + expectedSymbol);
+    Log_KeyValue("Fix Option 2", "Change SelectedPair to match chart");
+    Log_KeyValue("Fix Option 3", "Use PAIR_CUSTOM for manual config");
+    Log_Separator();
 
     if(EnableAlerts) {
         Alert("SUGAMARA: Pair mismatch! Selected ", expectedSymbol, " but chart is ", chartSymbol);

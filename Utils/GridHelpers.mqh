@@ -168,17 +168,10 @@ string GetEntrySpacingModeName() {
 void LogEntrySpacingConfig() {
     double entrySpacing = GetEntrySpacingPips(currentSpacing_Pips);
     double gapCentro = entrySpacing * 2.0;
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  📐 ENTRY SPACING CONFIG v9.8");
-    Print("═══════════════════════════════════════════════════════════════════");
-    PrintFormat("  Mode: %s", GetEntrySpacingModeName());
-    PrintFormat("  Grid Spacing: %.1f pips", currentSpacing_Pips);
-    PrintFormat("  Entry Spacing: %.1f pips (distanza Entry → L1)", entrySpacing);
-    PrintFormat("  Gap Centro: %.1f pips (buco tra L1 BUY e L1 SELL)", gapCentro);
-    if(EntrySpacingMode == ENTRY_SPACING_HALF) {
-        Print("  ✓ PERFECT CASCADE: Gap centro = spacing normale");
-    }
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_InitConfig("EntrySpacing.Mode", GetEntrySpacingModeName());
+    Log_InitConfigNum("EntrySpacing.GridSpacing", currentSpacing_Pips);
+    Log_InitConfigNum("EntrySpacing.EntryToL1", entrySpacing);
+    Log_InitConfigNum("EntrySpacing.CenterGap", gapCentro);
 }
 
 //+------------------------------------------------------------------+
@@ -369,126 +362,53 @@ double CalculateTotalGridLots(int levels) {
 //+------------------------------------------------------------------+
 //| Calculate Risk-Based Lot Sizes                                   |
 //| Formula: BaseLot = RiskCapital / DrawdownFactor                  |
-//| DrawdownFactor = Σ(Distance_i × Mult^i × PipValue) × 2 zones     |
-//|                                                                  |
-//| ⚠️ IMPORTANTE: Questo sistema NON piazza Stop Loss automatici!   |
-//| I lot vengono calcolati per limitare il DD teorico massimo.      |
-//| La protezione avviene tramite Shield (hedging), NON chiusure.    |
+//| DrawdownFactor = Sum(Distance_i * Mult^i * PipValue) * 2 zones   |
 //+------------------------------------------------------------------+
 void CalculateRiskBasedLots() {
-    if(riskBasedLotsCalculated) return;  // Gia calcolato
+    if(riskBasedLotsCalculated) return;
 
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  💰 RISK-BASED LOT CALCULATION");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  ⚠️ NOTA: Questo sistema calcola SOLO i lot size.");
-    Print("  ⚠️ NON vengono piazzati Stop Loss automatici!");
-    Print("  ⚠️ La protezione avviene tramite Shield (hedging).");
-    Print("───────────────────────────────────────────────────────────────────");
-
-    // Get pip value for 1 lot
     double pipValue = GetPipValueForLot(1.0);
     if(pipValue <= 0) {
-        Print("  ❌ ERROR: Cannot calculate pip value");
-        Print("     TickValue or TickSize not available from broker");
+        Log_SystemError("RiskCalc", 0, "Cannot calculate pip value");
         riskBasedBaseLot = symbolMinLot;
         riskBasedLotsCalculated = true;
-        Print("  ⚠️ Using minimum lot: ", DoubleToString(symbolMinLot, 2));
-        Print("═══════════════════════════════════════════════════════════════════");
         return;
     }
 
-    // Get current spacing
     double spacing = (currentSpacing_Pips > 0) ? currentSpacing_Pips : Fixed_Spacing_Pips;
-
-    // Log input parameters
-    Print("  📊 INPUT PARAMETERS:");
-    PrintFormat("     Symbol: %s", _Symbol);
-    PrintFormat("     Risk Capital: $%.2f", RiskCapital_USD);
-    PrintFormat("     Risk Buffer: %.1f%%", RiskBuffer_Percent);
-    PrintFormat("     Grid Levels: %d per side", GridLevelsPerSide);
-    PrintFormat("     Spacing: %.1f pips", spacing);
-    PrintFormat("     Lot Multiplier: %.2f", LotMultiplier);
-    PrintFormat("     Pip Value (1 lot): $%.4f", pipValue);
-    Print("───────────────────────────────────────────────────────────────────");
-
-    // Apply risk buffer
     double effectiveRisk = RiskCapital_USD * (1.0 - RiskBuffer_Percent / 100.0);
-    PrintFormat("  💵 Effective Risk: $%.2f (after %.1f%% buffer)", effectiveRisk, RiskBuffer_Percent);
-
-    // Calculate drawdown factor for worst case scenario
     double drawdownFactor = CalculateDrawdownFactor(spacing, pipValue);
 
     if(drawdownFactor <= 0) {
-        Print("  ❌ ERROR: DrawdownFactor is zero or negative");
+        Log_SystemError("RiskCalc", 0, "DrawdownFactor is zero or negative");
         riskBasedBaseLot = symbolMinLot;
         riskBasedLotsCalculated = true;
-        Print("  ⚠️ Using minimum lot: ", DoubleToString(symbolMinLot, 2));
-        Print("═══════════════════════════════════════════════════════════════════");
         return;
     }
 
-    PrintFormat("  📈 Drawdown Factor: %.2f (per 1 base lot)", drawdownFactor);
-
-    // Calculate base lot
     riskBasedBaseLot = effectiveRisk / drawdownFactor;
-    PrintFormat("  🔢 Calculated Base Lot: %.4f", riskBasedBaseLot);
 
     // Apply broker limits
     double originalLot = riskBasedBaseLot;
     riskBasedBaseLot = MathMax(riskBasedBaseLot, symbolMinLot);
     riskBasedBaseLot = MathMin(riskBasedBaseLot, MaxLotPerLevel);
-
-    if(riskBasedBaseLot != originalLot) {
-        PrintFormat("  ⚠️ Lot adjusted to broker limits: %.4f -> %.4f", originalLot, riskBasedBaseLot);
-        PrintFormat("     Min Lot: %.2f | Max Lot: %.2f", symbolMinLot, MaxLotPerLevel);
-    }
-
-    // Normalize to lot step
     riskBasedBaseLot = NormalizeLotSize(riskBasedBaseLot);
 
-    // Store theoretical max drawdown
     maxTheoreticalDrawdown = drawdownFactor * riskBasedBaseLot;
-
-    // Mark as calculated
     riskBasedLotsCalculated = true;
     riskBasedMultiplier = LotMultiplier;
 
-    // Final summary
-    Print("───────────────────────────────────────────────────────────────────");
-    Print("  ✅ CALCULATION COMPLETE:");
-    PrintFormat("     Base Lot (Level 1): %.2f", riskBasedBaseLot);
-    PrintFormat("     Max Theoretical DD: $%.2f", maxTheoreticalDrawdown);
-    PrintFormat("     Risk Capital: $%.2f", RiskCapital_USD);
-    PrintFormat("     DD/Risk Ratio: %.1f%%", (maxTheoreticalDrawdown / RiskCapital_USD) * 100);
-    Print("───────────────────────────────────────────────────────────────────");
+    // Log calculation results
+    Log_InitConfigNum("RiskCalc.RiskCapital", RiskCapital_USD);
+    Log_InitConfigNum("RiskCalc.EffectiveRisk", effectiveRisk);
+    Log_InitConfigNum("RiskCalc.DrawdownFactor", drawdownFactor);
+    Log_InitConfigNum("RiskCalc.BaseLot", riskBasedBaseLot);
+    Log_InitConfigNum("RiskCalc.MaxTheoreticalDD", maxTheoreticalDrawdown);
+    Log_InitConfigNum("RiskCalc.DDRiskRatio", (maxTheoreticalDrawdown / RiskCapital_USD) * 100);
 
-    // Show lot progression table
-    Print("  📋 LOT PROGRESSION TABLE:");
-    Print("     Level | Lot Size | Distance | DD Contribution");
-    Print("     ------|----------|----------|----------------");
-
-    double totalDD = 0;
-    for(int i = 0; i < GridLevelsPerSide; i++) {
-        double lot = NormalizeLotSize(riskBasedBaseLot * MathPow(LotMultiplier, i));
-        double distance = (i + 1) * spacing;
-        double ddContrib = distance * lot * pipValue;
-        totalDD += ddContrib;
-
-        PrintFormat("     L%d    | %.2f     | %.0f pips | $%.2f",
-                    i + 1, lot, distance, ddContrib);
+    if(originalLot != riskBasedBaseLot) {
+        Log_SystemWarning("RiskCalc", StringFormat("Lot adjusted: %.4f -> %.2f (broker limits)", originalLot, riskBasedBaseLot));
     }
-    Print("     ------|----------|----------|----------------");
-    PrintFormat("     TOTAL (1 zone)         | $%.2f", totalDD);
-    PrintFormat("     TOTAL (2 zones worst)  | $%.2f", totalDD * 2);
-
-    Print("───────────────────────────────────────────────────────────────────");
-    Print("  🛡️ PROTEZIONE:");
-    Print("     • NO Stop Loss automatici piazzati");
-    Print("     • Shield 3 Fasi gestisce breakout con HEDGING");
-    Print("     • Posizioni restano aperte durante protezione");
-    Print("     • Possibile recupero su rimbalzo prezzo");
-    Print("═══════════════════════════════════════════════════════════════════");
 }
 
 //+------------------------------------------------------------------+
@@ -1171,10 +1091,6 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
 
     // LIMIT orders: sempre immediato (broker rifiuta se prezzo non valido)
     if(orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_SELL_LIMIT) {
-        if(DetailedLogging) {
-            PrintFormat("[SmartReopen] %s @ %.5f → IMMEDIATO (LIMIT intrinsecamente protetto)",
-                        EnumToString(orderType), levelPrice);
-        }
         return true;
     }
 
@@ -1210,20 +1126,14 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
             return true;
     }
 
-    // v9.0: Log SOLO quando stato CAMBIA (ATTESA↔PRONTO) - elimina 175K+ log spam
+    // Log only on state change (WAITING <-> READY)
     if(DetailedLogging) {
         int stateIdx = FindOrAddReopenState(levelPrice);
         if(stateIdx >= 0) {
             bool wasReady = g_reopenStates[stateIdx].wasReady;
-            // Log SOLO se stato cambia
             if(canReopen != wasReady) {
-                if(canReopen) {
-                    PrintFormat("[SmartReopen] %s @ %.5f → PRONTO! %s ✓",
-                                EnumToString(orderType), levelPrice, condition);
-                } else {
-                    PrintFormat("[SmartReopen] %s @ %.5f → ATTESA (%.1f pips) %s",
-                                EnumToString(orderType), levelPrice, MathAbs(distancePips), condition);
-                }
+                Log_Debug("SmartReopen", StringFormat("%s @ %.5f status=%s",
+                          EnumToString(orderType), levelPrice, (canReopen ? "READY" : "WAITING")));
                 g_reopenStates[stateIdx].wasReady = canReopen;
             }
         }
@@ -1335,15 +1245,11 @@ double GetCurrentSpacingPoints() {
 //| Log Dynamic Positioning Info                                      |
 //+------------------------------------------------------------------+
 void LogDynamicPositioningInfo() {
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  📐 DYNAMIC POSITIONING INFO (v4.4)");
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  Grid Levels Per Side: ", GridLevelsPerSide);
-    Print("  Current Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
-    Print("───────────────────────────────────────────────────────────────────");
-    Print("  S/R Multiplier: ", DoubleToString(GetSRMultiplier(), 2), " (N+0.25)");
-    Print("  Warning Zone Multiplier: ", DoubleToString(GetWarningZoneMultiplier(), 2), " (N-0.5)");
-    Print("───────────────────────────────────────────────────────────────────");
+    Log_Header("DYNAMIC POSITIONING");
+    Log_KeyValueNum("Grid Levels Per Side", GridLevelsPerSide, 0);
+    Log_KeyValueNum("Current Spacing (pips)", currentSpacing_Pips, 1);
+    Log_KeyValueNum("S/R Multiplier", GetSRMultiplier(), 2);
+    Log_KeyValueNum("Warning Zone Multiplier", GetWarningZoneMultiplier(), 2);
 
     if(entryPoint > 0) {
         double srUp = CalculateSRLevel(entryPoint, currentSpacing_Pips, true);
@@ -1351,14 +1257,14 @@ void LogDynamicPositioningInfo() {
         double warnUp = CalculateWarningZoneLevel(entryPoint, currentSpacing_Pips, true);
         double warnDown = CalculateWarningZoneLevel(entryPoint, currentSpacing_Pips, false);
 
-        Print("  CALCULATED LEVELS:");
-        PrintFormat("    Entry Point: %.5f", entryPoint);
-        PrintFormat("    Warning Up: %.5f (%.1f pips)", warnUp, PointsToPips(warnUp - entryPoint));
-        PrintFormat("    Warning Down: %.5f (%.1f pips)", warnDown, PointsToPips(entryPoint - warnDown));
-        PrintFormat("    S/R Up (Resistance): %.5f (%.1f pips)", srUp, PointsToPips(srUp - entryPoint));
-        PrintFormat("    S/R Down (Support): %.5f (%.1f pips)", srDown, PointsToPips(entryPoint - srDown));
+        Log_Separator();
+        Log_KeyValueNum("Entry Point", entryPoint, 5);
+        Log_KeyValueNum("Warning Up", warnUp, 5);
+        Log_KeyValueNum("Warning Down", warnDown, 5);
+        Log_KeyValueNum("Resistance", srUp, 5);
+        Log_KeyValueNum("Support", srDown, 5);
     }
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+
@@ -1389,7 +1295,7 @@ double GetLastGridALevel() {
 //+------------------------------------------------------------------+
 bool CalculateBreakoutLevels() {
     if(entryPoint <= 0) {
-        Print("[GridHelpers] ERROR: Entry point not set");
+        Log_SystemError("GridHelpers", 0, "Entry point not set");
         return false;
     }
 
@@ -1397,8 +1303,8 @@ bool CalculateBreakoutLevels() {
     double spacingPoints = PipsToPoints(spacing);
 
     // Set shieldZone values using grid edges
-    shieldZone.resistance = GetLastGridBLevel();  // Upper Grid B last level
-    shieldZone.support = GetLastGridALevel();     // Lower Grid A last level
+    shieldZone.resistance = GetLastGridBLevel();
+    shieldZone.support = GetLastGridALevel();
 
     // Warning zones at N-0.5 levels
     double warningOffset = spacingPoints * (GridLevelsPerSide - 0.5);
@@ -1416,9 +1322,10 @@ bool CalculateBreakoutLevels() {
 
     shieldZone.isValid = true;
 
-    PrintFormat("[GridHelpers] Breakout levels set from grid edges:");
-    PrintFormat("  Support: %.5f | Resistance: %.5f", shieldZone.support, shieldZone.resistance);
-    PrintFormat("  Warning Down: %.5f | Warning Up: %.5f", shieldZone.warningZoneDown, shieldZone.warningZoneUp);
+    Log_InitConfigNum("Breakout.Support", shieldZone.support);
+    Log_InitConfigNum("Breakout.Resistance", shieldZone.resistance);
+    Log_InitConfigNum("Breakout.WarningDown", shieldZone.warningZoneDown);
+    Log_InitConfigNum("Breakout.WarningUp", shieldZone.warningZoneUp);
 
     return true;
 }
@@ -1502,34 +1409,22 @@ bool CheckBreakoutConditionShield(double currentPrice, ENUM_BREAKOUT_DIRECTION &
 
             if(confirmValid) {
                 g_breakoutConfirmCounter++;
-                if(DetailedLogging) {
-                    PrintFormat("[Shield] Breakout confirm %d/%d (candle close: %.5f)",
-                                g_breakoutConfirmCounter, Breakout_Confirm_Candles, prevClose);
-                }
+                Log_Debug("Shield", StringFormat("Breakout confirm %d/%d (candle close: %.5f)",
+                          g_breakoutConfirmCounter, Breakout_Confirm_Candles, prevClose));
             }
         }
         else {
-            // Conta semplicemente le nuove barre
             g_breakoutConfirmCounter++;
-            if(DetailedLogging) {
-                PrintFormat("[Shield] Breakout confirm %d/%d (new bar)",
-                            g_breakoutConfirmCounter, Breakout_Confirm_Candles);
-            }
+            Log_Debug("Shield", StringFormat("Breakout confirm %d/%d (new bar)",
+                      g_breakoutConfirmCounter, Breakout_Confirm_Candles));
         }
     }
 
-    // Non ancora confermato
     if(g_breakoutConfirmCounter < Breakout_Confirm_Candles) {
         return false;
     }
 
-    // Breakout confermato!
-    if(DetailedLogging) {
-        PrintFormat("[Shield] BREAKOUT CONFIRMED! Direction: %s, Counter: %d",
-                    (direction == BREAKOUT_UP ? "UP" : "DOWN"), g_breakoutConfirmCounter);
-    }
-
-    // Reset per prossimo breakout
+    // Breakout confirmed - reset for next
     g_breakoutConfirmCounter = 0;
     g_breakoutPendingDirection = BREAKOUT_NONE;
 
@@ -1550,47 +1445,29 @@ bool CheckReentryConditionShield(double currentPrice) {
     bool isInsideRange = (currentPrice > shieldZone.support &&
                           currentPrice < shieldZone.resistance);
 
-    // Se fuori dal range, reset timer
     if(!isInsideRange) {
-        if(g_shieldReentryStart != 0 && DetailedLogging) {
-            Print("[Shield] Reentry cancelled - price exited range");
-        }
         g_shieldReentryStart = 0;
         return false;
     }
 
-    // Se hysteresis disabilitata (0), conferma immediata (backward compatible)
+    // Immediate confirmation if hysteresis disabled
     if(Reentry_Confirm_Seconds <= 0) {
         return true;
     }
 
-    // Prima volta dentro il range - avvia timer
+    // First time inside range - start timer
     if(g_shieldReentryStart == 0) {
         g_shieldReentryStart = TimeCurrent();
-        if(DetailedLogging) {
-            PrintFormat("[Shield] Reentry timer started - need %d seconds inside range",
-                        Reentry_Confirm_Seconds);
-        }
         return false;
     }
 
-    // Calcola tempo trascorso dentro il range
     int timeSinceReentry = (int)(TimeCurrent() - g_shieldReentryStart);
 
-    // Log ogni 10 secondi
-    if(DetailedLogging && timeSinceReentry > 0 && timeSinceReentry % 10 == 0) {
-        PrintFormat("[Shield] Reentry timer: %d/%d seconds",
-                    timeSinceReentry, Reentry_Confirm_Seconds);
-    }
-
-    // Conferma dopo X secondi
     if(timeSinceReentry >= Reentry_Confirm_Seconds) {
-        PrintFormat("[Shield] Reentry CONFIRMED after %d seconds inside range",
-                    timeSinceReentry);
         g_shieldReentryStart = 0;
         return true;
     }
 
-    return false;  // Ancora in attesa conferma
+    return false;
 }
 

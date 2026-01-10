@@ -311,20 +311,16 @@ bool ValidateModeParameters()
 //+------------------------------------------------------------------+
 void PrintModeConfiguration()
 {
-   Print("═══════════════════════════════════════════════════════════════════");
-   Print("  SUGAMARA v9.7 - CONFIGURAZIONE MODALITÀ");
-   Print("═══════════════════════════════════════════════════════════════════");
-   PrintFormat("  Modalità: %s", GetModeName());
-   PrintFormat("  Descrizione: %s", GetModeDescription());
-   Print("───────────────────────────────────────────────────────────────────");
-   PrintFormat("  ATR Disponibile: %s", IsATRAvailable() ? "Sì" : "No");
-   PrintFormat("  ATR Abilitato: %s", IsATREnabled() ? "Sì" : "No");
-   PrintFormat("  Shield Mode: %s", GetShieldModeNameLogic());
-   PrintFormat("  Auto-Hedging (Grid A=BUY, B=SELL): %s", IsHedgingAvailable() ? "Sì" : "No");
-   PrintFormat("  TP Mode: %s", UsesCascadeTP() ? "CASCADE" : "FISSO");
-   Print("───────────────────────────────────────────────────────────────────");
-   PrintFormat("  Spacing Corrente: %.1f pips", CalculateCurrentSpacing());
-   Print("═══════════════════════════════════════════════════════════════════");
+   Log_Header("MODE CONFIGURATION");
+   Log_KeyValue("Mode", GetModeName());
+   Log_KeyValue("Description", GetModeDescription());
+   Log_KeyValue("ATR Available", IsATRAvailable() ? "YES" : "NO");
+   Log_KeyValue("ATR Enabled", IsATREnabled() ? "YES" : "NO");
+   Log_KeyValue("Shield Mode", GetShieldModeNameLogic());
+   Log_KeyValue("Auto-Hedging", IsHedgingAvailable() ? "YES" : "NO");
+   Log_KeyValue("TP Mode", UsesCascadeTP() ? "CASCADE" : "FIXED");
+   Log_KeyValueNum("Spacing", CalculateCurrentSpacing(), 1);
+   Log_Separator();
 }
 
 //+------------------------------------------------------------------+

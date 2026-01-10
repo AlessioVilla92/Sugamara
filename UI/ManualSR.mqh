@@ -42,13 +42,11 @@ string manualSR_DragObject = "";
 //+------------------------------------------------------------------+
 bool InitializeManualSR() {
     if(!Enable_ManualSR) {
-        Print("INFO: Manual S/R is DISABLED");
+        Log_InitConfig("ManualSR", "DISABLED");
         return true;
     }
 
-    Print("═══════════════════════════════════════════════════════════════════");
-    Print("  INITIALIZING MANUAL S/R SYSTEM v4.4 (Dynamic Positioning)");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Header("MANUAL S/R SYSTEM v4.4");
 
     double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
@@ -79,8 +77,8 @@ bool InitializeManualSR() {
         manualSR_Activation = basePrice;
     }
 
-    Print("  S/R Multiplier: ", DoubleToString(srMultiplier, 2), " (N+0.25 where N=", GridLevelsPerSide, ")");
-    Print("  Spacing: ", DoubleToString(spacing / symbolPoint / ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1), 1), " pips");
+    Log_KeyValueNum("S/R Multiplier", srMultiplier, 2);
+    Log_KeyValueNum("Spacing (pips)", spacing / symbolPoint / ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1), 1);
 
     // Use manual values if provided in inputs
     // v5.2: RangeBox removed, only use activation price if provided
@@ -100,12 +98,10 @@ bool InitializeManualSR() {
     // Create loss zone rectangles (faded red areas)
     UpdateLossZoneRectangles();
 
-    Print("  Resistance: ", DoubleToString(manualSR_Resistance, _Digits));
-    Print("  Support: ", DoubleToString(manualSR_Support, _Digits));
-    Print("  Activation: ", DoubleToString(manualSR_Activation, _Digits));
-    Print("  Loss Zones: ENABLED (Red rectangles)");
-    Print("  Drag & Drop: ENABLED");
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_KeyValueNum("Resistance", manualSR_Resistance, 5);
+    Log_KeyValueNum("Support", manualSR_Support, 5);
+    Log_KeyValueNum("Activation", manualSR_Activation, 5);
+    Log_InitComplete("ManualSR");
 
     return true;
 }
@@ -119,7 +115,7 @@ void CreateSRLine(string name, double price, color clr, string label) {
 
     // Create horizontal line
     if(!ObjectCreate(0, name, OBJ_HLINE, 0, 0, price)) {
-        Print("ERROR: Failed to create ", name);
+        Log_SystemError("ManualSR", 0, StringFormat("Failed to create %s", name));
         return;
     }
 
@@ -226,7 +222,7 @@ void OnManualSRDrag(string objectName) {
             manualSR_Resistance = newPrice;
             UpdateSRLine(objectName, newPrice, "Resistance");
 
-            Print("Manual S/R: Resistance moved to ", DoubleToString(newPrice, _Digits));
+            Log_Debug("ManualSR", StringFormat("Resistance moved to %.5f", newPrice));
 
             // v9.0: Sempre update breakout levels (struttura default)
             upperBreakoutLevel = newPrice + Breakout_Buffer_Pips * symbolPoint * 10;
@@ -238,7 +234,7 @@ void OnManualSRDrag(string objectName) {
             manualSR_Support = newPrice;
             UpdateSRLine(objectName, newPrice, "Support");
 
-            Print("Manual S/R: Support moved to ", DoubleToString(newPrice, _Digits));
+            Log_Debug("ManualSR", StringFormat("Support moved to %.5f", newPrice));
 
             // v9.0: Sempre update breakout levels (struttura default)
             lowerBreakoutLevel = newPrice - Breakout_Buffer_Pips * symbolPoint * 10;
@@ -250,7 +246,7 @@ void OnManualSRDrag(string objectName) {
             manualSR_Activation = newPrice;
             UpdateSRLine(objectName, newPrice, "Activation");
 
-            Print("Manual S/R: Activation moved to ", DoubleToString(newPrice, _Digits));
+            Log_Debug("ManualSR", StringFormat("Activation moved to %.5f", newPrice));
         }
     }
 
@@ -369,8 +365,6 @@ void DeinitializeManualSR() {
     RemoveManualSRLines();
     manualSR_Initialized = false;
 
-    Print("Manual S/R: Deinitialized");
-    Print("  Final Resistance: ", DoubleToString(manualSR_Resistance, _Digits));
-    Print("  Final Support: ", DoubleToString(manualSR_Support, _Digits));
+    Log_Debug("ManualSR", StringFormat("Deinitialized - Final Resistance: %.5f, Support: %.5f", manualSR_Resistance, manualSR_Support));
 }
 

@@ -538,7 +538,7 @@ void OnDeinit(const int reason) {
     // Note: We do NOT close orders on deinit - they should persist
     // Only close if explicitly requested or on critical error
 
-    Print("═══════════════════════════════════════════════════════════════════");
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+
@@ -790,64 +790,43 @@ void HandleKeyPress(int key) {
 //| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
-    Print("");
-    Print("+=====================================================================+");
-    Print("|       SUGAMARA RIBELLE v9.10 - COMPLETE STATUS REPORT               |");
-    Print("|       Generated: ", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), "                        |");
-    Print("+=====================================================================+");
-    Print("");
+    Log_Header("SUGAMARA RIBELLE v9.10 - COMPLETE STATUS REPORT");
+    Log_KeyValue("Generated", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
 
     // System Overview
-    Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  SYSTEM OVERVIEW                                                │");
-    Print("├─────────────────────────────────────────────────────────────────┤");
-    Print("│  Mode: ", EnumToString(NeutralMode));
-    Print("│  State: ", EnumToString(systemState));
-    Print("│  Entry Point: ", DoubleToString(entryPoint, symbolDigits));
-    Print("│  Current Price: ", DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_BID), symbolDigits));
-    Print("│  Current Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips");
-    Print("└─────────────────────────────────────────────────────────────────┘");
-    Print("");
+    Log_SubHeader("SYSTEM OVERVIEW");
+    Log_KeyValue("Mode", EnumToString(NeutralMode));
+    Log_KeyValue("State", EnumToString(systemState));
+    Log_KeyValueNum("Entry Point", entryPoint, symbolDigits);
+    Log_KeyValueNum("Current Price", SymbolInfoDouble(_Symbol, SYMBOL_BID), symbolDigits);
+    Log_KeyValueNum("Current Spacing (pips)", currentSpacing_Pips, 1);
 
     // v9.10 Modules Status
-    Print("┌─────────────────────────────────────────────────────────────────┐");
-    Print("│  v9.10 MODULES STATUS                                           │");
-    Print("├─────────────────────────────────────────────────────────────────┤");
-    // v9.10: Perfect Cascade (Grid A=BUY, Grid B=SELL default)
-    Print("│  PERFECT CASCADE: Grid A=BUY, Grid B=SELL (TP=spacing)");
-    Print("│  STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
-    Print("│  ENTRY SPACING: ", GetEntrySpacingModeName(), " (", DoubleToString(GetEntrySpacingPips(currentSpacing_Pips), 1), " pips)");
+    Log_SubHeader("v9.10 MODULES STATUS");
+    Log_KeyValue("PERFECT CASCADE", "Grid A=BUY, Grid B=SELL (TP=spacing)");
+    Log_KeyValue("STRADDLE TRENDING", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
+    Log_KeyValue("ENTRY SPACING", GetEntrySpacingModeName() + " (" + DoubleToString(GetEntrySpacingPips(currentSpacing_Pips), 1) + " pips)");
 
     // ATR Indicator (monitoring only)
     if(UseATR) {
-        Print("│  ATR Indicator: ACTIVE");
-        Print("│      ATR: ", DoubleToString(GetATRPips(), 1), " pips | ", GetATRConditionName(GetATRCondition()));
+        Log_KeyValue("ATR Indicator", "ACTIVE");
+        Log_KeyValue("ATR", DoubleToString(GetATRPips(), 1) + " pips | " + GetATRConditionName(GetATRCondition()));
     }
-
-    Print("└─────────────────────────────────────────────────────────────────┘");
-    Print("");
 
     // v7.1 Recovery Status
-    Print("+-------------------------------------------------------------------+");
-    Print("|  v7.1 RECOVERY STATUS                                            |");
-    Print("+-------------------------------------------------------------------+");
-    Print("|  Recovery Performed: ", g_recoveryPerformed ? "YES" : "NO");
+    Log_SubHeader("v7.1 RECOVERY STATUS");
+    Log_KeyValue("Recovery Performed", g_recoveryPerformed ? "YES" : "NO");
     if(g_recoveryPerformed) {
-        Print("|  Pending Orders Recovered: ", g_recoveredOrdersCount);
-        Print("|  Open Positions Recovered: ", g_recoveredPositionsCount);
-        Print("|  Recovery Time: ", TimeToString(g_lastRecoveryTime, TIME_DATE|TIME_SECONDS));
+        Log_KeyValueNum("Pending Orders Recovered", g_recoveredOrdersCount, 0);
+        Log_KeyValueNum("Open Positions Recovered", g_recoveredPositionsCount, 0);
+        Log_KeyValue("Recovery Time", TimeToString(g_lastRecoveryTime, TIME_DATE|TIME_SECONDS));
     }
-    Print("+-------------------------------------------------------------------+");
-    Print("");
 
     // Hotkeys reminder
-    Print("+-------------------------------------------------------------------+");
-    Print("|  v7.1 HOTKEYS                                                    |");
-    Print("+-------------------------------------------------------------------+");
-    Print("|  V = This report (Full Status)                                   |");
-    Print("|  A = ATR Report                                                  |");
-    Print("+-------------------------------------------------------------------+");
-    Print("");
+    Log_SubHeader("v7.1 HOTKEYS");
+    Log_KeyValue("V", "This report (Full Status)");
+    Log_KeyValue("A", "ATR Report");
+    Log_Separator();
 }
 
 //+------------------------------------------------------------------+
