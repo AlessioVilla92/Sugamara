@@ -152,7 +152,7 @@ void CheckSessionClose() {
 
     Log_SessionEnd(closedPositions, deletedOrders, sessionRealizedProfit, 0);
 
-    if(EnableAlerts) {
+    if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
         Alert("SUGAMARA: Session closed - positions=", closedPositions, " orders=", deletedOrders);
     }
 }

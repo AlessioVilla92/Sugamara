@@ -378,7 +378,7 @@ bool VerifyGridLinesExist() {
 void RecreateEntireDashboard() {
     if(!ShowDashboard) return;
 
-    Log_Header(\"RECREATING DASHBOARD (Auto-Recovery)\");
+    Log_Header("RECREATING DASHBOARD (Auto-Recovery)");
 
     // Remove any partial objects
     RemoveDashboard();
@@ -428,11 +428,27 @@ void CheckDashboardPersistence() {
 
     // Quick check: verify main panel exists
     if(ObjectFind(0, "TITLE_PANEL") < 0) {
-        // v9.11: Enhanced Debug Logging for "Dashboard Missing" event
-        Print("WARNING: Dashboard missing - auto-recreating...");
-        PrintFormat("DEBUG: ObjectsTotal=%d | ChartID=%lld | Symbol=%s",
-                    ObjectsTotal(0), ChartID(), _Symbol);
-        
+        // v9.11: Identify ALL missing objects for detailed logging
+        string criticalObjects[] = {
+            "TITLE_PANEL", "MODE_PANEL", "LEFT_GRIDA_PANEL",
+            "RIGHT_GRIDB_PANEL", "LEFT_EXPOSURE_PANEL", "RIGHT_PERF_PANEL",
+            "VOL_PANEL", "SHIELD_PANEL", "GRID_LEGEND_PANEL"
+        };
+
+        int missingCount = 0;
+        string missingList = "";
+
+        for(int i = 0; i < ArraySize(criticalObjects); i++) {
+            if(ObjectFind(0, criticalObjects[i]) < 0) {
+                missingCount++;
+                if(missingList != "") missingList += ", ";
+                missingList += criticalObjects[i];
+            }
+        }
+
+        // v9.11: Log dettagliato con Alert
+        Log_DashboardRecovery(missingCount, missingList);
+
         RecreateEntireDashboard();
     }
 }
@@ -465,8 +481,9 @@ void CreateUnifiedDashboard() {
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
     // v5.9.5: Titolo GIALLO, sottotitolo ARANCIONE SCURO
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 80, y + 12, "SUGAMARA v9.10", clrYellow, 20, "Arial Black");
-    DashLabel("TITLE_SUB", x + totalWidth/2 - 80, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
+    // v9.11: Title centered properly
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 95, y + 12, "SUGAMARA v9.11", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_SUB", x + totalWidth/2 - 70, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
     //═══════════════════════════════════════════════════════════════
@@ -507,9 +524,9 @@ void CreateUnifiedDashboard() {
     DashLabel("LEFT_GRIDA_SHORT", leftX + 10, ay, "Short Lots: 0.00", CLR_LOSS, 8);
     ay += 18;
     // v9.0: LIMIT/STOP monitoring con icone e etichette complete
-    DashLabel("LEFT_GRIDA_LIMIT", leftX + 10, ay, "📈 LIMIT 0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
+    DashLabel("LEFT_GRIDA_LIMIT", leftX + 10, ay, "[^] LIMIT 0/10 | Cycles:0 | Reopen:0", CLR_WHITE, 8);
     ay += 16;
-    DashLabel("LEFT_GRIDA_STOP", leftX + 10, ay, "📈 STOP  0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
+    DashLabel("LEFT_GRIDA_STOP", leftX + 10, ay, "[^] STOP  0/10 | Cycles:0 | Reopen:0", CLR_WHITE, 8);
 
     leftY += gridAHeight;
 
@@ -560,9 +577,9 @@ void CreateUnifiedDashboard() {
     DashLabel("RIGHT_GRIDB_SHORT", rightX + 10, by, "Short Lots: 0.00", CLR_LOSS, 8);
     by += 18;
     // v9.0: LIMIT/STOP monitoring con icone e etichette complete
-    DashLabel("RIGHT_GRIDB_LIMIT", rightX + 10, by, "📉 LIMIT 0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
+    DashLabel("RIGHT_GRIDB_LIMIT", rightX + 10, by, "[v] LIMIT 0/10 | Cycles:0 | Reopen:0", CLR_WHITE, 8);
     by += 16;
-    DashLabel("RIGHT_GRIDB_STOP", rightX + 10, by, "📉 STOP  0/10 | 🔄Cycles:0 | ♻️Reopen:0", CLR_WHITE, 8);
+    DashLabel("RIGHT_GRIDB_STOP", rightX + 10, by, "[v] STOP  0/10 | Cycles:0 | Reopen:0", CLR_WHITE, 8);
 
     rightY += gridBHeight;
 
@@ -570,7 +587,7 @@ void CreateUnifiedDashboard() {
     // v5.9.3: GRID INFO panel removed (info moved to Mode row)
 
     //--- PERFORMANCE PANEL (v5.9.3: moved up, no more GRID INFO above) ---
-    int perfHeight = 190;  // Increased for Risk line
+    int perfHeight = 200;  // v9.11: Match left column height (was 190)
     DashRectangle("RIGHT_PERF_PANEL", rightX, rightY, colWidth, perfHeight, CLR_PANEL_PERF);
 
     int py = rightY + 8;
@@ -593,7 +610,7 @@ void CreateUnifiedDashboard() {
     rightY += perfHeight;
 
     //--- GRID COUNTER PANEL (v5.9.3) ---
-    int counterHeight = 75;
+    int counterHeight = 100;  // v9.11: Match left column height (was 75)
     DashRectangle("RIGHT_COUNTER_PANEL", rightX, rightY, colWidth, counterHeight, C'30,35,45');
 
     int cy = rightY + 6;
@@ -888,11 +905,12 @@ void UpdateGridASection() {
     ObjectSetString(0, "LEFT_GRIDA_SHORT", OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
 
     // v9.0: Update LIMIT/STOP counters con etichette complete
+    // v9.11: Fixed emoji -> ASCII symbols for MT5 font compatibility
     ObjectSetString(0, "LEFT_GRIDA_LIMIT", OBJPROP_TEXT,
-        StringFormat("📈 LIMIT %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
+        StringFormat("[^] LIMIT %d/%d | Cycles:%d | Reopen:%d",
             g_gridA_LimitFilled, GridLevelsPerSide, g_gridA_LimitCycles, g_gridA_LimitReopens));
     ObjectSetString(0, "LEFT_GRIDA_STOP", OBJPROP_TEXT,
-        StringFormat("📈 STOP  %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
+        StringFormat("[^] STOP  %d/%d | Cycles:%d | Reopen:%d",
             g_gridA_StopFilled, GridLevelsPerSide, g_gridA_StopCycles, g_gridA_StopReopens));
 }
 
@@ -927,11 +945,12 @@ void UpdateGridBSection() {
     ObjectSetString(0, "RIGHT_GRIDB_SHORT", OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
 
     // v9.0: Update LIMIT/STOP counters con etichette complete
+    // v9.11: Fixed emoji -> ASCII symbols for MT5 font compatibility
     ObjectSetString(0, "RIGHT_GRIDB_LIMIT", OBJPROP_TEXT,
-        StringFormat("📉 LIMIT %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
+        StringFormat("[v] LIMIT %d/%d | Cycles:%d | Reopen:%d",
             g_gridB_LimitFilled, GridLevelsPerSide, g_gridB_LimitCycles, g_gridB_LimitReopens));
     ObjectSetString(0, "RIGHT_GRIDB_STOP", OBJPROP_TEXT,
-        StringFormat("📉 STOP  %d/%d | 🔄Cycles:%d | ♻️Reopen:%d",
+        StringFormat("[v] STOP  %d/%d | Cycles:%d | Reopen:%d",
             g_gridB_StopFilled, GridLevelsPerSide, g_gridB_StopCycles, g_gridB_StopReopens));
 }
 

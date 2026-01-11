@@ -292,23 +292,7 @@ input bool      PauseReopenNearShield = false;               // 🛡️ Pausa re
 input double    ShieldProximity_Pips = 20.0;                 // 📏 Distanza minima da Shield (pips)
 input bool      PauseReopenOnExtreme = false;                // 🛡️ Pausa reopen su ATR EXTREME ( Disattivato 12dic )
 
-//+------------------------------------------------------------------+
-//| 1️⃣2️⃣ 🚨 RISK MANAGEMENT                                          |
-//+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  1️⃣2️⃣  🚨 RISK MANAGEMENT                                 ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    🎯 DAILY TARGETS"
-input bool      EnableDailyTarget = false;                   // ✅ Abilita Target Giornaliero
-input double    DailyProfitTarget_USD = 100.0;               // 💵 Profit Target ($)
-input double    DailyLossLimit_USD = 50.0;                   // 📉 Loss Limit ($)
-
-input group "    ⚠️ NEWS PAUSE"
-input bool      PauseOnNews = false;                         // ✅ Pausa durante News (manuale)
-// Richiede attivazione manuale 30 min prima di news
+// v9.11: RISK MANAGEMENT section removed (EnableDailyTarget, PauseOnNews)
 
 //+------------------------------------------------------------------+
 //| 1️⃣4️⃣ 🔧 BROKER SETTINGS                                          |

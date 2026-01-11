@@ -277,7 +277,7 @@ void EnterPreShieldPhase(ENUM_BREAKOUT_DIRECTION direction)
       g_loggedPreShieldPhase = true;
    }
 
-   if(EnableAlerts) {
+   if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
       Alert("SUGAMARA: Shield pending - Breakout ", (direction == BREAKOUT_UP ? "UP" : "DOWN"), " imminent");
    }
 
@@ -346,7 +346,7 @@ void MonitorPendingShieldOrders()
          Log_ShieldActivated((shieldPendingType == SHIELD_LONG ? "LONG" : "SHORT"),
                             shield.ticket, shield.entry_price, shield.lot_size, exposure);
 
-         if(EnableAlerts) {
+         if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
             Alert("SUGAMARA: Shield ", (shieldPendingType == SHIELD_LONG ? "LONG" : "SHORT"),
                   " ACTIVE @ ", DoubleToString(shield.entry_price, symbolDigits));
          }
@@ -399,7 +399,7 @@ void ActivateShieldLong(string source)
 
          Log_ShieldActivated("LONG", shield.ticket, shield.entry_price, shieldLot, totalShortLots);
 
-         if(EnableAlerts) {
+         if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
             Alert("SUGAMARA: Shield LONG ACTIVE @ ", DoubleToString(shield.entry_price, symbolDigits));
          }
       }
@@ -455,7 +455,7 @@ void ActivateShieldShort(string source)
 
          Log_ShieldActivated("SHORT", shield.ticket, shield.entry_price, shieldLot, totalLongLots);
 
-         if(EnableAlerts) {
+         if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
             Alert("SUGAMARA: Shield SHORT ACTIVE @ ", DoubleToString(shield.entry_price, symbolDigits));
          }
       }

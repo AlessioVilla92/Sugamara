@@ -272,10 +272,7 @@ void CheckRiskLimits() {
         CheckEmergencyStop();
     }
 
-    // Daily Target Check
-    if(EnableDailyTarget) {
-        CheckDailyLimits();
-    }
+    // v9.11: Daily Target Check removed (EnableDailyTarget removed)
 
     // Exposure Check
     CheckExposureLimits();
@@ -310,41 +307,7 @@ void CheckEmergencyStop() {
     }
 }
 
-//+------------------------------------------------------------------+
-//| Check Daily Limits                                               |
-//+------------------------------------------------------------------+
-void CheckDailyLimits() {
-    double dailyPL = GetDailyProfitLoss();
-
-    // Check profit target
-    if(dailyPL >= DailyProfitTarget_USD) {
-        LogMessage(LOG_SUCCESS, "Daily profit target reached: " + FormatMoney(dailyPL));
-
-        if(systemState == STATE_ACTIVE) {
-            systemState = STATE_PAUSED;
-            LogMessage(LOG_INFO, "System paused - Daily target achieved");
-
-            if(EnableAlerts) {
-                Alert("SUGAMARA: Daily profit target reached!");
-            }
-        }
-    }
-
-    // Check loss limit
-    if(dailyPL <= -DailyLossLimit_USD) {
-        LogMessage(LOG_WARNING, "Daily loss limit reached: " + FormatMoney(dailyPL));
-
-        if(systemState == STATE_ACTIVE) {
-            EmergencyCloseAll();
-            systemState = STATE_PAUSED;
-            LogMessage(LOG_INFO, "System paused - Daily loss limit reached");
-
-            if(EnableAlerts) {
-                Alert("SUGAMARA: Daily loss limit reached - Trading paused!");
-            }
-        }
-    }
-}
+// v9.11: CheckDailyLimits() function removed (EnableDailyTarget removed)
 
 //+------------------------------------------------------------------+
 //| Check Exposure Limits                                            |

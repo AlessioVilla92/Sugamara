@@ -76,7 +76,12 @@ bool HasExistingOrders() {
 //| Returns true if recovery successful (at least 1 item recovered)  |
 //+------------------------------------------------------------------+
 bool RecoverExistingOrders() {
+    datetime startTime = TimeCurrent();  // v9.11: Track recovery duration
+
     Log_RecoveryStart(OrdersTotal(), PositionsTotal());
+    // v9.11: Alert di inizio recovery
+    Log_RecoveryAlert("START", StringFormat("Scanning Orders=%d Positions=%d",
+                      OrdersTotal(), PositionsTotal()), true);
 
     g_recoveredOrdersCount = 0;
     g_recoveredPositionsCount = 0;
@@ -97,12 +102,15 @@ bool RecoverExistingOrders() {
         Log_Debug("Recovery", StringFormat("Entry from orders: %.5f", entryPoint));
     } else {
         entryPoint = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-        Log_Debug("Recovery", StringFormat("Entry from current price: %.5f", entryPoint));
+        // v9.11: Log warning when using fallback price
+        Log_CrashAlert("Recovery-EntryPoint", 0,
+                       StringFormat("Entry calcolato=0, using current price %.5f", entryPoint));
     }
 
     entryPointTime = TimeCurrent();
 
     int totalRecovered = g_recoveredOrdersCount + g_recoveredPositionsCount;
+    int duration = (int)(TimeCurrent() - startTime);  // v9.11
 
     if(totalRecovered > 0) {
         g_recoveryPerformed = true;
@@ -111,10 +119,17 @@ bool RecoverExistingOrders() {
         CalculateBreakoutLevels();
 
         Log_RecoveryComplete(g_recoveredOrdersCount, g_recoveredPositionsCount, entryPoint);
+        // v9.11: Alert finale con durata
+        Log_RecoveryAlert("COMPLETE",
+                          StringFormat("Orders=%d Positions=%d Entry=%.5f Duration=%ds",
+                                       g_recoveredOrdersCount, g_recoveredPositionsCount,
+                                       entryPoint, duration), true);
         return true;
     }
 
     Log_SystemWarning("Recovery", "No orders/positions found");
+    // v9.11: Alert recovery fallito
+    Log_RecoveryAlert("COMPLETE", "No orders/positions found to recover", false);
     return false;
 }
 

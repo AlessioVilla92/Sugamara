@@ -230,9 +230,7 @@ double startingEquity = 0;                  // Equity iniziale sessione
 double startingBalance = 0;                 // Balance iniziale sessione
 double maxEquityReached = 0;                // Picco equity raggiunto
 double maxDrawdownReached = 0;              // Max drawdown registrato
-bool isDailyTargetReached = false;          // Flag target giornaliero
-bool isDailyLossLimitReached = false;       // Flag loss limit giornaliero
-bool isNewsPause = false;                   // Flag pausa news manuale
+// v9.11: Removed isDailyTargetReached, isDailyLossLimitReached, isNewsPause
 
 //+------------------------------------------------------------------+
 //| 💰 RISK-BASED LOT CALCULATION VARIABLES                          |

@@ -316,9 +316,39 @@ void Log_RecoveryStart(int orders, int positions) {
                 GetLogTimestamp(), LOG_CAT_RECOVERY, orders, positions);
 }
 
-void Log_RecoveryComplete(int recoveredOrders, int recoveredPositions, double entryPoint) {
+void Log_RecoveryComplete(int recoveredOrders, int recoveredPositions, double recoveredEntryPoint) {
     PrintFormat("%s %s COMPLETE orders=%d positions=%d entry=%.5f",
-                GetLogTimestamp(), LOG_CAT_RECOVERY, recoveredOrders, recoveredPositions, entryPoint);
+                GetLogTimestamp(), LOG_CAT_RECOVERY, recoveredOrders, recoveredPositions, recoveredEntryPoint);
+}
+
+// v9.11: Recovery con Alert - ALWAYS logged
+void Log_RecoveryAlert(string event, string details, bool success) {
+    string status = success ? "SUCCESS" : "FAILED";
+    string msg = StringFormat("[%s] RECOVERY %s: %s | %s", _Symbol, status, event, details);
+    PrintFormat("%s %s %s", GetLogTimestamp(), LOG_CAT_RECOVERY, msg);
+
+    if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
+        Alert("SUGAMARA [", _Symbol, "]: ", event, " - ", status);
+    }
+}
+
+// v9.11: Crash/Error con Alert - ALWAYS logged
+void Log_CrashAlert(string component, int errorCode, string details) {
+    string msg = StringFormat("CRASH in %s | Error: %d | %s", component, errorCode, details);
+    PrintFormat("%s [CRASH] %s", GetLogTimestamp(), msg);
+
+    if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
+        Alert("SUGAMARA CRASH: ", component, " - ", details);
+    }
+}
+
+// v9.11: Dashboard Recovery con dettagli - ALWAYS logged
+void Log_DashboardRecovery(int missingCount, string missingList) {
+    PrintFormat("%s [UI-RECOVERY] %d objects missing: %s", GetLogTimestamp(), missingCount, missingList);
+
+    if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
+        Alert("SUGAMARA [", _Symbol, "]: Dashboard recreated (", missingCount, " objects missing)");
+    }
 }
 
 // Log straddle events - ALWAYS logged

@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.10        |
+//|                                    SUGAMARA RIBELLE v9.11        |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.10.0 - Grid Visual System                            |
+//|  Version: 9.11.0 - Enhanced Crash/Recovery Logging               |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,20 +16,20 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v9.10 CHANGES:                                                  |
-//|  - Grid Visual System: colori configurabili per tipo ordine      |
-//|  - Pixel offset separazione BUY/SELL                             |
-//|  - Tooltip al passaggio mouse                                    |
-//|  - Entry Line separata con toggle dedicato                       |
+//|  v9.11 CHANGES:                                                  |
+//|  - Enhanced crash/recovery logging with Alert()                  |
+//|  - Dashboard: fixed column heights, centered title               |
+//|  - Dashboard: fixed emoji icons (replaced with ASCII)            |
+//|  - Removed: DailyTarget, NewsPause, hotkey N                     |
 //|                                                                  |
+//|  v9.10: Grid Visual System (colori, tooltip, entry line)         |
 //|  v9.9: Trailing Grid RIMOSSO (feature deprecated)                |
-//|  v9.8 ENTRY SPACING MODE (mantenuto)                             |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.100"
-#property description "SUGAMARA RIBELLE v9.10 - Grid Visual System"
+#property version   "9.110"
+#property description "SUGAMARA RIBELLE v9.11 - Enhanced Crash/Recovery Logging"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Configurable Colors"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -403,7 +403,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.10 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.11 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -564,8 +564,8 @@ void OnTick() {
     // Skip if system not active
     if(systemState != STATE_ACTIVE) {
         if(systemState == STATE_PAUSED) {
-            // Check if we can resume
-            if(EnableDailyTarget && IsNewDay()) {
+            // v9.11: Auto-resume on new day (EnableDailyTarget removed)
+            if(IsNewDay()) {
                 ResetDailyFlags();
                 systemState = STATE_ACTIVE;
                 LogMessage(LOG_INFO, "New day - System resumed");
@@ -773,10 +773,7 @@ void HandleKeyPress(int key) {
         LogATRReport();
     }
 
-    // N = Toggle News Pause
-    if(key == 'N' || key == 'n') {
-        SetNewsPause(!isNewsPause);
-    }
+    // v9.11: Hotkey N (News Pause) removed
 
     // V = v4.0 Full Status Report
     if(key == 'V' || key == 'v') {
@@ -786,11 +783,11 @@ void HandleKeyPress(int key) {
 }
 
 //+------------------------------------------------------------------+
-//| LOG v9.10 COMPLETE STATUS REPORT                                  |
+//| LOG v9.11 COMPLETE STATUS REPORT                                  |
 //| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
-    Log_Header("SUGAMARA RIBELLE v9.10 - COMPLETE STATUS REPORT");
+    Log_Header("SUGAMARA RIBELLE v9.11 - COMPLETE STATUS REPORT");
     Log_KeyValue("Generated", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
 
     // System Overview
@@ -801,8 +798,8 @@ void LogV4StatusReport() {
     Log_KeyValueNum("Current Price", SymbolInfoDouble(_Symbol, SYMBOL_BID), symbolDigits);
     Log_KeyValueNum("Current Spacing (pips)", currentSpacing_Pips, 1);
 
-    // v9.10 Modules Status
-    Log_SubHeader("v9.10 MODULES STATUS");
+    // v9.11 Modules Status
+    Log_SubHeader("v9.11 MODULES STATUS");
     Log_KeyValue("PERFECT CASCADE", "Grid A=BUY, Grid B=SELL (TP=spacing)");
     Log_KeyValue("STRADDLE TRENDING", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Log_KeyValue("ENTRY SPACING", GetEntrySpacingModeName() + " (" + DoubleToString(GetEntrySpacingPips(currentSpacing_Pips), 1) + " pips)");

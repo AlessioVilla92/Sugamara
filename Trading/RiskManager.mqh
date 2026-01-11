@@ -13,7 +13,7 @@
 datetime g_lastMarginWarning = 0;       // Last margin warning log time
 datetime g_lastMarginLevelWarning = 0;  // Last margin level warning log time
 datetime g_lastVolatilityWarning = 0;   // Last volatility warning log time
-datetime g_lastNewsPauseLog = 0;        // Last news pause log time
+// v9.11: g_lastNewsPauseLog removed
 int      g_warningThrottleSec = 300;    // Warning throttle: 5 minutes
 
 //+------------------------------------------------------------------+
@@ -53,28 +53,14 @@ bool PerformRiskChecks() {
         return false;
     }
 
-    // 2. Daily Limit Check
-    if(EnableDailyTarget && IsDailyLimitReached()) {
-        return false;
-    }
+    // v9.11: Daily Limit Check removed (EnableDailyTarget removed)
 
-    // 3. Margin Check (logging throttled inside HasSufficientMargin)
+    // 2. Margin Check (logging throttled inside HasSufficientMargin)
     if(!HasSufficientMargin()) {
         return false;
     }
 
-    // 4. Volatility Check - REMOVED v5.8
-    // PauseOnHighATR removed - ATR used only for monitoring
-
-    // 5. News Pause (manual)
-    if(PauseOnNews && isNewsPause) {
-        // v5.7: Throttled logging - 1x every 5 minutes if condition persists
-        if(TimeCurrent() - g_lastNewsPauseLog >= g_warningThrottleSec) {
-            LogMessage(LOG_INFO, "News pause active - new orders blocked");
-            g_lastNewsPauseLog = TimeCurrent();
-        }
-        return false;
-    }
+    // v9.11: Volatility Check removed v5.8, News Pause removed v9.11
 
     return true;
 }
@@ -116,8 +102,8 @@ void TriggerEmergencyStop() {
     // Set system state
     systemState = STATE_ERROR;
 
-    // Alert
-    if(EnableAlerts) {
+    // Alert (v9.11: Added MQL_TESTER guard)
+    if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
         Alert("SUGAMARA EMERGENCY STOP!\n",
               "Drawdown limit exceeded!\n",
               "All positions have been closed.");
@@ -129,62 +115,18 @@ void TriggerEmergencyStop() {
     LogMessage(LOG_INFO, "Max Drawdown: " + FormatPercent(maxDrawdownReached));
 }
 
-//+------------------------------------------------------------------+
-//| DAILY LIMITS                                                     |
-//+------------------------------------------------------------------+
+// v9.11: DAILY LIMITS section removed (EnableDailyTarget, IsDailyLimitReached removed)
 
 //+------------------------------------------------------------------+
-//| Check if Daily Limit is Reached                                  |
-//+------------------------------------------------------------------+
-bool IsDailyLimitReached() {
-    double dailyPL = GetDailyProfitLoss();
-
-    // Profit target reached
-    if(dailyPL >= DailyProfitTarget_USD) {
-        if(!isDailyTargetReached) {
-            isDailyTargetReached = true;
-            LogMessage(LOG_SUCCESS, "Daily profit target reached: " + FormatMoney(dailyPL));
-
-            if(EnableAlerts) {
-                Alert("SUGAMARA: Daily profit target reached!\n",
-                      "Profit: " + FormatMoney(dailyPL));
-            }
-        }
-        return true;
-    }
-
-    // Loss limit reached
-    if(dailyPL <= -DailyLossLimit_USD) {
-        if(!isDailyLossLimitReached) {
-            isDailyLossLimitReached = true;
-            LogMessage(LOG_WARNING, "Daily loss limit reached: " + FormatMoney(dailyPL));
-
-            // Close all on loss limit
-            CloseAllSugamaraOrders();
-
-            if(EnableAlerts) {
-                Alert("SUGAMARA: Daily loss limit reached!\n",
-                      "Loss: " + FormatMoney(dailyPL) + "\n",
-                      "All positions closed.");
-            }
-        }
-        return true;
-    }
-
-    return false;
-}
-
-//+------------------------------------------------------------------+
-//| Reset Daily Flags (Call at start of new day)                     |
+//| Reset Daily Stats (Call at start of new day)                     |
 //+------------------------------------------------------------------+
 void ResetDailyFlags() {
-    isDailyTargetReached = false;
-    isDailyLossLimitReached = false;
+    // v9.11: isDailyTargetReached, isDailyLossLimitReached removed
     dailyRealizedProfit = 0;
     dailyWins = 0;
     dailyLosses = 0;
 
-    LogMessage(LOG_INFO, "Daily flags reset for new trading day");
+    LogMessage(LOG_INFO, "Daily stats reset for new trading day");
 }
 
 //+------------------------------------------------------------------+
@@ -309,25 +251,7 @@ double GetVolatilityLotMultiplier() {
     return 1.0;
 }
 
-//+------------------------------------------------------------------+
-//| NEWS PAUSE MANAGEMENT                                            |
-//+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| Set News Pause (Manual Activation)                               |
-//+------------------------------------------------------------------+
-void SetNewsPause(bool pause) {
-    isNewsPause = pause;
-
-    if(pause) {
-        LogMessage(LOG_WARNING, "NEWS PAUSE ACTIVATED - New orders blocked");
-        if(EnableAlerts) {
-            Alert("SUGAMARA: News pause activated");
-        }
-    } else {
-        LogMessage(LOG_INFO, "News pause deactivated - Trading resumed");
-    }
-}
+// v9.11: NEWS PAUSE MANAGEMENT section removed (SetNewsPause removed)
 
 //+------------------------------------------------------------------+
 //| DRAWDOWN TRACKING                                                |
@@ -407,15 +331,7 @@ void LogRiskReport() {
     Log_KeyValueNum("ATR (pips)", atrPips, 1);
     Log_KeyValue("Condition", GetATRConditionName(GetATRCondition(atrPips)));
 
-    // Daily Status
-    if(EnableDailyTarget) {
-        Log_SubHeader("DAILY LIMITS");
-        Log_KeyValue("Daily P/L", FormatMoney(GetDailyProfitLoss()));
-        Log_KeyValue("Profit Target", FormatMoney(DailyProfitTarget_USD));
-        Log_KeyValue("Loss Limit", FormatMoney(DailyLossLimit_USD));
-        Log_KeyValue("Target Reached", isDailyTargetReached ? "YES" : "NO");
-        Log_KeyValue("Loss Limit Hit", isDailyLossLimitReached ? "YES" : "NO");
-    }
+    // v9.11: Daily Status section removed (EnableDailyTarget removed)
 
     Log_Separator();
 }
