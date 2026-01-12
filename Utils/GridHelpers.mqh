@@ -233,8 +233,9 @@ int level, double spacingPips, int totalLevels) {
     // NEUTRAL_CASCADE e NEUTRAL_RANGEBOX: TP CASCADE
     //=================================================================
 
-    // Final level uses fixed TP (BUY non ha level+1, SELL ha già TP fisso per simmetria)
-    if(level >= totalLevels - 1) {
+    // Final level: In CASCADE_PERFECT usa cascade, altrimenti FinalLevel_TP_Pips
+    // v9.14: Fix per garantire perfect cascade su TUTTI i livelli
+    if(level >= totalLevels - 1 && CascadeMode != CASCADE_PERFECT) {
         double finalTP_Price = PipsToPoints(FinalLevel_TP_Pips);
         if(isBuy) {
             return NormalizeDouble(orderEntryPrice + finalTP_Price, symbolDigits);

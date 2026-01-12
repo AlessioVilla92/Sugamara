@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.12        |
+//|                                    SUGAMARA RIBELLE v9.14        |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -16,6 +16,10 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
+//|  v9.14 CHANGES:
+//|  - Fix: Perfect Cascade guaranteed for ALL grid levels            |
+//|  - Final level now uses cascade logic instead of FinalLevel_TP    |
+//|                                                                    |
 //|  v9.12 CHANGES:                                                  |
 //|  - NEW: Complete Auto-Save system (StatePersistence.mqh)         |
 //|  - NEW: Full state recovery (715+ variables)                     |
@@ -29,8 +33,8 @@
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.120"
-#property description "SUGAMARA RIBELLE v9.12 - Complete Auto-Save & Recovery System"
+#property version   "9.140"
+#property description "SUGAMARA RIBELLE v9.14 - Perfect Cascade Fix for All Levels"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Configurable Colors"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -395,7 +399,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.11 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.14 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -782,7 +786,7 @@ void HandleKeyPress(int key) {
 //| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
-    Log_Header("SUGAMARA RIBELLE v9.11 - COMPLETE STATUS REPORT");
+    Log_Header("SUGAMARA RIBELLE v9.14 - COMPLETE STATUS REPORT");
     Log_KeyValue("Generated", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
 
     // System Overview
