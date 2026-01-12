@@ -31,7 +31,7 @@
 
 ENUM_ENTRY_MODE currentEntryMode = ENTRY_MARKET;
 ENUM_BUTTON_STATE buttonState = BTN_STATE_IDLE;
-bool waitingForActivation = false;
+// v9.12: waitingForActivation REMOVED - LIMIT/STOP modes not supported
 
 //+------------------------------------------------------------------+
 //| Initialize Control Buttons                                       |
@@ -134,7 +134,6 @@ void HandleControlButtonClick(string objectName) {
 
         currentEntryMode = ENTRY_MARKET;
         buttonState = BTN_STATE_ACTIVE;
-        waitingForActivation = false;
 
         // Highlight active button
         HighlightActiveButton(BTN_START_V3);
@@ -159,7 +158,6 @@ void HandleControlButtonClick(string objectName) {
 
         currentEntryMode = ENTRY_MARKET;
         buttonState = BTN_STATE_IDLE;
-        waitingForActivation = false;
         systemState = STATE_IDLE;
 
         ResetButtonHighlights();
@@ -298,22 +296,7 @@ ENUM_ENTRY_MODE GetCurrentEntryMode() {
     return currentEntryMode;
 }
 
-//+------------------------------------------------------------------+
-//| Is Waiting For Activation                                        |
-//+------------------------------------------------------------------+
-bool IsWaitingForActivation() {
-    return waitingForActivation;
-}
-
-//+------------------------------------------------------------------+
-//| Cancel Waiting                                                   |
-//+------------------------------------------------------------------+
-void CancelWaiting() {
-    waitingForActivation = false;
-    buttonState = BTN_STATE_IDLE;
-    ResetButtonHighlights();
-    UpdateStatusLabel("READY - Click START");
-}
+// v9.12: IsWaitingForActivation(), CancelWaiting() REMOVED - LIMIT/STOP modes not supported
 
 //+------------------------------------------------------------------+
 //| Remove Control Buttons                                           |
@@ -334,15 +317,5 @@ void DeinitializeControlButtons() {
     Log_Debug("ControlButtons", "Deinitialized");
 }
 
-//+------------------------------------------------------------------+
-//| Process Entry Mode Waiting (Stub - LIMIT/STOP modes removed)     |
-//| v4.3: This function is kept for backwards compatibility          |
-//| but does nothing since LIMIT/STOP modes are no longer supported  |
-//+------------------------------------------------------------------+
-void ProcessEntryModeWaiting() {
-    // v4.3: LIMIT and STOP modes have been removed
-    // Grid Neutral only uses immediate START
-    // This function is a stub for backwards compatibility
-    return;
-}
+// v9.12: ProcessEntryModeWaiting() REMOVED - was empty stub
 

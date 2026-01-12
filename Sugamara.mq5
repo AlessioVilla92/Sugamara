@@ -202,8 +202,7 @@ int OnInit() {
     currentSpacing_Pips = CalculateCurrentSpacing();
     Print("Initial Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips (Mode: ", GetModeName(), ")");
 
-    //--- STEP 10: Calculate Range Boundaries ---
-    CalculateRangeBoundaries();
+    // v9.12: STEP 10 (CalculateRangeBoundaries) REMOVED - was dead code
 
     //--- STEP 10.5: Initialize RangeBox (REMOVED - CASCADE_OVERLAP puro) ---
     // RangeBoxManager eliminato - CASCADE SOVRAPPOSTO non lo richiede
@@ -586,8 +585,7 @@ void OnTick() {
     //--- v3.0: PROCESS TRAILING STOPS (REMOVED - CASCADE_OVERLAP puro) ---
     // ProcessTrailingStops(); // GridTrailingManager eliminato
 
-    //--- v3.0: PROCESS ENTRY MODE WAITING (LIMIT/STOP) ---
-    ProcessEntryModeWaiting();
+    // v9.12: ProcessEntryModeWaiting() REMOVED - was empty stub
 
     //--- UPDATE EQUITY TRACKING ---
     UpdateEquityTracking();

@@ -111,7 +111,7 @@ void InitializeEntryPoint() {
             } else {
                 Print("[EntryPoint] CRITICAL: No price data available!");
                 Print("[EntryPoint] Strategy Tester may not have price data at first tick - EA will not function!");
-                return;  // v5.x FIX: Exit without setting entryPoint (remains 0, caught by CalculateRangeBoundaries)
+                return;  // v5.x FIX: Exit without setting entryPoint (remains 0)
             }
         }
     }
@@ -127,29 +127,5 @@ void InitializeEntryPoint() {
     Log_Separator();
 }
 
-//+------------------------------------------------------------------+
-//| Calculate Range Boundaries                                       |
-//+------------------------------------------------------------------+
-void CalculateRangeBoundaries() {
-    if(entryPoint <= 0 || currentSpacing_Pips <= 0) {
-        Log_SystemError("Init", 0, "Cannot calculate range - entry or spacing not set");
-        return;
-    }
-
-    double spacingPoints = PipsToPoints(currentSpacing_Pips);
-    double totalRangePoints = spacingPoints * GridLevelsPerSide;
-
-    rangeUpperBound = entryPoint + totalRangePoints;
-    rangeLowerBound = entryPoint - totalRangePoints;
-    totalRangePips = currentSpacing_Pips * GridLevelsPerSide * 2;
-
-    Log_Header("RANGE BOUNDARIES CALCULATED");
-    Log_KeyValueNum("Entry", entryPoint, symbolDigits);
-    Log_KeyValueNum("Spacing", currentSpacing_Pips, 1);
-    Log_KeyValueNum("Levels/Side", GridLevelsPerSide, 0);
-    Log_KeyValueNum("Upper", rangeUpperBound, symbolDigits);
-    Log_KeyValueNum("Lower", rangeLowerBound, symbolDigits);
-    Log_KeyValueNum("Total Range", totalRangePips, 1);
-    Log_Separator();
-}
+// v9.12: CalculateRangeBoundaries() REMOVED - was dead code
 

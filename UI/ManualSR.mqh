@@ -311,30 +311,8 @@ void SetManualSR(double resistance, double support, double activation = 0) {
     ChartRedraw(0);
 }
 
-//+------------------------------------------------------------------+
-//| Check if Price Reached Activation Level                          |
-//+------------------------------------------------------------------+
-bool IsPriceAtActivation(double tolerance = 0) {
-    if(!Enable_ManualSR) return true; // If disabled, always ready
-
-    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-    double tolPips = (tolerance == 0) ? 5 * symbolPoint * 10 : tolerance;
-
-    return (MathAbs(currentPrice - manualSR_Activation) <= tolPips);
-}
-
-//+------------------------------------------------------------------+
-//| Check if Price Broke Through Activation Level (for STOP mode)    |
-//+------------------------------------------------------------------+
-bool IsPriceAboveActivation() {
-    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-    return (currentPrice > manualSR_Activation);
-}
-
-bool IsPriceBelowActivation() {
-    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-    return (currentPrice < manualSR_Activation);
-}
+// v9.12: IsPriceAtActivation(), IsPriceAboveActivation(), IsPriceBelowActivation() REMOVED
+// These were for LIMIT/STOP entry modes which are not supported
 
 //+------------------------------------------------------------------+
 //| Remove Manual S/R Lines                                          |

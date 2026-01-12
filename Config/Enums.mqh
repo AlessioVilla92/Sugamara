@@ -41,15 +41,6 @@ enum ENUM_FOREX_PAIR {
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//| 🔄 BREAKOUT DIRECTION - Direzione breakout                       |
-//+------------------------------------------------------------------+
-enum ENUM_BREAKOUT_DIRECTION {
-    BREAKOUT_NONE = 0,          // Nessun breakout
-    BREAKOUT_UP = 1,            // Breakout verso l'alto
-    BREAKOUT_DOWN = 2           // Breakout verso il basso
-};
-
-//+------------------------------------------------------------------+
 //| 📏 SPACING MODE - Modalità calcolo spacing griglia               |
 //| v5.9: SPACING_PAIR_AUTO aggiunto - legge spacing dal pair preset |
 //+------------------------------------------------------------------+
@@ -108,20 +99,6 @@ enum ENUM_SYSTEM_STATE {
     STATE_PAUSED = 3,           // In pausa
     STATE_INITIALIZING = 4,     // Inizializzazione in corso
     STATE_CLOSING = 5,          // Chiusura posizioni in corso
-
-    // Stati Range (v9.12: legacy, kept for compatibility)
-    STATE_INSIDE_RANGE = 10,    // Dentro il range (normale)
-    STATE_WARNING_UP = 11,      // Warning zona superiore
-    STATE_WARNING_DOWN = 12,    // Warning zona inferiore
-
-    // Stati Breakout
-    STATE_BREAKOUT_UP = 20,     // Breakout sopra
-    STATE_BREAKOUT_DOWN = 21,   // Breakout sotto
-
-    // Stati Shield REMOVED in v9.12
-
-    // Stati Reentry
-    STATE_REENTRY = 40,         // Rientro nel range
 
     // Stati Emergency
     STATE_EMERGENCY = 90,       // Emergency stop

@@ -148,23 +148,7 @@ double totalShortLots = 0;                  // Totale lotti SHORT aperti
 double netExposure = 0;                     // Esposizione netta (LONG - SHORT)
 bool isNeutral = true;                      // Flag: sistema in equilibrio
 
-//+------------------------------------------------------------------+
-//| RANGE BOUNDARIES                                                 |
-//+------------------------------------------------------------------+
-double rangeUpperBound = 0;                 // Limite superiore range
-double rangeLowerBound = 0;                 // Limite inferiore range
-double totalRangePips = 0;                  // Range totale in pips
-
-// v5.2: RangeBox variables removed (v9.12: Shield removed completely)
-
-//+------------------------------------------------------------------+
-//| 🛡️ SHIELD REMOVED in v9.12                                       |
-//+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| CURRENT SYSTEM STATE (Extended)                                  |
-//+------------------------------------------------------------------+
-ENUM_SYSTEM_STATE currentSystemState = STATE_INIT;
+// v9.12: Range boundaries, Shield, currentSystemState REMOVED
 
 //+------------------------------------------------------------------+
 //| RISK MANAGEMENT VARIABLES                                        |
