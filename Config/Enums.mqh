@@ -213,9 +213,10 @@ enum ENUM_STRADDLE_MULTIPLIER {
 
 //+------------------------------------------------------------------+
 //| CONSTANTS - Costanti di sistema                                  |
+//| Note: #define required for array sizes in MQL5                   |
 //+------------------------------------------------------------------+
-const int MAX_GRID_LEVELS = 20;           // Max livelli per lato (v9.0: Esteso a 20)
-const int MAX_TOTAL_ORDERS = 40;          // Max ordini totali (Grid A + Grid B)
+#define MAX_GRID_LEVELS     30            // Max livelli per lato (v9.12: Esteso a 30)
+#define MAX_TOTAL_ORDERS    60            // Max ordini totali (Grid A + Grid B)
 const double MIN_SPACING_PIPS = 10.0;     // Spacing minimo (pips)
 const double MAX_SPACING_PIPS = 100.0;    // Spacing massimo (pips)
 const int ATR_RECALC_HOURS = 4;           // Ore tra ricalcoli ATR

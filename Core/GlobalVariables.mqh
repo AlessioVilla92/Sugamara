@@ -87,9 +87,9 @@ int g_gridB_StopReopens = 0;                 // Grid B STOP reopens
 
 //+------------------------------------------------------------------+
 //| GRID STRUCTURE                                                   |
-//| Ogni array ha dimensione [MAX_GRID_LEVELS] = 20 elementi         |
+//| Ogni array ha dimensione [MAX_GRID_LEVELS] elementi              |
 //| Indice 0 = Level 1 (piu vicino a entry)                          |
-//| v9.0: Esteso da [15] a [20] per supportare più livelli           |
+//| v9.0: Esteso da [15] a [20], ora usa costante MAX_GRID_LEVELS    |
 //+------------------------------------------------------------------+
 
 // ═══════════════════════════════════════════════════════════════════
@@ -97,48 +97,48 @@ int g_gridB_StopReopens = 0;                 // Grid B STOP reopens
 // ═══════════════════════════════════════════════════════════════════
 
 // Upper Zone (sopra Entry Point) - Buy Limit orders
-ulong gridA_Upper_Tickets[20];              // Ticket ordini pending
-double gridA_Upper_EntryPrices[20];         // Prezzi entry calcolati
-double gridA_Upper_Lots[20];                // Lot size per livello
-double gridA_Upper_TP[20];                  // Take Profit (Cascade)
-double gridA_Upper_SL[20];                  // Stop Loss
-ENUM_ORDER_STATUS gridA_Upper_Status[20];   // Stato ordine
-datetime gridA_Upper_LastClose[20];         // Tempo ultima chiusura (per cyclic)
-int gridA_Upper_Cycles[20];                 // Contatore cicli
+ulong gridA_Upper_Tickets[MAX_GRID_LEVELS];              // Ticket ordini pending
+double gridA_Upper_EntryPrices[MAX_GRID_LEVELS];         // Prezzi entry calcolati
+double gridA_Upper_Lots[MAX_GRID_LEVELS];                // Lot size per livello
+double gridA_Upper_TP[MAX_GRID_LEVELS];                  // Take Profit (Cascade)
+double gridA_Upper_SL[MAX_GRID_LEVELS];                  // Stop Loss
+ENUM_ORDER_STATUS gridA_Upper_Status[MAX_GRID_LEVELS];   // Stato ordine
+datetime gridA_Upper_LastClose[MAX_GRID_LEVELS];         // Tempo ultima chiusura (per cyclic)
+int gridA_Upper_Cycles[MAX_GRID_LEVELS];                 // Contatore cicli
 
 // Lower Zone (sotto Entry Point) - Sell Stop orders
-ulong gridA_Lower_Tickets[20];
-double gridA_Lower_EntryPrices[20];
-double gridA_Lower_Lots[20];
-double gridA_Lower_TP[20];
-double gridA_Lower_SL[20];
-ENUM_ORDER_STATUS gridA_Lower_Status[20];
-datetime gridA_Lower_LastClose[20];
-int gridA_Lower_Cycles[20];
+ulong gridA_Lower_Tickets[MAX_GRID_LEVELS];
+double gridA_Lower_EntryPrices[MAX_GRID_LEVELS];
+double gridA_Lower_Lots[MAX_GRID_LEVELS];
+double gridA_Lower_TP[MAX_GRID_LEVELS];
+double gridA_Lower_SL[MAX_GRID_LEVELS];
+ENUM_ORDER_STATUS gridA_Lower_Status[MAX_GRID_LEVELS];
+datetime gridA_Lower_LastClose[MAX_GRID_LEVELS];
+int gridA_Lower_Cycles[MAX_GRID_LEVELS];
 
 // ═══════════════════════════════════════════════════════════════════
 // GRID B - Short Bias (Sell Limit sopra, Buy Stop sotto)
 // ═══════════════════════════════════════════════════════════════════
 
 // Upper Zone (sopra Entry Point) - Sell Limit orders
-ulong gridB_Upper_Tickets[20];
-double gridB_Upper_EntryPrices[20];
-double gridB_Upper_Lots[20];
-double gridB_Upper_TP[20];
-double gridB_Upper_SL[20];
-ENUM_ORDER_STATUS gridB_Upper_Status[20];
-datetime gridB_Upper_LastClose[20];
-int gridB_Upper_Cycles[20];
+ulong gridB_Upper_Tickets[MAX_GRID_LEVELS];
+double gridB_Upper_EntryPrices[MAX_GRID_LEVELS];
+double gridB_Upper_Lots[MAX_GRID_LEVELS];
+double gridB_Upper_TP[MAX_GRID_LEVELS];
+double gridB_Upper_SL[MAX_GRID_LEVELS];
+ENUM_ORDER_STATUS gridB_Upper_Status[MAX_GRID_LEVELS];
+datetime gridB_Upper_LastClose[MAX_GRID_LEVELS];
+int gridB_Upper_Cycles[MAX_GRID_LEVELS];
 
 // Lower Zone (sotto Entry Point) - Buy Stop orders
-ulong gridB_Lower_Tickets[20];
-double gridB_Lower_EntryPrices[20];
-double gridB_Lower_Lots[20];
-double gridB_Lower_TP[20];
-double gridB_Lower_SL[20];
-ENUM_ORDER_STATUS gridB_Lower_Status[20];
-datetime gridB_Lower_LastClose[20];
-int gridB_Lower_Cycles[20];
+ulong gridB_Lower_Tickets[MAX_GRID_LEVELS];
+double gridB_Lower_EntryPrices[MAX_GRID_LEVELS];
+double gridB_Lower_Lots[MAX_GRID_LEVELS];
+double gridB_Lower_TP[MAX_GRID_LEVELS];
+double gridB_Lower_SL[MAX_GRID_LEVELS];
+ENUM_ORDER_STATUS gridB_Lower_Status[MAX_GRID_LEVELS];
+datetime gridB_Lower_LastClose[MAX_GRID_LEVELS];
+int gridB_Lower_Cycles[MAX_GRID_LEVELS];
 
 //+------------------------------------------------------------------+
 //| NET EXPOSURE                                                     |

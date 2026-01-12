@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.11        |
+//|                                    SUGAMARA RIBELLE v9.12        |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.11.0 - Enhanced Crash/Recovery Logging               |
+//|  Version: 9.12.0 - Complete Auto-Save & Recovery System          |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,20 +16,21 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v9.11 CHANGES:                                                  |
-//|  - Enhanced crash/recovery logging with Alert()                  |
-//|  - Dashboard: fixed column heights, centered title               |
-//|  - Dashboard: fixed emoji icons (replaced with ASCII)            |
-//|  - Removed: DailyTarget, NewsPause, hotkey N                     |
+//|  v9.12 CHANGES:                                                  |
+//|  - NEW: Complete Auto-Save system (StatePersistence.mqh)         |
+//|  - NEW: Full state recovery (715+ variables)                     |
+//|  - NEW: Cycling variables preserved across crash/restart         |
+//|  - NEW: Graphics fully restored (lines, dashboard, S/R zones)    |
+//|  - Shield removal + dead code cleanup                            |
 //|                                                                  |
+//|  v9.11: Enhanced crash/recovery logging with Alert()             |
 //|  v9.10: Grid Visual System (colori, tooltip, entry line)         |
-//|  v9.9: Trailing Grid RIMOSSO (feature deprecated)                |
 //+------------------------------------------------------------------+
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.110"
-#property description "SUGAMARA RIBELLE v9.11 - Enhanced Crash/Recovery Logging"
+#property version   "9.120"
+#property description "SUGAMARA RIBELLE v9.12 - Complete Auto-Save & Recovery System"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Configurable Colors"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -50,6 +51,7 @@
 #include "Core/ModeLogic.mqh"
 #include "Core/SessionManager.mqh"  // v4.6 Auto Session
 #include "Core/RecoveryManager.mqh" // v5.9 Auto Recovery
+#include "Core/StatePersistence.mqh" // v9.12 Auto-Save & Complete Recovery
 
 // Utility Modules
 #include "Utils/Helpers.mqh"
@@ -352,6 +354,35 @@ int OnInit() {
         Print("=======================================================================");
     }
 
+    //--- v9.12 AUTO-RECOVERY: Restore Complete State from Saved Data ---
+    if(Enable_AutoRecovery && HasSavedState()) {
+        Print("");
+        Print("=======================================================================");
+        Print("  [AUTO-SAVE RECOVERY] Found saved state - restoring...");
+        Print("=======================================================================");
+
+        if(RestoreCompleteStateWithMerge()) {
+            Print("  [AUTO-SAVE] State restoration complete");
+            Print("  [AUTO-SAVE] Cycling variables restored - will continue from saved position");
+            Print("  [AUTO-SAVE] COP/Session/Risk tracking restored");
+
+            // Recreate all graphics from restored state
+            if(Recovery_RestoreGraphics) {
+                RecreateAllGraphics();
+                Print("  [AUTO-SAVE] Graphics fully restored");
+            }
+
+            // Set system state to ACTIVE if we have restored cycling data
+            if(Recovery_RestoreCycling && systemState == STATE_IDLE) {
+                systemState = STATE_ACTIVE;
+                Print("  [AUTO-SAVE] System set to STATE_ACTIVE (cycling restored)");
+            }
+        } else {
+            Print("  [AUTO-SAVE] WARNING: State restoration had issues - check logs");
+        }
+        Print("=======================================================================");
+    }
+
     //--- STEP 19: Draw Grid Visualization ---
     DrawGridVisualization();
 
@@ -411,6 +442,19 @@ void OnDeinit(const int reason) {
     Print("=======================================================================");
     Print("  SUGAMARA DEINIT");
     Print("=======================================================================");
+
+    //--- v9.12 AUTO-SAVE: Save Complete State or Clear on Remove ---
+    if(Enable_AutoSave) {
+        if(reason == REASON_REMOVE && ClearStateOnRemove) {
+            // EA removed from chart - clear saved state
+            ClearSavedState();
+            Print("  [AUTO-SAVE] Saved state CLEARED (EA removed)");
+        } else {
+            // All other cases - save complete state for recovery
+            SaveCompleteState();
+            Print("  [AUTO-SAVE] Complete state SAVED for recovery");
+        }
+    }
 
     //--- v5.9: Save Entry Point for Recovery ---
     if(entryPoint > 0) {
@@ -498,6 +542,9 @@ void OnDeinit(const int reason) {
 //| Expert tick function                                              |
 //+------------------------------------------------------------------+
 void OnTick() {
+    //--- v9.12 AUTO-SAVE: Check and execute periodic state backup ---
+    ExecuteAutoSave();
+
     // DEBUG MODE: Check and trigger automatic entry (MUST be FIRST)
     CheckDebugModeEntry();
 

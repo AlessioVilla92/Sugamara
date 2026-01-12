@@ -59,6 +59,29 @@ input string    DebugEntryTime = "09:30";                    // Entry Time (HH:M
 input string    DebugCloseTime = "";                         // Close Time (HH:MM) - vuoto = no close
 
 //+------------------------------------------------------------------+
+//| 💾 AUTO-SAVE & RECOVERY SYSTEM v9.12                              |
+//+------------------------------------------------------------------+
+
+input group "                                                           "
+input group "╔═══════════════════════════════════════════════════════════╗"
+input group "║  💾 AUTO-SAVE & RECOVERY SYSTEM v9.12                     ║"
+input group "╚═══════════════════════════════════════════════════════════╝"
+
+input group "    💾 AUTO-SAVE SETTINGS"
+input bool      Enable_AutoSave = true;                       // ✅ Enable Auto-Save (Backup ogni N minuti)
+input int       AutoSave_Interval_Minutes = 5;                // ⏱️ Intervallo Backup (minuti) [Default: 5]
+input bool      AutoSave_FullLogging = false;                 // 📝 Full Logging Auto-Save (dettagliato)
+input bool      AutoSave_UseFileBackup = true;                // 💾 Doppio Backup (GlobalVar + File)
+
+input group "    🔄 RECOVERY SETTINGS"
+input bool      Enable_AutoRecovery = true;                   // ✅ Enable Auto-Recovery (da ultimo salvataggio)
+input bool      Recovery_RestoreGraphics = true;              // 🎨 Ripristina Grafica (linee grid, entry point)
+input bool      Recovery_RestoreCycling = true;               // 🔄 Ripristina Reopen Cycling (Status, Cycles, LastClose)
+input bool      Recovery_RestoreCOP = true;                   // 💰 Ripristina COP (Profitto realizzato, stats)
+input bool      Recovery_RestoreSession = true;               // 📊 Ripristina Session Stats (Profit, Wins, Losses)
+input bool      ClearStateOnRemove = true;                    // 🗑️ Cancella Stato quando EA rimosso
+
+//+------------------------------------------------------------------+
 //| 💰 PARTIAL TAKE PROFIT - REMOVED (v5.x cleanup)                  |
 //| Dannoso per Cyclic Reopen - riduce profit del 37%                |
 //+------------------------------------------------------------------+
@@ -88,8 +111,8 @@ input group "║  📐 GRID CONFIGURATION                                   ║"
 input group "╚═══════════════════════════════════════════════════════════╝"
 
 input group "    📏 GRID STRUCTURE"
-input int       GridLevelsPerSide = 10;                      // 🔢 Livelli per Lato (3-20) [Default: 10]
-// 10 livelli × 2 zone × 2 grid = 40 ordini totali
+input int       GridLevelsPerSide = 10;                      // 🔢 Livelli per Lato (3-30) [Default: 10]
+// 10 livelli × 2 zone × 2 grid = 40 ordini totali (max 60 con 30 livelli)
 
 input group "    ╔═ SPACING SETTINGS ════════════════════════════════🔽🔽🔽"
 input ENUM_SPACING_MODE SpacingMode = SPACING_PAIR_AUTO;     // 📏 Modalità Spacing ▼ (DEFAULT: Pair Auto)

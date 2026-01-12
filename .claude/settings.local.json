@@ -34,7 +34,9 @@
       "Bash(timeout:*)",
       "Bash(del \"C:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\analyze_log.ps1\")",
       "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Indicators\\\\CenterCalculator.mqh\")",
-      "Bash(cut:*)"
+      "Bash(cut:*)",
+      "Bash(cmd.exe /c:*)",
+      "Bash(\"C:\\\\Program Files\\\\MetaTrader 5\\\\MetaEditor64.exe\" /compile:\"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Sugamara.mq5\" /log)"
     ],
     "deny": [],
     "ask": []
