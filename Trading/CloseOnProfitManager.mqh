@@ -64,7 +64,7 @@ double COP_GetFloatingProfit() {
         // Check symbol
         if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
 
-        // Check magic number (Grid A, Grid B, Shield)
+        // Check magic number (Grid A, Grid B)
         long magic = PositionGetInteger(POSITION_MAGIC);
         if(magic < MagicNumber || magic > MagicNumber + MAGIC_OFFSET_GRID_B + 1000) continue;
 

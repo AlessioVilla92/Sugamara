@@ -356,7 +356,7 @@ double CalculateTotalGridLots(int levels) {
 //+------------------------------------------------------------------+
 //| 💰 RISK-BASED LOT CALCULATION SYSTEM                             |
 //| Calcola lot automatici per garantire max loss = RiskCapital      |
-//| IMPORTANTE: NON piazza SL automatici - Shield gestisce rischio   |
+//| IMPORTANTE: NON piazza SL automatici                              |
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
@@ -946,46 +946,15 @@ bool ValidateGridConfiguration() {
 
 //+------------------------------------------------------------------+
 //| Check if Level Can Reopen                                        |
-//| v4.0: Added safety checks (trend, shield proximity, volatility)  |
+//| v9.12: Shield proximity check removed                            |
 //+------------------------------------------------------------------+
 bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
     if(!EnableCyclicReopen) return false;
 
-    // ═══════════════════════════════════════════════════════════════════
-    // v4.0 SAFETY CHECK 1: Block near Shield activation
-    // ═══════════════════════════════════════════════════════════════════
-    // v9.0: Rimosso IsCascadeOverlapMode() - struttura è default
-    if(PauseReopenNearShield && ShieldMode != SHIELD_DISABLED) {
-        double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-        double proximityPoints = PipsToPoints(ShieldProximity_Pips);
-
-        // Check distance from breakout levels
-        if(upperBreakoutLevel > 0 && (upperBreakoutLevel - currentPrice) < proximityPoints) {
-            if(DetailedLogging) {
-                Print("Reopen blocked: Too close to upper Shield (",
-                      DoubleToString(PointsToPips(upperBreakoutLevel - currentPrice), 1), " pips)");
-            }
-            return false;
-        }
-        if(lowerBreakoutLevel > 0 && (currentPrice - lowerBreakoutLevel) < proximityPoints) {
-            if(DetailedLogging) {
-                Print("Reopen blocked: Too close to lower Shield (",
-                      DoubleToString(PointsToPips(currentPrice - lowerBreakoutLevel), 1), " pips)");
-            }
-            return false;
-        }
-
-        // Also block if Shield is already active
-        if(shield.isActive) {
-            if(DetailedLogging) {
-                Print("Reopen blocked: Shield is active");
-            }
-            return false;
-        }
-    }
+    // Shield proximity check REMOVED in v9.12
 
     // ═══════════════════════════════════════════════════════════════════
-    // v5.8 SAFETY CHECK 3: Block on extreme volatility (simplified)
+    // v5.8 SAFETY CHECK: Block on extreme volatility (simplified)
     // ═══════════════════════════════════════════════════════════════════
     if(PauseReopenOnExtreme) {
         if(currentATR_Condition == ATR_EXTREME) {
@@ -1268,206 +1237,6 @@ void LogDynamicPositioningInfo() {
 }
 
 //+------------------------------------------------------------------+
-//| CASCADE_OVERLAP: STUB FUNCTIONS FOR SHIELD (replaces RangeBox)    |
-//| These functions use grid edges as breakout levels                 |
+//| SHIELD FUNCTIONS REMOVED in v9.12                                 |
 //+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| Get Last Grid B Upper Level (Resistance)                          |
-//+------------------------------------------------------------------+
-double GetLastGridBLevel() {
-    double spacing = (currentSpacing_Pips > 0) ? currentSpacing_Pips : Fixed_Spacing_Pips;
-    double spacingPoints = PipsToPoints(spacing);
-    return NormalizeDouble(entryPoint + (spacingPoints * GridLevelsPerSide), symbolDigits);
-}
-
-//+------------------------------------------------------------------+
-//| Get Last Grid A Lower Level (Support)                             |
-//+------------------------------------------------------------------+
-double GetLastGridALevel() {
-    double spacing = (currentSpacing_Pips > 0) ? currentSpacing_Pips : Fixed_Spacing_Pips;
-    double spacingPoints = PipsToPoints(spacing);
-    return NormalizeDouble(entryPoint - (spacingPoints * GridLevelsPerSide), symbolDigits);
-}
-
-//+------------------------------------------------------------------+
-//| Calculate Breakout Levels from Grid Edges (replaces RangeBox)     |
-//+------------------------------------------------------------------+
-bool CalculateBreakoutLevels() {
-    if(entryPoint <= 0) {
-        Log_SystemError("GridHelpers", 0, "Entry point not set");
-        return false;
-    }
-
-    double spacing = (currentSpacing_Pips > 0) ? currentSpacing_Pips : Fixed_Spacing_Pips;
-    double spacingPoints = PipsToPoints(spacing);
-
-    // Set shieldZone values using grid edges
-    shieldZone.resistance = GetLastGridBLevel();
-    shieldZone.support = GetLastGridALevel();
-
-    // Warning zones at N-0.5 levels
-    double warningOffset = spacingPoints * (GridLevelsPerSide - 0.5);
-    shieldZone.warningZoneUp = NormalizeDouble(entryPoint + warningOffset, symbolDigits);
-    shieldZone.warningZoneDown = NormalizeDouble(entryPoint - warningOffset, symbolDigits);
-
-    // Breakout zones at N+0.5 levels (beyond grid edges)
-    double breakoutOffset = spacingPoints * (GridLevelsPerSide + 0.5);
-    upperBreakoutLevel = NormalizeDouble(entryPoint + breakoutOffset, symbolDigits);
-    lowerBreakoutLevel = NormalizeDouble(entryPoint - breakoutOffset, symbolDigits);
-
-    // Reentry zones (same as support/resistance)
-    upperReentryLevel = shieldZone.resistance;
-    lowerReentryLevel = shieldZone.support;
-
-    shieldZone.isValid = true;
-
-    Log_InitConfigNum("Breakout.Support", shieldZone.support);
-    Log_InitConfigNum("Breakout.Resistance", shieldZone.resistance);
-    Log_InitConfigNum("Breakout.WarningDown", shieldZone.warningZoneDown);
-    Log_InitConfigNum("Breakout.WarningUp", shieldZone.warningZoneUp);
-
-    return true;
-}
-
-//+------------------------------------------------------------------+
-//| Get Price Position in Range (for Shield 3 Phases)                 |
-//+------------------------------------------------------------------+
-ENUM_SYSTEM_STATE GetPricePositionInRange(double currentPrice) {
-    if(!shieldZone.isValid) {
-        return STATE_INSIDE_RANGE;
-    }
-
-    // Check if price is in warning zone (approaching edges)
-    if(currentPrice >= shieldZone.warningZoneUp) {
-        return STATE_WARNING_UP;
-    }
-    if(currentPrice <= shieldZone.warningZoneDown) {
-        return STATE_WARNING_DOWN;
-    }
-
-    return STATE_INSIDE_RANGE;
-}
-
-//+------------------------------------------------------------------+
-//| Check Breakout Condition for Shield (v5.6: con conferma candele) |
-//| Usa Breakout_Confirm_Candles e Use_Candle_Close per confermare   |
-//+------------------------------------------------------------------+
-bool CheckBreakoutConditionShield(double currentPrice, ENUM_BREAKOUT_DIRECTION &direction) {
-    if(!shieldZone.isValid) {
-        direction = BREAKOUT_NONE;
-        g_breakoutConfirmCounter = 0;
-        g_breakoutPendingDirection = BREAKOUT_NONE;
-        return false;
-    }
-
-    // Determina direzione breakout
-    ENUM_BREAKOUT_DIRECTION currentDirection = BREAKOUT_NONE;
-
-    if(currentPrice > shieldZone.resistance) {
-        currentDirection = BREAKOUT_UP;
-    }
-    else if(currentPrice < shieldZone.support) {
-        currentDirection = BREAKOUT_DOWN;
-    }
-
-    // Se nessun breakout o direzione cambiata, reset
-    if(currentDirection == BREAKOUT_NONE ||
-       (g_breakoutPendingDirection != BREAKOUT_NONE && currentDirection != g_breakoutPendingDirection)) {
-        g_breakoutConfirmCounter = 0;
-        g_breakoutPendingDirection = BREAKOUT_NONE;
-        direction = BREAKOUT_NONE;
-        return false;
-    }
-
-    // Breakout rilevato - inizia/continua conferma
-    g_breakoutPendingDirection = currentDirection;
-    direction = currentDirection;
-
-    // Se Breakout_Confirm_Candles <= 0, conferma immediata (backward compatible)
-    if(Breakout_Confirm_Candles <= 0) {
-        return true;
-    }
-
-    // Conferma candele
-    datetime currentBar = iTime(_Symbol, PERIOD_CURRENT, 0);
-
-    if(currentBar != g_breakoutLastBarTime) {
-        g_breakoutLastBarTime = currentBar;
-
-        if(Use_Candle_Close) {
-            // Verifica che la candela PRECEDENTE abbia CHIUSO oltre il livello
-            double prevClose = iClose(_Symbol, PERIOD_CURRENT, 1);
-            bool confirmValid = false;
-
-            if(currentDirection == BREAKOUT_UP && prevClose > shieldZone.resistance) {
-                confirmValid = true;
-            }
-            else if(currentDirection == BREAKOUT_DOWN && prevClose < shieldZone.support) {
-                confirmValid = true;
-            }
-
-            if(confirmValid) {
-                g_breakoutConfirmCounter++;
-                Log_Debug("Shield", StringFormat("Breakout confirm %d/%d (candle close: %.5f)",
-                          g_breakoutConfirmCounter, Breakout_Confirm_Candles, prevClose));
-            }
-        }
-        else {
-            g_breakoutConfirmCounter++;
-            Log_Debug("Shield", StringFormat("Breakout confirm %d/%d (new bar)",
-                      g_breakoutConfirmCounter, Breakout_Confirm_Candles));
-        }
-    }
-
-    if(g_breakoutConfirmCounter < Breakout_Confirm_Candles) {
-        return false;
-    }
-
-    // Breakout confirmed - reset for next
-    g_breakoutConfirmCounter = 0;
-    g_breakoutPendingDirection = BREAKOUT_NONE;
-
-    return true;
-}
-
-//+------------------------------------------------------------------+
-//| Check Reentry Condition for Shield (v5.6: con hysteresis)         |
-//| Il prezzo deve restare dentro il range per X secondi              |
-//| Usa Reentry_Confirm_Seconds (0 = disabilitato)                    |
-//+------------------------------------------------------------------+
-bool CheckReentryConditionShield(double currentPrice) {
-    if(!shieldZone.isValid) {
-        g_shieldReentryStart = 0;
-        return false;
-    }
-
-    bool isInsideRange = (currentPrice > shieldZone.support &&
-                          currentPrice < shieldZone.resistance);
-
-    if(!isInsideRange) {
-        g_shieldReentryStart = 0;
-        return false;
-    }
-
-    // Immediate confirmation if hysteresis disabled
-    if(Reentry_Confirm_Seconds <= 0) {
-        return true;
-    }
-
-    // First time inside range - start timer
-    if(g_shieldReentryStart == 0) {
-        g_shieldReentryStart = TimeCurrent();
-        return false;
-    }
-
-    int timeSinceReentry = (int)(TimeCurrent() - g_shieldReentryStart);
-
-    if(timeSinceReentry >= Reentry_Confirm_Seconds) {
-        g_shieldReentryStart = 0;
-        return true;
-    }
-
-    return false;
-}
 

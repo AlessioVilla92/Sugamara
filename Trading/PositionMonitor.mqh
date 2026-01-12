@@ -151,16 +151,15 @@ double GetCurrentPairRealizedProfit() {
 
 //+------------------------------------------------------------------+
 //| Check if Magic Number belongs to Sugamara (v5.3)                 |
+//| v9.12: Shield magic numbers removed                              |
 //+------------------------------------------------------------------+
 bool IsSugamaraMagic(long magic) {
     // Grid A: MagicNumber + 0 to +999
     // Grid B: MagicNumber + 10000 to +10999
-    // Shield: MagicNumber + 9001, MagicNumber + 9002
     long baseMagic = MagicNumber;
 
     if(magic >= baseMagic && magic < baseMagic + 1000) return true;  // Grid A
     if(magic >= baseMagic + 10000 && magic < baseMagic + 11000) return true;  // Grid B
-    if(magic == baseMagic + MAGIC_SHIELD_LONG || magic == baseMagic + MAGIC_SHIELD_SHORT) return true;  // Shield
 
     return false;
 }
@@ -580,7 +579,7 @@ void CheckBreakOnProfit() {
         // Check symbol
         if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
 
-        // Check magic number (Grid A, Grid B, Shield)
+        // Check magic number (Grid A, Grid B)
         long magic = PositionGetInteger(POSITION_MAGIC);
         if(magic < MagicNumber || magic > MagicNumber + MAGIC_OFFSET_GRID_B + 1000) continue;
 

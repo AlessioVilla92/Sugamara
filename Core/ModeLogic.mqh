@@ -40,8 +40,8 @@ bool IsATREnabled()
 //+------------------------------------------------------------------+
 bool IsHedgingAvailable()
 {
-   // v9.0: Hedging sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
-   return EnableHedging;
+   // v9.12: Fixed - usa AllowHedging (input parameter)
+   return AllowHedging;
 }
 
 //+------------------------------------------------------------------+
@@ -316,7 +316,6 @@ void PrintModeConfiguration()
    Log_KeyValue("Description", GetModeDescription());
    Log_KeyValue("ATR Available", IsATRAvailable() ? "YES" : "NO");
    Log_KeyValue("ATR Enabled", IsATREnabled() ? "YES" : "NO");
-   Log_KeyValue("Shield Mode", GetShieldModeNameLogic());
    Log_KeyValue("Auto-Hedging", IsHedgingAvailable() ? "YES" : "NO");
    Log_KeyValue("TP Mode", UsesCascadeTP() ? "CASCADE" : "FIXED");
    Log_KeyValueNum("Spacing", CalculateCurrentSpacing(), 1);
@@ -324,33 +323,8 @@ void PrintModeConfiguration()
 }
 
 //+------------------------------------------------------------------+
-//| ═══════════════════════════════════════════════════════════════ |
-//| 🛡️ SHIELD INTELLIGENTE INTEGRATION                              |
-//| ═══════════════════════════════════════════════════════════════ |
+//| 🛡️ SHIELD REMOVED in v9.12                                       |
 //+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//| Check if Shield is Available                                      |
-//+------------------------------------------------------------------+
-bool IsShieldAvailableLogic()
-{
-   // v9.0: Shield sempre disponibile (struttura Grid A=BUY, Grid B=SELL è default)
-   return (ShieldMode != SHIELD_DISABLED);
-}
-
-//+------------------------------------------------------------------+
-//| Get Shield Mode Name                                              |
-//+------------------------------------------------------------------+
-string GetShieldModeNameLogic()
-{
-   // v9.0: Shield sempre disponibile
-   switch(ShieldMode) {
-      case SHIELD_DISABLED: return "DISABLED";
-      case SHIELD_SIMPLE: return "SIMPLE";
-      case SHIELD_3_PHASES: return "3 PHASES";
-      default: return "UNKNOWN";
-   }
-}
 
 //+------------------------------------------------------------------+
 //| Initialize Mode (main entry point)                                |
@@ -443,11 +417,6 @@ void CheckATRRecalculation()
 void DeinitializeMode()
 {
    Print("[ModeLogic] Deinitializing mode: ", GetModeName());
-
-   // Deinitialize Shield if enabled
-   if(ShieldMode != SHIELD_DISABLED) {
-      DeinitializeShield();
-   }
-
+   // Shield REMOVED in v9.12
    Print("[ModeLogic] Mode deinitialized");
 }

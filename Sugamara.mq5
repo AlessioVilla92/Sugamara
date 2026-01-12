@@ -65,7 +65,7 @@
 #include "Trading/GridBSystem.mqh"
 #include "Trading/PositionMonitor.mqh"
 #include "Trading/RiskManager.mqh"
-#include "Trading/ShieldManager.mqh"
+// ShieldManager.mqh REMOVED in v9.12 - Shield functionality eliminated
 
 // v3.0 NEW Trading Modules
 // PartialTPManager.mqh REMOVED - Dannoso per Cyclic Reopen (v5.x cleanup)
@@ -85,7 +85,7 @@
 // v3.0 NEW UI Modules
 #include "UI/ManualSR.mqh"
 #include "UI/ControlButtons.mqh"
-#include "UI/ShieldZonesVisual.mqh"
+// ShieldZonesVisual.mqh REMOVED in v9.12 - Shield functionality eliminated
 
 // Debug Mode (v4.5)
 #include "Core/DebugMode.mqh"
@@ -210,19 +210,7 @@ int OnInit() {
 
     //--- STEP 10.6: v9.5 - Hedge offset rimosso (Perfect Cascade default) ---
 
-    //--- STEP 10.7: Initialize Shield Intelligente ---
-    if(ShieldMode != SHIELD_DISABLED) {
-        if(!InitializeShield()) {
-            Print("WARNING: Failed to initialize Shield Intelligente");
-        }
-    }
-
-    //--- STEP 10.8: Initialize Shield Zones Visual (v3.0) ---
-    if(Enable_ShieldZonesVisual) {
-        if(!InitializeShieldZonesVisual()) {
-            Print("WARNING: Failed to initialize Shield Zones Visual");
-        }
-    }
+    //--- STEP 10.7-10.8: Shield REMOVED in v9.12 ---
 
     //--- STEP 11: Initialize Position Monitor ---
     if(!InitializePositionMonitor()) {
@@ -332,33 +320,7 @@ int OnInit() {
         Print("  [Recovery] Initializing all subsystems...");
         Print("=======================================================================");
 
-        // 1. Shield Manager (chiama CalculateBreakoutLevels internamente)
-        if(ShieldMode != SHIELD_DISABLED) {
-            InitializeShield();
-            // Reset hysteresis flags che InitializeShield non resetta
-            g_preShieldInsideRangeStart = 0;
-            g_shieldTransitionLogCount = 0;
-            g_loggedWarningPhase = false;
-            g_loggedExitWarning = false;
-            g_loggedPreShieldPhase = false;
-            g_loggedCancelPreShield = false;
-            g_loggedShieldActive = false;
-            g_lastShieldHeartbeat = 0;
-            g_lastShieldState = "";
-            Print("  [Recovery] Shield Manager: INITIALIZED");
-        }
-
-        // 2. Calculate Range Boundaries (prerequisito per ShieldZonesVisual)
-        CalculateRangeBoundaries();
-
-        // 3. Shield Zones Visual (BANDE ROSSE) - PULIRE PRIMA per evitare duplicati
-        if(Enable_ShieldZonesVisual) {
-            if(shieldZonesInitialized) {
-                DeinitializeShieldZonesVisual();  // Rimuovi zone esistenti
-            }
-            InitializeShieldZonesVisual();
-            Print("  [Recovery] Shield Zones Visual: INITIALIZED");
-        }
+        // 1-3. Shield REMOVED in v9.12
 
         // 4. ATR Multi-TF (indipendente)
         if(Enable_ATRMultiTF) {
@@ -412,11 +374,7 @@ int OnInit() {
     }
     Print("  Grid A Orders: ", GetGridAPendingOrders() + GetGridAActivePositions(), " [SOLO BUY]");
     Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions(), " [SOLO SELL]");
-    if(ShieldMode != SHIELD_DISABLED) {
-        Print("  Shield Mode: ", GetShieldModeName());
-        Print("  Upper Breakout: ", DoubleToString(upperBreakoutLevel, symbolDigits));
-        Print("  Lower Breakout: ", DoubleToString(lowerBreakoutLevel, symbolDigits));
-    }
+    // Shield log REMOVED in v9.12
     Print("-----------------------------------------------------------------------");
     Print("  v9.10 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
@@ -518,7 +476,7 @@ void OnDeinit(const int reason) {
     if(shouldCleanUI) {
         Print("Cleaning up UI objects...");
         DeinitializeControlButtons();
-        DeinitializeShieldZonesVisual();
+        // DeinitializeShieldZonesVisual(); REMOVED in v9.12
         CleanupUI();
 
         // Clean up RangeBox visualization (REMOVED - CASCADE_OVERLAP puro)
@@ -529,11 +487,7 @@ void OnDeinit(const int reason) {
         g_dashboardInitialized = false;
     }
 
-    // Deinitialize Shield (logic only, not visual)
-    if(ShieldMode != SHIELD_DISABLED) {
-        DeinitializeShield();
-        // DeinitializeRangeBoxShield(); // REMOVED - RangeBoxManager eliminato
-    }
+    // Shield REMOVED in v9.12
 
     // Note: We do NOT close orders on deinit - they should persist
     // Only close if explicitly requested or on critical error
@@ -593,11 +547,7 @@ void OnTick() {
     //--- HEDGING: (REMOVED - hedge integrato in LIMIT orders) ---
     // HedgingManager eliminato
 
-    //--- SHIELD: Process Shield Intelligente ---
-    // Shield ora gestito direttamente senza RangeBox
-    if(ShieldMode != SHIELD_DISABLED) {
-        ProcessShield();
-    }
+    //--- SHIELD REMOVED in v9.12 ---
 
     // v5.8: ATR recalculation removed - ATR for monitoring only, spacing is fixed
     // Spacing is updated from CalculateCurrentSpacing() which now returns fixed spacing

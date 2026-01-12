@@ -41,16 +41,7 @@
 #define MANUAL_SR_SHOW_LABELS        true           // Show Labels
 
 //+------------------------------------------------------------------+
-//| SHIELD ZONES VISUAL                                               |
+//| SHIELD ZONES VISUAL - REMOVED in v9.12                            |
 //+------------------------------------------------------------------+
-#define SHIELDZONES_TRANSPARENCY     210            // Transparency (0=opaque, 255=invisible)
-#define SHIELDZONE_PHASE1_COLOR      clrYellow      // Phase 1 (Warning) - Yellow
-#define SHIELDZONE_PHASE2_COLOR      clrOrange      // Phase 2 (Pre-Shield) - Orange
-#define SHIELDZONE_PHASE3_COLOR      C'160,40,40'   // Phase 3 (Breakout) - Dark Red
-#define SHIELDENTRY_LINE_COLOR       clrLightYellow // Shield Entry Line - Giallo Chiaro (v5.9.1)
-#define SHIELDENTRY_LINE_WIDTH       2              // Shield Entry Line Width
-#define SHIELDENTRY_LINE_STYLE       STYLE_DASH     // Shield Entry Line Style
-#define PROFITZONE_COLOR             clrLime        // Profit Zone - Green
-#define PROFITZONE_TRANSPARENCY      220            // Profit Zone Transparency
 
 //+------------------------------------------------------------------+

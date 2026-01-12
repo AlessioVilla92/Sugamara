@@ -223,9 +223,7 @@ void OnManualSRDrag(string objectName) {
             UpdateSRLine(objectName, newPrice, "Resistance");
 
             Log_Debug("ManualSR", StringFormat("Resistance moved to %.5f", newPrice));
-
-            // v9.0: Sempre update breakout levels (struttura default)
-            upperBreakoutLevel = newPrice + Breakout_Buffer_Pips * symbolPoint * 10;
+            // breakout level update REMOVED in v9.12
         }
     }
     else if(objectName == SR_LINE_SUPPORT) {
@@ -235,9 +233,7 @@ void OnManualSRDrag(string objectName) {
             UpdateSRLine(objectName, newPrice, "Support");
 
             Log_Debug("ManualSR", StringFormat("Support moved to %.5f", newPrice));
-
-            // v9.0: Sempre update breakout levels (struttura default)
-            lowerBreakoutLevel = newPrice - Breakout_Buffer_Pips * symbolPoint * 10;
+            // breakout level update REMOVED in v9.12
         }
     }
     else if(objectName == SR_LINE_ACTIVATION) {

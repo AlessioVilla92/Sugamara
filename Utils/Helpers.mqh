@@ -181,8 +181,9 @@ string FormatDuration(int seconds) {
 //| LOGGING SYSTEM v10.0 - PROFESSIONAL & AI-PARSABLE                |
 //+------------------------------------------------------------------+
 //| Format: [TIMESTAMP] [CATEGORY] [EVENT] key=value key=value       |
-//| Categories: INIT, GRID, ORDER, POSITION, SHIELD, SESSION, SYSTEM |
+//| Categories: INIT, GRID, ORDER, POSITION, SESSION, SYSTEM         |
 //| Events are logged only on state changes, not on every tick       |
+//| v9.12: LOG_CAT_SHIELD removed                                    |
 //+------------------------------------------------------------------+
 
 // Log Categories - uppercase, fixed width for easy parsing
@@ -190,7 +191,6 @@ string FormatDuration(int seconds) {
 #define LOG_CAT_GRID      "[GRID]"
 #define LOG_CAT_ORDER     "[ORDER]"
 #define LOG_CAT_POSITION  "[POSITION]"
-#define LOG_CAT_SHIELD    "[SHIELD]"
 #define LOG_CAT_SESSION   "[SESSION]"
 #define LOG_CAT_SYSTEM    "[SYSTEM]"
 #define LOG_CAT_RECOVERY  "[RECOVERY]"
@@ -259,21 +259,7 @@ void Log_CycleCompleted(string grid, string zone, int level, int cycleNum, doubl
                 GetLogTimestamp(), LOG_CAT_POSITION, grid, zone, level, cycleNum, profit);
 }
 
-// Log shield events - ALWAYS logged (important state changes)
-void Log_ShieldPhaseChange(string fromPhase, string toPhase, double price) {
-    PrintFormat("%s %s PHASE_CHANGE from=%s to=%s price=%.5f",
-                GetLogTimestamp(), LOG_CAT_SHIELD, fromPhase, toPhase, price);
-}
-
-void Log_ShieldActivated(string type, ulong ticket, double price, double lot, double exposure) {
-    PrintFormat("%s %s ACTIVATED type=%s ticket=%d price=%.5f lot=%.2f exposure=%.2f",
-                GetLogTimestamp(), LOG_CAT_SHIELD, type, ticket, price, lot, exposure);
-}
-
-void Log_ShieldClosed(ulong ticket, string reason, double profit, int duration) {
-    PrintFormat("%s %s CLOSED ticket=%d reason=%s profit=%.2f duration=%ds",
-                GetLogTimestamp(), LOG_CAT_SHIELD, ticket, reason, profit, duration);
-}
+// Log_Shield* functions REMOVED in v9.12
 
 // Log session events - ALWAYS logged
 void Log_SessionStart(string symbol, string mode) {
@@ -398,11 +384,7 @@ void Log_DebugATR(double atr, double spacing, string condition) {
                 GetLogTimestamp(), LOG_CAT_DEBUG, atr, spacing, condition);
 }
 
-void Log_DebugShield(string phase, string state, double price, double distance) {
-    if(!DetailedLogging) return;
-    PrintFormat("%s %s SHIELD_STATE phase=%s state=%s price=%.5f distance=%.1f",
-                GetLogTimestamp(), LOG_CAT_DEBUG, phase, state, price, distance);
-}
+// Log_DebugShield REMOVED in v9.12
 
 void Log_DebugReopen(string grid, string zone, int level, string status, double price) {
     if(!DetailedLogging) return;
@@ -500,14 +482,7 @@ void LogOrder(string action, ulong ticket, string details) {
     PrintFormat("%s %s %s ticket=%d %s", GetLogTimestamp(), LOG_CAT_ORDER, action, ticket, details);
 }
 
-void LogShield(string phase, string action, string details = "") {
-    if(!DetailedLogging) return;
-    if(details != "") {
-        PrintFormat("%s %s phase=%s action=%s details=%s", GetLogTimestamp(), LOG_CAT_SHIELD, phase, action, details);
-    } else {
-        PrintFormat("%s %s phase=%s action=%s", GetLogTimestamp(), LOG_CAT_SHIELD, phase, action);
-    }
-}
+// LogShield REMOVED in v9.12
 
 void LogATR(double atrValue, double spacing, string condition) {
     if(!DetailedLogging) return;
@@ -577,11 +552,7 @@ void LogGridInitSummary(ENUM_GRID_SIDE side) {
     Log_Separator();
 }
 
-void LogPriceAlert(string zone, double currentPrice, double triggerLevel, double distance) {
-    if(!DetailedLogging) return;
-    PrintFormat("%s %s ALERT zone=%s price=%.5f trigger=%.5f distance=%.1f",
-                GetLogTimestamp(), LOG_CAT_SHIELD, zone, currentPrice, triggerLevel, distance);
-}
+// LogPriceAlert REMOVED in v9.12
 
 void LogStartupBanner() {
     Print("");

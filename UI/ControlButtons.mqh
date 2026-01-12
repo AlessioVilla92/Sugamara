@@ -199,14 +199,7 @@ void HandleControlButtonClick(string objectName) {
             if(Enable_ManualSR) {
                 UpdateLossZoneRectangles();      // Zone rosse/verdi
             }
-            if(Enable_ShieldZonesVisual) {
-                // v5.9.2: Se non inizializzate (dopo riavvio MT5), inizializza invece di aggiornare
-                if(!shieldZonesInitialized) {
-                    InitializeShieldZonesVisual();   // Prima volta dopo riavvio
-                } else {
-                    UpdateShieldZones();             // Già inizializzate
-                }
-            }
+            // ShieldZonesVisual REMOVED in v9.12
 
             if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
                 Alert("SUGAMARA [", _Symbol, "]: Recovery successful - ",

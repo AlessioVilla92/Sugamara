@@ -155,68 +155,11 @@ double rangeUpperBound = 0;                 // Limite superiore range
 double rangeLowerBound = 0;                 // Limite inferiore range
 double totalRangePips = 0;                  // Range totale in pips
 
-// v5.2: RangeBox variables removed - now using ShieldZoneData struct below for Shield
+// v5.2: RangeBox variables removed (v9.12: Shield removed completely)
 
 //+------------------------------------------------------------------+
-//| 🛡️ SHIELD INTELLIGENTE STRUCTURE                                 |
+//| 🛡️ SHIELD REMOVED in v9.12                                       |
 //+------------------------------------------------------------------+
-struct ShieldData {
-    bool isActive;                          // Shield attivo
-    ENUM_SHIELD_TYPE type;                  // Tipo (LONG/SHORT)
-    ENUM_SHIELD_PHASE phase;                // Fase corrente (per 3 fasi)
-    ulong ticket;                           // Ticket posizione shield
-    double lot_size;                        // Lot size shield
-    double entry_price;                     // Prezzo entry
-    double current_pl;                      // P/L corrente
-    double trailing_sl;                     // Trailing SL (se attivo)
-    datetime activation_time;               // Tempo attivazione
-    int activation_count;                   // Contatore attivazioni
-};
-
-ShieldData shield;
-
-// Shield Statistics
-int totalShieldActivations = 0;
-double totalShieldPL = 0;
-datetime lastShieldClosure = 0;
-
-//+------------------------------------------------------------------+
-//| 🛡️ SHIELD ZONE DATA STRUCTURE (Used by Shield for breakout zones)|
-//+------------------------------------------------------------------+
-struct ShieldZoneData {
-    double resistance;                      // Livello Resistance
-    double support;                         // Livello Support
-    double center;                          // Centro range
-    double rangeHeight;                     // Altezza range (pips)
-    double warningZoneUp;                   // Zona warning superiore
-    double warningZoneDown;                 // Zona warning inferiore
-    bool isValid;                           // Range valido
-    datetime lastCalc;                      // Ultimo calcolo
-};
-
-ShieldZoneData shieldZone;
-
-// Breakout Levels (calcolati da ultimo livello grid)
-double upperBreakoutLevel = 0;
-double lowerBreakoutLevel = 0;
-double upperReentryLevel = 0;
-double lowerReentryLevel = 0;
-
-// Breakout Detection
-datetime breakoutDetectionTime = 0;
-ENUM_BREAKOUT_DIRECTION lastBreakoutDirection = BREAKOUT_NONE;
-
-//+------------------------------------------------------------------+
-//| v5.6: BREAKOUT CONFIRMATION VARIABLES                            |
-//+------------------------------------------------------------------+
-int g_breakoutConfirmCounter = 0;
-datetime g_breakoutLastBarTime = 0;
-ENUM_BREAKOUT_DIRECTION g_breakoutPendingDirection = BREAKOUT_NONE;
-
-//+------------------------------------------------------------------+
-//| v5.6: REENTRY CONFIRMATION VARIABLES                             |
-//+------------------------------------------------------------------+
-datetime g_shieldReentryStart = 0;
 
 //+------------------------------------------------------------------+
 //| CURRENT SYSTEM STATE (Extended)                                  |
@@ -317,37 +260,7 @@ void InitializeArrays() {
     ArrayInitialize(gridB_Lower_Cycles, 0);
     for(int i = 0; i < MAX_GRID_LEVELS; i++) gridB_Lower_Status[i] = ORDER_NONE;  // FIX v4.5
 
-    // Initialize Shield Structure
-    ZeroMemory(shield);
-    shield.isActive = false;
-    shield.type = SHIELD_NONE;
-    shield.phase = PHASE_NORMAL;
-    shield.ticket = 0;
-    shield.lot_size = 0;
-    shield.entry_price = 0;
-    shield.current_pl = 0;
-    shield.trailing_sl = 0;
-    shield.activation_time = 0;
-    shield.activation_count = 0;
-
-    // Initialize RangeBox Structure
-    ZeroMemory(shieldZone);
-    shieldZone.resistance = 0;
-    shieldZone.support = 0;
-    shieldZone.center = 0;
-    shieldZone.rangeHeight = 0;
-    shieldZone.warningZoneUp = 0;
-    shieldZone.warningZoneDown = 0;
-    shieldZone.isValid = false;
-    shieldZone.lastCalc = 0;
-
-    // Reset breakout levels
-    upperBreakoutLevel = 0;
-    lowerBreakoutLevel = 0;
-    upperReentryLevel = 0;
-    lowerReentryLevel = 0;
-    breakoutDetectionTime = 0;
-    lastBreakoutDirection = BREAKOUT_NONE;
+    // Shield initialization REMOVED in v9.12
 
     // ═══════════════════════════════════════════════════════════════════
     // v5.8: Initialize ATR Cache (monitoring only)
@@ -360,7 +273,7 @@ void InitializeArrays() {
     g_lastLoggedATRChange = 0;
     g_lastATRStepName = "";
 
-    Print("SUCCESS: All grid arrays, Shield, and v4.0 modules initialized");
+    Print("SUCCESS: All grid arrays and v4.0 modules initialized");
 }
 
 //+------------------------------------------------------------------+

@@ -116,7 +116,7 @@ bool RecoverExistingOrders() {
         g_recoveryPerformed = true;
         g_lastRecoveryTime = TimeCurrent();
 
-        CalculateBreakoutLevels();
+        // CalculateBreakoutLevels() REMOVED in v9.12
 
         Log_RecoveryComplete(g_recoveredOrdersCount, g_recoveredPositionsCount, entryPoint);
         // v9.11: Alert finale con durata

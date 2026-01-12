@@ -170,43 +170,8 @@ input double    TP_Ratio_Pure = 1.2;                         // 🎯 Ratio TP pe
 // TP = Spacing × Ratio | 1.2 = TP 20% maggiore di spacing
 
 //+------------------------------------------------------------------+
-//| 7️⃣ 🛡️ SHIELD INTELLIGENTE                                        |
+//| 7️⃣ 🛡️ SHIELD INTELLIGENTE - REMOVED in v9.12                     |
 //+------------------------------------------------------------------+
-
-input group "                                                           "
-input group "╔═══════════════════════════════════════════════════════════╗"
-input group "║  7️⃣  🛡️ SHIELD INTELLIGENTE                               ║"
-input group "╚═══════════════════════════════════════════════════════════╝"
-
-input group "    ╔═ SELEZIONA SHIELD MODE ═══════════════════════════════🔽🔽🔽"
-input ENUM_SHIELD_MODE ShieldMode = SHIELD_3_PHASES;         // 🛡️ Modalita Shield ▼
-// SHIELD_DISABLED  = Nessuna protezione
-// SHIELD_SIMPLE    = Attivazione diretta su breakout
-// SHIELD_3_PHASES  = Warning -> Pre-Shield -> Active (CONSIGLIATO)
-
-input group "    ╔═ SELEZIONA TIPO ORDINE SHIELD ════════════════════════🔽🔽🔽"
-input ENUM_SHIELD_ORDER_TYPE ShieldOrderType = SHIELD_ORDER_STOP; // 🛡️ Tipo Ordine Shield ▼
-// SHIELD_ORDER_MARKET = Esecuzione immediata a mercato
-// SHIELD_ORDER_STOP   = Pending STOP order al livello breakout (CONSIGLIATO)
-
-input group "    📐 SHIELD BREAKOUT PARAMETERS"
-input double    Breakout_Buffer_Pips = 20.0;                 // 📏 Buffer Breakout oltre ultimo grid (pips)
-input int       Breakout_Confirm_Candles = 2;                // 🔢 Candele Conferma Breakout
-input bool      Use_Candle_Close = true;                     // ✅ Usa Chiusura Candela per Conferma
-input int       Reentry_Confirm_Seconds = 30;                // ⏱️ Secondi conferma Reentry (0=disabilitato)
-
-input group "    ⚠️ SHIELD 3 FASI PARAMETERS"
-input bool      Shield_Use_Trailing = false;                 // ✅ Trailing per Shield
-input double    Shield_Trailing_Start = 30.0;                // 📏 Trailing Start (pips)
-input double    Shield_Trailing_Step = 10.0;                 // 📏 Trailing Step (pips)
-
-input group "    🎨 SHIELD ZONES VISUAL (Fasce Colorate)"
-input bool      Enable_ShieldZonesVisual = true;             // ✅ Mostra Fasce Shield Zones
-input bool      Enable_ProfitZoneVisual = true;              // ✅ Mostra Zona Profit (Verde)
-// SHIELD ZONE COLORS: Now in VisualTheme.mqh (SHIELDZONE_*, PROFITZONE_*)
-
-input group "    🔧 LEGACY HEDGE (Backward Compatibility)"
-input bool      EnableHedging = true;                        // ✅ Abilita hedging (maps to Shield)
 
 //+------------------------------------------------------------------+
 //| 9️⃣ 💰 LOT SIZING                                                 |
@@ -229,9 +194,7 @@ input double    MaxLotPerLevel = 0.12;                       // 🔒 Max Lot per
 input group "    💰 RISK-BASED LOT SETTINGS (se LOT_RISK_BASED)"
 input double    RiskCapital_USD = 100.0;                     // 💰 Capitale Rischio MAX ($)
 // Se chiudi TUTTO in loss, perderai massimo questo importo
-input bool      IncludeShieldInRisk = true;                  // 🛡️ Includi Shield nel calcolo rischio
-// IMPORTANTE: Shield NON piazza SL automatici!
-// Shield = protezione tramite hedging, NON chiusura forzata
+// IncludeShieldInRisk REMOVED in v9.12
 input double    RiskBuffer_Percent = 10.0;                   // 📊 Buffer Sicurezza (%)
 // Calcola lot per perdere (RiskCapital - 10%) come margine
 
@@ -287,9 +250,8 @@ input ENUM_REOPEN_MODE ReopenMode = REOPEN_MODE_SAME_POINT;  // 📍 Modalità C
 // REOPEN_MODE_ATR_DRIVEN: Riapre al prezzo calcolato da ATR corrente
 // REOPEN_MODE_HYBRID: Stesso punto se vicino, ATR se lontano (>50% spacing)
 
-input group "    🛡️ SICUREZZA REOPEN v4.0"
-input bool      PauseReopenNearShield = false;               // 🛡️ Pausa reopen vicino a Shield ( Disattivato 12dic )
-input double    ShieldProximity_Pips = 20.0;                 // 📏 Distanza minima da Shield (pips)
+input group "    🔒 SICUREZZA REOPEN v4.0"
+// PauseReopenNearShield, ShieldProximity_Pips REMOVED in v9.12
 input bool      PauseReopenOnExtreme = false;                // 🛡️ Pausa reopen su ATR EXTREME ( Disattivato 12dic )
 
 // v9.11: RISK MANAGEMENT section removed (EnableDailyTarget, PauseOnNews)

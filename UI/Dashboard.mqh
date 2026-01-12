@@ -282,7 +282,7 @@ bool InitializeDashboard() {
 
     CreateUnifiedDashboard();
     CreateVolatilityPanel();
-    CreateShieldPanel();
+    // CreateShieldPanel(); REMOVED in v9.12
     CreateGridLegendPanel();
     CreateCOPPanel();  // v5.1: Close On Profit Panel
 
@@ -316,8 +316,8 @@ bool VerifyDashboardExists() {
         "LEFT_EXPOSURE_PANEL",
         "RIGHT_PERF_PANEL",
         "VOL_PANEL",
-        "SHIELD_PANEL",
         "GRID_LEGEND_PANEL"
+        // SHIELD_PANEL REMOVED in v9.12
     };
 
     int missingCount = 0;
@@ -388,7 +388,7 @@ void RecreateEntireDashboard() {
     // Recreate all components
     CreateUnifiedDashboard();
     CreateVolatilityPanel();
-    CreateShieldPanel();
+    // CreateShieldPanel(); REMOVED in v9.12
     CreateGridLegendPanel();
     CreateCOPPanel();  // v5.1: Close On Profit Panel
 
@@ -429,10 +429,11 @@ void CheckDashboardPersistence() {
     // Quick check: verify main panel exists
     if(ObjectFind(0, "TITLE_PANEL") < 0) {
         // v9.11: Identify ALL missing objects for detailed logging
+        // v9.12: SHIELD_PANEL removed
         string criticalObjects[] = {
             "TITLE_PANEL", "MODE_PANEL", "LEFT_GRIDA_PANEL",
             "RIGHT_GRIDB_PANEL", "LEFT_EXPOSURE_PANEL", "RIGHT_PERF_PANEL",
-            "VOL_PANEL", "SHIELD_PANEL", "GRID_LEGEND_PANEL"
+            "VOL_PANEL", "GRID_LEGEND_PANEL"
         };
 
         int missingCount = 0;
@@ -687,61 +688,8 @@ void CreateVolatilityPanel() {
 }
 
 //+------------------------------------------------------------------+
-//| Create Shield Panel (Right Side)                                  |
-//| v5.8: Expanded with PreAlert/Shield levels and distance           |
-//| v5.9: Moved up (ATR Monitor reduced from 160 to 55px)             |
+//| CreateShieldPanel() REMOVED in v9.12                              |
 //+------------------------------------------------------------------+
-void CreateShieldPanel() {
-    int shieldX = Dashboard_X + TOTAL_WIDTH + 10;
-    int shieldY = Dashboard_Y + 60;  // v5.9: Subito sotto ATR Monitor (55 + 5 gap)
-    int shieldWidth = 175;
-    int shieldHeight = 215;  // v5.8: Expanded from 140 to 215 for new level fields
-
-    DashRectangle("SHIELD_PANEL", shieldX, shieldY, shieldWidth, shieldHeight, C'25,35,25');
-
-    int ly = shieldY + 8;
-    DashLabel("SHIELD_TITLE", shieldX + 10, ly, "SHIELD MONITOR", CLR_GOLD, 9, "Arial Bold");
-    ly += 20;
-    DashLabel("SHIELD_SEPARATOR", shieldX + 10, ly, "------------------------", clrGray, 7);
-    ly += 15;
-
-    // Shield Mode
-    DashLabel("SHIELD_MODE", shieldX + 10, ly, "Mode: ---", CLR_AZURE_1, 8);
-    ly += 16;
-
-    // Shield Status
-    DashLabel("SHIELD_STATUS", shieldX + 10, ly, "Status: IDLE", clrGray, 8);
-    ly += 16;
-
-    // Shield Phase
-    DashLabel("SHIELD_PHASE", shieldX + 10, ly, "Phase: Normal", clrGray, 8);
-    ly += 16;
-
-    // v5.8: Shield Levels section
-    DashLabel("SHIELD_SEP2", shieldX + 10, ly, "--- LEVELS ---", clrGray, 7);
-    ly += 14;
-
-    // PreAlert and Shield levels
-    DashLabel("SHIELD_PREALERT_UP", shieldX + 10, ly, "PreAlert↑: ------", CLR_NEUTRAL, 7);
-    ly += 13;
-    DashLabel("SHIELD_PREALERT_DN", shieldX + 10, ly, "PreAlert↓: ------", CLR_NEUTRAL, 7);
-    ly += 13;
-    DashLabel("SHIELD_BREAKOUT_UP", shieldX + 10, ly, "Shield↑:   ------", CLR_LOSS, 7);
-    ly += 13;
-    DashLabel("SHIELD_BREAKOUT_DN", shieldX + 10, ly, "Shield↓:   ------", CLR_LOSS, 7);
-    ly += 13;
-    DashLabel("SHIELD_DISTANCE", shieldX + 10, ly, "Distance:  --- pips", CLR_AZURE_1, 7);
-    ly += 16;
-
-    // Active Shield Info
-    DashLabel("SHIELD_TYPE", shieldX + 10, ly, "Type: ---", clrGray, 8);
-    ly += 14;
-    DashLabel("SHIELD_LOT", shieldX + 10, ly, "Lot: ---", clrGray, 8);
-    ly += 14;
-    DashLabel("SHIELD_PL", shieldX + 10, ly, "P/L: ---", clrGray, 9, "Arial Bold");
-
-    Print("SUCCESS: Shield Panel created (expanded with levels)");
-}
 
 //+------------------------------------------------------------------+
 //| Create Grid Legend Panel (Under Performance - Right Column)       |
@@ -785,7 +733,7 @@ void CreateCOPPanel() {
     if(!Enable_CloseOnProfit) return;
 
     int copX = Dashboard_X + TOTAL_WIDTH + 10;
-    int copY = Dashboard_Y + 280;  // v5.9: Subito sotto Shield (60 + 215 + 5 gap)
+    int copY = Dashboard_Y + 65;  // v9.12: Subito sotto ATR Monitor (Shield removed)
     int copWidth = 175;
     int copHeight = 155;  // Increased for new fields
 
@@ -843,7 +791,7 @@ void UpdateDashboard() {
     UpdatePerformanceSection();
     UpdateGridCounterSection();  // v5.9.3: Grid Counter Section
     UpdateVolatilityPanel();
-    UpdateShieldSection();
+    // UpdateShieldSection(); REMOVED in v9.12
     UpdateCOPSection();  // v5.1: Close On Profit Section
 
     ChartRedraw(0);
@@ -1085,152 +1033,8 @@ void UpdateVolatilityPanel() {
 }
 
 //+------------------------------------------------------------------+
-//| Update Shield Section                                             |
+//| UpdateShieldSection() REMOVED in v9.12                            |
 //+------------------------------------------------------------------+
-void UpdateShieldSection() {
-    // Shield Mode
-    string modeText = "Mode: ";
-    // v9.0: Rimosso check IsCascadeOverlapMode() - Shield sempre disponibile
-
-    // Get Shield Mode Name
-    switch(ShieldMode) {
-        case SHIELD_DISABLED: modeText += "DISABLED"; break;
-        case SHIELD_SIMPLE: modeText += "SIMPLE"; break;
-        case SHIELD_3_PHASES: modeText += "3 PHASES"; break;
-    }
-    ObjectSetString(0, "SHIELD_MODE", OBJPROP_TEXT, modeText);
-    ObjectSetInteger(0, "SHIELD_MODE", OBJPROP_COLOR, CLR_AZURE_1);
-
-    // Shield Status
-    string statusText = "Status: ";
-    color statusColor = clrGray;
-
-    if(ShieldMode == SHIELD_DISABLED) {
-        statusText += "DISABLED";
-        statusColor = clrGray;
-    }
-    else if(!shield.isActive) {
-        switch(shield.phase) {
-            case PHASE_NORMAL:
-                statusText += "IDLE";
-                statusColor = CLR_AZURE_3;
-                break;
-            case PHASE_WARNING:
-                statusText += "WARNING";
-                statusColor = CLR_NEUTRAL;
-                break;
-            case PHASE_PRE_SHIELD:
-                statusText += "PRE-SHIELD";
-                statusColor = clrOrange;
-                break;
-            default:
-                statusText += "IDLE";
-                break;
-        }
-    }
-    else {
-        if(shield.type == SHIELD_LONG) {
-            statusText += "SHIELD LONG";
-            statusColor = CLR_PROFIT;
-        } else if(shield.type == SHIELD_SHORT) {
-            statusText += "SHIELD SHORT";
-            statusColor = CLR_LOSS;
-        }
-    }
-
-    ObjectSetString(0, "SHIELD_STATUS", OBJPROP_TEXT, statusText);
-    ObjectSetInteger(0, "SHIELD_STATUS", OBJPROP_COLOR, statusColor);
-
-    // Shield Phase
-    string phaseText = "Phase: ";
-    switch(shield.phase) {
-        case PHASE_NORMAL: phaseText += "Normal"; break;
-        case PHASE_WARNING: phaseText += "Warning"; break;
-        case PHASE_PRE_SHIELD: phaseText += "Pre-Shield"; break;
-        case PHASE_SHIELD_ACTIVE: phaseText += "Active"; break;
-    }
-    ObjectSetString(0, "SHIELD_PHASE", OBJPROP_TEXT, phaseText);
-
-    // v5.8: Shield Levels Update
-    int priceDigits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
-
-    // PreAlert Levels (Warning Zone)
-    if(szWarningZoneUp > 0) {
-        ObjectSetString(0, "SHIELD_PREALERT_UP", OBJPROP_TEXT,
-                        StringFormat("PreAlert↑: %s", DoubleToString(szWarningZoneUp, priceDigits)));
-    } else {
-        ObjectSetString(0, "SHIELD_PREALERT_UP", OBJPROP_TEXT, "PreAlert↑: ------");
-    }
-
-    if(szWarningZoneDown > 0) {
-        ObjectSetString(0, "SHIELD_PREALERT_DN", OBJPROP_TEXT,
-                        StringFormat("PreAlert↓: %s", DoubleToString(szWarningZoneDown, priceDigits)));
-    } else {
-        ObjectSetString(0, "SHIELD_PREALERT_DN", OBJPROP_TEXT, "PreAlert↓: ------");
-    }
-
-    // Breakout Levels (Shield Trigger)
-    if(szBreakoutUp > 0) {
-        ObjectSetString(0, "SHIELD_BREAKOUT_UP", OBJPROP_TEXT,
-                        StringFormat("Shield↑:   %s", DoubleToString(szBreakoutUp, priceDigits)));
-    } else {
-        ObjectSetString(0, "SHIELD_BREAKOUT_UP", OBJPROP_TEXT, "Shield↑:   ------");
-    }
-
-    if(szBreakoutDown > 0) {
-        ObjectSetString(0, "SHIELD_BREAKOUT_DN", OBJPROP_TEXT,
-                        StringFormat("Shield↓:   %s", DoubleToString(szBreakoutDown, priceDigits)));
-    } else {
-        ObjectSetString(0, "SHIELD_BREAKOUT_DN", OBJPROP_TEXT, "Shield↓:   ------");
-    }
-
-    // Distance to nearest breakout
-    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-    double distanceUp = (szBreakoutUp > 0) ? PointsToPips(szBreakoutUp - currentPrice) : 0;
-    double distanceDown = (szBreakoutDown > 0) ? PointsToPips(currentPrice - szBreakoutDown) : 0;
-    double nearestDistance = 0;
-
-    if(distanceUp > 0 && distanceDown > 0) {
-        nearestDistance = MathMin(distanceUp, distanceDown);
-    } else if(distanceUp > 0) {
-        nearestDistance = distanceUp;
-    } else if(distanceDown > 0) {
-        nearestDistance = distanceDown;
-    }
-
-    if(nearestDistance > 0) {
-        color distColor = (nearestDistance < 20) ? CLR_NEUTRAL : CLR_AZURE_1;
-        ObjectSetString(0, "SHIELD_DISTANCE", OBJPROP_TEXT,
-                        StringFormat("Distance:  %.1f pips", nearestDistance));
-        ObjectSetInteger(0, "SHIELD_DISTANCE", OBJPROP_COLOR, distColor);
-    } else {
-        ObjectSetString(0, "SHIELD_DISTANCE", OBJPROP_TEXT, "Distance:  --- pips");
-        ObjectSetInteger(0, "SHIELD_DISTANCE", OBJPROP_COLOR, clrGray);
-    }
-
-    // Active Shield Details
-    if(shield.isActive) {
-        string typeText = "Type: ";
-        if(shield.type == SHIELD_LONG) typeText += "LONG";
-        else if(shield.type == SHIELD_SHORT) typeText += "SHORT";
-        else typeText += "---";
-        ObjectSetString(0, "SHIELD_TYPE", OBJPROP_TEXT, typeText);
-
-        ObjectSetString(0, "SHIELD_LOT", OBJPROP_TEXT,
-                        StringFormat("Lot: %.2f", shield.lot_size));
-
-        color plColor = shield.current_pl >= 0 ? CLR_PROFIT : CLR_LOSS;
-        ObjectSetString(0, "SHIELD_PL", OBJPROP_TEXT,
-                        StringFormat("P/L: $%.2f", shield.current_pl));
-        ObjectSetInteger(0, "SHIELD_PL", OBJPROP_COLOR, plColor);
-    }
-    else {
-        ObjectSetString(0, "SHIELD_TYPE", OBJPROP_TEXT, "Type: ---");
-        ObjectSetString(0, "SHIELD_LOT", OBJPROP_TEXT, "Lot: ---");
-        ObjectSetString(0, "SHIELD_PL", OBJPROP_TEXT, "P/L: ---");
-        ObjectSetInteger(0, "SHIELD_PL", OBJPROP_COLOR, clrGray);
-    }
-}
 
 //+------------------------------------------------------------------+
 //| Update COP Section (v5.1)                                         |

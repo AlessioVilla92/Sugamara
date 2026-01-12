@@ -37,40 +37,8 @@ enum ENUM_FOREX_PAIR {
 };
 
 //+------------------------------------------------------------------+
-//| 🛡️ SHIELD MODE - Modalità Shield Intelligente                    |
+//| 🛡️ SHIELD ENUMS REMOVED in v9.12                                 |
 //+------------------------------------------------------------------+
-enum ENUM_SHIELD_MODE {
-    SHIELD_DISABLED = 0,        // Shield Disabilitato
-    SHIELD_SIMPLE = 1,          // Shield Simple (1 fase - attivazione diretta)
-    SHIELD_3_PHASES = 2         // Shield 3 Fasi (Warning -> Pre-Shield -> Attivo)
-};
-
-//+------------------------------------------------------------------+
-//| 🛡️ SHIELD TYPE - Tipo di Shield attivo                           |
-//+------------------------------------------------------------------+
-enum ENUM_SHIELD_TYPE {
-    SHIELD_NONE = 0,            // Nessuno shield attivo
-    SHIELD_LONG = 1,            // Shield LONG (protegge LONG in perdita)
-    SHIELD_SHORT = 2            // Shield SHORT (protegge SHORT in perdita)
-};
-
-//+------------------------------------------------------------------+
-//| 🛡️ SHIELD PHASE - Fase Shield (solo per SHIELD_3_PHASES)         |
-//+------------------------------------------------------------------+
-enum ENUM_SHIELD_PHASE {
-    PHASE_NORMAL = 0,           // Operativita normale (dentro range)
-    PHASE_WARNING = 1,          // Fase 1: Warning Zone (alert)
-    PHASE_PRE_SHIELD = 2,       // Fase 2: Pre-Shield (pending pronto)
-    PHASE_SHIELD_ACTIVE = 3     // Fase 3: Shield Attivo (protezione)
-};
-
-//+------------------------------------------------------------------+
-//| 🛡️ SHIELD ORDER TYPE - Tipo ordine Shield (MARKET vs STOP)       |
-//+------------------------------------------------------------------+
-enum ENUM_SHIELD_ORDER_TYPE {
-    SHIELD_ORDER_MARKET = 0,    // MARKET - Esecuzione immediata (CONSIGLIATO)
-    SHIELD_ORDER_STOP = 1       // STOP - Pending order al livello breakout
-};
 
 //+------------------------------------------------------------------+
 //| 🔄 BREAKOUT DIRECTION - Direzione breakout                       |
@@ -129,7 +97,7 @@ enum ENUM_REOPEN_TRIGGER {
 };
 
 //+------------------------------------------------------------------+
-//| ⚙️ SYSTEM STATE - Stati del sistema (esteso per Shield)          |
+//| ⚙️ SYSTEM STATE - Stati del sistema                              |
 //+------------------------------------------------------------------+
 enum ENUM_SYSTEM_STATE {
     // Stati base
@@ -141,7 +109,7 @@ enum ENUM_SYSTEM_STATE {
     STATE_INITIALIZING = 4,     // Inizializzazione in corso
     STATE_CLOSING = 5,          // Chiusura posizioni in corso
 
-    // Stati Range (usati da Shield per breakout detection)
+    // Stati Range (v9.12: legacy, kept for compatibility)
     STATE_INSIDE_RANGE = 10,    // Dentro il range (normale)
     STATE_WARNING_UP = 11,      // Warning zona superiore
     STATE_WARNING_DOWN = 12,    // Warning zona inferiore
@@ -150,10 +118,7 @@ enum ENUM_SYSTEM_STATE {
     STATE_BREAKOUT_UP = 20,     // Breakout sopra
     STATE_BREAKOUT_DOWN = 21,   // Breakout sotto
 
-    // Stati Shield
-    STATE_SHIELD_PENDING = 30,  // Shield pending (pronto)
-    STATE_SHIELD_LONG = 31,     // Shield LONG attivo
-    STATE_SHIELD_SHORT = 32,    // Shield SHORT attivo
+    // Stati Shield REMOVED in v9.12
 
     // Stati Reentry
     STATE_REENTRY = 40,         // Rientro nel range
@@ -285,7 +250,5 @@ const int DEFAULT_COOLDOWN_SEC = 120;     // Cooldown default cyclic (secondi)
 const int MAGIC_OFFSET_GRID_A = 0;        // Grid A: MagicNumber + 0
 const int MAGIC_OFFSET_GRID_B = 10000;    // Grid B: MagicNumber + 10000
 
-// Shield Magic Numbers (nuovo sistema)
-const int MAGIC_SHIELD_LONG = 9001;       // Shield LONG
-const int MAGIC_SHIELD_SHORT = 9002;      // Shield SHORT
+// Shield Magic Numbers REMOVED in v9.12
 
