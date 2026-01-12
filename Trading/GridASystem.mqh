@@ -51,12 +51,12 @@ bool InitializeGridA() {
     // Sanity check - verify prices are unique
     bool pricesValid = true;
     for(int i = 1; i < GridLevelsPerSide; i++) {
-        if(MathAbs(gridA_Upper_EntryPrices[i] - gridA_Upper_EntryPrices[i-1]) < symbolPoint) {
-            Log_SystemError("GridA", 0, StringFormat("Upper L%d = L%d (same price)", i+1, i));
+        if(MathAbs(gridA_Upper_EntryPrices[i] - gridA_Upper_EntryPrices[i - 1]) < symbolPoint) {
+            Log_SystemError("GridA", 0, StringFormat("Upper L % d = L % d(same price)", i + 1, i));
             pricesValid = false;
         }
-        if(MathAbs(gridA_Lower_EntryPrices[i] - gridA_Lower_EntryPrices[i-1]) < symbolPoint) {
-            Log_SystemError("GridA", 0, StringFormat("Lower L%d = L%d (same price)", i+1, i));
+        if(MathAbs(gridA_Lower_EntryPrices[i] - gridA_Lower_EntryPrices[i - 1]) < symbolPoint) {
+            Log_SystemError("GridA", 0, StringFormat("Lower L % d = L % d(same price)", i + 1, i));
             pricesValid = false;
         }
     }
@@ -109,8 +109,8 @@ bool PlaceAllGridAOrders() {
     int totalPlaced = placedUpper + placedLower;
     int totalExpected = GridLevelsPerSide * 2;
 
-    LogMessage(LOG_INFO, "Grid A: Placed " + IntegerToString(totalPlaced) + "/" +
-               IntegerToString(totalExpected) + " orders");
+    LogMessage(LOG_INFO, "Grid A: Placed " + IntegerToString(totalPlaced) + " / " +
+    IntegerToString(totalExpected) + " orders");
 
     if(totalPlaced < totalExpected) {
         LogMessage(LOG_WARNING, "Grid A: Some orders failed to place");
@@ -124,12 +124,12 @@ bool PlaceAllGridAOrders() {
 //| Place Single Grid A Upper Order (Buy Limit)                      |
 //+------------------------------------------------------------------+
 bool PlaceGridAUpperOrder(int level) {
-    if(!IsValidTrailingIndex(level, true)) return false;  // v9.0: Supporta trailing grids
-    if(gridA_Upper_Status[level] != ORDER_NONE) return false;  // Already has order
+    if(!IsValidTrailingIndex(level, true)) return false; // v9.0: Supporta trailing grids
+    if(gridA_Upper_Status[level] != ORDER_NONE) return false; // Already has order
 
     double entryPrice = gridA_Upper_EntryPrices[level];
     double tp = gridA_Upper_TP[level];
-    double sl = 0;  // v5.6: No SL - Auto-hedging compensa le perdite
+    double sl = 0; // v5.6: No SL - Auto - hedging compensa le perdite
     double lot = gridA_Upper_Lots[level];
 
     // v9.0: Grid A Upper = sempre BUY STOP
@@ -143,18 +143,17 @@ bool PlaceGridAUpperOrder(int level) {
 
     // Place order
     ulong ticket = PlacePendingOrder(orderType, lot, entryPrice, sl, tp,
-                                     GetGridLevelID(GRID_A, ZONE_UPPER, level),
-                                     GetGridMagic(GRID_A));
+    GetGridLevelID(GRID_A, ZONE_UPPER, level),
+    GetGridMagic(GRID_A));
 
     if(ticket > 0) {
         gridA_Upper_Tickets[level] = ticket;
         gridA_Upper_Status[level] = ORDER_PENDING;
-        g_gridA_PendingCount++;  // v5.9.3: Grid Counter
+        g_gridA_PendingCount++; // v5.9.3: Grid Counter
         LogGridStatus(GRID_A, ZONE_UPPER, level, "Order placed: " + IntegerToString(ticket));
         return true;
     }
 
-    LogGridStatus(GRID_A, ZONE_UPPER, level, "Failed to place order");
     return false;
 }
 
@@ -162,17 +161,17 @@ bool PlaceGridAUpperOrder(int level) {
 //| Place Single Grid A Lower Order (Sell Stop)                      |
 //+------------------------------------------------------------------+
 bool PlaceGridALowerOrder(int level) {
-    if(!IsValidTrailingIndex(level, false)) return false;  // v9.0: Supporta trailing grids
+    if(!IsValidTrailingIndex(level, false)) return false; // v9.0: Supporta trailing grids
     if(gridA_Lower_Status[level] != ORDER_NONE) return false;
 
     double entryPrice = gridA_Lower_EntryPrices[level];
     double tp = gridA_Lower_TP[level];
-    double sl = 0;  // v5.6: No SL - Auto-hedging compensa le perdite
+    double sl = 0; // v5.6: No SL - Auto - hedging compensa le perdite
     double lot = gridA_Lower_Lots[level];
 
     // v9.0: Grid A Lower = sempre BUY LIMIT
     ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_A, ZONE_LOWER);
-    bool isBuyOrder = true;  // v9.0: Grid A = sempre BUY
+    bool isBuyOrder = true; // v9.0: Grid A = sempre BUY
 
     // v9.0: Rimosso GetSafeOrderPrice - entry SEMPRE originale
     // Se prezzo invalido, OrderManager ritorna 0 e cyclic reopen riprova
@@ -182,18 +181,17 @@ bool PlaceGridALowerOrder(int level) {
 
     // Place order
     ulong ticket = PlacePendingOrder(orderType, lot, entryPrice, sl, tp,
-                                     GetGridLevelID(GRID_A, ZONE_LOWER, level),
-                                     GetGridMagic(GRID_A));
+    GetGridLevelID(GRID_A, ZONE_LOWER, level),
+    GetGridMagic(GRID_A));
 
     if(ticket > 0) {
         gridA_Lower_Tickets[level] = ticket;
         gridA_Lower_Status[level] = ORDER_PENDING;
-        g_gridA_PendingCount++;  // v5.9.3: Grid Counter
+        g_gridA_PendingCount++; // v5.9.3: Grid Counter
         LogGridStatus(GRID_A, ZONE_LOWER, level, "Order placed: " + IntegerToString(ticket));
         return true;
     }
 
-    LogGridStatus(GRID_A, ZONE_LOWER, level, "Failed to place order");
     return false;
 }
 
@@ -224,7 +222,7 @@ void UpdateGridAStatuses() {
 //| Update Single Grid A Upper Level Status                          |
 //+------------------------------------------------------------------+
 void UpdateGridAUpperStatus(int level) {
-    if(!IsValidTrailingIndex(level, true)) return;  // v9.0: Supporta trailing grids
+    if(!IsValidTrailingIndex(level, true)) return; // v9.0: Supporta trailing grids
 
     ulong ticket = gridA_Upper_Tickets[level];
     ENUM_ORDER_STATUS currentStatus = gridA_Upper_Status[level];
@@ -274,7 +272,7 @@ void UpdateGridAUpperStatus(int level) {
 //| Update Single Grid A Lower Level Status                          |
 //+------------------------------------------------------------------+
 void UpdateGridALowerStatus(int level) {
-    if(!IsValidTrailingIndex(level, false)) return;  // v9.0: Supporta trailing grids
+    if(!IsValidTrailingIndex(level, false)) return; // v9.0: Supporta trailing grids
 
     ulong ticket = gridA_Lower_Tickets[level];
     ENUM_ORDER_STATUS currentStatus = gridA_Lower_Status[level];
@@ -284,7 +282,7 @@ void UpdateGridALowerStatus(int level) {
     // Check if pending order still exists
     if(currentStatus == ORDER_PENDING) {
         if(OrderSelect(ticket)) {
-            return;  // Order still pending
+            return; // Order still pending
         } else {
             if(PositionSelectByTicket(ticket)) {
                 gridA_Lower_Status[level] = ORDER_FILLED;
@@ -409,13 +407,13 @@ void ReopenGridAUpper(int level) {
     gridA_Upper_Tickets[level] = 0;
 
     if(PlaceGridAUpperOrder(level)) {
-        Log_OrderPlaced("A", "UP", level+1, "BUY_STOP", gridA_Upper_Tickets[level],
-                       gridA_Upper_EntryPrices[level], gridA_Upper_TP[level], 0, gridA_Upper_Lots[level]);
+        Log_OrderPlaced("A", "UP", level + 1, "BUY_STOP", gridA_Upper_Tickets[level],
+        gridA_Upper_EntryPrices[level], gridA_Upper_TP[level], 0, gridA_Upper_Lots[level]);
         IncrementCycleCount(GRID_A, ZONE_UPPER, level);
     } else {
         gridA_Upper_Status[level] = prevStatus;
         gridA_Upper_Tickets[level] = prevTicket;
-        Log_Debug("Reopen", StringFormat("GridA-UP-L%d FAILED", level+1));
+        Log_Debug("Reopen", StringFormat("GridA - UP - L % d FAILED", level + 1));
     }
 }
 
@@ -430,13 +428,13 @@ void ReopenGridALower(int level) {
     gridA_Lower_Tickets[level] = 0;
 
     if(PlaceGridALowerOrder(level)) {
-        Log_OrderPlaced("A", "DN", level+1, "BUY_LIMIT", gridA_Lower_Tickets[level],
-                       gridA_Lower_EntryPrices[level], gridA_Lower_TP[level], 0, gridA_Lower_Lots[level]);
+        Log_OrderPlaced("A", "DN", level + 1, "BUY_LIMIT", gridA_Lower_Tickets[level],
+        gridA_Lower_EntryPrices[level], gridA_Lower_TP[level], 0, gridA_Lower_Lots[level]);
         IncrementCycleCount(GRID_A, ZONE_LOWER, level);
     } else {
         gridA_Lower_Status[level] = prevStatus;
         gridA_Lower_Tickets[level] = prevTicket;
-        Log_Debug("Reopen", StringFormat("GridA-DN-L%d FAILED", level+1));
+        Log_Debug("Reopen", StringFormat("GridA - DN - L % d FAILED", level + 1));
     }
 }
 
@@ -598,7 +596,7 @@ string GetGridASummary() {
     double profit = GetGridAOpenProfit();
 
     return "Pos:" + IntegerToString(positions) +
-           " Pend:" + IntegerToString(pending) +
-           " P/L:" + FormatMoney(profit);
+    " Pend:" + IntegerToString(pending) +
+    " P / L:" + FormatMoney(profit);
 }
 

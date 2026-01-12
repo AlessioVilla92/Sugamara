@@ -92,8 +92,8 @@ bool PlaceAllGridBOrders() {
     int totalPlaced = placedUpper + placedLower;
     int totalExpected = GridLevelsPerSide * 2;
 
-    LogMessage(LOG_INFO, "Grid B: Placed " + IntegerToString(totalPlaced) + "/" +
-               IntegerToString(totalExpected) + " orders");
+    LogMessage(LOG_INFO, "Grid B: Placed " + IntegerToString(totalPlaced) + " / " +
+    IntegerToString(totalExpected) + " orders");
 
     if(totalPlaced < totalExpected) {
         LogMessage(LOG_WARNING, "Grid B: Some orders failed to place");
@@ -107,17 +107,17 @@ bool PlaceAllGridBOrders() {
 //| Place Single Grid B Upper Order (Sell Limit)                     |
 //+------------------------------------------------------------------+
 bool PlaceGridBUpperOrder(int level) {
-    if(!IsValidTrailingIndex(level, true)) return false;  // v9.0: Supporta trailing grids
+    if(!IsValidTrailingIndex(level, true)) return false; // v9.0: Supporta trailing grids
     if(gridB_Upper_Status[level] != ORDER_NONE) return false;
 
     double entryPrice = gridB_Upper_EntryPrices[level];
     double tp = gridB_Upper_TP[level];
-    double sl = 0;  // v5.6: No SL - Auto-hedging compensa le perdite
+    double sl = 0; // v5.6: No SL - Auto - hedging compensa le perdite
     double lot = gridB_Upper_Lots[level];
 
     // v9.0: Grid B Upper = sempre SELL LIMIT
     ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_UPPER);
-    bool isBuyOrder = false;  // v9.0: Grid B = sempre SELL
+    bool isBuyOrder = false; // v9.0: Grid B = sempre SELL
 
     // v9.0: Rimosso GetSafeOrderPrice - entry SEMPRE originale
     // Se prezzo invalido, OrderManager ritorna 0 e cyclic reopen riprova
@@ -127,18 +127,17 @@ bool PlaceGridBUpperOrder(int level) {
 
     // Place order
     ulong ticket = PlacePendingOrder(orderType, lot, entryPrice, sl, tp,
-                                     GetGridLevelID(GRID_B, ZONE_UPPER, level),
-                                     GetGridMagic(GRID_B));
+    GetGridLevelID(GRID_B, ZONE_UPPER, level),
+    GetGridMagic(GRID_B));
 
     if(ticket > 0) {
         gridB_Upper_Tickets[level] = ticket;
         gridB_Upper_Status[level] = ORDER_PENDING;
-        g_gridB_PendingCount++;  // v5.9.3: Grid Counter
+        g_gridB_PendingCount++; // v5.9.3: Grid Counter
         LogGridStatus(GRID_B, ZONE_UPPER, level, "Order placed: " + IntegerToString(ticket));
         return true;
     }
 
-    LogGridStatus(GRID_B, ZONE_UPPER, level, "Failed to place order");
     return false;
 }
 
@@ -146,17 +145,17 @@ bool PlaceGridBUpperOrder(int level) {
 //| Place Single Grid B Lower Order (Buy Stop)                       |
 //+------------------------------------------------------------------+
 bool PlaceGridBLowerOrder(int level) {
-    if(!IsValidTrailingIndex(level, false)) return false;  // v9.0: Supporta trailing grids
+    if(!IsValidTrailingIndex(level, false)) return false; // v9.0: Supporta trailing grids
     if(gridB_Lower_Status[level] != ORDER_NONE) return false;
 
     double entryPrice = gridB_Lower_EntryPrices[level];
     double tp = gridB_Lower_TP[level];
-    double sl = 0;  // v5.6: No SL - Auto-hedging compensa le perdite
+    double sl = 0; // v5.6: No SL - Auto - hedging compensa le perdite
     double lot = gridB_Lower_Lots[level];
 
     // v9.0: Grid B Lower = sempre SELL STOP
     ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_LOWER);
-    bool isBuyOrder = false;  // v9.0: Grid B = sempre SELL
+    bool isBuyOrder = false; // v9.0: Grid B = sempre SELL
 
     // v9.0: Rimosso GetSafeOrderPrice - entry SEMPRE originale
     // Se prezzo invalido, OrderManager ritorna 0 e cyclic reopen riprova
@@ -166,18 +165,17 @@ bool PlaceGridBLowerOrder(int level) {
 
     // Place order
     ulong ticket = PlacePendingOrder(orderType, lot, entryPrice, sl, tp,
-                                     GetGridLevelID(GRID_B, ZONE_LOWER, level),
-                                     GetGridMagic(GRID_B));
+    GetGridLevelID(GRID_B, ZONE_LOWER, level),
+    GetGridMagic(GRID_B));
 
     if(ticket > 0) {
         gridB_Lower_Tickets[level] = ticket;
         gridB_Lower_Status[level] = ORDER_PENDING;
-        g_gridB_PendingCount++;  // v5.9.3: Grid Counter
+        g_gridB_PendingCount++; // v5.9.3: Grid Counter
         LogGridStatus(GRID_B, ZONE_LOWER, level, "Order placed: " + IntegerToString(ticket));
         return true;
     }
 
-    LogGridStatus(GRID_B, ZONE_LOWER, level, "Failed to place order");
     return false;
 }
 
@@ -208,7 +206,7 @@ void UpdateGridBStatuses() {
 //| Update Single Grid B Upper Level Status                          |
 //+------------------------------------------------------------------+
 void UpdateGridBUpperStatus(int level) {
-    if(!IsValidTrailingIndex(level, true)) return;  // v9.0: Supporta trailing grids
+    if(!IsValidTrailingIndex(level, true)) return; // v9.0: Supporta trailing grids
 
     ulong ticket = gridB_Upper_Tickets[level];
     ENUM_ORDER_STATUS currentStatus = gridB_Upper_Status[level];
@@ -218,7 +216,7 @@ void UpdateGridBUpperStatus(int level) {
     // Check if pending order still exists
     if(currentStatus == ORDER_PENDING) {
         if(OrderSelect(ticket)) {
-            return;  // Order still pending
+            return; // Order still pending
         } else {
             if(PositionSelectByTicket(ticket)) {
                 gridB_Upper_Status[level] = ORDER_FILLED;
@@ -253,7 +251,7 @@ void UpdateGridBUpperStatus(int level) {
 //| Update Single Grid B Lower Level Status                          |
 //+------------------------------------------------------------------+
 void UpdateGridBLowerStatus(int level) {
-    if(!IsValidTrailingIndex(level, false)) return;  // v9.0: Supporta trailing grids
+    if(!IsValidTrailingIndex(level, false)) return; // v9.0: Supporta trailing grids
 
     ulong ticket = gridB_Lower_Tickets[level];
     ENUM_ORDER_STATUS currentStatus = gridB_Lower_Status[level];
@@ -389,13 +387,13 @@ void ReopenGridBUpper(int level) {
     if(PlaceGridBUpperOrder(level)) {
         ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_UPPER);
         string typeName = (orderType == ORDER_TYPE_SELL_LIMIT) ? "SELL_LIMIT" : "SELL_STOP";
-        Log_OrderPlaced("B", "UP", level+1, typeName, gridB_Upper_Tickets[level],
-                       gridB_Upper_EntryPrices[level], gridB_Upper_TP[level], 0, gridB_Upper_Lots[level]);
+        Log_OrderPlaced("B", "UP", level + 1, typeName, gridB_Upper_Tickets[level],
+        gridB_Upper_EntryPrices[level], gridB_Upper_TP[level], 0, gridB_Upper_Lots[level]);
         IncrementCycleCount(GRID_B, ZONE_UPPER, level);
     } else {
         gridB_Upper_Status[level] = prevStatus;
         gridB_Upper_Tickets[level] = prevTicket;
-        Log_Debug("Reopen", StringFormat("GridB-UP-L%d failed, retry next tick", level+1));
+        Log_Debug("Reopen", StringFormat("GridB - UP - L % d failed, retry next tick", level + 1));
     }
 }
 
@@ -413,13 +411,13 @@ void ReopenGridBLower(int level) {
     if(PlaceGridBLowerOrder(level)) {
         ENUM_ORDER_TYPE orderType = GetGridOrderType(GRID_B, ZONE_LOWER);
         string typeName = (orderType == ORDER_TYPE_SELL_STOP) ? "SELL_STOP" : "SELL_LIMIT";
-        Log_OrderPlaced("B", "DN", level+1, typeName, gridB_Lower_Tickets[level],
-                       gridB_Lower_EntryPrices[level], gridB_Lower_TP[level], 0, gridB_Lower_Lots[level]);
+        Log_OrderPlaced("B", "DN", level + 1, typeName, gridB_Lower_Tickets[level],
+        gridB_Lower_EntryPrices[level], gridB_Lower_TP[level], 0, gridB_Lower_Lots[level]);
         IncrementCycleCount(GRID_B, ZONE_LOWER, level);
     } else {
         gridB_Lower_Status[level] = prevStatus;
         gridB_Lower_Tickets[level] = prevTicket;
-        Log_Debug("Reopen", StringFormat("GridB-DN-L%d failed, retry next tick", level+1));
+        Log_Debug("Reopen", StringFormat("GridB - DN - L % d failed, retry next tick", level + 1));
     }
 }
 
@@ -579,8 +577,8 @@ string GetGridBSummary() {
     double profit = GetGridBOpenProfit();
 
     return "Pos:" + IntegerToString(positions) +
-           " Pend:" + IntegerToString(pending) +
-           " P/L:" + FormatMoney(profit);
+    " Pend:" + IntegerToString(pending) +
+    " P / L:" + FormatMoney(profit);
 }
 
 //+------------------------------------------------------------------+

@@ -37,21 +37,21 @@ ENUM_GRID_SIDE GetGridSideFromMagic(int magic) {
 //| Get Grid Side Name                                               |
 //+------------------------------------------------------------------+
 string GetGridSideName(ENUM_GRID_SIDE side) {
-    return (side == GRID_A) ? "Grid A" : "Grid B";
+    return(side == GRID_A) ? "Grid A" : "Grid B";
 }
 
 //+------------------------------------------------------------------+
 //| Get Grid Zone Name                                               |
 //+------------------------------------------------------------------+
 string GetGridZoneName(ENUM_GRID_ZONE zone) {
-    return (zone == ZONE_UPPER) ? "Upper" : "Lower";
+    return(zone == ZONE_UPPER) ? "Upper" : "Lower";
 }
 
 //+------------------------------------------------------------------+
 //| Get Full Grid Level Identifier                                   |
 //+------------------------------------------------------------------+
 string GetGridLevelID(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
-    return GetGridSideName(side) + "-" + GetGridZoneName(zone) + "-L" + IntegerToString(level + 1);
+    return GetGridSideName(side) + " - " + GetGridZoneName(zone) + " - L" + IntegerToString(level + 1);
 }
 
 //+------------------------------------------------------------------+
@@ -73,16 +73,16 @@ ENUM_ORDER_TYPE GetGridOrderType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
     if(side == GRID_A) {
         // Grid A = SOLO ordini BUY
         if(zone == ZONE_UPPER) {
-            return ORDER_TYPE_BUY_STOP;    // BUY STOP @ livello (trend capture)
+            return ORDER_TYPE_BUY_STOP; // BUY STOP @ livello(trend capture)
         } else {
-            return ORDER_TYPE_BUY_LIMIT;   // BUY LIMIT @ livello (mean reversion)
+            return ORDER_TYPE_BUY_LIMIT; // BUY LIMIT @ livello(mean reversion)
         }
-    } else {  // GRID_B
+    } else { // GRID_B
         // Grid B = SOLO ordini SELL
         if(zone == ZONE_UPPER) {
-            return ORDER_TYPE_SELL_LIMIT;  // SELL LIMIT @ livello (mean reversion)
+            return ORDER_TYPE_SELL_LIMIT; // SELL LIMIT @ livello(mean reversion)
         } else {
-            return ORDER_TYPE_SELL_STOP;   // SELL STOP @ livello (trend capture)
+            return ORDER_TYPE_SELL_STOP; // SELL STOP @ livello(trend capture)
         }
     }
 }
@@ -100,7 +100,7 @@ ENUM_ORDER_TYPE GetGridOrderType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
 ENUM_POSITION_TYPE GetGridPositionType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
     // v9.0: Grid A = sempre BUY, Grid B = sempre SELL (struttura default)
     // Il parametro zone non è più necessario ma mantenuto per compatibilità
-    return (side == GRID_A) ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
+    return(side == GRID_A) ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
 }
 
 //+------------------------------------------------------------------+
@@ -108,7 +108,7 @@ ENUM_POSITION_TYPE GetGridPositionType(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone)
 //+------------------------------------------------------------------+
 bool IsGridOrderBuy(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
     ENUM_POSITION_TYPE posType = GetGridPositionType(side, zone);
-    return (posType == POSITION_TYPE_BUY);
+    return(posType == POSITION_TYPE_BUY);
 }
 
 //+------------------------------------------------------------------+
@@ -116,13 +116,13 @@ bool IsGridOrderBuy(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
 //+------------------------------------------------------------------+
 string GetOrderTypeString(ENUM_ORDER_TYPE orderType) {
     switch(orderType) {
-        case ORDER_TYPE_BUY_LIMIT:  return "Buy Limit";
+        case ORDER_TYPE_BUY_LIMIT: return "Buy Limit";
         case ORDER_TYPE_SELL_LIMIT: return "Sell Limit";
-        case ORDER_TYPE_BUY_STOP:   return "Buy Stop";
-        case ORDER_TYPE_SELL_STOP:  return "Sell Stop";
-        case ORDER_TYPE_BUY:        return "Buy";
-        case ORDER_TYPE_SELL:       return "Sell";
-        default:                    return "Unknown";
+        case ORDER_TYPE_BUY_STOP: return "Buy Stop";
+        case ORDER_TYPE_SELL_STOP: return "Sell Stop";
+        case ORDER_TYPE_BUY: return "Buy";
+        case ORDER_TYPE_SELL: return "Sell";
+        default: return "Unknown";
     }
 }
 
@@ -140,13 +140,13 @@ string GetOrderTypeString(ENUM_ORDER_TYPE orderType) {
 double GetEntrySpacingPips(double spacingPips) {
     switch(EntrySpacingMode) {
         case ENTRY_SPACING_FULL:
-            return spacingPips;                    // Gap centro = 2×spacing
+        return spacingPips; // Gap centro = 2×spacing
         case ENTRY_SPACING_HALF:
-            return spacingPips / 2.0;              // Gap centro = spacing (PERFECT CASCADE!)
+        return spacingPips / 2.0; // Gap centro = spacing(PERFECT CASCADE!)
         case ENTRY_SPACING_MANUAL:
-            return Entry_Spacing_Manual_Pips;      // Gap centro = 2×manual
+        return Entry_Spacing_Manual_Pips; // Gap centro = 2×manual
         default:
-            return spacingPips / 2.0;              // Default = HALF
+        return spacingPips / 2.0; // Default = HALF
     }
 }
 
@@ -155,10 +155,10 @@ double GetEntrySpacingPips(double spacingPips) {
 //+------------------------------------------------------------------+
 string GetEntrySpacingModeName() {
     switch(EntrySpacingMode) {
-        case ENTRY_SPACING_FULL:   return "FULL";
-        case ENTRY_SPACING_HALF:   return "HALF";
+        case ENTRY_SPACING_FULL: return "FULL";
+        case ENTRY_SPACING_HALF: return "HALF";
         case ENTRY_SPACING_MANUAL: return "MANUAL";
-        default:                   return "UNKNOWN";
+        default: return "UNKNOWN";
     }
 }
 
@@ -185,7 +185,7 @@ void LogEntrySpacingConfig() {
 //| Level N: usa entrySpacing + (N × gridSpacing)                    |
 //+------------------------------------------------------------------+
 double CalculateGridLevelPrice(double baseEntryPoint, ENUM_GRID_ZONE zone, int level,
-                                double spacingPips, ENUM_GRID_SIDE side = GRID_A) {
+double spacingPips, ENUM_GRID_SIDE side = GRID_A) {
     double spacingPoints = PipsToPoints(spacingPips);
     double entrySpacingPips = GetEntrySpacingPips(spacingPips);
     double entrySpacingPoints = PipsToPoints(entrySpacingPips);
@@ -211,7 +211,7 @@ double CalculateGridLevelPrice(double baseEntryPoint, ENUM_GRID_ZONE zone, int l
 //| - NEUTRAL_CASCADE/RANGEBOX: TP cascade (Entry livello precedente)|
 //+------------------------------------------------------------------+
 double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone,
-                          int level, double spacingPips, int totalLevels) {
+int level, double spacingPips, int totalLevels) {
 
     double spacingPrice = PipsToPoints(spacingPips);
     bool isBuy = IsGridOrderBuy(side, zone);
@@ -233,7 +233,7 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
     // NEUTRAL_CASCADE e NEUTRAL_RANGEBOX: TP CASCADE
     //=================================================================
 
-    // Final level uses fixed TP (non ha livello precedente)
+    // Final level uses fixed TP (BUY non ha level+1, SELL ha già TP fisso per simmetria)
     if(level >= totalLevels - 1) {
         double finalTP_Price = PipsToPoints(FinalLevel_TP_Pips);
         if(isBuy) {
@@ -246,35 +246,43 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
     // CASCADE MODE: Decide tra PERFECT e RATIO
     if(CascadeMode == CASCADE_PERFECT) {
         double cascadeTP;
+        ENUM_GRID_ZONE oppositeZone = (zone == ZONE_UPPER) ? ZONE_LOWER : ZONE_UPPER;
 
-        // Perfect Cascade: TP = Entry del livello precedente (verso entry point)
-        if(level == 0) {
-            // Level 1: TP = Entry Point centrale
-            cascadeTP = entryPointPrice;
-        } else {
-            // Livelli successivi: TP = Entry del livello precedente
-            cascadeTP = CalculateGridLevelPrice(entryPointPrice, zone, level - 1, spacingPips);
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // FIX v4.5: Validazione direzione TP
-        // Per BUY: TP deve essere >= orderEntryPrice (prezzo deve salire)
-        // Per SELL: TP deve essere <= orderEntryPrice (prezzo deve scendere)
-        // ═══════════════════════════════════════════════════════════════
-        bool tpDirectionValid = isBuy ? (cascadeTP >= orderEntryPrice) : (cascadeTP <= orderEntryPrice);
-
-        if(tpDirectionValid) {
-            return cascadeTP;
-        }
-
-        // TP nella direzione sbagliata! Usa fallback ratio-based
-        // Questo garantisce sempre un TP nella direzione corretta
-        double tpDistance = spacingPrice * CascadeTP_Ratio;
+        // BUY: TP più in ALTO (UPPER: level+1, LOWER: level-1 o zona opposta)
+        // SELL: TP più in BASSO (LOWER: level+1, UPPER: level-1 o zona opposta)
         if(isBuy) {
-            return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
+            // BUY: TP deve essere più in ALTO
+            if(zone == ZONE_UPPER) {
+                // UPPER: level+1 = più lontano da entry = più in alto
+                cascadeTP = CalculateGridLevelPrice(entryPointPrice, zone, level + 1, spacingPips, side);
+            } else {
+                // LOWER: verso entry = più in alto
+                if(level == 0) {
+                    // Level 0: attraversa entry, TP = Level 0 Upper
+                    cascadeTP = CalculateGridLevelPrice(entryPointPrice, oppositeZone, 0, spacingPips, side);
+                } else {
+                    // level-1 = più vicino a entry = più in alto
+                    cascadeTP = CalculateGridLevelPrice(entryPointPrice, zone, level - 1, spacingPips, side);
+                }
+            }
         } else {
-            return NormalizeDouble(orderEntryPrice - tpDistance, symbolDigits);
+            // SELL: TP deve essere più in BASSO
+            if(zone == ZONE_LOWER) {
+                // LOWER: level+1 = più lontano da entry = più in basso
+                cascadeTP = CalculateGridLevelPrice(entryPointPrice, zone, level + 1, spacingPips, side);
+            } else {
+                // UPPER: verso entry = più in basso
+                if(level == 0) {
+                    // Level 0: attraversa entry, TP = Level 0 Lower
+                    cascadeTP = CalculateGridLevelPrice(entryPointPrice, oppositeZone, 0, spacingPips, side);
+                } else {
+                    // level-1 = più vicino a entry = più in basso
+                    cascadeTP = CalculateGridLevelPrice(entryPointPrice, zone, level - 1, spacingPips, side);
+                }
+            }
         }
+
+        return cascadeTP;
     }
 
     // RATIO MODE: TP = Spacing × Ratio
@@ -308,8 +316,8 @@ double CalculateCascadeTP(double entryPointPrice, ENUM_GRID_SIDE side, ENUM_GRID
 // Stop Loss rompe la logica neutrale
 // Funzione stub mantenuta per backward compatibility
 double CalculateGridSL(double baseEntryPoint, ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone,
-                       int level, double spacingPips, int totalLevels) {
-    return 0;  // v5.6: Sempre 0 - No SL
+int level, double spacingPips, int totalLevels) {
+    return 0; // v5.6: Sempre 0 - No SL
 }
 
 //+------------------------------------------------------------------+
@@ -407,7 +415,7 @@ void CalculateRiskBasedLots() {
     Log_InitConfigNum("RiskCalc.DDRiskRatio", (maxTheoreticalDrawdown / RiskCapital_USD) * 100);
 
     if(originalLot != riskBasedBaseLot) {
-        Log_SystemWarning("RiskCalc", StringFormat("Lot adjusted: %.4f -> %.2f (broker limits)", originalLot, riskBasedBaseLot));
+        Log_SystemWarning("RiskCalc", StringFormat("Lot adjusted: % .4f - > % .2f(broker limits)", originalLot, riskBasedBaseLot));
     }
 }
 
@@ -436,7 +444,7 @@ double CalculateDrawdownFactor(double spacingPips, double pipValuePerLot) {
     // Multiply by number of zones that could go against us
     // In worst case, 2 zones on one side (e.g., Upper + Lower BUY-biased)
     // But with Double Grid Neutral, it's 2 grids × 1 bad zone each = 2 zones
-    factor *= 2;  // Conservative: 2 zones losing
+    factor *= 2; // Conservative: 2 zones losing
 
     return factor;
 }
@@ -493,11 +501,11 @@ string GetRiskStatusString() {
 
     double currentDD = GetCurrentUnrealizedDrawdown();
     double riskPercent = (maxTheoreticalDrawdown > 0) ?
-                         (currentDD / maxTheoreticalDrawdown * 100.0) : 0;
+    (currentDD / maxTheoreticalDrawdown * 100.0) : 0;
 
     return "$" + DoubleToString(currentDD, 0) + " / $" +
-           DoubleToString(RiskCapital_USD, 0) + " (" +
-           DoubleToString(riskPercent, 0) + "%)";
+    DoubleToString(RiskCapital_USD, 0) + " (" +
+    DoubleToString(riskPercent, 0) + " % )";
 }
 
 //+------------------------------------------------------------------+
@@ -517,7 +525,7 @@ double GetCurrentUnrealizedDrawdown() {
         if(posMagic >= MagicNumber && posMagic <= MagicNumber + MAGIC_OFFSET_GRID_B + 10000) {
             double profit = PositionGetDouble(POSITION_PROFIT);
             double swap = PositionGetDouble(POSITION_SWAP);
-            double commission = 0;  // Commission usually in ticket close
+            double commission = 0; // Commission usually in ticket close
 
             double netPL = profit + swap + commission;
             if(netPL < 0) {
@@ -538,8 +546,8 @@ double GetCurrentUnrealizedDrawdown() {
 //| Get Array Reference for Grid Zone                                |
 //+------------------------------------------------------------------+
 void GetGridArrays(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone,
-                   ulong &tickets[], double &entryPrices[], double &tpPrices[],
-                   double &slPrices[], double &lotSizes[], ENUM_ORDER_STATUS &statuses[]) {
+ulong &tickets[], double &entryPrices[], double &tpPrices[],
+double &slPrices[], double &lotSizes[], ENUM_ORDER_STATUS &statuses[]) {
 
     if(side == GRID_A) {
         if(zone == ZONE_UPPER) {
@@ -655,7 +663,7 @@ bool IsGridBalanced() {
     int gridB_Active = CountActiveOrdersInGrid(GRID_B);
 
     // Grids should have same number of active orders
-    return (gridA_Active == gridB_Active);
+    return(gridA_Active == gridB_Active);
 }
 
 //+------------------------------------------------------------------+
@@ -701,15 +709,15 @@ color GetGridLineColor(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone) {
 
     // v9.10: Use configurable input colors
     switch(orderType) {
-        case ORDER_TYPE_BUY_STOP:   return Color_BuyStop;     // Lime (Verde brillante)
-        case ORDER_TYPE_BUY_LIMIT:  return Color_BuyLimit;    // SeaGreen (Verde scuro)
-        case ORDER_TYPE_SELL_STOP:  return Color_SellStop;    // Crimson (Rosso scuro)
-        case ORDER_TYPE_SELL_LIMIT: return Color_SellLimit;   // Coral (Arancio/Corallo)
+        case ORDER_TYPE_BUY_STOP: return Color_BuyStop; // Lime(Verde brillante)
+        case ORDER_TYPE_BUY_LIMIT: return Color_BuyLimit; // SeaGreen(Verde scuro)
+        case ORDER_TYPE_SELL_STOP: return Color_SellStop; // Crimson(Rosso scuro)
+        case ORDER_TYPE_SELL_LIMIT: return Color_SellLimit; // Coral(Arancio / Corallo)
         default: break;
     }
 
     // Fallback to input defaults
-    return (side == GRID_A) ? Color_BuyStop : Color_SellLimit;
+    return(side == GRID_A) ? Color_BuyStop : Color_SellLimit;
 }
 
 //+------------------------------------------------------------------+
@@ -723,12 +731,12 @@ int GetPixelOffset(ENUM_ORDER_TYPE orderType) {
     switch(orderType) {
         case ORDER_TYPE_BUY_STOP:
         case ORDER_TYPE_BUY_LIMIT:
-            return -GridLine_PixelOffset;  // BUY verso il basso
+        return - GridLine_PixelOffset; // BUY verso il basso
         case ORDER_TYPE_SELL_STOP:
         case ORDER_TYPE_SELL_LIMIT:
-            return +GridLine_PixelOffset;  // SELL verso l'alto
+        return + GridLine_PixelOffset; // SELL verso l'alto
         default:
-            return 0;
+        return 0;
     }
 }
 
@@ -780,8 +788,8 @@ void CreateGridLevelLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, do
 
     // v9.10: Add tooltip on hover
     if(GridLine_ShowTooltip) {
-        string tooltip = StringFormat("%s | Level %d | %.5f",
-                         GetOrderTypeString(orderType), level + 1, price);
+        string tooltip = StringFormat(" % s | Level % d | % .5f",
+        GetOrderTypeString(orderType), level + 1, price);
         ObjectSetString(0, name, OBJPROP_TOOLTIP, tooltip);
     }
 
@@ -883,7 +891,7 @@ void DrawEntryPointLine() {
     // v9.10: Add tooltip on hover
     if(GridLine_ShowTooltip) {
         ObjectSetString(0, "SUGAMARA_ENTRY", OBJPROP_TOOLTIP,
-                       StringFormat("ENTRY POINT | %.5f", entryPoint));
+        StringFormat("ENTRY POINT | % .5f", entryPoint));
     }
 }
 
@@ -895,7 +903,7 @@ void DrawEntryPointLine() {
 //| Validate Grid Level Index                                        |
 //+------------------------------------------------------------------+
 bool IsValidLevelIndex(int level) {
-    return (level >= 0 && level < GridLevelsPerSide && level < MAX_GRID_LEVELS);
+    return(level >= 0 && level < GridLevelsPerSide && level < MAX_GRID_LEVELS);
 }
 
 //+------------------------------------------------------------------+
@@ -905,14 +913,14 @@ bool IsValidLevelIndex(int level) {
 bool IsValidTrailingIndex(int level, bool isUpper) {
     if(level < 0) return false;
     // v9.9: Trailing Grid removed - no extra levels
-    return (level < GridLevelsPerSide && level < MAX_GRID_LEVELS);
+    return(level < GridLevelsPerSide && level < MAX_GRID_LEVELS);
 }
 
 //+------------------------------------------------------------------+
 //| Check if Level Should be Active                                  |
 //+------------------------------------------------------------------+
 bool ShouldLevelBeActive(int level) {
-    return (level < GridLevelsPerSide);
+    return(level < GridLevelsPerSide);
 }
 
 //+------------------------------------------------------------------+
@@ -983,7 +991,7 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
         }
     }
 
-    if(lastClose == 0) return true;  // Never closed, can open
+    if(lastClose == 0) return true; // Never closed, can open
 
     // COOLDOWN REMOVED v5.8 - Reopen sempre immediato
 
@@ -1007,7 +1015,7 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
         }
 
         if(cycles >= MaxCyclesPerLevel) {
-            return false;  // Max cycles reached
+            return false; // Max cycles reached
         }
     }
 
@@ -1026,7 +1034,7 @@ bool CanLevelReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
 //+------------------------------------------------------------------+
 struct ReopenStateEntry {
     double levelPrice;
-    bool   wasReady;      // true = era PRONTO, false = era ATTESA
+    bool wasReady; // true = era PRONTO, false = era ATTESA
 };
 ReopenStateEntry g_reopenStates[];
 int g_reopenStatesCount = 0;
@@ -1036,7 +1044,7 @@ int FindOrAddReopenState(double levelPrice) {
     // Cerca esistente
     for(int i = 0; i < g_reopenStatesCount; i++) {
         if(MathAbs(g_reopenStates[i].levelPrice - levelPrice) < 0.00001)
-            return i;
+        return i;
     }
     // Aggiungi nuovo
     if(g_reopenStatesCount < MAX_REOPEN_STATES) {
@@ -1045,7 +1053,7 @@ int FindOrAddReopenState(double levelPrice) {
         g_reopenStates[g_reopenStatesCount].wasReady = false;
         return g_reopenStatesCount++;
     }
-    return -1;
+    return - 1;
 }
 
 //+------------------------------------------------------------------+
@@ -1075,24 +1083,24 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
     switch(orderType) {
         case ORDER_TYPE_BUY_STOP:
             // BUY STOP: piazza quando prezzo SOTTO entry - garantisce validità
-            targetPrice = levelPrice - offsetPoints;
-            canReopen = (currentPrice <= targetPrice);
-            distancePips = PointsToPips(currentPrice - targetPrice);
-            condition = StringFormat("price %.5f <= %.5f (entry-%.1f)",
-                                     currentPrice, targetPrice, ReopenOffset_Pips_STOP_ORDERS);
-            break;
+        targetPrice = levelPrice - offsetPoints;
+        canReopen = (currentPrice <= targetPrice);
+        distancePips = PointsToPips(currentPrice - targetPrice);
+        condition = StringFormat("price % .5f <= % .5f(entry - % .1f)",
+        currentPrice, targetPrice, ReopenOffset_Pips_STOP_ORDERS);
+        break;
 
         case ORDER_TYPE_SELL_STOP:
             // SELL STOP: piazza quando prezzo SOPRA entry - garantisce validità
-            targetPrice = levelPrice + offsetPoints;
-            canReopen = (currentPrice >= targetPrice);
-            distancePips = PointsToPips(targetPrice - currentPrice);
-            condition = StringFormat("price %.5f >= %.5f (entry+%.1f)",
-                                     currentPrice, targetPrice, ReopenOffset_Pips_STOP_ORDERS);
-            break;
+        targetPrice = levelPrice + offsetPoints;
+        canReopen = (currentPrice >= targetPrice);
+        distancePips = PointsToPips(targetPrice - currentPrice);
+        condition = StringFormat("price % .5f >= % .5f(entry + % .1f)",
+        currentPrice, targetPrice, ReopenOffset_Pips_STOP_ORDERS);
+        break;
 
         default:
-            return true;
+        return true;
     }
 
     // Log only on state change (WAITING <-> READY)
@@ -1101,8 +1109,8 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
         if(stateIdx >= 0) {
             bool wasReady = g_reopenStates[stateIdx].wasReady;
             if(canReopen != wasReady) {
-                Log_Debug("SmartReopen", StringFormat("%s @ %.5f status=%s",
-                          EnumToString(orderType), levelPrice, (canReopen ? "READY" : "WAITING")));
+                Log_Debug("SmartReopen", StringFormat(" % s @ % .5f status = % s",
+                EnumToString(orderType), levelPrice, (canReopen ? "READY" : "WAITING")));
                 g_reopenStates[stateIdx].wasReady = canReopen;
             }
         }
@@ -1184,9 +1192,9 @@ double CalculateSRLevel(double entry, double spacingPips, bool isResistance) {
     double spacingPoints = PipsToPoints(spacingPips);
 
     if(isResistance)
-        return NormalizeDouble(entry + (spacingPoints * multiplier), symbolDigits);
+    return NormalizeDouble(entry + (spacingPoints * multiplier), symbolDigits);
     else
-        return NormalizeDouble(entry - (spacingPoints * multiplier), symbolDigits);
+    return NormalizeDouble(entry - (spacingPoints * multiplier), symbolDigits);
 }
 
 //+------------------------------------------------------------------+
@@ -1198,9 +1206,9 @@ double CalculateWarningZoneLevel(double entry, double spacingPips, bool isUpper)
     double spacingPoints = PipsToPoints(spacingPips);
 
     if(isUpper)
-        return NormalizeDouble(entry + (spacingPoints * multiplier), symbolDigits);
+    return NormalizeDouble(entry + (spacingPoints * multiplier), symbolDigits);
     else
-        return NormalizeDouble(entry - (spacingPoints * multiplier), symbolDigits);
+    return NormalizeDouble(entry - (spacingPoints * multiplier), symbolDigits);
 }
 
 //+------------------------------------------------------------------+
@@ -1216,8 +1224,8 @@ double GetCurrentSpacingPoints() {
 void LogDynamicPositioningInfo() {
     Log_Header("DYNAMIC POSITIONING");
     Log_KeyValueNum("Grid Levels Per Side", GridLevelsPerSide, 0);
-    Log_KeyValueNum("Current Spacing (pips)", currentSpacing_Pips, 1);
-    Log_KeyValueNum("S/R Multiplier", GetSRMultiplier(), 2);
+    Log_KeyValueNum("Current Spacing(pips)", currentSpacing_Pips, 1);
+    Log_KeyValueNum("S / R Multiplier", GetSRMultiplier(), 2);
     Log_KeyValueNum("Warning Zone Multiplier", GetWarningZoneMultiplier(), 2);
 
     if(entryPoint > 0) {
