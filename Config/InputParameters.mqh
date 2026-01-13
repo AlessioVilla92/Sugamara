@@ -676,20 +676,26 @@ input bool      ShowEntryLine = true;                        // ✅ Mostra Linea
 
 input group "    🎨 COLORI GRID LINES"
 input color     Color_BuyStop = clrLime;                     // 🟢 BUY STOP (Verde brillante)
-input color     Color_BuyLimit = clrSeaGreen;                // 🟢 BUY LIMIT (Verde scuro)
+input color     Color_BuyLimit = clrChartreuse;              // 🟢 BUY LIMIT (Verde Fluo Vivace)
 input color     Color_SellLimit = clrCoral;                  // 🔴 SELL LIMIT (Arancio/Corallo)
 input color     Color_SellStop = clrCrimson;                 // 🔴 SELL STOP (Rosso scuro)
 input color     Color_EntryLine = clrGold;                   // 🟡 Entry Point (Oro)
 
 input group "    📐 DIMENSIONI"
-input int       GridLine_Width = 2;                          // 📏 Spessore Linee Grid (pixel)
+input int       GridLine_Width = 3;                          // 📏 Spessore Linee Grid (pixel)
 input int       EntryLine_Width = 3;                         // 📏 Spessore Entry Line (pixel)
 input int       GridLine_PixelOffset = 1;                    // 📐 Offset Separazione BUY/SELL (pixel)
 
 input group "    🎯 OPZIONI AVANZATE"
-input bool      GridLine_ShowLabels = false;                 // 🏷️ Mostra Etichette (A+1, B+1, ecc.)
+input bool      GridLine_ShowLabels = false;                 // 🏷️ Etichette DISATTIVATE (usa tooltip invece)
 input bool      GridLine_ShowTooltip = true;                 // 💬 Mostra Tooltip al passaggio mouse
 input bool      GridLine_DifferentStyleFilled = false;       // 🔄 Stile diverso per FILLED (tratteggiata)
+
+// v9.15: Label Settings (HARDCODED - modifica solo nel codice, non visibili in EA settings)
+#define Label_VerticalOffset    8              // Offset verticale etichette (pixel) [BUY giù, SELL su]
+#define Label_Color_Buy         clrLime        // Colore etichette BUY
+#define Label_Color_Sell        clrOrangeRed   // Colore etichette SELL
+#define HideMT5_TradeLevels     true           // Nascondi linee ordini native MT5
 
 //+------------------------------------------------------------------+
 //| 📊 VOLATILITY MONITOR                                            |

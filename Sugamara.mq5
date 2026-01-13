@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.14        |
+//|                                    SUGAMARA RIBELLE v9.17        |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.12.0 - Complete Auto-Save & Recovery System          |
+//|  Version: 9.17.0 - Tooltips Only (Perfect Zoom)                  |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,6 +16,18 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
+//|  v9.17 CHANGES:
+//|  - FIX: Labels DISABLED by default (GridLine_ShowLabels=false)   |
+//|  - FIX: Zoom now works perfectly (no label interference)         |
+//|  - KEEP: Tooltips active on hover for grid line info             |
+//|                                                                   |
+//|  v9.16 CHANGES:
+//|  - Dynamic label positioning (removed in v9.17)                   |
+//|                                                                   |
+//|  v9.15 CHANGES:
+//|  - Grid labels displayed on RIGHT side of chart                   |
+//|  - Labels show full info: Order Type + Lot + Price                |
+//|                                                                   |
 //|  v9.14 CHANGES:
 //|  - Fix: Perfect Cascade guaranteed for ALL grid levels            |
 //|  - Final level now uses cascade logic instead of FinalLevel_TP    |
@@ -33,8 +45,8 @@
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.140"
-#property description "SUGAMARA RIBELLE v9.14 - Perfect Cascade Fix for All Levels"
+#property version   "9.170"
+#property description "SUGAMARA RIBELLE v9.17 - Tooltips Only (Perfect Zoom)"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Configurable Colors"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -399,7 +411,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.14 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.17 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -700,6 +712,7 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
         if(ShowGridLines && systemState == STATE_ACTIVE) {
             DrawGridVisualization();
         }
+        // v9.17: Labels DISABLED - using tooltips only (zoom works perfectly)
     }
 
     // v3.0: Handle object delete - recreate dashboard if critical object deleted
@@ -786,7 +799,7 @@ void HandleKeyPress(int key) {
 //| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
-    Log_Header("SUGAMARA RIBELLE v9.14 - COMPLETE STATUS REPORT");
+    Log_Header("SUGAMARA RIBELLE v9.17 - COMPLETE STATUS REPORT");
     Log_KeyValue("Generated", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
 
     // System Overview
@@ -859,6 +872,12 @@ void ApplyVisualTheme() {
     // Show bid/ask lines
     ChartSetInteger(0, CHART_SHOW_ASK_LINE, true);
     ChartSetInteger(0, CHART_SHOW_BID_LINE, true);
+
+    // v9.15: Hide MT5 native trade levels (white order labels) if enabled
+    if(HideMT5_TradeLevels) {
+        ChartSetInteger(0, CHART_SHOW_TRADE_LEVELS, false);
+        Print("MT5 native trade levels HIDDEN (using EA custom labels on RIGHT side)");
+    }
 
     Print("Visual Theme v5.4 applied: DUNE/Arrakis Desert Theme (The Spice Must Flow)");
     ChartRedraw(0);

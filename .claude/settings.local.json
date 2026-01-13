@@ -36,7 +36,10 @@
       "Bash(del \"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Indicators\\\\CenterCalculator.mqh\")",
       "Bash(cut:*)",
       "Bash(cmd.exe /c:*)",
-      "Bash(\"C:\\\\Program Files\\\\MetaTrader 5\\\\MetaEditor64.exe\" /compile:\"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Sugamara.mq5\" /log)"
+      "Bash(\"C:\\\\Program Files\\\\MetaTrader 5\\\\MetaEditor64.exe\" /compile:\"c:\\\\Users\\\\Admin\\\\Documents\\\\GitHub\\\\Sugamara\\\\Sugamara.mq5\" /log)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

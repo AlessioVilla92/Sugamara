@@ -794,28 +794,41 @@ void CreateGridLevelLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, do
         ObjectSetString(0, name, OBJPROP_TOOLTIP, tooltip);
     }
 
-    // v9.10: Only show labels if enabled (default: false)
+    // v9.15: Show labels on RIGHT side of chart (visible, not covered by dashboard)
     if(GridLine_ShowLabels) {
         string orderTypeLabel = GetOrderTypeString(orderType);
         string labelName = name + "_LBL";
 
-        // v5.9: Convert price to Y pixel coordinate for fixed position
+        // Convert price to Y pixel coordinate for fixed position
         int chartHeight = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
         double priceMax = ChartGetDouble(0, CHART_PRICE_MAX);
         double priceMin = ChartGetDouble(0, CHART_PRICE_MIN);
         int yPixel = (int)((priceMax - visualPrice) / (priceMax - priceMin) * chartHeight);
 
-        // v5.9: Fixed X position near side panels (Dashboard ends at ~630px)
-        int xPixel = Dashboard_X + 620;
+        // v9.15: Vertical offset to separate BUY/SELL labels
+        // BUY = offset DOWN (+), SELL = offset UP (-)
+        bool isBuyOrder = (orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_BUY_STOP);
+        int verticalOffset = isBuyOrder ? Label_VerticalOffset : -Label_VerticalOffset;
+        yPixel += verticalOffset;
+
+        // v9.15: Separate colors for BUY/SELL labels
+        color labelColor = isBuyOrder ? Label_Color_Buy : Label_Color_Sell;
+
+        // v9.15: Position on RIGHT side of chart (15 pixels from right edge)
+        int xPixel = 15;
+
+        // v9.15: Full label text with lot size and price
+        double lotSize = CalculateGridLotSize(level);
+        string labelText = StringFormat("%s %.2f @ %.5f", orderTypeLabel, lotSize, price);
 
         ObjectDelete(0, labelName);
         if(ObjectCreate(0, labelName, OBJ_LABEL, 0, 0, 0)) {
-            ObjectSetInteger(0, labelName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+            ObjectSetInteger(0, labelName, OBJPROP_CORNER, CORNER_RIGHT_UPPER);  // RIGHT side
             ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, xPixel);
             ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, yPixel);
-            ObjectSetString(0, labelName, OBJPROP_TEXT, orderTypeLabel);
-            ObjectSetInteger(0, labelName, OBJPROP_COLOR, clr);
-            ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 7);
+            ObjectSetString(0, labelName, OBJPROP_TEXT, labelText);
+            ObjectSetInteger(0, labelName, OBJPROP_COLOR, labelColor);  // Separate label color
+            ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 8);
             ObjectSetString(0, labelName, OBJPROP_FONT, "Arial");
             ObjectSetInteger(0, labelName, OBJPROP_ANCHOR, ANCHOR_RIGHT);
             ObjectSetInteger(0, labelName, OBJPROP_BACK, false);
@@ -843,20 +856,20 @@ void CreateGridTPLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, doubl
     // v4.6: Use configurable style and width
     CreateHLine(name, price, clr, TP_LINE_WIDTH, TP_LINE_STYLE);
 
-    // v5.9: Convert price to Y pixel coordinate for fixed position
+    // Convert price to Y pixel coordinate for fixed position
     int chartHeight = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
     double priceMax = ChartGetDouble(0, CHART_PRICE_MAX);
     double priceMin = ChartGetDouble(0, CHART_PRICE_MIN);
     int yPixel = (int)((priceMax - price) / (priceMax - priceMin) * chartHeight);
 
-    // v5.9: Fixed X position near side panels (Dashboard ends at ~630px)
-    int xPixel = Dashboard_X + 620;
+    // v9.15: Position on RIGHT side of chart (15 pixels from right edge)
+    int xPixel = 15;
 
-    // Add small TP label
+    // Add small TP label on RIGHT side
     string labelName = name + "_LBL";
     ObjectDelete(0, labelName);
     if(ObjectCreate(0, labelName, OBJ_LABEL, 0, 0, 0)) {
-        ObjectSetInteger(0, labelName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, labelName, OBJPROP_CORNER, CORNER_RIGHT_UPPER);  // RIGHT side
         ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, xPixel);
         ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, yPixel);
         ObjectSetString(0, labelName, OBJPROP_TEXT, "TP");
@@ -1243,6 +1256,43 @@ void LogDynamicPositioningInfo() {
         Log_KeyValueNum("Support", srDown, 5);
     }
     Log_Separator();
+}
+
+//+------------------------------------------------------------------+
+//| v9.16: Update grid labels position on chart zoom/scroll          |
+//| Called from OnChartEvent(CHARTEVENT_CHART_CHANGE)                 |
+//+------------------------------------------------------------------+
+void UpdateGridLabelsPosition() {
+    if(!GridLine_ShowLabels) return;
+
+    int chartHeight = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
+    double priceMax = ChartGetDouble(0, CHART_PRICE_MAX);
+    double priceMin = ChartGetDouble(0, CHART_PRICE_MIN);
+
+    // Protezione divisione per zero
+    if(priceMax - priceMin < 0.00001) return;
+
+    // Scorre tutti gli oggetti e aggiorna le etichette "_LBL"
+    for(int i = ObjectsTotal(0) - 1; i >= 0; i--) {
+        string name = ObjectName(0, i);
+        if(StringFind(name, "_LBL") < 0) continue;
+
+        // Trova la linea associata (rimuovi "_LBL")
+        string lineName = StringSubstr(name, 0, StringLen(name) - 4);
+        double price = ObjectGetDouble(0, lineName, OBJPROP_PRICE);
+
+        if(price <= 0) continue;
+
+        // Calcola nuova posizione Y
+        int yPixel = (int)((priceMax - price) / (priceMax - priceMin) * chartHeight);
+
+        // Applica offset BUY/SELL (Grid A = BUY, Grid B = SELL)
+        bool isBuy = (StringFind(name, "BUY") >= 0 || StringFind(lineName, "GA_") >= 0);
+        yPixel += isBuy ? Label_VerticalOffset : -Label_VerticalOffset;
+
+        // Aggiorna posizione Y (X resta fisso a 15px dal bordo destro)
+        ObjectSetInteger(0, name, OBJPROP_YDISTANCE, yPixel);
+    }
 }
 
 //+------------------------------------------------------------------+
