@@ -476,14 +476,15 @@ void CreateUnifiedDashboard() {
     int totalWidth = TOTAL_WIDTH;
 
     //═══════════════════════════════════════════════════════════════
-    // TITLE PANEL (Full Width) - DUNE THEME
+    // TITLE PANEL (Full Width = 2 columns only, excludes side panels)
     //═══════════════════════════════════════════════════════════════
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
-    // v5.9.5: Titolo GIALLO, sottotitolo ARANCIONE SCURO
-    // v9.11: Title centered properly
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 95, y + 12, "SUGAMARA v9.22", clrYellow, 20, "Arial Black");
-    DashLabel("TITLE_SUB", x + totalWidth/2 - 70, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
+    // v9.22: Title centered relative to 2 columns (690px), NOT including ATR/COP side panels
+    // "SUGAMARA v9.22" @ 20px Arial Black ≈ 200px wide → offset -100
+    // "The Spice Must Flow" @ 10px ≈ 130px wide → offset -65
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 100, y + 12, "SUGAMARA v9.22", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_SUB", x + totalWidth/2 - 65, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
     //═══════════════════════════════════════════════════════════════
@@ -511,7 +512,7 @@ void CreateUnifiedDashboard() {
     DashRectangle("LEFT_GRIDA_PANEL", leftX, leftY, colWidth, gridAHeight, CLR_PANEL_GRIDA);
 
     int ay = leftY + 8;
-    DashLabel("LEFT_GRIDA_TITLE", leftX + 10, ay, "GRID A", CLR_GOLD, 9, "Arial Bold");  // v9.22: Standardized title
+    DashLabel("LEFT_GRIDA_TITLE", leftX + 10, ay, "GRID A - BUY", CLR_GOLD, 10, "Arial Bold");  // v9.22: Standardized title
     ay += 20;  // v9.22: Consistent title spacing
     DashLabel("LEFT_GRIDA_STATUS", leftX + 10, ay, "Status: IDLE", clrGray, 9);
     ay += 16;
@@ -535,7 +536,7 @@ void CreateUnifiedDashboard() {
     DashRectangle("LEFT_PERF_PANEL", leftX, leftY, colWidth, perfHeight, CLR_PANEL_PERF);
 
     int py = leftY + 8;
-    DashLabel("LEFT_PERF_TITLE", leftX + 10, py, "PERFORMANCE", CLR_GOLD, 9, "Arial Bold");  // v9.22: Standardized title
+    DashLabel("LEFT_PERF_TITLE", leftX + 10, py, "PERFORMANCE", CLR_GOLD, 10, "Arial Bold");  // v9.22: Standardized title
     py += 20;  // v9.22: Consistent title spacing
     DashLabel("LEFT_PERF_TOTAL", leftX + 10, py, "Total P/L: $0.00", CLR_WHITE, 11, "Arial Bold");
     py += 18;
@@ -570,7 +571,7 @@ void CreateUnifiedDashboard() {
     DashRectangle("RIGHT_GRIDB_PANEL", rightX, rightY, colWidth, gridBHeight, CLR_PANEL_GRIDB);
 
     int by = rightY + 8;
-    DashLabel("RIGHT_GRIDB_TITLE", rightX + 10, by, "GRID B", CLR_GOLD, 9, "Arial Bold");  // v9.22: Standardized title
+    DashLabel("RIGHT_GRIDB_TITLE", rightX + 10, by, "GRID B - SELL", CLR_GOLD, 10, "Arial Bold");  // v9.22: Standardized title
     by += 20;  // v9.22: Consistent title spacing
     DashLabel("RIGHT_GRIDB_STATUS", rightX + 10, by, "Status: IDLE", clrGray, 9);
     by += 16;
@@ -599,7 +600,7 @@ void CreateUnifiedDashboard() {
     DashRectangle("RIGHT_REOPEN_PANEL", rightX, rightY, colWidth, reopenHeight, C'35,30,25');
 
     int ry = rightY + 8;
-    DashLabel("RIGHT_REOPEN_TITLE", rightX + 10, ry, "REOPEN CYCLE MONITOR", CLR_GOLD, 9, "Arial Bold");
+    DashLabel("RIGHT_REOPEN_TITLE", rightX + 10, ry, "REOPEN CYCLE MONITOR", CLR_GOLD, 10, "Arial Bold");
     ry += 20;
 
     // Grid A / Grid B summary headers
@@ -649,21 +650,21 @@ void CreateUnifiedDashboard() {
     ry += 18;
 
     //--- v9.22: GRID LEGEND integrated into REOPEN panel ---
-    DashLabel("LEGEND_TITLE", rightX + 10, ry, "GRID LEGEND", CLR_GOLD, 9, "Arial Bold");
-    ry += 18;
+    DashLabel("LEGEND_TITLE", rightX + 10, ry, "GRID LEGEND", CLR_GOLD, 10, "Arial Bold");
+    ry += 20;  // v9.22: Increased for taller row
 
-    // Compact layout - GA and GB on same row with colored boxes
-    DashRectangle("LEGEND_GA_STOP_BOX", rightX + 10, ry, 6, 6, Color_BuyStop);
-    DashLabel("LEGEND_GA_STOP", rightX + 20, ry - 2, "STOP[0]", Color_BuyStop, 7);
-    DashRectangle("LEGEND_GA_LIMIT_BOX", rightX + 75, ry, 6, 6, Color_BuyLimit);
-    DashLabel("LEGEND_GA_LIMIT", rightX + 85, ry - 2, "LMT[0]", Color_BuyLimit, 7);
-    DashLabel("LEGEND_GA_TOTAL", rightX + 140, ry - 2, "Tot:0", CLR_GRID_A, 7);
+    // v9.22: Aligned to MODE height (10x10 boxes, 10px font)
+    DashRectangle("LEGEND_GA_STOP_BOX", rightX + 10, ry + 2, 10, 10, Color_BuyStop);
+    DashLabel("LEGEND_GA_STOP", rightX + 24, ry, "STP[0]", Color_BuyStop, 10);
+    DashRectangle("LEGEND_GA_LIMIT_BOX", rightX + 75, ry + 2, 10, 10, Color_BuyLimit);
+    DashLabel("LEGEND_GA_LIMIT", rightX + 89, ry, "LMT[0]", Color_BuyLimit, 10);
+    DashLabel("LEGEND_GA_TOTAL", rightX + 148, ry, "Tot:0", CLR_GRID_A, 10);
 
-    DashRectangle("LEGEND_GB_LIMIT_BOX", rightX + 180, ry, 6, 6, Color_SellLimit);
-    DashLabel("LEGEND_GB_LIMIT", rightX + 190, ry - 2, "LMT[0]", Color_SellLimit, 7);
-    DashRectangle("LEGEND_GB_STOP_BOX", rightX + 245, ry, 6, 6, Color_SellStop);
-    DashLabel("LEGEND_GB_STOP", rightX + 255, ry - 2, "STOP[0]", Color_SellStop, 7);
-    DashLabel("LEGEND_GB_TOTAL", rightX + 310, ry - 2, "Tot:0", CLR_GRID_B, 7);
+    DashRectangle("LEGEND_GB_LIMIT_BOX", rightX + 185, ry + 2, 10, 10, Color_SellLimit);
+    DashLabel("LEGEND_GB_LIMIT", rightX + 199, ry, "LMT[0]", Color_SellLimit, 10);
+    DashRectangle("LEGEND_GB_STOP_BOX", rightX + 253, ry + 2, 10, 10, Color_SellStop);
+    DashLabel("LEGEND_GB_STOP", rightX + 267, ry, "STP[0]", Color_SellStop, 10);
+    DashLabel("LEGEND_GB_TOTAL", rightX + 318, ry, "Tot:0", CLR_GRID_B, 10);
 
     rightY += reopenHeight;
 
@@ -676,7 +677,7 @@ void CreateUnifiedDashboard() {
 //+------------------------------------------------------------------+
 void CreateControlButtons(int startY, int startX, int panelWidth) {
     int x = startX + 10;
-    int y = startY + 20;  // v9.19: Increased padding top (was 10)
+    int y = startY + 15;  // v9.22: Top padding for status label
     int btnStartWidth = 100;   // v9.1: Ridotto per fare spazio a RECOVER
     int btnCloseWidth = 90;    // v9.1: Ridotto
     int btnRecoverWidth = 90;  // v9.1: AGGIUNTO
@@ -686,19 +687,23 @@ void CreateControlButtons(int startY, int startX, int panelWidth) {
     // Status Label (matches ControlButtons.mqh BTN_STATUS_V3)
     // v9.22: Two labels for dual-color status (e.g., "ALL CLOSED -" red + "CLICK START" white)
     DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY", CLR_DASH_TEXT, 10, "Arial Bold");
-    DashLabel("SUGAMARA_BTN_STATUS2", x + 60, y, "- CLICK START", clrWhite, 10, "Arial Bold");
-    y += 28;  // v9.19: Increased spacing (was 22)
+    DashLabel("SUGAMARA_BTN_STATUS2", x + 95, y, "", clrWhite, 10, "Arial Bold");  // v9.22: Only visible in STATE_CLOSING
+    y += 25;  // v9.22: Space after status label
+
+    // v9.22: Extra spacing ABOVE buttons
+    y += 8;
 
     // v9.1: 3 Main Buttons: START | CLOSE | RECOVER
     // Names MUST match ControlButtons.mqh
     DashButton("SUGAMARA_BTN_START", x, y, btnStartWidth, btnHeight, "START", C'0,150,80');
     DashButton("SUGAMARA_BTN_CLOSEALL", x + btnStartWidth + spacing, y, btnCloseWidth, btnHeight, "CLOSE", C'180,30,30');
     DashButton("SUGAMARA_BTN_RECOVER", x + btnStartWidth + spacing + btnCloseWidth + spacing, y, btnRecoverWidth, btnHeight, "RECOVER", C'0,140,140');
-    y += btnHeight + 12;  // v9.19: Increased spacing (was 8)
+
+    // v9.22: Extra spacing BELOW buttons
+    y += btnHeight + 18;
 
     // v9.22: Mode status with colored indicator box (size 12, slightly spaced)
     // Format: "MODE: [colored box] STATUS"
-    y += 5;  // v9.22: Slight top spacing
     DashLabel("MODE_LABEL", x, y, "MODE:", CLR_WHITE, 12, "Arial Bold");
     DashRectangle("MODE_STATUS_BOX", x + 55, y + 2, 12, 12, clrWhite);
     DashLabel("MODE_STATUS_TEXT", x + 72, y, "READY", CLR_WHITE, 12, "Arial Bold");
@@ -721,7 +726,7 @@ void CreateVolatilityPanel() {
     int ly = volY + 6;
     // v9.22: Colored status box before title
     DashRectangle("VOL_STATUS_BOX", volX + 10, ly + 2, 8, 8, clrLime);
-    DashLabel("VOL_TITLE", volX + 22, ly, "ATR MONITOR", CLR_GOLD, 9, "Arial Bold");
+    DashLabel("VOL_TITLE", volX + 22, ly, "ATR MONITOR", CLR_GOLD, 10, "Arial Bold");
     ly += 18;
 
     // Compact single line for M5 and H1
@@ -747,7 +752,9 @@ void CreateAutoSavePanel() {
     DashRectangle("AUTOSAVE_PANEL", asX, asY, asWidth, asHeight, CLR_BG_DARK);
 
     int ly = asY + 6;
-    DashLabel("AUTOSAVE_TITLE", asX + 10, ly, "AUTO-SAVE", CLR_GOLD, 9, "Arial Bold");
+    // v9.22: Colored status box before title (like ATR MONITOR and COP)
+    DashRectangle("AUTOSAVE_TITLE_BOX", asX + 10, ly + 2, 8, 8, clrLime);
+    DashLabel("AUTOSAVE_TITLE", asX + 22, ly, "AUTO-SAVE", CLR_GOLD, 10, "Arial Bold");
     ly += 16;
 
     // Status with colored box
@@ -783,7 +790,7 @@ void CreateCOPPanel() {
     int copX = Dashboard_X + TOTAL_WIDTH + 10;
     int copY = Dashboard_Y + 125;  // v9.22: After ATR (55) + gap (10) + AUTO-SAVE (50) + gap (10)
     int copWidth = 175;
-    int copHeight = 155;
+    int copHeight = 170;  // v9.22: Increased to include Commission label
 
     // v9.7: Gold border around COP panel
     DashRectangle("COP_BORDER", copX - 2, copY - 2, copWidth + 4, copHeight + 4, clrGold);
@@ -792,7 +799,7 @@ void CreateCOPPanel() {
     int ly = copY + 8;
     // v9.22: Colored status box instead of emoji (MT5 font compatibility)
     DashRectangle("COP_STATUS_BOX", copX + 10, ly + 2, 8, 8, clrLime);
-    DashLabel("COP_TITLE", copX + 22, ly, "CLOSE ON PROFIT", CLR_GOLD, 9, "Arial Bold");
+    DashLabel("COP_TITLE", copX + 22, ly, "CLOSE ON PROFIT", CLR_GOLD, 10, "Arial Bold");
     ly += 20;
     DashLabel("COP_SEPARATOR", copX + 10, ly, "------------------------", clrGray, 7);
     ly += 15;
@@ -911,13 +918,13 @@ void UpdateModeStatusIndicator() {
 void UpdateStatusLabel() {
     color labelColor;
     string labelText;
-    string labelText2 = "";  // Second label (for dual-color)
+    string labelText2 = "";  // v9.22: Only visible in STATE_CLOSING
 
     if(systemState == STATE_CLOSING) {
-        // v9.22: "ALL CLOSED -" red + "CLICK START" white
+        // v9.22: "ALL CLOSED" red + "CLICK START" white (spaced)
         labelColor = clrRed;
-        labelText = "ALL CLOSED -";
-        labelText2 = "CLICK START";
+        labelText = "ALL CLOSED";
+        labelText2 = "CLICK START";  // Only shown here
     } else if(systemState == STATE_ACTIVE || systemState == STATE_RUNNING) {
         int totalPositions = GetGridAActivePositions() + GetGridBActivePositions();
         if(totalPositions > 0) {
@@ -931,19 +938,18 @@ void UpdateStatusLabel() {
         labelColor = clrOrange;
         labelText = "PAUSED";
     } else {
-        // STATE_IDLE: "READY" white + "- CLICK START" white
+        // STATE_IDLE: Solo "READY" bianco, niente altro
         labelColor = clrWhite;
-        labelText = "READY";
-        labelText2 = "- CLICK START";
+        labelText = "READY - CLICK START";
+        // labelText2 resta vuoto
     }
 
     // Update main label
     ObjectSetString(0, "SUGAMARA_BTN_STATUS", OBJPROP_TEXT, labelText);
     ObjectSetInteger(0, "SUGAMARA_BTN_STATUS", OBJPROP_COLOR, labelColor);
 
-    // Update secondary label (for dual-color states)
+    // Update secondary label (only visible in STATE_CLOSING)
     ObjectSetString(0, "SUGAMARA_BTN_STATUS2", OBJPROP_TEXT, labelText2);
-    // Second label always white (for "CLICK START" part)
     ObjectSetInteger(0, "SUGAMARA_BTN_STATUS2", OBJPROP_COLOR, clrWhite);
 }
 
@@ -1154,9 +1160,10 @@ void UpdateGridLegendSection() {
     }
     int gaTotal = gaStop + gaLimit;
 
-    ObjectSetString(0, "LEGEND_GA_STOP", OBJPROP_TEXT, StringFormat("STOP  [%d]", gaStop));
-    ObjectSetString(0, "LEGEND_GA_LIMIT", OBJPROP_TEXT, StringFormat("LIMIT [%d]", gaLimit));
-    ObjectSetString(0, "LEGEND_GA_TOTAL", OBJPROP_TEXT, StringFormat("Tot: %d", gaTotal));
+    // v9.22: Compact format (STP/LMT) to match taller legend
+    ObjectSetString(0, "LEGEND_GA_STOP", OBJPROP_TEXT, StringFormat("STP[%d]", gaStop));
+    ObjectSetString(0, "LEGEND_GA_LIMIT", OBJPROP_TEXT, StringFormat("LMT[%d]", gaLimit));
+    ObjectSetString(0, "LEGEND_GA_TOTAL", OBJPROP_TEXT, StringFormat("Tot:%d", gaTotal));
 
     // Count Grid B orders (SELL only)
     int gbLimit = 0, gbStop = 0;
@@ -1166,9 +1173,10 @@ void UpdateGridLegendSection() {
     }
     int gbTotal = gbLimit + gbStop;
 
-    ObjectSetString(0, "LEGEND_GB_LIMIT", OBJPROP_TEXT, StringFormat("LIMIT [%d]", gbLimit));
-    ObjectSetString(0, "LEGEND_GB_STOP", OBJPROP_TEXT, StringFormat("STOP  [%d]", gbStop));
-    ObjectSetString(0, "LEGEND_GB_TOTAL", OBJPROP_TEXT, StringFormat("Tot: %d", gbTotal));
+    // v9.22: Compact format (STP/LMT) to match taller legend
+    ObjectSetString(0, "LEGEND_GB_LIMIT", OBJPROP_TEXT, StringFormat("LMT[%d]", gbLimit));
+    ObjectSetString(0, "LEGEND_GB_STOP", OBJPROP_TEXT, StringFormat("STP[%d]", gbStop));
+    ObjectSetString(0, "LEGEND_GB_TOTAL", OBJPROP_TEXT, StringFormat("Tot:%d", gbTotal));
 }
 
 //+------------------------------------------------------------------+
