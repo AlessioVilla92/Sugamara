@@ -137,10 +137,12 @@ void HandleControlButtonClick(string objectName) {
 
         // Highlight active button
         HighlightActiveButton(BTN_START_V3);
-        UpdateStatusLabel("STARTING GRID...");
 
         // Start grid immediately
         StartGridSystem();
+
+        // v9.22 FIX: Immediate dashboard update for state colors
+        UpdateDashboard();
 
         return;
     }
@@ -158,10 +160,12 @@ void HandleControlButtonClick(string objectName) {
 
         currentEntryMode = ENTRY_MARKET;
         buttonState = BTN_STATE_IDLE;
-        systemState = STATE_IDLE;
+        systemState = STATE_CLOSING;  // v9.21: Triggers STOPPED status in Mode indicator
 
         ResetButtonHighlights();
-        UpdateStatusLabel("ALL CLOSED - Ready");
+
+        // v9.22 FIX: Immediate dashboard update for state colors
+        UpdateDashboard();
 
         if(EnableAlerts) {
             Alert("SUGAMARA: All positions closed");
@@ -175,8 +179,7 @@ void HandleControlButtonClick(string objectName) {
     //══════════════════════════════════════════════════════════════
     if(objectName == BTN_RECOVER_V3) {
         Log_Header("MANUAL RECOVERY REQUESTED");
-
-        UpdateStatusLabel("RECOVERING...");
+        // v9.22: Status updated by Dashboard.mqh based on systemState
         ChartRedraw(0);
 
         // Call recovery function from RecoveryManager
@@ -187,7 +190,7 @@ void HandleControlButtonClick(string objectName) {
             systemState = STATE_ACTIVE;
             buttonState = BTN_STATE_ACTIVE;
             HighlightActiveButton(BTN_START_V3);
-            UpdateStatusLabel("RECOVERED - Grid Active");
+            // v9.22: Status updated by Dashboard.mqh based on systemState
 
             // Recalculate spacing and redraw
             currentSpacing_Pips = CalculateCurrentSpacing();
@@ -206,7 +209,7 @@ void HandleControlButtonClick(string objectName) {
             }
         } else {
             // No orders found to recover
-            UpdateStatusLabel("No orders to recover");
+            // v9.22: Status updated by Dashboard.mqh based on systemState
 
             if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {
                 Alert("SUGAMARA [", _Symbol, "]: No orders found to recover");
@@ -240,10 +243,10 @@ void StartGridSystem() {
         PlaceAllGridBOrders();
 
         Log_InitComplete("GridSystem");
-        UpdateStatusLabel("ACTIVE - Grid Running");
+        // v9.22: Status updated by Dashboard.mqh based on systemState
     } else {
         Log_InitFailed("GridSystem", "Failed to start");
-        UpdateStatusLabel("ERROR - Check logs");
+        // v9.22: Status updated by Dashboard.mqh based on systemState
         systemState = STATE_ERROR;
     }
 }
@@ -269,13 +272,7 @@ void ResetButtonHighlights() {
     ChartRedraw(0);
 }
 
-//+------------------------------------------------------------------+
-//| Update Status Label                                              |
-//+------------------------------------------------------------------+
-void UpdateStatusLabel(string text) {
-    ObjectSetString(0, BTN_STATUS_V3, OBJPROP_TEXT, text);
-    ChartRedraw(0);
-}
+// v9.22: UpdateStatusLabel REMOVED - Dashboard.mqh handles status colors based on systemState
 
 //+------------------------------------------------------------------+
 //| Get Entry Mode Name                                              |

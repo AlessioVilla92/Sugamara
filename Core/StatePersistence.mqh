@@ -21,6 +21,7 @@
 //| STATE PERSISTENCE VARIABLES                                       |
 //+------------------------------------------------------------------+
 datetime g_lastAutoSaveTime = 0;            // Timestamp ultimo auto-save
+bool g_lastAutoSaveSuccess = false;         // v9.22: Risultato ultimo backup
 int g_savedVariableCount = 0;               // Contatore variabili salvate
 bool g_stateRestored = false;               // Flag: stato ripristinato
 int g_restoredVariableCount = 0;            // Contatore variabili ripristinate
@@ -228,6 +229,7 @@ void ExecuteAutoSave() {
 
     SaveCompleteState();
     g_lastAutoSaveTime = TimeCurrent();
+    g_lastAutoSaveSuccess = (g_saveErrors == 0);  // v9.22: Track success for dashboard
 
     if(AutoSave_FullLogging) {
         Print("[AUTO-SAVE] Complete - ", g_savedVariableCount, " variables saved");

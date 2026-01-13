@@ -200,6 +200,16 @@ int    cop_TradesToday = 0;                 // Numero trades oggi (per commissio
 double cop_TotalLotsToday = 0.0;            // Lotti totali tradati oggi (per commissioni)
 
 //+------------------------------------------------------------------+
+//| v9.18: REOPEN CYCLE MONITOR TRACKING                             |
+//+------------------------------------------------------------------+
+#define MAX_LAST_REOPENS 3                     // Max elementi nell'array ultimi reopen
+string g_lastReopens[MAX_LAST_REOPENS];        // Array ultimi reopen (format: "HH:MM GA_U_03 BUY STOP Ciclo 2")
+int g_lastReopensCount = 0;                    // Contatore reopen registrati
+
+// v9.22: AUTO-SAVE TRACKING moved to StatePersistence.mqh
+// g_lastAutoSaveTime and g_lastAutoSaveSuccess are defined there
+
+//+------------------------------------------------------------------+
 //| Initialize All Arrays                                            |
 //| Call in OnInit() after variable declarations                     |
 //+------------------------------------------------------------------+
@@ -256,6 +266,12 @@ void InitializeArrays() {
     g_atrCache.isValid = false;
     g_lastLoggedATRChange = 0;
     g_lastATRStepName = "";
+
+    // ═══════════════════════════════════════════════════════════════════
+    // v9.18: Initialize Reopen Cycle Monitor tracking
+    // ═══════════════════════════════════════════════════════════════════
+    for(int i = 0; i < MAX_LAST_REOPENS; i++) g_lastReopens[i] = "";
+    g_lastReopensCount = 0;
 
     Print("SUCCESS: All grid arrays and v4.0 modules initialized");
 }
