@@ -481,10 +481,10 @@ void CreateUnifiedDashboard() {
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
     // v9.22: Title centered relative to 2 columns (690px), NOT including ATR/COP side panels
-    // "SUGAMARA v9.22" @ 20px Arial Black ≈ 200px wide → offset -100
-    // "The Spice Must Flow" @ 10px ≈ 130px wide → offset -65
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 100, y + 12, "SUGAMARA v9.22", clrYellow, 20, "Arial Black");
-    DashLabel("TITLE_SUB", x + totalWidth/2 - 65, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
+    // "SUGAMARA v9.22" @ 20px Arial Black ≈ 220px wide → offset -110
+    // "The Spice Must Flow" @ 10px ≈ 144px wide → offset -72
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 110, y + 12, "SUGAMARA v9.22", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_SUB", x + totalWidth/2 - 72, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
     //═══════════════════════════════════════════════════════════════
@@ -651,20 +651,27 @@ void CreateUnifiedDashboard() {
 
     //--- v9.22: GRID LEGEND integrated into REOPEN panel ---
     DashLabel("LEGEND_TITLE", rightX + 10, ry, "GRID LEGEND", CLR_GOLD, 10, "Arial Bold");
-    ry += 20;  // v9.22: Increased for taller row
+    ry += 18;
 
-    // v9.22: Aligned to MODE height (10x10 boxes, 10px font)
+    // v9.22: Row 1 - GRID A (BUY): STP + LMT
     DashRectangle("LEGEND_GA_STOP_BOX", rightX + 10, ry + 2, 10, 10, Color_BuyStop);
     DashLabel("LEGEND_GA_STOP", rightX + 24, ry, "STP[0]", Color_BuyStop, 10);
-    DashRectangle("LEGEND_GA_LIMIT_BOX", rightX + 75, ry + 2, 10, 10, Color_BuyLimit);
-    DashLabel("LEGEND_GA_LIMIT", rightX + 89, ry, "LMT[0]", Color_BuyLimit, 10);
-    DashLabel("LEGEND_GA_TOTAL", rightX + 148, ry, "Tot:0", CLR_GRID_A, 10);
+    DashRectangle("LEGEND_GA_LIMIT_BOX", rightX + 85, ry + 2, 10, 10, Color_BuyLimit);
+    DashLabel("LEGEND_GA_LIMIT", rightX + 99, ry, "LMT[0]", Color_BuyLimit, 10);
+    DashLabel("LEGEND_GA_LABEL", rightX + 160, ry, "GRID A", CLR_GRID_A, 10);
+    ry += 16;
 
-    DashRectangle("LEGEND_GB_LIMIT_BOX", rightX + 185, ry + 2, 10, 10, Color_SellLimit);
-    DashLabel("LEGEND_GB_LIMIT", rightX + 199, ry, "LMT[0]", Color_SellLimit, 10);
-    DashRectangle("LEGEND_GB_STOP_BOX", rightX + 253, ry + 2, 10, 10, Color_SellStop);
-    DashLabel("LEGEND_GB_STOP", rightX + 267, ry, "STP[0]", Color_SellStop, 10);
-    DashLabel("LEGEND_GB_TOTAL", rightX + 318, ry, "Tot:0", CLR_GRID_B, 10);
+    // v9.22: Row 2 - GRID B (SELL): LMT + STP
+    DashRectangle("LEGEND_GB_LIMIT_BOX", rightX + 10, ry + 2, 10, 10, Color_SellLimit);
+    DashLabel("LEGEND_GB_LIMIT", rightX + 24, ry, "LMT[0]", Color_SellLimit, 10);
+    DashRectangle("LEGEND_GB_STOP_BOX", rightX + 85, ry + 2, 10, 10, Color_SellStop);
+    DashLabel("LEGEND_GB_STOP", rightX + 99, ry, "STP[0]", Color_SellStop, 10);
+    DashLabel("LEGEND_GB_LABEL", rightX + 160, ry, "GRID B", CLR_GRID_B, 10);
+    ry += 16;
+
+    // v9.22: Row 3 - Totals aligned left
+    DashLabel("LEGEND_GA_TOTAL", rightX + 10, ry, "GA Tot: 0", CLR_GRID_A, 10);
+    DashLabel("LEGEND_GB_TOTAL", rightX + 100, ry, "GB Tot: 0", CLR_GRID_B, 10);
 
     rightY += reopenHeight;
 
@@ -685,9 +692,9 @@ void CreateControlButtons(int startY, int startX, int panelWidth) {
     int spacing = 5;           // v9.1: Ridotto spacing
 
     // Status Label (matches ControlButtons.mqh BTN_STATUS_V3)
-    // v9.22: Two labels for dual-color status (e.g., "ALL CLOSED -" red + "CLICK START" white)
-    DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY", CLR_DASH_TEXT, 10, "Arial Bold");
-    DashLabel("SUGAMARA_BTN_STATUS2", x + 95, y, "", clrWhite, 10, "Arial Bold");  // v9.22: Only visible in STATE_CLOSING
+    // v9.22: Single label, 11px font (increased from 10px)
+    DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY", CLR_DASH_TEXT, 11, "Arial Bold");
+    // STATUS2 removed - no longer needed
     y += 25;  // v9.22: Space after status label
 
     // v9.22: Extra spacing ABOVE buttons
@@ -918,13 +925,11 @@ void UpdateModeStatusIndicator() {
 void UpdateStatusLabel() {
     color labelColor;
     string labelText;
-    string labelText2 = "";  // v9.22: Only visible in STATE_CLOSING
 
     if(systemState == STATE_CLOSING) {
-        // v9.22: "ALL CLOSED" red + "CLICK START" white (spaced)
+        // v9.22: Solo "ALL CLOSED" rosso (11px)
         labelColor = clrRed;
         labelText = "ALL CLOSED";
-        labelText2 = "CLICK START";  // Only shown here
     } else if(systemState == STATE_ACTIVE || systemState == STATE_RUNNING) {
         int totalPositions = GetGridAActivePositions() + GetGridBActivePositions();
         if(totalPositions > 0) {
@@ -938,19 +943,14 @@ void UpdateStatusLabel() {
         labelColor = clrOrange;
         labelText = "PAUSED";
     } else {
-        // STATE_IDLE: Solo "READY" bianco, niente altro
+        // STATE_IDLE
         labelColor = clrWhite;
         labelText = "READY - CLICK START";
-        // labelText2 resta vuoto
     }
 
-    // Update main label
+    // Update label
     ObjectSetString(0, "SUGAMARA_BTN_STATUS", OBJPROP_TEXT, labelText);
     ObjectSetInteger(0, "SUGAMARA_BTN_STATUS", OBJPROP_COLOR, labelColor);
-
-    // Update secondary label (only visible in STATE_CLOSING)
-    ObjectSetString(0, "SUGAMARA_BTN_STATUS2", OBJPROP_TEXT, labelText2);
-    ObjectSetInteger(0, "SUGAMARA_BTN_STATUS2", OBJPROP_COLOR, clrWhite);
 }
 
 //+------------------------------------------------------------------+
@@ -1160,10 +1160,10 @@ void UpdateGridLegendSection() {
     }
     int gaTotal = gaStop + gaLimit;
 
-    // v9.22: Compact format (STP/LMT) to match taller legend
+    // v9.22: Update STP/LMT labels
     ObjectSetString(0, "LEGEND_GA_STOP", OBJPROP_TEXT, StringFormat("STP[%d]", gaStop));
     ObjectSetString(0, "LEGEND_GA_LIMIT", OBJPROP_TEXT, StringFormat("LMT[%d]", gaLimit));
-    ObjectSetString(0, "LEGEND_GA_TOTAL", OBJPROP_TEXT, StringFormat("Tot:%d", gaTotal));
+    ObjectSetString(0, "LEGEND_GA_TOTAL", OBJPROP_TEXT, StringFormat("GA Tot: %d", gaTotal));
 
     // Count Grid B orders (SELL only)
     int gbLimit = 0, gbStop = 0;
@@ -1173,10 +1173,10 @@ void UpdateGridLegendSection() {
     }
     int gbTotal = gbLimit + gbStop;
 
-    // v9.22: Compact format (STP/LMT) to match taller legend
+    // v9.22: Update STP/LMT labels + Tot on separate row
     ObjectSetString(0, "LEGEND_GB_LIMIT", OBJPROP_TEXT, StringFormat("LMT[%d]", gbLimit));
     ObjectSetString(0, "LEGEND_GB_STOP", OBJPROP_TEXT, StringFormat("STP[%d]", gbStop));
-    ObjectSetString(0, "LEGEND_GB_TOTAL", OBJPROP_TEXT, StringFormat("Tot:%d", gbTotal));
+    ObjectSetString(0, "LEGEND_GB_TOTAL", OBJPROP_TEXT, StringFormat("GB Tot: %d", gbTotal));
 }
 
 //+------------------------------------------------------------------+

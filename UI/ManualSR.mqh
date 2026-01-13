@@ -122,10 +122,10 @@ void CreateSRLine(string name, double price, color clr, string label) {
     ObjectSetInteger(0, name, OBJPROP_COLOR, clr);
     ObjectSetInteger(0, name, OBJPROP_WIDTH, MANUAL_SR_LINE_WIDTH);
     ObjectSetInteger(0, name, OBJPROP_STYLE, STYLE_SOLID);
-    ObjectSetInteger(0, name, OBJPROP_BACK, false);
-    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, true);    // Enable selection
+    ObjectSetInteger(0, name, OBJPROP_BACK, true);           // v9.22: Draw behind dashboard
+    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, true);     // Enable selection
     ObjectSetInteger(0, name, OBJPROP_SELECTED, false);
-    ObjectSetInteger(0, name, OBJPROP_ZORDER, 5000);
+    ObjectSetInteger(0, name, OBJPROP_ZORDER, 100);          // v9.22: Lower Z-order (behind dashboard)
     ObjectSetString(0, name, OBJPROP_TOOLTIP, label + ": " + DoubleToString(price, _Digits));
 
     // Create label
@@ -141,6 +141,8 @@ void CreateSRLine(string name, double price, color clr, string label) {
             ObjectSetInteger(0, lblName, OBJPROP_FONTSIZE, 9);
             ObjectSetString(0, lblName, OBJPROP_FONT, "Arial Bold");
             ObjectSetInteger(0, lblName, OBJPROP_ANCHOR, ANCHOR_LEFT);
+            ObjectSetInteger(0, lblName, OBJPROP_BACK, true);   // v9.22: Draw behind dashboard
+            ObjectSetInteger(0, lblName, OBJPROP_ZORDER, 100);  // v9.22: Lower Z-order
         }
     }
 }
