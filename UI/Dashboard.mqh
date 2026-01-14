@@ -226,7 +226,7 @@ void HandleButtonClick(string clickedObject) {
         CloseAllSugamaraOrders();
         // v5.8 FIX: COP_ResetDaily() RIMOSSO - profitti devono accumularsi
         // Il reset avviene solo al cambio giorno (COP_IsNewDay) o target raggiunto
-        systemState = STATE_IDLE;
+        systemState = STATE_CLOSING;  // v9.20: Show "ALL CLOSED" (red) in status
         if(EnableAlerts) Alert("Sugamara: ALL POSITIONS CLOSED");
         return;
     }
@@ -282,9 +282,10 @@ bool InitializeDashboard() {
 
     CreateUnifiedDashboard();
     CreateVolatilityPanel();
+    CreateAutoSavePanel();   // v9.22: Auto-Save Monitor
     // CreateShieldPanel(); REMOVED in v9.12
-    CreateGridLegendPanel();
-    CreateCOPPanel();  // v5.1: Close On Profit Panel
+    CreateGridLegendPanel(); // v9.22: Now a stub - GRID LEGEND is in right column
+    CreateCOPPanel();        // v5.1: Close On Profit Panel
 
     // Mark dashboard as initialized
     g_dashboardInitialized = true;
@@ -307,17 +308,15 @@ bool InitializeDashboard() {
 bool VerifyDashboardExists() {
     if(!ShowDashboard) return true;
 
-    // Check for critical dashboard objects
+    // v9.22: Updated critical objects (GRID_LEGEND_PANEL removed - integrated into REOPEN)
     string criticalObjects[] = {
         "TITLE_PANEL",
         "MODE_PANEL",
         "LEFT_GRIDA_PANEL",
         "RIGHT_GRIDB_PANEL",
-        "LEFT_EXPOSURE_PANEL",
-        "RIGHT_PERF_PANEL",
-        "VOL_PANEL",
-        "GRID_LEGEND_PANEL"
-        // SHIELD_PANEL REMOVED in v9.12
+        "LEFT_PERF_PANEL",
+        "RIGHT_REOPEN_PANEL",
+        "VOL_PANEL"
     };
 
     int missingCount = 0;
@@ -388,9 +387,10 @@ void RecreateEntireDashboard() {
     // Recreate all components
     CreateUnifiedDashboard();
     CreateVolatilityPanel();
+    CreateAutoSavePanel();   // v9.22: Auto-Save Monitor
     // CreateShieldPanel(); REMOVED in v9.12
-    CreateGridLegendPanel();
-    CreateCOPPanel();  // v5.1: Close On Profit Panel
+    CreateGridLegendPanel(); // v9.22: Now a stub - GRID LEGEND is in right column
+    CreateCOPPanel();        // v5.1: Close On Profit Panel
 
     // v4.4: Control buttons ALWAYS active
     // FIX v4.5: Corrected parameter order (startX, startY, panelWidth)
@@ -428,12 +428,11 @@ void CheckDashboardPersistence() {
 
     // Quick check: verify main panel exists
     if(ObjectFind(0, "TITLE_PANEL") < 0) {
-        // v9.11: Identify ALL missing objects for detailed logging
-        // v9.12: SHIELD_PANEL removed
+        // v9.22: Updated critical objects (GRID_LEGEND_PANEL removed - integrated into REOPEN)
         string criticalObjects[] = {
             "TITLE_PANEL", "MODE_PANEL", "LEFT_GRIDA_PANEL",
-            "RIGHT_GRIDB_PANEL", "LEFT_EXPOSURE_PANEL", "RIGHT_PERF_PANEL",
-            "VOL_PANEL", "GRID_LEGEND_PANEL"
+            "RIGHT_GRIDB_PANEL", "LEFT_PERF_PANEL", "RIGHT_REOPEN_PANEL",
+            "VOL_PANEL"
         };
 
         int missingCount = 0;
@@ -477,14 +476,15 @@ void CreateUnifiedDashboard() {
     int totalWidth = TOTAL_WIDTH;
 
     //═══════════════════════════════════════════════════════════════
-    // TITLE PANEL (Full Width) - DUNE THEME
+    // TITLE PANEL (Full Width = 2 columns only, excludes side panels)
     //═══════════════════════════════════════════════════════════════
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
-    // v5.9.5: Titolo GIALLO, sottotitolo ARANCIONE SCURO
-    // v9.11: Title centered properly
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 95, y + 12, "SUGAMARA v9.11", clrYellow, 20, "Arial Black");
-    DashLabel("TITLE_SUB", x + totalWidth/2 - 70, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
+    // v9.22: Title centered relative to 2 columns (690px), NOT including ATR/COP side panels
+    // "SUGAMARA v9.22" @ 20px Arial Black ≈ 220px wide → offset -110
+    // "The Spice Must Flow" @ 10px ≈ 144px wide → offset -72
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 110, y + 12, "SUGAMARA v9.22", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_SUB", x + totalWidth/2 - 72, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
     //═══════════════════════════════════════════════════════════════
@@ -508,43 +508,47 @@ void CreateUnifiedDashboard() {
     int leftY = y;
 
     //--- GRID A PANEL (SOLO BUY - Spice Harvesters) ---
-    int gridAHeight = 200;  // v9.0: +20px per 2 righe LIMIT/STOP
+    int gridAHeight = 165;  // v9.22: Reduced from 200 (removed extra spacing)
     DashRectangle("LEFT_GRIDA_PANEL", leftX, leftY, colWidth, gridAHeight, CLR_PANEL_GRIDA);
 
     int ay = leftY + 8;
-    DashLabel("LEFT_GRIDA_TITLE", leftX + 10, ay, "GRID A - SOLO BUY", CLR_GRID_A, 11, "Arial Bold");
-    ay += 22;
+    DashLabel("LEFT_GRIDA_TITLE", leftX + 10, ay, "GRID A - BUY", CLR_GOLD, 10, "Arial Bold");  // v9.22: Standardized title
+    ay += 20;  // v9.22: Consistent title spacing
     DashLabel("LEFT_GRIDA_STATUS", leftX + 10, ay, "Status: IDLE", clrGray, 9);
-    ay += 18;
+    ay += 16;
     DashLabel("LEFT_GRIDA_POSITIONS", leftX + 10, ay, "Positions: 0", CLR_WHITE, 8);
-    ay += 16;
+    ay += 14;
     DashLabel("LEFT_GRIDA_PENDING", leftX + 10, ay, "Pending: 0", CLR_WHITE, 8);
-    ay += 16;
+    ay += 14;
     DashLabel("LEFT_GRIDA_LOTS", leftX + 10, ay, "Long Lots: 0.00", CLR_GRID_A, 8);
-    ay += 16;
+    ay += 14;
     DashLabel("LEFT_GRIDA_SHORT", leftX + 10, ay, "Short Lots: 0.00", CLR_LOSS, 8);
-    ay += 18;
+    ay += 16;
     // v9.0: LIMIT/STOP monitoring con icone e etichette complete
     DashLabel("LEFT_GRIDA_LIMIT", leftX + 10, ay, "[^] LIMIT 0/10 | Cycles:0 | Reopen:0", CLR_WHITE, 8);
-    ay += 16;
+    ay += 14;
     DashLabel("LEFT_GRIDA_STOP", leftX + 10, ay, "[^] STOP  0/10 | Cycles:0 | Reopen:0", CLR_WHITE, 8);
 
     leftY += gridAHeight;
 
-    //--- NET EXPOSURE PANEL ---
-    int exposureHeight = 100;
-    DashRectangle("LEFT_EXPOSURE_PANEL", leftX, leftY, colWidth, exposureHeight, CLR_BG_MEDIUM);
+    //--- PERFORMANCE PANEL (v9.18: moved from right column, replaced NET EXPOSURE) ---
+    int perfHeight = 140;
+    DashRectangle("LEFT_PERF_PANEL", leftX, leftY, colWidth, perfHeight, CLR_PANEL_PERF);
 
-    int ey = leftY + 8;
-    DashLabel("LEFT_EXPOSURE_TITLE", leftX + 10, ey, "NET EXPOSURE", CLR_AZURE_2, 11, "Arial Bold");
-    ey += 22;
-    DashLabel("LEFT_EXPOSURE_LONG", leftX + 10, ey, "Total Long: 0.00 lot", CLR_GRID_A, 9);
-    ey += 18;
-    DashLabel("LEFT_EXPOSURE_SHORT", leftX + 10, ey, "Total Short: 0.00 lot", CLR_GRID_B, 9);
-    ey += 18;
-    DashLabel("LEFT_EXPOSURE_NET", leftX + 10, ey, "Net: 0.00 (NEUTRAL)", CLR_ACTIVE, 10, "Arial Bold");
+    int py = leftY + 8;
+    DashLabel("LEFT_PERF_TITLE", leftX + 10, py, "PERFORMANCE", CLR_GOLD, 10, "Arial Bold");  // v9.22: Standardized title
+    py += 20;  // v9.22: Consistent title spacing
+    DashLabel("LEFT_PERF_TOTAL", leftX + 10, py, "Total P/L: $0.00", CLR_WHITE, 11, "Arial Bold");
+    py += 18;
+    DashLabel("LEFT_PERF_EQUITY", leftX + 10, py, "Equity: $---", CLR_WHITE, 8);
+    py += 16;
+    DashLabel("LEFT_PERF_BALANCE", leftX + 10, py, "Balance: $---", CLR_WHITE, 8);
+    py += 16;
+    DashLabel("LEFT_PERF_DD", leftX + 10, py, "Drawdown: 0.00%", CLR_WHITE, 8);
+    py += 16;
+    DashLabel("LEFT_PERF_WINRATE", leftX + 10, py, "Win Rate: --% (0W/0L)", CLR_SILVER, 8);
 
-    leftY += exposureHeight;
+    leftY += perfHeight;
 
     //--- CONTROL BUTTONS PANEL ---
     int buttonsHeight = 200;  // v5.8: Increased +30px to balance Grid Zero panel
@@ -554,6 +558,8 @@ void CreateUnifiedDashboard() {
 
     leftY += buttonsHeight;
 
+    // v9.22: LEFT_PADDING_PANEL removed - columns now equal height (505px each)
+
     //═══════════════════════════════════════════════════════════════
     // RIGHT COLUMN START
     //═══════════════════════════════════════════════════════════════
@@ -561,83 +567,124 @@ void CreateUnifiedDashboard() {
     int rightY = y;
 
     //--- GRID B PANEL (SOLO SELL - Sandworm Riders) ---
-    int gridBHeight = 200;  // v9.0: +20px per 2 righe LIMIT/STOP
+    int gridBHeight = 165;  // v9.22: Reduced from 200 (removed extra spacing)
     DashRectangle("RIGHT_GRIDB_PANEL", rightX, rightY, colWidth, gridBHeight, CLR_PANEL_GRIDB);
 
     int by = rightY + 8;
-    DashLabel("RIGHT_GRIDB_TITLE", rightX + 10, by, "GRID B - SOLO SELL", CLR_GRID_B, 11, "Arial Bold");
-    by += 22;
+    DashLabel("RIGHT_GRIDB_TITLE", rightX + 10, by, "GRID B - SELL", CLR_GOLD, 10, "Arial Bold");  // v9.22: Standardized title
+    by += 20;  // v9.22: Consistent title spacing
     DashLabel("RIGHT_GRIDB_STATUS", rightX + 10, by, "Status: IDLE", clrGray, 9);
-    by += 18;
+    by += 16;
     DashLabel("RIGHT_GRIDB_POSITIONS", rightX + 10, by, "Positions: 0", CLR_WHITE, 8);
-    by += 16;
+    by += 14;
     DashLabel("RIGHT_GRIDB_PENDING", rightX + 10, by, "Pending: 0", CLR_WHITE, 8);
-    by += 16;
+    by += 14;
     DashLabel("RIGHT_GRIDB_LOTS", rightX + 10, by, "Long Lots: 0.00", CLR_GRID_A, 8);
-    by += 16;
+    by += 14;
     DashLabel("RIGHT_GRIDB_SHORT", rightX + 10, by, "Short Lots: 0.00", CLR_LOSS, 8);
-    by += 18;
+    by += 16;
     // v9.0: LIMIT/STOP monitoring con icone e etichette complete
     DashLabel("RIGHT_GRIDB_LIMIT", rightX + 10, by, "[v] LIMIT 0/10 | Cycles:0 | Reopen:0", CLR_WHITE, 8);
-    by += 16;
+    by += 14;
     DashLabel("RIGHT_GRIDB_STOP", rightX + 10, by, "[v] STOP  0/10 | Cycles:0 | Reopen:0", CLR_WHITE, 8);
 
     rightY += gridBHeight;
 
     // v5.2: RANGEBOX panel removed (mode deprecated)
     // v5.9.3: GRID INFO panel removed (info moved to Mode row)
+    // v9.18: PERFORMANCE moved to left column, GRID COUNTER replaced by REOPEN CYCLE MONITOR
 
-    //--- PERFORMANCE PANEL (v5.9.3: moved up, no more GRID INFO above) ---
-    int perfHeight = 200;  // v9.11: Match left column height (was 190)
-    DashRectangle("RIGHT_PERF_PANEL", rightX, rightY, colWidth, perfHeight, CLR_PANEL_PERF);
+    //--- REOPEN CYCLE MONITOR (v9.22: includes GRID LEGEND at bottom) ---
+    // v9.22: 340px to match left column (165+140+200 = 505px, gridB 165 + reopen 340 = 505px)
+    int reopenHeight = 340;
+    DashRectangle("RIGHT_REOPEN_PANEL", rightX, rightY, colWidth, reopenHeight, C'35,30,25');
 
-    int py = rightY + 8;
-    DashLabel("RIGHT_PERF_TITLE", rightX + colWidth/2 - 50, py, "PERFORMANCE", CLR_GOLD, 9, "Arial Bold");
-    py += 22;
-    DashLabel("RIGHT_PERF_TOTAL", rightX + 10, py, "Total P/L: $0.00", CLR_WHITE, 11, "Arial Bold");
-    py += 20;
-    DashLabel("RIGHT_PERF_EQUITY", rightX + 10, py, "Equity: $---", CLR_WHITE, 8);
-    py += 16;
-    DashLabel("RIGHT_PERF_BALANCE", rightX + 10, py, "Balance: $---", CLR_WHITE, 8);
-    py += 16;
-    DashLabel("RIGHT_PERF_DD", rightX + 10, py, "Drawdown: 0.00%", CLR_WHITE, 8);
-    py += 16;
-    DashLabel("RIGHT_PERF_RISK", rightX + 10, py, "Risk: ---", CLR_PROFIT, 9, "Arial Bold");
-    py += 20;
-    DashLabel("RIGHT_PERF_WINRATE", rightX + 10, py, "Win Rate: --% (0W/0L)", CLR_SILVER, 8);
-    py += 16;
-    DashLabel("RIGHT_PERF_TRADES", rightX + 10, py, "Total Trades: 0", CLR_SILVER, 8);
+    int ry = rightY + 8;
+    DashLabel("RIGHT_REOPEN_TITLE", rightX + 10, ry, "REOPEN CYCLE MONITOR", CLR_GOLD, 10, "Arial Bold");
+    ry += 20;
 
-    rightY += perfHeight;
+    // Grid A / Grid B summary headers
+    DashLabel("REOPEN_GA_HEADER", rightX + 10, ry, "GRID A (BUY)", CLR_GRID_A, 9, "Arial Bold");
+    DashLabel("REOPEN_GB_HEADER", rightX + 180, ry, "GRID B (SELL)", CLR_GRID_B, 9, "Arial Bold");
+    ry += 16;
 
-    //--- GRID COUNTER PANEL (v5.9.3) ---
-    int counterHeight = 100;  // v9.11: Match left column height (was 75)
-    DashRectangle("RIGHT_COUNTER_PANEL", rightX, rightY, colWidth, counterHeight, C'30,35,45');
+    // Queue counters
+    DashLabel("REOPEN_GA_QUEUE", rightX + 10, ry, "In Coda:    0", CLR_WHITE, 8);
+    DashLabel("REOPEN_GB_QUEUE", rightX + 180, ry, "In Coda:    0", CLR_WHITE, 8);
+    ry += 14;
 
-    int cy = rightY + 6;
-    DashLabel("RIGHT_COUNTER_TITLE", rightX + colWidth/2 - 45, cy, "GRID COUNTER", CLR_GOLD, 9, "Arial Bold");
-    cy += 18;
-    // Grid A contatori
-    DashLabel("COUNTER_A_CLOSED", rightX + 10, cy, "A Closed: 0", CLR_GRID_A, 8);
-    DashLabel("COUNTER_A_PENDING", rightX + 10, cy + 14, "A Pending: 0", CLR_GRID_A, 8);
-    // Grid B contatori
-    DashLabel("COUNTER_B_CLOSED", rightX + 110, cy, "B Closed: 0", CLR_GRID_B, 8);
-    DashLabel("COUNTER_B_PENDING", rightX + 110, cy + 14, "B Pending: 0", CLR_GRID_B, 8);
-    // Totale
-    DashLabel("COUNTER_TOTAL", rightX + 210, cy, "Tot: 0/0", CLR_WHITE, 8);
+    // Done counters
+    DashLabel("REOPEN_GA_DONE", rightX + 10, ry, "Reinseriti: 0", CLR_WHITE, 8);
+    DashLabel("REOPEN_GB_DONE", rightX + 180, ry, "Reinseriti: 0", CLR_WHITE, 8);
+    ry += 14;
 
-    rightY += counterHeight;
+    // Cycles counters
+    DashLabel("REOPEN_GA_CYCLES", rightX + 10, ry, "Cicli:      0/50", CLR_WHITE, 8);
+    DashLabel("REOPEN_GB_CYCLES", rightX + 180, ry, "Cicli:      0/50", CLR_WHITE, 8);
+    ry += 18;
+
+    // Separator - STOP orders waiting
+    DashLabel("REOPEN_SEP1", rightX + 10, ry, "STOP ORDERS IN ATTESA REOPEN:", CLR_AZURE_2, 8, "Arial Bold");
+    ry += 14;
+
+    // Stop orders waiting list (up to 4 lines)
+    DashLabel("REOPEN_WAIT_1", rightX + 10, ry, "---", clrGray, 7);
+    ry += 12;
+    DashLabel("REOPEN_WAIT_2", rightX + 10, ry, "---", clrGray, 7);
+    ry += 12;
+    DashLabel("REOPEN_WAIT_3", rightX + 10, ry, "---", clrGray, 7);
+    ry += 12;
+    DashLabel("REOPEN_WAIT_4", rightX + 10, ry, "---", clrGray, 7);
+    ry += 16;
+
+    // Separator - Recent reopens
+    DashLabel("REOPEN_SEP2", rightX + 10, ry, "ULTIMI REOPEN:", CLR_AZURE_2, 8, "Arial Bold");
+    ry += 14;
+
+    // Recent reopens list (3 lines)
+    DashLabel("REOPEN_LAST_1", rightX + 10, ry, "---", clrGray, 7);
+    ry += 12;
+    DashLabel("REOPEN_LAST_2", rightX + 10, ry, "---", clrGray, 7);
+    ry += 12;
+    DashLabel("REOPEN_LAST_3", rightX + 10, ry, "---", clrGray, 7);
+    ry += 18;
+
+    //--- v9.22: GRID LEGEND integrated into REOPEN panel ---
+    DashLabel("LEGEND_TITLE", rightX + 10, ry, "GRID LEGEND", CLR_GOLD, 10, "Arial Bold");
+    ry += 18;
+
+    // v9.22: Row 1 - GRID A (BUY): STP + LMT
+    DashRectangle("LEGEND_GA_STOP_BOX", rightX + 10, ry + 2, 10, 10, Color_BuyStop);
+    DashLabel("LEGEND_GA_STOP", rightX + 24, ry, "STP[0]", Color_BuyStop, 10);
+    DashRectangle("LEGEND_GA_LIMIT_BOX", rightX + 85, ry + 2, 10, 10, Color_BuyLimit);
+    DashLabel("LEGEND_GA_LIMIT", rightX + 99, ry, "LMT[0]", Color_BuyLimit, 10);
+    DashLabel("LEGEND_GA_LABEL", rightX + 160, ry, "GRID A", CLR_GRID_A, 10);
+    ry += 16;
+
+    // v9.22: Row 2 - GRID B (SELL): LMT + STP
+    DashRectangle("LEGEND_GB_LIMIT_BOX", rightX + 10, ry + 2, 10, 10, Color_SellLimit);
+    DashLabel("LEGEND_GB_LIMIT", rightX + 24, ry, "LMT[0]", Color_SellLimit, 10);
+    DashRectangle("LEGEND_GB_STOP_BOX", rightX + 85, ry + 2, 10, 10, Color_SellStop);
+    DashLabel("LEGEND_GB_STOP", rightX + 99, ry, "STP[0]", Color_SellStop, 10);
+    DashLabel("LEGEND_GB_LABEL", rightX + 160, ry, "GRID B", CLR_GRID_B, 10);
+    ry += 16;
+
+    // v9.22: Row 3 - Totals aligned left
+    DashLabel("LEGEND_GA_TOTAL", rightX + 10, ry, "GA Tot: 0", CLR_GRID_A, 10);
+    DashLabel("LEGEND_GB_TOTAL", rightX + 100, ry, "GB Tot: 0", CLR_GRID_B, 10);
+
+    rightY += reopenHeight;
 
     ChartRedraw(0);
-    Print("SUCCESS: Unified Dashboard created with 2-column layout");
+    Print("SUCCESS: Unified Dashboard created with 2-column layout (v9.22)");
 }
 
 //+------------------------------------------------------------------+
-//| Create Control Buttons v9.1 (START/CLOSE/RECOVER)                |
+//| Create Control Buttons v9.19 (START/CLOSE/RECOVER + Mode Status) |
 //+------------------------------------------------------------------+
 void CreateControlButtons(int startY, int startX, int panelWidth) {
     int x = startX + 10;
-    int y = startY + 10;
+    int y = startY + 15;  // v9.22: Top padding for status label
     int btnStartWidth = 100;   // v9.1: Ridotto per fare spazio a RECOVER
     int btnCloseWidth = 90;    // v9.1: Ridotto
     int btnRecoverWidth = 90;  // v9.1: AGGIUNTO
@@ -645,46 +692,84 @@ void CreateControlButtons(int startY, int startX, int panelWidth) {
     int spacing = 5;           // v9.1: Ridotto spacing
 
     // Status Label (matches ControlButtons.mqh BTN_STATUS_V3)
-    DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY - Click START", CLR_DASH_TEXT, 10, "Arial Bold");
-    y += 22;
+    // v9.22: Single label, 11px font (increased from 10px)
+    DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY", CLR_DASH_TEXT, 11, "Arial Bold");
+    // STATUS2 removed - no longer needed
+    y += 25;  // v9.22: Space after status label
+
+    // v9.22: Extra spacing ABOVE buttons
+    y += 8;
 
     // v9.1: 3 Main Buttons: START | CLOSE | RECOVER
     // Names MUST match ControlButtons.mqh
     DashButton("SUGAMARA_BTN_START", x, y, btnStartWidth, btnHeight, "START", C'0,150,80');
     DashButton("SUGAMARA_BTN_CLOSEALL", x + btnStartWidth + spacing, y, btnCloseWidth, btnHeight, "CLOSE", C'180,30,30');
     DashButton("SUGAMARA_BTN_RECOVER", x + btnStartWidth + spacing + btnCloseWidth + spacing, y, btnRecoverWidth, btnHeight, "RECOVER", C'0,140,140');
-    y += btnHeight + 8;
 
-    // Entry Mode Status
-    DashLabel("BTN_MODE_STATUS", x, y, "Mode: READY", CLR_CYAN, 9, "Arial Bold");
+    // v9.22: Extra spacing BELOW buttons
+    y += btnHeight + 18;
+
+    // v9.22: Mode status with colored indicator box (size 12, slightly spaced)
+    // Format: "MODE: [colored box] STATUS"
+    DashLabel("MODE_LABEL", x, y, "MODE:", CLR_WHITE, 12, "Arial Bold");
+    DashRectangle("MODE_STATUS_BOX", x + 55, y + 2, 12, 12, clrWhite);
+    DashLabel("MODE_STATUS_TEXT", x + 72, y, "READY", CLR_WHITE, 12, "Arial Bold");
 
     ChartRedraw(0);
 }
 
 //+------------------------------------------------------------------+
 //| Create Volatility/ATR Monitor Panel (Right Side)                 |
-//| v5.9: Compacted to 55px (was 160px) - 3 rows max                 |
+//| v9.22: Added colored box indicator before title                   |
 //+------------------------------------------------------------------+
 void CreateVolatilityPanel() {
     int volX = Dashboard_X + TOTAL_WIDTH + 10;
     int volY = Dashboard_Y;
     int volWidth = 175;
-    int volHeight = 55;  // v5.9: Reduced from 160 to 55
+    int volHeight = 55;
 
     DashRectangle("VOL_PANEL", volX, volY, volWidth, volHeight, CLR_BG_DARK);
 
     int ly = volY + 6;
-    DashLabel("VOL_TITLE", volX + 10, ly, "ATR MONITOR", CLR_GOLD, 9, "Arial Bold");
+    // v9.22: Colored status box before title
+    DashRectangle("VOL_STATUS_BOX", volX + 10, ly + 2, 8, 8, clrLime);
+    DashLabel("VOL_TITLE", volX + 22, ly, "ATR MONITOR", CLR_GOLD, 10, "Arial Bold");
     ly += 18;
 
-    // v5.9: Compact single line for M5 and H1
+    // Compact single line for M5 and H1
     DashLabel("VOL_ATR_LINE", volX + 10, ly, "M5: --- | H1: ---", CLR_AZURE_1, 8);
     ly += 16;
 
     // Spacing + Condition on same line
     DashLabel("VOL_SPACING_STATUS", volX + 10, ly, "Spacing: --- (Normal)", CLR_CYAN, 8);
 
-    Print("SUCCESS: Volatility Panel created (v5.9 compact)");
+    Print("SUCCESS: Volatility Panel created (v9.22 with status box)");
+}
+
+//+------------------------------------------------------------------+
+//| Create AUTO-SAVE Monitor Panel (v9.22: NEW)                       |
+//| Shows auto-save status and last backup time                       |
+//+------------------------------------------------------------------+
+void CreateAutoSavePanel() {
+    int asX = Dashboard_X + TOTAL_WIDTH + 10;
+    int asY = Dashboard_Y + 65;  // Below ATR Monitor (55px + 10px gap)
+    int asWidth = 175;
+    int asHeight = 50;
+
+    DashRectangle("AUTOSAVE_PANEL", asX, asY, asWidth, asHeight, CLR_BG_DARK);
+
+    int ly = asY + 6;
+    // v9.22: Colored status box before title (like ATR MONITOR and COP)
+    DashRectangle("AUTOSAVE_TITLE_BOX", asX + 10, ly + 2, 8, 8, clrLime);
+    DashLabel("AUTOSAVE_TITLE", asX + 22, ly, "AUTO-SAVE", CLR_GOLD, 10, "Arial Bold");
+    ly += 16;
+
+    // Status with colored box
+    DashRectangle("AUTOSAVE_STATUS_BOX", asX + 10, ly + 2, 8, 8, clrLime);
+    DashLabel("AUTOSAVE_STATUS", asX + 22, ly, "ON", clrLime, 8);
+    DashLabel("AUTOSAVE_LAST", asX + 60, ly, "Last: --:-- --", CLR_SILVER, 8);
+
+    Print("SUCCESS: Auto-Save Panel created (v9.22)");
 }
 
 //+------------------------------------------------------------------+
@@ -692,80 +777,59 @@ void CreateVolatilityPanel() {
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//| Create Grid Legend Panel (Under Performance - Right Column)       |
-//| v5.8: Moved under Performance, horizontal layout 2x2              |
+//| Create Grid Legend Panel                                          |
+//| v9.22: MOVED to right column in CreateUnifiedDashboard()          |
+//| This function now does nothing - kept for compatibility           |
 //+------------------------------------------------------------------+
 void CreateGridLegendPanel() {
-    // v5.8: Position under Performance in right column
-    int legendX = Dashboard_X + PANEL_WIDTH;  // Right column X
-    // Calculate Y: After GridB (180) + GridInfo (55) + Performance (190)
-    int legendY = Dashboard_Y + 180 + 55 + 190;
-    int legendWidth = PANEL_WIDTH;            // Same width as Performance (315)
-    int legendHeight = 55;                    // Compact height for 2 rows
-
-    DashRectangle("GRID_LEGEND_PANEL", legendX, legendY, legendWidth, legendHeight, CLR_BG_DARK);
-
-    int ly = legendY + 6;
-    DashLabel("LEGEND_TITLE", legendX + legendWidth/2 - 35, ly, "GRID LINES", CLR_GOLD, 8, "Arial Bold");
-    ly += 18;
-
-    // v5.8: Horizontal layout - 2 columns x 2 rows
-    int col1 = legendX + 8;
-    int col2 = legendX + legendWidth/2 + 5;
-
-    // v9.10: Row 1 - Grid A (BUY only) with configurable input colors
-    DashLabel("LEGEND_BS", col1, ly, "■ BUY STOP (GA↑)", Color_BuyStop, 7);
-    DashLabel("LEGEND_BL", col2, ly, "■ BUY LMT (GA↓)", Color_BuyLimit, 7);
-    ly += 14;
-
-    // v9.10: Row 2 - Grid B (SELL only) with configurable input colors
-    DashLabel("LEGEND_SL", col1, ly, "■ SELL LMT (GB↑)", Color_SellLimit, 7);
-    DashLabel("LEGEND_SS", col2, ly, "■ SELL STP (GB↓)", Color_SellStop, 7);
-
-    Print("SUCCESS: Grid Legend Panel created (under Performance)");
+    // v9.22: Grid Legend is now created inline in CreateUnifiedDashboard()
+    // at the bottom of the right column, after REOPEN CYCLE MONITOR
+    // This function is kept as a stub for compatibility
 }
 
 //+------------------------------------------------------------------+
 //| Create COP Panel (v5.1 - Close On Profit)                        |
-//| v5.9: Moved up (ATR Monitor reduced)                              |
+//| v9.22: Moved below AUTO-SAVE, colored box instead of emoji        |
 //+------------------------------------------------------------------+
 void CreateCOPPanel() {
     if(!Enable_CloseOnProfit) return;
 
     int copX = Dashboard_X + TOTAL_WIDTH + 10;
-    int copY = Dashboard_Y + 65;  // v9.12: Subito sotto ATR Monitor (Shield removed)
+    int copY = Dashboard_Y + 125;  // v9.22: After ATR (55) + gap (10) + AUTO-SAVE (50) + gap (10)
     int copWidth = 175;
-    int copHeight = 155;  // Increased for new fields
+    int copHeight = 170;  // v9.22: Increased to include Commission label
 
-    // v9.7: Bordo giallo sottile attorno al pannello COP per maggiore visibilità
+    // v9.7: Gold border around COP panel
     DashRectangle("COP_BORDER", copX - 2, copY - 2, copWidth + 4, copHeight + 4, clrGold);
     DashRectangle("COP_PANEL", copX, copY, copWidth, copHeight, C'28,35,28');
 
     int ly = copY + 8;
-    DashLabel("COP_TITLE", copX + 10, ly, "💵 CLOSE ON PROFIT", CLR_GOLD, 9, "Arial Bold");
+    // v9.22: Colored status box instead of emoji (MT5 font compatibility)
+    DashRectangle("COP_STATUS_BOX", copX + 10, ly + 2, 8, 8, clrLime);
+    DashLabel("COP_TITLE", copX + 22, ly, "CLOSE ON PROFIT", CLR_GOLD, 10, "Arial Bold");
     ly += 20;
     DashLabel("COP_SEPARATOR", copX + 10, ly, "------------------------", clrGray, 7);
     ly += 15;
 
     // Net Profit
     DashLabel("COP_NET", copX + 10, ly, "Net: $0.00 / $50.00", CLR_AZURE_1, 8);
-    ly += 16;
+    ly += 18;  // v9.21: Increased spacing
 
     // Progress Bar (text-based)
     DashLabel("COP_PROGRESS", copX + 10, ly, "░░░░░░░░░░░░░░░░ 0%", clrGray, 8);
-    ly += 16;
+    ly += 18;  // v9.21: Increased spacing
 
     // Status and Remaining (NEW)
     DashLabel("COP_STATUS", copX + 10, ly, "Status: ACTIVE", CLR_PROFIT, 8);
-    ly += 16;
+    ly += 18;  // v9.21: Increased spacing
     DashLabel("COP_MISSING", copX + 10, ly, "Manca: $50.00", CLR_AZURE_1, 8);
-    ly += 18;
+    ly += 20;  // v9.21: Increased spacing
 
     // Details
     DashLabel("COP_REAL", copX + 10, ly, "Real: $0.00", clrGray, 8);
-    ly += 16;
+    ly += 18;  // v9.21: Increased spacing
     DashLabel("COP_FLOAT", copX + 10, ly, "Float: $0.00", clrGray, 8);
-    ly += 16;
+    ly += 18;  // v9.21: Increased spacing
     DashLabel("COP_COMM", copX + 10, ly, "Comm: -$0.00", clrGray, 8);
 
     Print("SUCCESS: COP Panel created (enhanced v5.2)");
@@ -783,16 +847,17 @@ void UpdateDashboard() {
     lastUpdate = TimeCurrent();
 
     UpdateModeSection();
+    UpdateModeStatusIndicator();  // v9.19: Update MODE: [box] STATUS indicator
+    UpdateStatusLabel();          // v9.20: Dynamic status label colors
     UpdateGridASection();
     UpdateGridBSection();
-    UpdateExposureSection();
-    // v5.2: UpdateRangeBoxSection removed (mode deprecated)
-    // v5.9.3: UpdateGridInfoSection removed (info moved to Mode row)
-    UpdatePerformanceSection();
-    UpdateGridCounterSection();  // v5.9.3: Grid Counter Section
+    // v9.18: UpdateExposureSection() REMOVED - replaced by Performance in left column
+    UpdatePerformanceSection();  // v9.18: Now updates LEFT_PERF_* labels
+    UpdateReopenCycleSection();  // v9.18: NEW - replaces GridCounterSection
     UpdateVolatilityPanel();
-    // UpdateShieldSection(); REMOVED in v9.12
-    UpdateCOPSection();  // v5.1: Close On Profit Section
+    UpdateGridLegendSection();   // v9.18: NEW - updates Grid Legend on right side
+    UpdateAutoSaveSection();     // v9.22: NEW - updates Auto-Save status
+    UpdateCOPSection();
 
     ChartRedraw(0);
 }
@@ -820,6 +885,72 @@ void UpdateModeSection() {
 
     string levelsText = StringFormat("Levels: %d", GridLevelsPerSide);
     ObjectSetString(0, "MODE_LEVELS", OBJPROP_TEXT, levelsText);
+}
+
+//+------------------------------------------------------------------+
+//| Update Mode Status Indicator (v9.21: colored box + text)          |
+//| Shows: MODE: [colored box] STATUS                                  |
+//| Colors: White=READY, Green=WORKING, Red=STOPPED                    |
+//+------------------------------------------------------------------+
+void UpdateModeStatusIndicator() {
+    color statusColor;
+    string statusText;
+
+    if(systemState == STATE_ACTIVE || systemState == STATE_RUNNING) {
+        statusColor = clrLime;
+        statusText = "WORKING";
+    } else if(systemState == STATE_PAUSED || systemState == STATE_CLOSING) {
+        // v9.21: STATE_CLOSING shows STOPPED (red)
+        statusColor = clrRed;
+        statusText = "STOPPED";
+    } else {
+        // STATE_IDLE only
+        statusColor = clrWhite;
+        statusText = "READY";
+    }
+
+    // Update colored box background
+    ObjectSetInteger(0, "MODE_STATUS_BOX", OBJPROP_BGCOLOR, statusColor);
+
+    // Update status text and color
+    ObjectSetString(0, "MODE_STATUS_TEXT", OBJPROP_TEXT, statusText);
+    ObjectSetInteger(0, "MODE_STATUS_TEXT", OBJPROP_COLOR, statusColor);
+}
+
+//+------------------------------------------------------------------+
+//| Update Status Label (v9.22: dual-color support)                    |
+//| SUGAMARA_BTN_STATUS + STATUS2: allows two-color status display     |
+//| WHITE=READY, AZZURRO=STARTING, GREEN=ACTIVE, RED=CLOSED            |
+//+------------------------------------------------------------------+
+void UpdateStatusLabel() {
+    color labelColor;
+    string labelText;
+
+    if(systemState == STATE_CLOSING) {
+        // v9.22: Solo "ALL CLOSED" rosso (11px)
+        labelColor = clrRed;
+        labelText = "ALL CLOSED";
+    } else if(systemState == STATE_ACTIVE || systemState == STATE_RUNNING) {
+        int totalPositions = GetGridAActivePositions() + GetGridBActivePositions();
+        if(totalPositions > 0) {
+            labelColor = clrLime;
+            labelText = "ACTIVE - GRID RUNNING";
+        } else {
+            labelColor = CLR_ACTIVE;  // Azzurrino
+            labelText = "STARTING GRID...";
+        }
+    } else if(systemState == STATE_PAUSED) {
+        labelColor = clrOrange;
+        labelText = "PAUSED";
+    } else {
+        // STATE_IDLE
+        labelColor = clrWhite;
+        labelText = "READY - CLICK START";
+    }
+
+    // Update label
+    ObjectSetString(0, "SUGAMARA_BTN_STATUS", OBJPROP_TEXT, labelText);
+    ObjectSetInteger(0, "SUGAMARA_BTN_STATUS", OBJPROP_COLOR, labelColor);
 }
 
 //+------------------------------------------------------------------+
@@ -902,66 +1033,182 @@ void UpdateGridBSection() {
             g_gridB_StopFilled, GridLevelsPerSide, g_gridB_StopCycles, g_gridB_StopReopens));
 }
 
-//+------------------------------------------------------------------+
-//| Update Exposure Section                                          |
-//+------------------------------------------------------------------+
-void UpdateExposureSection() {
-    CalculateTotalExposure();
-
-    ObjectSetString(0, "LEFT_EXPOSURE_LONG", OBJPROP_TEXT,
-                    StringFormat("Total Long: %.2f lot", totalLongLots));
-    ObjectSetString(0, "LEFT_EXPOSURE_SHORT", OBJPROP_TEXT,
-                    StringFormat("Total Short: %.2f lot", totalShortLots));
-
-    string netText = "";
-    color netColor = CLR_NEUTRAL;
-
-    if(netExposure > 0.001) {
-        netText = StringFormat("Net: +%.2f (LONG bias)", netExposure);
-        netColor = CLR_GRID_A;
-    } else if(netExposure < -0.001) {
-        netText = StringFormat("Net: %.2f (SHORT bias)", netExposure);
-        netColor = CLR_GRID_B;
-    } else {
-        netText = "Net: 0.00 (NEUTRAL)";
-        netColor = CLR_ACTIVE;
-    }
-
-    ObjectSetString(0, "LEFT_EXPOSURE_NET", OBJPROP_TEXT, netText);
-    ObjectSetInteger(0, "LEFT_EXPOSURE_NET", OBJPROP_COLOR, netColor);
-}
+// v9.18: UpdateExposureSection() REMOVED - NET EXPOSURE replaced by PERFORMANCE in left column
 
 // v5.2: UpdateRangeBoxSection() removed (RANGEBOX mode deprecated)
 
+// v9.18: UpdateGridCounterSection() REMOVED - replaced by UpdateReopenCycleSection()
+
 //+------------------------------------------------------------------+
-//| Update Grid Counter Section (v5.9.3)                              |
+//| Update Reopen Cycle Monitor Section (v9.18: NEW)                  |
 //+------------------------------------------------------------------+
-void UpdateGridCounterSection() {
-    // Grid A counters
-    ObjectSetString(0, "COUNTER_A_CLOSED", OBJPROP_TEXT,
-                    StringFormat("A Closed: %d", g_gridA_ClosedCount));
-    ObjectSetString(0, "COUNTER_A_PENDING", OBJPROP_TEXT,
-                    StringFormat("A Pending: %d", g_gridA_PendingCount));
+void UpdateReopenCycleSection() {
+    // Grid A summary
+    int gaQueue = 0;  // Count pending reopens
+    int gaDone = g_gridA_LimitReopens + g_gridA_StopReopens;
+    int gaCycles = g_gridA_LimitCycles + g_gridA_StopCycles;
+    bool infiniteCycles = (MaxCyclesPerLevel == 0);  // 0 = infinite cycles
 
-    // Grid B counters
-    ObjectSetString(0, "COUNTER_B_CLOSED", OBJPROP_TEXT,
-                    StringFormat("B Closed: %d", g_gridB_ClosedCount));
-    ObjectSetString(0, "COUNTER_B_PENDING", OBJPROP_TEXT,
-                    StringFormat("B Pending: %d", g_gridB_PendingCount));
+    // Count Grid A pending reopens (orders waiting to reopen)
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        // If infinite cycles (0), always count as pending; otherwise check against max
+        if(gridA_Upper_Status[i] == ORDER_CLOSED_TP && (infiniteCycles || gridA_Upper_Cycles[i] < MaxCyclesPerLevel)) gaQueue++;
+        if(gridA_Lower_Status[i] == ORDER_CLOSED_TP && (infiniteCycles || gridA_Lower_Cycles[i] < MaxCyclesPerLevel)) gaQueue++;
+    }
 
-    // Totals
-    int totalClosed = g_gridA_ClosedCount + g_gridB_ClosedCount;
-    int totalPending = g_gridA_PendingCount + g_gridB_PendingCount;
-    ObjectSetString(0, "COUNTER_TOTAL", OBJPROP_TEXT,
-                    StringFormat("Tot: %d/%d", totalClosed, totalPending));
+    ObjectSetString(0, "REOPEN_GA_QUEUE", OBJPROP_TEXT, StringFormat("In Coda:    %d", gaQueue));
+    ObjectSetString(0, "REOPEN_GA_DONE", OBJPROP_TEXT, StringFormat("Reinseriti: %d", gaDone));
+    // Display "∞" for infinite cycles
+    if(infiniteCycles)
+        ObjectSetString(0, "REOPEN_GA_CYCLES", OBJPROP_TEXT, StringFormat("Cicli:      %d/inf", gaCycles));
+    else
+        ObjectSetString(0, "REOPEN_GA_CYCLES", OBJPROP_TEXT, StringFormat("Cicli:      %d/%d", gaCycles, MaxCyclesPerLevel * GridLevelsPerSide * 2));
 
-    // Colore: verde se closed == pending (bilanciato), rosso se diversi
-    color totColor = (totalClosed == totalPending) ? CLR_PROFIT : CLR_LOSS;
-    ObjectSetInteger(0, "COUNTER_TOTAL", OBJPROP_COLOR, totColor);
+    // Grid B summary
+    int gbQueue = 0;  // Count pending reopens
+    int gbDone = g_gridB_LimitReopens + g_gridB_StopReopens;
+    int gbCycles = g_gridB_LimitCycles + g_gridB_StopCycles;
+
+    // Count Grid B pending reopens
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        if(gridB_Upper_Status[i] == ORDER_CLOSED_TP && (infiniteCycles || gridB_Upper_Cycles[i] < MaxCyclesPerLevel)) gbQueue++;
+        if(gridB_Lower_Status[i] == ORDER_CLOSED_TP && (infiniteCycles || gridB_Lower_Cycles[i] < MaxCyclesPerLevel)) gbQueue++;
+    }
+
+    ObjectSetString(0, "REOPEN_GB_QUEUE", OBJPROP_TEXT, StringFormat("In Coda:    %d", gbQueue));
+    ObjectSetString(0, "REOPEN_GB_DONE", OBJPROP_TEXT, StringFormat("Reinseriti: %d", gbDone));
+    if(infiniteCycles)
+        ObjectSetString(0, "REOPEN_GB_CYCLES", OBJPROP_TEXT, StringFormat("Cicli:      %d/inf", gbCycles));
+    else
+        ObjectSetString(0, "REOPEN_GB_CYCLES", OBJPROP_TEXT, StringFormat("Cicli:      %d/%d", gbCycles, MaxCyclesPerLevel * GridLevelsPerSide * 2));
+
+    // Update waiting STOP orders list
+    UpdateWaitingStopOrdersList();
+
+    // Update recent reopens list
+    UpdateRecentReopensList();
 }
 
 //+------------------------------------------------------------------+
-//| Update Performance Section                                       |
+//| Update Waiting STOP Orders List (v9.18)                           |
+//+------------------------------------------------------------------+
+void UpdateWaitingStopOrdersList() {
+    string waitList[4];
+    int waitCount = 0;
+    bool infiniteCycles = (MaxCyclesPerLevel == 0);  // 0 = infinite cycles
+
+    // Find STOP orders waiting for price to reach reopen level
+    // Grid A Upper = BUY STOP, Grid B Lower = SELL STOP
+    for(int i = 0; i < GridLevelsPerSide && waitCount < 4; i++) {
+        // Grid A Upper (BUY STOP)
+        if(gridA_Upper_Status[i] == ORDER_CLOSED_TP && (infiniteCycles || gridA_Upper_Cycles[i] < MaxCyclesPerLevel)) {
+            if(infiniteCycles)
+                waitList[waitCount++] = StringFormat("GA_U_%02d BUY STOP  Ciclo %d/inf", i+1, gridA_Upper_Cycles[i]+1);
+            else
+                waitList[waitCount++] = StringFormat("GA_U_%02d BUY STOP  Ciclo %d/%d", i+1, gridA_Upper_Cycles[i]+1, MaxCyclesPerLevel);
+        }
+        if(waitCount >= 4) break;
+
+        // Grid B Lower (SELL STOP)
+        if(gridB_Lower_Status[i] == ORDER_CLOSED_TP && (infiniteCycles || gridB_Lower_Cycles[i] < MaxCyclesPerLevel)) {
+            if(infiniteCycles)
+                waitList[waitCount++] = StringFormat("GB_L_%02d SELL STOP Ciclo %d/inf", i+1, gridB_Lower_Cycles[i]+1);
+            else
+                waitList[waitCount++] = StringFormat("GB_L_%02d SELL STOP Ciclo %d/%d", i+1, gridB_Lower_Cycles[i]+1, MaxCyclesPerLevel);
+        }
+    }
+
+    // Update labels
+    for(int i = 0; i < 4; i++) {
+        string labelName = StringFormat("REOPEN_WAIT_%d", i+1);
+        if(i < waitCount) {
+            ObjectSetString(0, labelName, OBJPROP_TEXT, waitList[i]);
+            ObjectSetInteger(0, labelName, OBJPROP_COLOR, CLR_NEUTRAL);
+        } else {
+            ObjectSetString(0, labelName, OBJPROP_TEXT, "---");
+            ObjectSetInteger(0, labelName, OBJPROP_COLOR, clrGray);
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Update Recent Reopens List (v9.18)                                |
+//+------------------------------------------------------------------+
+void UpdateRecentReopensList() {
+    // Display last 3 reopens from g_lastReopens array
+    for(int i = 0; i < 3; i++) {
+        string labelName = StringFormat("REOPEN_LAST_%d", i+1);
+        if(i < g_lastReopensCount && g_lastReopens[i] != "") {
+            ObjectSetString(0, labelName, OBJPROP_TEXT, g_lastReopens[i]);
+            ObjectSetInteger(0, labelName, OBJPROP_COLOR, CLR_PROFIT);
+        } else {
+            ObjectSetString(0, labelName, OBJPROP_TEXT, "---");
+            ObjectSetInteger(0, labelName, OBJPROP_COLOR, clrGray);
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Update Grid Legend Section (v9.18: NEW)                           |
+//+------------------------------------------------------------------+
+void UpdateGridLegendSection() {
+    // Count Grid A orders (BUY only)
+    int gaStop = 0, gaLimit = 0;
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        if(gridA_Upper_Status[i] == ORDER_PENDING || gridA_Upper_Status[i] == ORDER_FILLED) gaStop++;
+        if(gridA_Lower_Status[i] == ORDER_PENDING || gridA_Lower_Status[i] == ORDER_FILLED) gaLimit++;
+    }
+    int gaTotal = gaStop + gaLimit;
+
+    // v9.22: Update STP/LMT labels
+    ObjectSetString(0, "LEGEND_GA_STOP", OBJPROP_TEXT, StringFormat("STP[%d]", gaStop));
+    ObjectSetString(0, "LEGEND_GA_LIMIT", OBJPROP_TEXT, StringFormat("LMT[%d]", gaLimit));
+    ObjectSetString(0, "LEGEND_GA_TOTAL", OBJPROP_TEXT, StringFormat("GA Tot: %d", gaTotal));
+
+    // Count Grid B orders (SELL only)
+    int gbLimit = 0, gbStop = 0;
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        if(gridB_Upper_Status[i] == ORDER_PENDING || gridB_Upper_Status[i] == ORDER_FILLED) gbLimit++;
+        if(gridB_Lower_Status[i] == ORDER_PENDING || gridB_Lower_Status[i] == ORDER_FILLED) gbStop++;
+    }
+    int gbTotal = gbLimit + gbStop;
+
+    // v9.22: Update STP/LMT labels + Tot on separate row
+    ObjectSetString(0, "LEGEND_GB_LIMIT", OBJPROP_TEXT, StringFormat("LMT[%d]", gbLimit));
+    ObjectSetString(0, "LEGEND_GB_STOP", OBJPROP_TEXT, StringFormat("STP[%d]", gbStop));
+    ObjectSetString(0, "LEGEND_GB_TOTAL", OBJPROP_TEXT, StringFormat("GB Tot: %d", gbTotal));
+}
+
+//+------------------------------------------------------------------+
+//| Update Auto-Save Section (v9.22: NEW)                             |
+//+------------------------------------------------------------------+
+void UpdateAutoSaveSection() {
+    // Get status from global variables
+    color statusColor = Enable_AutoSave ? clrLime : clrRed;
+    string statusText = Enable_AutoSave ? "ON" : "OFF";
+
+    // Update status box and text
+    ObjectSetInteger(0, "AUTOSAVE_STATUS_BOX", OBJPROP_BGCOLOR, statusColor);
+    ObjectSetString(0, "AUTOSAVE_STATUS", OBJPROP_TEXT, statusText);
+    ObjectSetInteger(0, "AUTOSAVE_STATUS", OBJPROP_COLOR, statusColor);
+
+    // Last backup time and result
+    string lastText = "Last: --:-- --";
+    color lastColor = CLR_SILVER;
+
+    if(g_lastAutoSaveTime > 0) {
+        string result = g_lastAutoSaveSuccess ? "OK" : "FAIL";
+        lastColor = g_lastAutoSaveSuccess ? clrLime : clrRed;
+        lastText = StringFormat("Last: %s %s",
+                   TimeToString(g_lastAutoSaveTime, TIME_MINUTES), result);
+    }
+
+    ObjectSetString(0, "AUTOSAVE_LAST", OBJPROP_TEXT, lastText);
+    ObjectSetInteger(0, "AUTOSAVE_LAST", OBJPROP_COLOR, lastColor);
+}
+
+//+------------------------------------------------------------------+
+//| Update Performance Section (v9.18: moved to left column)         |
 //+------------------------------------------------------------------+
 void UpdatePerformanceSection() {
     // v5.3: P/L per singola pair, non globale
@@ -976,34 +1223,21 @@ void UpdatePerformanceSection() {
     int trades = pairWins + pairLosses;
     double winRate = trades > 0 ? (pairWins * 100.0 / trades) : 0;
 
+    // v9.18: Updated to LEFT_PERF_* labels (moved to left column)
     color plColor = totalPL >= 0 ? CLR_PROFIT : CLR_LOSS;
-    ObjectSetString(0, "RIGHT_PERF_TOTAL", OBJPROP_TEXT, StringFormat("Total P/L: $%.2f", totalPL));
-    ObjectSetInteger(0, "RIGHT_PERF_TOTAL", OBJPROP_COLOR, plColor);
+    ObjectSetString(0, "LEFT_PERF_TOTAL", OBJPROP_TEXT, StringFormat("Total P/L: $%.2f", totalPL));
+    ObjectSetInteger(0, "LEFT_PERF_TOTAL", OBJPROP_COLOR, plColor);
 
-    ObjectSetString(0, "RIGHT_PERF_EQUITY", OBJPROP_TEXT, StringFormat("Equity: $%.2f", equity));
-    ObjectSetString(0, "RIGHT_PERF_BALANCE", OBJPROP_TEXT, StringFormat("Balance: $%.2f", balance));
+    ObjectSetString(0, "LEFT_PERF_EQUITY", OBJPROP_TEXT, StringFormat("Equity: $%.2f", equity));
+    ObjectSetString(0, "LEFT_PERF_BALANCE", OBJPROP_TEXT, StringFormat("Balance: $%.2f", balance));
 
     color ddColor = dd > 10 ? CLR_LOSS : (dd > 5 ? CLR_NEUTRAL : CLR_WHITE);
-    ObjectSetString(0, "RIGHT_PERF_DD", OBJPROP_TEXT, StringFormat("Drawdown: %.2f%%", dd));
-    ObjectSetInteger(0, "RIGHT_PERF_DD", OBJPROP_COLOR, ddColor);
+    ObjectSetString(0, "LEFT_PERF_DD", OBJPROP_TEXT, StringFormat("Drawdown: %.2f%%", dd));
+    ObjectSetInteger(0, "LEFT_PERF_DD", OBJPROP_COLOR, ddColor);
 
-    // Risk-Based Status (if enabled)
-    if(LotMode == LOT_RISK_BASED) {
-        double currentDD = GetCurrentUnrealizedDrawdown();
-        double riskPercent = (RiskCapital_USD > 0) ? (currentDD / RiskCapital_USD * 100.0) : 0;
-        color riskColor = riskPercent > 80 ? CLR_LOSS : (riskPercent > 50 ? CLR_NEUTRAL : CLR_PROFIT);
-
-        ObjectSetString(0, "RIGHT_PERF_RISK", OBJPROP_TEXT,
-                        StringFormat("Risk: $%.0f / $%.0f (%.0f%%)", currentDD, RiskCapital_USD, riskPercent));
-        ObjectSetInteger(0, "RIGHT_PERF_RISK", OBJPROP_COLOR, riskColor);
-    } else {
-        ObjectSetString(0, "RIGHT_PERF_RISK", OBJPROP_TEXT, "Risk: FIXED MODE");
-        ObjectSetInteger(0, "RIGHT_PERF_RISK", OBJPROP_COLOR, clrGray);
-    }
-
-    ObjectSetString(0, "RIGHT_PERF_WINRATE", OBJPROP_TEXT,
-                    StringFormat("Win Rate: %.0f%% (%dW/%dL)", winRate, sessionWins, sessionLosses));
-    ObjectSetString(0, "RIGHT_PERF_TRADES", OBJPROP_TEXT, StringFormat("Total Trades: %d", trades));
+    ObjectSetString(0, "LEFT_PERF_WINRATE", OBJPROP_TEXT,
+                    StringFormat("Win Rate: %.0f%% (%dW/%dL)", winRate, pairWins, pairLosses));
+    // v9.18: RIGHT_PERF_TRADES removed (Performance moved to left column)
 }
 
 //+------------------------------------------------------------------+
@@ -1225,8 +1459,9 @@ void RemoveDashboard() {
     DeleteObjectsByPrefix("LBL_");
     DeleteObjectsByPrefix("LEGEND_");
     DeleteObjectsByPrefix("GRID_LEGEND_");
-    DeleteObjectsByPrefix("SHIELD_");
-    DeleteObjectsByPrefix("COP_");  // v5.1: Close On Profit Panel
+    DeleteObjectsByPrefix("REOPEN_");    // v9.18: Reopen Cycle Monitor
+    DeleteObjectsByPrefix("AUTOSAVE_");  // v9.22: Auto-Save Monitor
+    DeleteObjectsByPrefix("COP_");       // v5.1: Close On Profit Panel
     ChartRedraw(0);
 }
 

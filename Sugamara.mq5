@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.17        |
+//|                                    SUGAMARA RIBELLE v9.22        |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.17.0 - Tooltips Only (Perfect Zoom)                  |
+//|  Version: 9.22.0 - Layout + Status Fix + Auto-Save Monitor       |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,10 +16,40 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
+//|  v9.22 CHANGES:                                                  |
+//|  - FIX: UpdateStatusLabel conflict resolved (ControlButtons.mqh) |
+//|  - FIX: Status colors now update correctly after STOP->START     |
+//|  - NEW: Auto-Save Monitor panel (shows ON/OFF + last backup)     |
+//|  - MOVE: GRID LEGEND moved to right column (compacted 80px)      |
+//|  - STYLE: ATR MONITOR + COP now use colored box indicators       |
+//|  - STYLE: Columns increased to 620px (balanced layout)           |
+//|                                                                   |
+//|  v9.21 CHANGES:
+//|  - FIX: CLOSE button now sets STATE_CLOSING (ControlButtons.mqh) |
+//|  - FIX: Mode indicator shows STOPPED (red) after CLOSE           |
+//|  - STYLE: GRID A/B titles now YELLOW (CLR_GOLD)                  |
+//|  - STYLE: COP Panel increased spacing (16px -> 18px)             |
+//|                                                                   |
+//|  v9.20 CHANGES:
+//|  - NEW: Dynamic status label colors (white/azure/green/red)       |
+//|  - NEW: UpdateStatusLabel() function for dynamic colors           |
+//|                                                                   |
+//|  v9.19 CHANGES:
+//|  - POLISH: Columns same height (ReopenMonitor 300→340px)          |
+//|  - NEW: Mode status indicator (MODE: [colored box] STATUS)        |
+//|  - POLISH: Grid Legend with colored boxes + more spacing          |
+//|  - POLISH: Button panel spacing improved                          |
+//|                                                                   |
+//|  v9.18 CHANGES:
+//|  - NEW: REOPEN CYCLE MONITOR section in right column              |
+//|  - NEW: GRID LEGEND panel on right side of chart                  |
+//|  - MOVE: PERFORMANCE panel from right to left column              |
+//|  - REMOVE: NET EXPOSURE section (replaced by PERFORMANCE)         |
+//|  - REMOVE: GRID COUNTER section (replaced by REOPEN MONITOR)      |
+//|                                                                   |
 //|  v9.17 CHANGES:
 //|  - FIX: Labels DISABLED by default (GridLine_ShowLabels=false)   |
 //|  - FIX: Zoom now works perfectly (no label interference)         |
-//|  - KEEP: Tooltips active on hover for grid line info             |
 //|                                                                   |
 //|  v9.16 CHANGES:
 //|  - Dynamic label positioning (removed in v9.17)                   |
@@ -45,8 +75,8 @@
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.170"
-#property description "SUGAMARA RIBELLE v9.17 - Tooltips Only (Perfect Zoom)"
+#property version   "9.220"
+#property description "SUGAMARA RIBELLE v9.22 - Layout + Status Fix + Auto-Save Monitor"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Configurable Colors"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -411,7 +441,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.17 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.21 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -587,6 +617,9 @@ void OnTick() {
                 LogMessage(LOG_INFO, "New day - System resumed");
             }
         }
+        // v9.22 FIX: ALWAYS update dashboard even when not ACTIVE
+        // Otherwise STATE_CLOSING and STATE_IDLE never update the UI!
+        UpdateDashboard();
         return;
     }
 
@@ -799,7 +832,7 @@ void HandleKeyPress(int key) {
 //| Master report combining all modules                               |
 //+------------------------------------------------------------------+
 void LogV4StatusReport() {
-    Log_Header("SUGAMARA RIBELLE v9.17 - COMPLETE STATUS REPORT");
+    Log_Header("SUGAMARA RIBELLE v9.21 - COMPLETE STATUS REPORT");
     Log_KeyValue("Generated", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
 
     // System Overview
