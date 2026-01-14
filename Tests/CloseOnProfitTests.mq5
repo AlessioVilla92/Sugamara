@@ -15,6 +15,13 @@
 #include "../Config/Enums.mqh"
 #include "../Config/InputParameters.mqh"
 #include "../Core/GlobalVariables.mqh"
+
+//+------------------------------------------------------------------+
+//| STUBS: Mock functions to avoid dependency chains                 |
+//+------------------------------------------------------------------+
+double GetWinRate() { return 0.0; }
+double NormalizeLotSize(double lot) { return lot; }
+
 #include "../Utils/Helpers.mqh"
 #include "TestFramework.mqh"
 

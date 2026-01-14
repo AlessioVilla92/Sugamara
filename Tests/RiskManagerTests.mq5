@@ -15,6 +15,19 @@
 #include "../Config/Enums.mqh"
 #include "../Config/InputParameters.mqh"
 #include "../Core/GlobalVariables.mqh"
+
+//+------------------------------------------------------------------+
+//| STUBS: Mock functions to avoid dependency chains                 |
+//+------------------------------------------------------------------+
+double GetWinRate() { return 0.0; }
+double NormalizeLotSize(double lot) { return lot; }
+void EmergencyCloseAll() { Print("STUB: EmergencyCloseAll"); }
+void CalculateTotalExposure() { }
+ENUM_ATR_CONDITION GetATRCondition(double atrPips) { return ATR_NORMAL; }
+ENUM_ATR_CONDITION GetATRCondition() { return ATR_NORMAL; }
+double GetATRPips() { return 10.0; }
+string GetATRConditionName(ENUM_ATR_CONDITION condition) { return "NORMAL"; }
+
 #include "../Utils/Helpers.mqh"
 #include "../Utils/GridHelpers.mqh"
 #include "../Trading/RiskManager.mqh"

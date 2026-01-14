@@ -244,7 +244,7 @@ void ResetTestCounters() {
 //+------------------------------------------------------------------+
 void SetupBaseTestEnvironment() {
     // Initialize symbol info
-    _Symbol = Symbol();
+    // _Symbol è una costante di sistema, già disponibile
     symbolDigits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
     symbolPoint = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
 
@@ -332,53 +332,31 @@ double PointsToPips_Test(double points) {
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//| Saved Parameters Structure - For test isolation                  |
+//| TEST ISOLATION - NOTA IMPORTANTE                                 |
+//|                                                                  |
+//| I parametri 'input' in MQL5 sono READ-ONLY a runtime.            |
+//| Non è possibile modificarli o ripristinarli durante l'esecuzione.|
+//|                                                                  |
+//| I test devono usare variabili locali per valori di test.         |
+//| Le funzioni SaveAllInputParameters/RestoreAllInputParameters     |
+//| sono mantenute per compatibilità ma non modificano nulla.        |
 //+------------------------------------------------------------------+
-struct SavedParameters {
-    bool EnableCyclicReopen_saved;
-    int MaxCyclesPerLevel_saved;
-    double ReopenOffset_Pips_STOP_ORDERS_saved;
-    bool PauseReopenOnExtreme_saved;
-    bool EnableEmergencyStop_saved;
-    double EmergencyStop_Percent_saved;
-    bool Enable_CloseOnProfit_saved;
-    double COP_DailyTarget_USD_saved;
-    int GridLevelsPerSide_saved;
-    double BaseLot_saved;
-};
-
-SavedParameters g_savedParams;
 
 //+------------------------------------------------------------------+
-//| Save Input Parameters                                            |
+//| Save Input Parameters (no-op per compatibilità)                  |
 //+------------------------------------------------------------------+
 void SaveAllInputParameters() {
-    g_savedParams.EnableCyclicReopen_saved = EnableCyclicReopen;
-    g_savedParams.MaxCyclesPerLevel_saved = MaxCyclesPerLevel;
-    g_savedParams.ReopenOffset_Pips_STOP_ORDERS_saved = ReopenOffset_Pips_STOP_ORDERS;
-    g_savedParams.PauseReopenOnExtreme_saved = PauseReopenOnExtreme;
-    g_savedParams.EnableEmergencyStop_saved = EnableEmergencyStop;
-    g_savedParams.EmergencyStop_Percent_saved = EmergencyStop_Percent;
-    g_savedParams.Enable_CloseOnProfit_saved = Enable_CloseOnProfit;
-    g_savedParams.COP_DailyTarget_USD_saved = COP_DailyTarget_USD;
-    g_savedParams.GridLevelsPerSide_saved = GridLevelsPerSide;
-    g_savedParams.BaseLot_saved = BaseLot;
+    // I parametri input sono read-only in MQL5
+    // Questa funzione è mantenuta solo per compatibilità
+    Print("  [Info] Input parameters are read-only, using current configuration");
 }
 
 //+------------------------------------------------------------------+
-//| Restore Input Parameters                                         |
+//| Restore Input Parameters (no-op per compatibilità)               |
 //+------------------------------------------------------------------+
 void RestoreAllInputParameters() {
-    EnableCyclicReopen = g_savedParams.EnableCyclicReopen_saved;
-    MaxCyclesPerLevel = g_savedParams.MaxCyclesPerLevel_saved;
-    ReopenOffset_Pips_STOP_ORDERS = g_savedParams.ReopenOffset_Pips_STOP_ORDERS_saved;
-    PauseReopenOnExtreme = g_savedParams.PauseReopenOnExtreme_saved;
-    EnableEmergencyStop = g_savedParams.EnableEmergencyStop_saved;
-    EmergencyStop_Percent = g_savedParams.EmergencyStop_Percent_saved;
-    Enable_CloseOnProfit = g_savedParams.Enable_CloseOnProfit_saved;
-    COP_DailyTarget_USD = g_savedParams.COP_DailyTarget_USD_saved;
-    GridLevelsPerSide = g_savedParams.GridLevelsPerSide_saved;
-    BaseLot = g_savedParams.BaseLot_saved;
+    // I parametri input sono read-only in MQL5
+    // Questa funzione è mantenuta solo per compatibilità
 }
 
 //+------------------------------------------------------------------+
