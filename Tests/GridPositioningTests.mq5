@@ -18,109 +18,17 @@
 #include "../Core/GlobalVariables.mqh"
 #include "../Utils/Helpers.mqh"
 #include "../Utils/GridHelpers.mqh"
-
-//+------------------------------------------------------------------+
-//| TEST FRAMEWORK - Struttura base per i test                       |
-//+------------------------------------------------------------------+
-struct TestResult {
-    string testName;
-    bool passed;
-    string message;
-    datetime executionTime;
-};
-
-TestResult g_testResults[];
-int g_totalTests = 0;
-int g_passedTests = 0;
-int g_failedTests = 0;
-
-//+------------------------------------------------------------------+
-//| Assert Functions                                                 |
-//+------------------------------------------------------------------+
-bool AssertTrue(string testName, bool condition, string errorMsg = "") {
-    ArrayResize(g_testResults, g_totalTests + 1);
-    g_testResults[g_totalTests].testName = testName;
-    g_testResults[g_totalTests].passed = condition;
-    g_testResults[g_totalTests].message = condition ? "PASS" : ("FAIL: " + errorMsg);
-    g_testResults[g_totalTests].executionTime = TimeCurrent();
-
-    g_totalTests++;
-    if(condition) {
-        g_passedTests++;
-        Print("[✓] ", testName, " - PASSED");
-    } else {
-        g_failedTests++;
-        Print("[✗] ", testName, " - FAILED: ", errorMsg);
-    }
-
-    return condition;
-}
-
-bool AssertEquals(string testName, double actual, double expected, double tolerance = 0.00001, string context = "") {
-    bool passed = MathAbs(actual - expected) <= tolerance;
-    string msg = passed ? "PASS" :
-        StringFormat("Expected %.5f, got %.5f (tolerance %.5f) %s",
-                     expected, actual, tolerance, context);
-    return AssertTrue(testName, passed, msg);
-}
-
-bool AssertGreaterThan(string testName, double actual, double threshold, string context = "") {
-    bool passed = actual > threshold;
-    string msg = passed ? "PASS" :
-        StringFormat("Expected > %.5f, got %.5f %s", threshold, actual, context);
-    return AssertTrue(testName, passed, msg);
-}
-
-bool AssertLessThan(string testName, double actual, double threshold, string context = "") {
-    bool passed = actual < threshold;
-    string msg = passed ? "PASS" :
-        StringFormat("Expected < %.5f, got %.5f %s", threshold, actual, context);
-    return AssertTrue(testName, passed, msg);
-}
-
-//+------------------------------------------------------------------+
-//| Test Suite Header                                                |
-//+------------------------------------------------------------------+
-void PrintTestHeader(string suiteName) {
-    Print("═══════════════════════════════════════════════════════════════");
-    Print("  ", suiteName);
-    Print("═══════════════════════════════════════════════════════════════");
-}
-
-void PrintTestSummary() {
-    Print("");
-    Print("═══════════════════════════════════════════════════════════════");
-    Print("  TEST SUMMARY");
-    Print("═══════════════════════════════════════════════════════════════");
-    Print("Total Tests:  ", g_totalTests);
-    Print("Passed:       ", g_passedTests, " (", (g_totalTests > 0 ? (g_passedTests*100.0/g_totalTests) : 0), "%)");
-    Print("Failed:       ", g_failedTests);
-    Print("═══════════════════════════════════════════════════════════════");
-
-    if(g_failedTests == 0) {
-        Print("✓ ALL TESTS PASSED!");
-    } else {
-        Print("✗ SOME TESTS FAILED - Review output above");
-    }
-}
+#include "TestFramework.mqh"
 
 //+------------------------------------------------------------------+
 //| SETUP - Inizializzazione environment test                        |
 //+------------------------------------------------------------------+
 void SetupTestEnvironment() {
-    // Inizializza variabili globali necessarie
-    _Symbol = Symbol();
-    symbolDigits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
-    symbolPoint = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+    SetupBaseTestEnvironment();
 
     // Imposta parametri di default per i test
     GridLevelsPerSide = 10;
     BaseLot = 0.01;
-
-    Print("Test environment initialized:");
-    Print("  Symbol: ", _Symbol);
-    Print("  Digits: ", symbolDigits);
-    Print("  Point: ", symbolPoint);
 }
 
 //+------------------------------------------------------------------+
