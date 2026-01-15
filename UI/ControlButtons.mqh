@@ -207,9 +207,7 @@ void HandleControlButtonClick(string objectName) {
             DrawGridVisualization();
 
             // v5.9.1: Ridisegna TUTTE le visualizzazioni dopo recovery
-            if(Enable_ManualSR) {
-                UpdateLossZoneRectangles();      // Zone rosse/verdi
-            }
+            // Loss zone rectangles removed in v9.25
             // ShieldZonesVisual REMOVED in v9.12
 
             if(EnableAlerts && !MQLInfoInteger(MQL_TESTER)) {

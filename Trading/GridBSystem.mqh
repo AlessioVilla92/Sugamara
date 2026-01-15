@@ -50,8 +50,6 @@ bool InitializeGridB() {
 
     LogGridBConfiguration();
 
-    // v9.24: Sync loss zones with new grid levels
-    UpdateLossZoneRectangles();
 
     return true;
 }

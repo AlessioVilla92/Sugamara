@@ -560,6 +560,20 @@ void CreateUnifiedDashboard() {
     g_btnY = leftY;
     // v9.24: Button creation delegated to InitializeControlButtons() in ControlButtons.mqh (called from RecreateEntireDashboard)
 
+    // v9.25 FIX: Restore MODE indicator (accidentally removed in v9.24 button refactor)
+    // Creates MODE: [colored box] STATUS below buttons
+    int modeY = leftY + 142;  // 142px from top of button panel (below RECOVER button)
+    int modeX = leftX + 10;   // Same X offset as buttons
+
+    // "MODE:" label
+    DashLabel("MODE_LABEL", modeX, modeY, "MODE:", CLR_WHITE, 12, "Arial Bold");
+
+    // Colored status box (12x12px, initially white for READY state)
+    DashRectangle("MODE_STATUS_BOX", modeX + 55, modeY + 2, 12, 12, clrWhite);
+
+    // Status text (initially "READY")
+    DashLabel("MODE_STATUS_TEXT", modeX + 72, modeY, "READY", CLR_WHITE, 12, "Arial Bold");
+
     leftY += buttonsHeight;
 
     // v9.22: LEFT_PADDING_PANEL removed - columns now equal height (505px each)

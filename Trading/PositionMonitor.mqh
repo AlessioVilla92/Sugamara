@@ -122,9 +122,12 @@ double GetSessionRealizedProfit() {
 double GetCurrentPairRealizedProfit() {
     double profit = 0;
 
-    // Scan deal history for current symbol only (today)
-    datetime startOfDay = StringToTime(TimeToString(TimeCurrent(), TIME_DATE));
-    HistorySelect(startOfDay, TimeCurrent());
+    // v9.25 FIX: Use EA session start time instead of calendar day start
+    // User choice: "Continua sessione" → systemStartTime is restored from file on restart
+    // This ensures COP only counts profits from deals closed AFTER session start
+    // Excludes: pre-existing deals from other EAs, previous sessions (if systemStartTime > midnight)
+    datetime sessionStart = (systemStartTime > 0) ? systemStartTime : StringToTime(TimeToString(TimeCurrent(), TIME_DATE));
+    HistorySelect(sessionStart, TimeCurrent());
 
     int totalDeals = HistoryDealsTotal();
     for(int i = 0; i < totalDeals; i++) {

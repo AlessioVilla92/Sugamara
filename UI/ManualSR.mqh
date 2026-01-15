@@ -20,12 +20,9 @@
 #define SR_LABEL_SUPPORT      "SUGAMARA_LBL_SUPPORT"
 #define SR_LABEL_ACTIVATION   "SUGAMARA_LBL_ACTIVATION"
 
-// Loss Zone Rectangles
+// v9.25: Loss zone constants kept for backward compatibility cleanup only
 #define SR_RECT_UPPER_LOSS    "SUGAMARA_RECT_UPPER_LOSS"
 #define SR_RECT_LOWER_LOSS    "SUGAMARA_RECT_LOWER_LOSS"
-
-// Dark red color for loss zones (v4.4.1 - darker and more muted)
-#define CLR_LOSS_ZONE         C'180,50,50'
 
 //+------------------------------------------------------------------+
 //| GLOBAL VARIABLES                                                 |
@@ -95,8 +92,6 @@ bool InitializeManualSR() {
 
     manualSR_Initialized = true;
 
-    // Create loss zone rectangles (faded red areas)
-    UpdateLossZoneRectangles();
 
     Log_KeyValueNum("Resistance", manualSR_Resistance, 5);
     Log_KeyValueNum("Support", manualSR_Support, 5);
@@ -147,80 +142,6 @@ void CreateSRLine(string name, double price, color clr, string label) {
     }
 }
 
-//+------------------------------------------------------------------+
-//| Create/Update Loss Zone Rectangles                               |
-//| Upper: Above Resistance (SELL in loss)                           |
-//| Lower: Below Support (BUY in loss)                               |
-//+------------------------------------------------------------------+
-void UpdateLossZoneRectangles() {
-    if(!Enable_ManualSR || !manualSR_Initialized) return;
-    if(manualSR_Resistance == 0 || manualSR_Support == 0) return;
-
-    datetime timeStart = iTime(_Symbol, PERIOD_CURRENT, 100);
-    datetime timeEnd = TimeCurrent() + PeriodSeconds() * 100;
-
-    //=== UPPER LOSS ZONE (Above Resistance) ===
-    double upperZoneBottom = manualSR_Resistance;
-    double upperZoneTop = 0.0;
-
-    // v9.24: Find nearest grid line below resistance
-    double nearestGridBelow = FindHighestGridLineBelow(manualSR_Resistance);
-
-    if(nearestGridBelow > 0) {
-        // Grid found: extend one spacing interval above resistance
-        double spacingPoints = PipsToPoints(currentSpacing_Pips);
-        upperZoneTop = manualSR_Resistance + spacingPoints;
-    } else {
-        // Fallback: No grid initialized, use 500 pips
-        double fallbackExtension = 500 * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
-        upperZoneTop = manualSR_Resistance + fallbackExtension;
-    }
-
-    // Create upper rectangle
-    ObjectDelete(0, SR_RECT_UPPER_LOSS);
-    if(ObjectCreate(0, SR_RECT_UPPER_LOSS, OBJ_RECTANGLE, 0, timeStart, upperZoneTop, timeEnd, upperZoneBottom)) {
-        ObjectSetInteger(0, SR_RECT_UPPER_LOSS, OBJPROP_COLOR, CLR_LOSS_ZONE);
-        ObjectSetInteger(0, SR_RECT_UPPER_LOSS, OBJPROP_FILL, true);
-        ObjectSetInteger(0, SR_RECT_UPPER_LOSS, OBJPROP_BACK, true);
-        ObjectSetInteger(0, SR_RECT_UPPER_LOSS, OBJPROP_SELECTABLE, false);
-        ObjectSetInteger(0, SR_RECT_UPPER_LOSS, OBJPROP_ZORDER, 0);
-        string upperTooltip = (nearestGridBelow > 0) ?
-            StringFormat("DANGER ZONE: Above Resistance - Aligned to grid @ %.5f", nearestGridBelow) :
-            "DANGER ZONE: Above Resistance - Fallback 500 pips";
-        ObjectSetString(0, SR_RECT_UPPER_LOSS, OBJPROP_TOOLTIP, upperTooltip);
-    }
-
-    //=== LOWER LOSS ZONE (Below Support) ===
-    double lowerZoneTop = manualSR_Support;
-    double lowerZoneBottom = 0.0;
-
-    // v9.24: Find nearest grid line above support
-    double nearestGridAbove = FindLowestGridLineAbove(manualSR_Support);
-
-    if(nearestGridAbove > 0) {
-        // Grid found: extend one spacing interval below support
-        double spacingPoints = PipsToPoints(currentSpacing_Pips);
-        lowerZoneBottom = manualSR_Support - spacingPoints;
-    } else {
-        // Fallback: No grid initialized, use 500 pips
-        double fallbackExtension = 500 * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
-        lowerZoneBottom = manualSR_Support - fallbackExtension;
-    }
-
-    // Create lower rectangle
-    ObjectDelete(0, SR_RECT_LOWER_LOSS);
-    if(ObjectCreate(0, SR_RECT_LOWER_LOSS, OBJ_RECTANGLE, 0, timeStart, lowerZoneTop, timeEnd, lowerZoneBottom)) {
-        ObjectSetInteger(0, SR_RECT_LOWER_LOSS, OBJPROP_COLOR, CLR_LOSS_ZONE);
-        ObjectSetInteger(0, SR_RECT_LOWER_LOSS, OBJPROP_FILL, true);
-        ObjectSetInteger(0, SR_RECT_LOWER_LOSS, OBJPROP_BACK, true);
-        ObjectSetInteger(0, SR_RECT_LOWER_LOSS, OBJPROP_SELECTABLE, false);
-        ObjectSetInteger(0, SR_RECT_LOWER_LOSS, OBJPROP_ZORDER, 0);
-        string lowerTooltip = (nearestGridAbove > 0) ?
-            StringFormat("DANGER ZONE: Below Support - Aligned to grid @ %.5f", nearestGridAbove) :
-            "DANGER ZONE: Below Support - Fallback 500 pips";
-        ObjectSetString(0, SR_RECT_LOWER_LOSS, OBJPROP_TOOLTIP, lowerTooltip);
-    }
-}
 
 //+------------------------------------------------------------------+
 //| Update S/R Line                                                  |
@@ -278,8 +199,6 @@ void OnManualSRDrag(string objectName) {
         }
     }
 
-    // Update loss zone rectangles when S/R lines are moved
-    UpdateLossZoneRectangles();
 
     ChartRedraw(0);
 }
@@ -357,7 +276,7 @@ void RemoveManualSRLines() {
     ObjectDelete(0, SR_LINE_SUPPORT + "_LBL");
     ObjectDelete(0, SR_LINE_ACTIVATION + "_LBL");
 
-    // Remove loss zone rectangles
+    // Remove loss zone rectangles (v9.25: backward compatibility cleanup)
     ObjectDelete(0, SR_RECT_UPPER_LOSS);
     ObjectDelete(0, SR_RECT_LOWER_LOSS);
 

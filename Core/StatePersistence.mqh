@@ -1152,14 +1152,11 @@ void RecreateAllGraphics() {
         if(DefaultEntryMode == ENTRY_LIMIT || DefaultEntryMode == ENTRY_STOP) {
             CreateSRLine("SUGAMARA_SR_ACTIVATION", manualSR_Activation, clrGold, "Activation");
         }
-        // Ricrea rettangoli loss zone
-        UpdateLossZoneRectangles();
         manualSR_Initialized = true;
         elementsCreated += 3;
 
         if(AutoSave_FullLogging) {
             LogItem(SP_LOG_RECOVERY, "Manual S/R Lines", "Resistance + Support + Activation");
-            LogItem(SP_LOG_RECOVERY, "Loss Zone Rectangles", "Upper + Lower zones");
         }
     }
 
