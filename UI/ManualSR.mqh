@@ -156,17 +156,27 @@ void UpdateLossZoneRectangles() {
     if(!Enable_ManualSR || !manualSR_Initialized) return;
     if(manualSR_Resistance == 0 || manualSR_Support == 0) return;
 
-    // Calculate zone height (extend 500 pips beyond S/R)
-    double zoneExtension = 500 * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
-
-    // Time range: from 100 bars ago to 100 bars in future
     datetime timeStart = iTime(_Symbol, PERIOD_CURRENT, 100);
     datetime timeEnd = TimeCurrent() + PeriodSeconds() * 100;
 
     //=== UPPER LOSS ZONE (Above Resistance) ===
-    double upperZoneTop = manualSR_Resistance + zoneExtension;
     double upperZoneBottom = manualSR_Resistance;
+    double upperZoneTop = 0.0;
 
+    // v9.24: Find nearest grid line below resistance
+    double nearestGridBelow = FindHighestGridLineBelow(manualSR_Resistance);
+
+    if(nearestGridBelow > 0) {
+        // Grid found: extend one spacing interval above resistance
+        double spacingPoints = PipsToPoints(currentSpacing_Pips);
+        upperZoneTop = manualSR_Resistance + spacingPoints;
+    } else {
+        // Fallback: No grid initialized, use 500 pips
+        double fallbackExtension = 500 * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
+        upperZoneTop = manualSR_Resistance + fallbackExtension;
+    }
+
+    // Create upper rectangle
     ObjectDelete(0, SR_RECT_UPPER_LOSS);
     if(ObjectCreate(0, SR_RECT_UPPER_LOSS, OBJ_RECTANGLE, 0, timeStart, upperZoneTop, timeEnd, upperZoneBottom)) {
         ObjectSetInteger(0, SR_RECT_UPPER_LOSS, OBJPROP_COLOR, CLR_LOSS_ZONE);
@@ -174,13 +184,30 @@ void UpdateLossZoneRectangles() {
         ObjectSetInteger(0, SR_RECT_UPPER_LOSS, OBJPROP_BACK, true);
         ObjectSetInteger(0, SR_RECT_UPPER_LOSS, OBJPROP_SELECTABLE, false);
         ObjectSetInteger(0, SR_RECT_UPPER_LOSS, OBJPROP_ZORDER, 0);
-        ObjectSetString(0, SR_RECT_UPPER_LOSS, OBJPROP_TOOLTIP, "DANGER ZONE: Above Resistance - Potential Loss Area");
+        string upperTooltip = (nearestGridBelow > 0) ?
+            StringFormat("DANGER ZONE: Above Resistance - Aligned to grid @ %.5f", nearestGridBelow) :
+            "DANGER ZONE: Above Resistance - Fallback 500 pips";
+        ObjectSetString(0, SR_RECT_UPPER_LOSS, OBJPROP_TOOLTIP, upperTooltip);
     }
 
     //=== LOWER LOSS ZONE (Below Support) ===
     double lowerZoneTop = manualSR_Support;
-    double lowerZoneBottom = manualSR_Support - zoneExtension;
+    double lowerZoneBottom = 0.0;
 
+    // v9.24: Find nearest grid line above support
+    double nearestGridAbove = FindLowestGridLineAbove(manualSR_Support);
+
+    if(nearestGridAbove > 0) {
+        // Grid found: extend one spacing interval below support
+        double spacingPoints = PipsToPoints(currentSpacing_Pips);
+        lowerZoneBottom = manualSR_Support - spacingPoints;
+    } else {
+        // Fallback: No grid initialized, use 500 pips
+        double fallbackExtension = 500 * symbolPoint * ((symbolDigits == 5 || symbolDigits == 3) ? 10 : 1);
+        lowerZoneBottom = manualSR_Support - fallbackExtension;
+    }
+
+    // Create lower rectangle
     ObjectDelete(0, SR_RECT_LOWER_LOSS);
     if(ObjectCreate(0, SR_RECT_LOWER_LOSS, OBJ_RECTANGLE, 0, timeStart, lowerZoneTop, timeEnd, lowerZoneBottom)) {
         ObjectSetInteger(0, SR_RECT_LOWER_LOSS, OBJPROP_COLOR, CLR_LOSS_ZONE);
@@ -188,7 +215,10 @@ void UpdateLossZoneRectangles() {
         ObjectSetInteger(0, SR_RECT_LOWER_LOSS, OBJPROP_BACK, true);
         ObjectSetInteger(0, SR_RECT_LOWER_LOSS, OBJPROP_SELECTABLE, false);
         ObjectSetInteger(0, SR_RECT_LOWER_LOSS, OBJPROP_ZORDER, 0);
-        ObjectSetString(0, SR_RECT_LOWER_LOSS, OBJPROP_TOOLTIP, "DANGER ZONE: Below Support - Potential Loss Area");
+        string lowerTooltip = (nearestGridAbove > 0) ?
+            StringFormat("DANGER ZONE: Below Support - Aligned to grid @ %.5f", nearestGridAbove) :
+            "DANGER ZONE: Below Support - Fallback 500 pips";
+        ObjectSetString(0, SR_RECT_LOWER_LOSS, OBJPROP_TOOLTIP, lowerTooltip);
     }
 }
 

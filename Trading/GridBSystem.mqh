@@ -49,6 +49,10 @@ bool InitializeGridB() {
     }
 
     LogGridBConfiguration();
+
+    // v9.24: Sync loss zones with new grid levels
+    UpdateLossZoneRectangles();
+
     return true;
 }
 
@@ -436,6 +440,10 @@ void ReopenGridBLower(int level) {
         Log_OrderPlaced("B", "DN", level + 1, typeName, gridB_Lower_Tickets[level],
         gridB_Lower_EntryPrices[level], gridB_Lower_TP[level], 0, gridB_Lower_Lots[level]);
         IncrementCycleCount(GRID_B, ZONE_LOWER, level);
+
+        // v9.24: Delete trigger line now that order is reopened
+        string triggerLineName = GetGridObjectPrefix(GRID_B, ZONE_LOWER) + "REOPEN_L" + IntegerToString(level + 1);
+        ObjectDelete(0, triggerLineName);
     } else {
         gridB_Lower_Status[level] = prevStatus;
         gridB_Lower_Tickets[level] = prevTicket;

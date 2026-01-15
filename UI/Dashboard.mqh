@@ -558,7 +558,7 @@ void CreateUnifiedDashboard() {
     int buttonsHeight = 200;  // v5.8: Increased +30px to balance Grid Zero panel
     DashRectangle("LEFT_BUTTONS_PANEL", leftX, leftY, colWidth, buttonsHeight, CLR_PANEL_BUTTONS);
     g_btnY = leftY;
-    CreateControlButtons(leftY, leftX, colWidth);
+    // v9.24: Button creation delegated to InitializeControlButtons() in ControlButtons.mqh (called from RecreateEntireDashboard)
 
     leftY += buttonsHeight;
 
@@ -681,45 +681,6 @@ void CreateUnifiedDashboard() {
 
     ChartRedraw(0);
     Print("SUCCESS: Unified Dashboard created with 2-column layout (v9.22)");
-}
-
-//+------------------------------------------------------------------+
-//| Create Control Buttons v9.19 (START/CLOSE/RECOVER + Mode Status) |
-//+------------------------------------------------------------------+
-void CreateControlButtons(int startY, int startX, int panelWidth) {
-    int x = startX + 10;
-    int y = startY + 15;  // v9.22: Top padding for status label
-    int btnStartWidth = 100;   // v9.1: Ridotto per fare spazio a RECOVER
-    int btnCloseWidth = 90;    // v9.1: Ridotto
-    int btnRecoverWidth = 90;  // v9.1: AGGIUNTO
-    int btnHeight = 35;
-    int spacing = 5;           // v9.1: Ridotto spacing
-
-    // Status Label (matches ControlButtons.mqh BTN_STATUS_V3)
-    // v9.22: Single label, 11px font (increased from 10px)
-    DashLabel("SUGAMARA_BTN_STATUS", x, y, "READY", CLR_DASH_TEXT, 11, "Arial Bold");
-    // STATUS2 removed - no longer needed
-    y += 25;  // v9.22: Space after status label
-
-    // v9.22: Extra spacing ABOVE buttons
-    y += 8;
-
-    // v9.1: 3 Main Buttons: START | CLOSE | RECOVER
-    // Names MUST match ControlButtons.mqh
-    DashButton("SUGAMARA_BTN_START", x, y, btnStartWidth, btnHeight, "START", C'0,150,80');
-    DashButton("SUGAMARA_BTN_CLOSEALL", x + btnStartWidth + spacing, y, btnCloseWidth, btnHeight, "CLOSE", C'180,30,30');
-    DashButton("SUGAMARA_BTN_RECOVER", x + btnStartWidth + spacing + btnCloseWidth + spacing, y, btnRecoverWidth, btnHeight, "RECOVER", C'0,140,140');
-
-    // v9.22: Extra spacing BELOW buttons
-    y += btnHeight + 18;
-
-    // v9.22: Mode status with colored indicator box (size 12, slightly spaced)
-    // Format: "MODE: [colored box] STATUS"
-    DashLabel("MODE_LABEL", x, y, "MODE:", CLR_WHITE, 12, "Arial Bold");
-    DashRectangle("MODE_STATUS_BOX", x + 55, y + 2, 12, 12, clrWhite);
-    DashLabel("MODE_STATUS_TEXT", x + 72, y, "READY", CLR_WHITE, 12, "Arial Bold");
-
-    ChartRedraw(0);
 }
 
 //+------------------------------------------------------------------+
@@ -1501,6 +1462,7 @@ void DrawGridVisualization() {
     DrawEntryPointLine();
     DrawGridALines();
     DrawGridBLines();
+    DrawReopenTriggerLines();  // v9.24: Reopen trigger lines for STOP orders
 
     ChartRedraw(0);
 }
@@ -1537,6 +1499,29 @@ void DrawGridBLines() {
     for(int i = 0; i < GridLevelsPerSide; i++) {
         if(gridB_Lower_EntryPrices[i] > 0) {
             CreateGridLevelLine(GRID_B, ZONE_LOWER, i, gridB_Lower_EntryPrices[i]);
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Draw Reopen Trigger Lines (v9.24)                                |
+//| Shows dotted lines for STOP orders waiting for reopen            |
+//+------------------------------------------------------------------+
+void DrawReopenTriggerLines() {
+    if(!ShowReopenTriggerLines) return;
+    if(!EnableCyclicReopen) return;
+
+    // Draw Grid A Upper trigger lines (BUY STOP)
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        if(gridA_Upper_EntryPrices[i] > 0 && IsLevelWaitingForReopen(GRID_A, ZONE_UPPER, i)) {
+            CreateReopenTriggerLine(GRID_A, ZONE_UPPER, i, gridA_Upper_EntryPrices[i]);
+        }
+    }
+
+    // Draw Grid B Lower trigger lines (SELL STOP)
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        if(gridB_Lower_EntryPrices[i] > 0 && IsLevelWaitingForReopen(GRID_B, ZONE_LOWER, i)) {
+            CreateReopenTriggerLine(GRID_B, ZONE_LOWER, i, gridB_Lower_EntryPrices[i]);
         }
     }
 }

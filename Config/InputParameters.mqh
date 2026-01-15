@@ -673,13 +673,14 @@ input group "╚═════════════════════�
 input group "    ✅ ATTIVAZIONE"
 input bool      ShowGridLines = true;                        // ✅ Mostra Linee Grid su Chart
 input bool      ShowEntryLine = true;                        // ✅ Mostra Linea Entry Point
+input bool      ShowReopenTriggerLines = true;           // ✅ Show Reopen Trigger Lines (STOP Orders)
 
 input group "    🎨 COLORI GRID LINES"
 input color     Color_BuyStop = clrLime;                     // 🟢 BUY STOP (Verde brillante)
 input color     Color_BuyLimit = clrChartreuse;              // 🟢 BUY LIMIT (Verde Fluo Vivace)
 input color     Color_SellLimit = clrCoral;                  // 🔴 SELL LIMIT (Arancio/Corallo)
 input color     Color_SellStop = clrCrimson;                 // 🔴 SELL STOP (Rosso scuro)
-input color     Color_EntryLine = clrGold;                   // 🟡 Entry Point (Oro)
+input color     Color_EntryLine = C'180,180,180';            // ⚪ Entry Point (Grigio Chiaro)
 
 input group "    📐 DIMENSIONI"
 input int       GridLine_Width = 3;                          // 📏 Spessore Linee Grid (pixel)

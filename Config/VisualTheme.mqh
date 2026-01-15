@@ -45,3 +45,11 @@
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
+//| REOPEN TRIGGER LINES v9.24                                        |
+//+------------------------------------------------------------------+
+#define REOPEN_TRIGGER_BUY_STOP_COLOR    clrDeepSkyBlue   // Light blue for BUY STOP triggers
+#define REOPEN_TRIGGER_SELL_STOP_COLOR   clrMagenta       // Purple/Violet for SELL STOP triggers
+#define REOPEN_TRIGGER_LINE_WIDTH        1                 // Thin lines (1 pixel)
+#define REOPEN_TRIGGER_LINE_STYLE        STYLE_DOT         // Dotted style for distinction
+
+//+------------------------------------------------------------------+

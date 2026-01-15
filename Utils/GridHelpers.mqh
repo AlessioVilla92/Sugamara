@@ -1134,6 +1134,109 @@ bool IsPriceAtReopenLevelSmart(double levelPrice, ENUM_ORDER_TYPE orderType) {
 }
 
 //+------------------------------------------------------------------+
+//| Check if Level is Waiting for Reopen (v9.24)                     |
+//| Returns true if: cycles > 0, order closed, not max cycles        |
+//+------------------------------------------------------------------+
+bool IsLevelWaitingForReopen(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
+    if(!EnableCyclicReopen) return false;
+    if(level < 0 || level >= GridLevelsPerSide) return false;
+
+    // Get status and cycles for this level
+    ENUM_ORDER_STATUS status = ORDER_NONE;
+    int cycles = 0;
+
+    if(side == GRID_A) {
+        if(zone == ZONE_UPPER) {
+            status = gridA_Upper_Status[level];
+            cycles = gridA_Upper_Cycles[level];
+        } else {
+            status = gridA_Lower_Status[level];
+            cycles = gridA_Lower_Cycles[level];
+        }
+    } else { // GRID_B
+        if(zone == ZONE_UPPER) {
+            status = gridB_Upper_Status[level];
+            cycles = gridB_Upper_Cycles[level];
+        } else {
+            status = gridB_Lower_Status[level];
+            cycles = gridB_Lower_Cycles[level];
+        }
+    }
+
+    // Must have completed at least one cycle
+    if(cycles <= 0) return false;
+
+    // Must be in a closed state (waiting for reopen)
+    if(status != ORDER_CLOSED_TP && status != ORDER_CLOSED_SL && status != ORDER_CANCELLED) {
+        return false;
+    }
+
+    // Check if max cycles reached (0 = infinite)
+    if(MaxCyclesPerLevel > 0 && cycles >= MaxCyclesPerLevel) {
+        return false;
+    }
+
+    return true;
+}
+
+//+------------------------------------------------------------------+
+//| Create Reopen Trigger Line on Chart (v9.24)                      |
+//| Shows dotted line at trigger price for STOP orders               |
+//+------------------------------------------------------------------+
+void CreateReopenTriggerLine(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level, double entryPrice) {
+    if(!ShowReopenTriggerLines) return;
+    if(entryPrice <= 0) return;
+
+    // Get order type for this grid position
+    ENUM_ORDER_TYPE orderType = GetGridOrderType(side, zone);
+
+    // Only create trigger lines for STOP orders (LIMIT orders reopen immediately)
+    if(orderType != ORDER_TYPE_BUY_STOP && orderType != ORDER_TYPE_SELL_STOP) {
+        return;
+    }
+
+    // Calculate trigger price with offset
+    double offsetPoints = PipsToPoints(ReopenOffset_Pips_STOP_ORDERS);
+    double triggerPrice = 0;
+    color lineColor;
+
+    if(orderType == ORDER_TYPE_BUY_STOP) {
+        // BUY STOP: trigger BELOW entry (price must drop to trigger)
+        triggerPrice = entryPrice - offsetPoints;
+        lineColor = REOPEN_TRIGGER_BUY_STOP_COLOR;
+    } else { // ORDER_TYPE_SELL_STOP
+        // SELL STOP: trigger ABOVE entry (price must rise to trigger)
+        triggerPrice = entryPrice + offsetPoints;
+        lineColor = REOPEN_TRIGGER_SELL_STOP_COLOR;
+    }
+
+    // Create line name
+    string lineName = GetGridObjectPrefix(side, zone) + "REOPEN_L" + IntegerToString(level + 1);
+
+    // Get cycle count for tooltip
+    int cycles = 0;
+    if(side == GRID_A) {
+        cycles = (zone == ZONE_UPPER) ? gridA_Upper_Cycles[level] : gridA_Lower_Cycles[level];
+    } else {
+        cycles = (zone == ZONE_UPPER) ? gridB_Upper_Cycles[level] : gridB_Lower_Cycles[level];
+    }
+
+    // Create the trigger line (uses CreateHLine which already sets OBJPROP_BACK = true)
+    CreateHLine(lineName, triggerPrice, lineColor, REOPEN_TRIGGER_LINE_WIDTH, REOPEN_TRIGGER_LINE_STYLE);
+
+    // Add detailed tooltip
+    string orderTypeName = (orderType == ORDER_TYPE_BUY_STOP) ? "BUY STOP" : "SELL STOP";
+    string tooltip = StringFormat("REOPEN TRIGGER | %s L%d | Cycle %d | %.5f (offset %.1f pips)",
+                                 orderTypeName,
+                                 level + 1,
+                                 cycles + 1,  // Show NEXT cycle number
+                                 triggerPrice,
+                                 ReopenOffset_Pips_STOP_ORDERS);
+
+    ObjectSetString(0, lineName, OBJPROP_TOOLTIP, tooltip);
+}
+
+//+------------------------------------------------------------------+
 //| Increment Cycle Count for Level                                  |
 //+------------------------------------------------------------------+
 void IncrementCycleCount(ENUM_GRID_SIDE side, ENUM_GRID_ZONE zone, int level) {
@@ -1195,6 +1298,84 @@ double GetSRMultiplier() {
 //+------------------------------------------------------------------+
 double GetWarningZoneMultiplier() {
     return GridLevelsPerSide - 0.5;
+}
+
+//+------------------------------------------------------------------+
+//| Find Highest Grid Line Below Given Price (v9.24)                 |
+//| Searches all 4 grid arrays and returns highest price < limit    |
+//| Returns 0 if no grid line found below the limit                  |
+//+------------------------------------------------------------------+
+double FindHighestGridLineBelow(double priceLimit) {
+    double highestPrice = 0.0;
+
+    // Search all 4 grid arrays
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        // Grid A Upper
+        if(gridA_Upper_EntryPrices[i] > 0 &&
+           gridA_Upper_EntryPrices[i] < priceLimit &&
+           gridA_Upper_EntryPrices[i] > highestPrice) {
+            highestPrice = gridA_Upper_EntryPrices[i];
+        }
+        // Grid A Lower
+        if(gridA_Lower_EntryPrices[i] > 0 &&
+           gridA_Lower_EntryPrices[i] < priceLimit &&
+           gridA_Lower_EntryPrices[i] > highestPrice) {
+            highestPrice = gridA_Lower_EntryPrices[i];
+        }
+        // Grid B Upper
+        if(gridB_Upper_EntryPrices[i] > 0 &&
+           gridB_Upper_EntryPrices[i] < priceLimit &&
+           gridB_Upper_EntryPrices[i] > highestPrice) {
+            highestPrice = gridB_Upper_EntryPrices[i];
+        }
+        // Grid B Lower
+        if(gridB_Lower_EntryPrices[i] > 0 &&
+           gridB_Lower_EntryPrices[i] < priceLimit &&
+           gridB_Lower_EntryPrices[i] > highestPrice) {
+            highestPrice = gridB_Lower_EntryPrices[i];
+        }
+    }
+
+    return highestPrice;
+}
+
+//+------------------------------------------------------------------+
+//| Find Lowest Grid Line Above Given Price (v9.24)                  |
+//| Searches all 4 grid arrays and returns lowest price > limit     |
+//| Returns 0 if no grid line found above the limit                  |
+//+------------------------------------------------------------------+
+double FindLowestGridLineAbove(double priceLimit) {
+    double lowestPrice = DBL_MAX;
+
+    // Search all 4 grid arrays
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        // Grid A Upper
+        if(gridA_Upper_EntryPrices[i] > 0 &&
+           gridA_Upper_EntryPrices[i] > priceLimit &&
+           gridA_Upper_EntryPrices[i] < lowestPrice) {
+            lowestPrice = gridA_Upper_EntryPrices[i];
+        }
+        // Grid A Lower
+        if(gridA_Lower_EntryPrices[i] > 0 &&
+           gridA_Lower_EntryPrices[i] > priceLimit &&
+           gridA_Lower_EntryPrices[i] < lowestPrice) {
+            lowestPrice = gridA_Lower_EntryPrices[i];
+        }
+        // Grid B Upper
+        if(gridB_Upper_EntryPrices[i] > 0 &&
+           gridB_Upper_EntryPrices[i] > priceLimit &&
+           gridB_Upper_EntryPrices[i] < lowestPrice) {
+            lowestPrice = gridB_Upper_EntryPrices[i];
+        }
+        // Grid B Lower
+        if(gridB_Lower_EntryPrices[i] > 0 &&
+           gridB_Lower_EntryPrices[i] > priceLimit &&
+           gridB_Lower_EntryPrices[i] < lowestPrice) {
+            lowestPrice = gridB_Lower_EntryPrices[i];
+        }
+    }
+
+    return (lowestPrice == DBL_MAX) ? 0.0 : lowestPrice;
 }
 
 //+------------------------------------------------------------------+

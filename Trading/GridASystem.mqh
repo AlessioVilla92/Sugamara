@@ -66,6 +66,10 @@ bool InitializeGridA() {
     }
 
     LogGridAConfiguration();
+
+    // v9.24: Sync loss zones with new grid levels
+    UpdateLossZoneRectangles();
+
     return true;
 }
 
@@ -432,6 +436,10 @@ void ReopenGridAUpper(int level) {
         Log_OrderPlaced("A", "UP", level + 1, "BUY_STOP", gridA_Upper_Tickets[level],
         gridA_Upper_EntryPrices[level], gridA_Upper_TP[level], 0, gridA_Upper_Lots[level]);
         IncrementCycleCount(GRID_A, ZONE_UPPER, level);
+
+        // v9.24: Delete trigger line now that order is reopened
+        string triggerLineName = GetGridObjectPrefix(GRID_A, ZONE_UPPER) + "REOPEN_L" + IntegerToString(level + 1);
+        ObjectDelete(0, triggerLineName);
     } else {
         gridA_Upper_Status[level] = prevStatus;
         gridA_Upper_Tickets[level] = prevTicket;

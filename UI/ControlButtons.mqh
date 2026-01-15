@@ -9,6 +9,8 @@
 #property copyright "Sugamara (C) 2025"
 #property link      "https://sugamara.com"
 
+// v9.24: DashObjName() function is used from Dashboard.mqh (automatically available in MQL5 includes)
+
 //+------------------------------------------------------------------+
 //| BUTTON CONSTANTS                                                 |
 //+------------------------------------------------------------------+
@@ -75,27 +77,28 @@ bool InitializeControlButtons(int startX, int startY, int panelWidth) {
 //| Create Control Button                                            |
 //+------------------------------------------------------------------+
 void CreateControlButton(string name, int x, int y, int width, int height, string text, color bgColor) {
-    ObjectDelete(0, name);
+    string objName = DashObjName(name);  // v9.24: Apply symbol suffix for multi-chart
+    ObjectDelete(0, objName);
 
-    if(!ObjectCreate(0, name, OBJ_BUTTON, 0, 0, 0)) {
-        Log_SystemError("ControlButtons", 0, StringFormat("Failed to create button %s", name));
+    if(!ObjectCreate(0, objName, OBJ_BUTTON, 0, 0, 0)) {
+        Log_SystemError("ControlButtons", 0, StringFormat("Failed to create button %s", objName));
         return;
     }
 
-    ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-    ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
-    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
-    ObjectSetInteger(0, name, OBJPROP_XSIZE, width);
-    ObjectSetInteger(0, name, OBJPROP_YSIZE, height);
-    ObjectSetString(0, name, OBJPROP_TEXT, text);
-    ObjectSetInteger(0, name, OBJPROP_COLOR, clrWhite);
-    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bgColor);
-    ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, clrBlack);
-    ObjectSetInteger(0, name, OBJPROP_FONTSIZE, 10);
-    ObjectSetString(0, name, OBJPROP_FONT, "Arial Bold");
-    ObjectSetInteger(0, name, OBJPROP_BACK, false);
-    ObjectSetInteger(0, name, OBJPROP_STATE, false);
-    ObjectSetInteger(0, name, OBJPROP_ZORDER, 10001);
+    ObjectSetInteger(0, objName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+    ObjectSetInteger(0, objName, OBJPROP_XDISTANCE, x);
+    ObjectSetInteger(0, objName, OBJPROP_YDISTANCE, y);
+    ObjectSetInteger(0, objName, OBJPROP_XSIZE, width);
+    ObjectSetInteger(0, objName, OBJPROP_YSIZE, height);
+    ObjectSetString(0, objName, OBJPROP_TEXT, text);
+    ObjectSetInteger(0, objName, OBJPROP_COLOR, clrWhite);
+    ObjectSetInteger(0, objName, OBJPROP_BGCOLOR, bgColor);
+    ObjectSetInteger(0, objName, OBJPROP_BORDER_COLOR, clrBlack);
+    ObjectSetInteger(0, objName, OBJPROP_FONTSIZE, 10);
+    ObjectSetString(0, objName, OBJPROP_FONT, "Arial Bold");
+    ObjectSetInteger(0, objName, OBJPROP_BACK, false);
+    ObjectSetInteger(0, objName, OBJPROP_STATE, false);
+    ObjectSetInteger(0, objName, OBJPROP_ZORDER, 10001);
 }
 
 //+------------------------------------------------------------------+
@@ -123,13 +126,20 @@ void CreateButtonLabel(string name, int x, int y, int width, string text, color 
 void HandleControlButtonClick(string objectName) {
     // v4.4: No check needed - buttons always active
 
-    // Reset button state
+    // v9.24: Strip symbol suffix for comparison (multi-chart support)
+    string baseName = objectName;
+    int suffixPos = StringFind(objectName, "_" + _Symbol);
+    if(suffixPos > 0) {
+        baseName = StringSubstr(objectName, 0, suffixPos);
+    }
+
+    // Reset button state using ORIGINAL name (with suffix)
     ObjectSetInteger(0, objectName, OBJPROP_STATE, false);
 
     //══════════════════════════════════════════════════════════════
     // START Button
     //══════════════════════════════════════════════════════════════
-    if(objectName == BTN_START_V3) {
+    if(baseName == BTN_START_V3) {
         Log_Header("START BUTTON CLICKED");
 
         currentEntryMode = ENTRY_MARKET;
@@ -150,7 +160,7 @@ void HandleControlButtonClick(string objectName) {
     //══════════════════════════════════════════════════════════════
     // CLOSE ALL Button
     //══════════════════════════════════════════════════════════════
-    if(objectName == BTN_CLOSEALL_V3) {
+    if(baseName == BTN_CLOSEALL_V3) {
         Log_Header("CLOSE ALL REQUESTED");
 
         CloseAllSugamaraOrders();
@@ -177,7 +187,7 @@ void HandleControlButtonClick(string objectName) {
     //══════════════════════════════════════════════════════════════
     // RECOVER Button - v5.9 Manual Recovery
     //══════════════════════════════════════════════════════════════
-    if(objectName == BTN_RECOVER_V3) {
+    if(baseName == BTN_RECOVER_V3) {
         Log_Header("MANUAL RECOVERY REQUESTED");
         // v9.22: Status updated by Dashboard.mqh based on systemState
         ChartRedraw(0);
@@ -255,10 +265,13 @@ void StartGridSystem() {
 //| Highlight Active Button                                          |
 //+------------------------------------------------------------------+
 void HighlightActiveButton(string activeBtn) {
-    // Reset START button
-    ObjectSetInteger(0, BTN_START_V3, OBJPROP_BGCOLOR, CLR_BTN_START);
+    // v9.24: Apply symbol suffix for multi-chart
+    string startBtn = DashObjName(BTN_START_V3);
 
-    // Highlight active
+    // Reset START button
+    ObjectSetInteger(0, startBtn, OBJPROP_BGCOLOR, CLR_BTN_START);
+
+    // Highlight active (activeBtn already has suffix from caller)
     ObjectSetInteger(0, activeBtn, OBJPROP_BGCOLOR, CLR_BTN_ACTIVE);
 
     ChartRedraw(0);
@@ -268,7 +281,9 @@ void HighlightActiveButton(string activeBtn) {
 //| Reset Button Highlights                                          |
 //+------------------------------------------------------------------+
 void ResetButtonHighlights() {
-    ObjectSetInteger(0, BTN_START_V3, OBJPROP_BGCOLOR, CLR_BTN_START);
+    // v9.24: Apply symbol suffix for multi-chart
+    string startBtn = DashObjName(BTN_START_V3);
+    ObjectSetInteger(0, startBtn, OBJPROP_BGCOLOR, CLR_BTN_START);
     ChartRedraw(0);
 }
 
@@ -299,10 +314,11 @@ ENUM_ENTRY_MODE GetCurrentEntryMode() {
 //| Remove Control Buttons                                           |
 //+------------------------------------------------------------------+
 void RemoveControlButtons() {
-    ObjectDelete(0, BTN_START_V3);
-    ObjectDelete(0, BTN_CLOSEALL_V3);
-    ObjectDelete(0, BTN_RECOVER_V3);
-    ObjectDelete(0, BTN_STATUS_V3);
+    // v9.24: Apply symbol suffix for multi-chart
+    ObjectDelete(0, DashObjName(BTN_START_V3));
+    ObjectDelete(0, DashObjName(BTN_CLOSEALL_V3));
+    ObjectDelete(0, DashObjName(BTN_RECOVER_V3));
+    ObjectDelete(0, DashObjName(BTN_STATUS_V3));
     ChartRedraw(0);
 }
 
