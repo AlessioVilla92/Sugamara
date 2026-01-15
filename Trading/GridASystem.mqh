@@ -235,15 +235,26 @@ void UpdateGridAUpperStatus(int level) {
             // Order still pending
             return;
         } else {
+            // v9.23 FIX: Check if OnTradeTransaction already updated status
+            if(gridA_Upper_Status[level] == ORDER_FILLED) {
+                return;  // Already handled by ProcessOrderFilled()
+            }
+
             // Order no longer pending - check if it became a position
             if(PositionSelectByTicket(ticket)) {
                 gridA_Upper_Status[level] = ORDER_FILLED;
                 LogGridStatus(GRID_A, ZONE_UPPER, level, "Order FILLED");
             } else {
-                // Order was deleted/cancelled
-                gridA_Upper_Status[level] = ORDER_CANCELLED;
-                gridA_Upper_Tickets[level] = 0;
-                LogGridStatus(GRID_A, ZONE_UPPER, level, "Order cancelled");
+                // v9.23 FIX: Safety net - search position by price before marking cancelled
+                if(FindPositionAtPrice(gridA_Upper_EntryPrices[level], POSITION_TYPE_BUY, GetGridMagic(GRID_A))) {
+                    gridA_Upper_Status[level] = ORDER_FILLED;
+                    LogGridStatus(GRID_A, ZONE_UPPER, level, "Order FILLED (via price match)");
+                } else {
+                    // Order was deleted/cancelled
+                    gridA_Upper_Status[level] = ORDER_CANCELLED;
+                    gridA_Upper_Tickets[level] = 0;
+                    LogGridStatus(GRID_A, ZONE_UPPER, level, "Order cancelled");
+                }
             }
         }
     }
@@ -284,13 +295,24 @@ void UpdateGridALowerStatus(int level) {
         if(OrderSelect(ticket)) {
             return; // Order still pending
         } else {
+            // v9.23 FIX: Check if OnTradeTransaction already updated status
+            if(gridA_Lower_Status[level] == ORDER_FILLED) {
+                return;  // Already handled by ProcessOrderFilled()
+            }
+
             if(PositionSelectByTicket(ticket)) {
                 gridA_Lower_Status[level] = ORDER_FILLED;
                 LogGridStatus(GRID_A, ZONE_LOWER, level, "Order FILLED");
             } else {
-                gridA_Lower_Status[level] = ORDER_CANCELLED;
-                gridA_Lower_Tickets[level] = 0;
-                LogGridStatus(GRID_A, ZONE_LOWER, level, "Order cancelled");
+                // v9.23 FIX: Safety net - search position by price before marking cancelled
+                if(FindPositionAtPrice(gridA_Lower_EntryPrices[level], POSITION_TYPE_SELL, GetGridMagic(GRID_A))) {
+                    gridA_Lower_Status[level] = ORDER_FILLED;
+                    LogGridStatus(GRID_A, ZONE_LOWER, level, "Order FILLED (via price match)");
+                } else {
+                    gridA_Lower_Status[level] = ORDER_CANCELLED;
+                    gridA_Lower_Tickets[level] = 0;
+                    LogGridStatus(GRID_A, ZONE_LOWER, level, "Order cancelled");
+                }
             }
         }
     }

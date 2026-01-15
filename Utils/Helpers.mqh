@@ -795,3 +795,26 @@ void DeleteObjectsByPrefix(string prefix) {
     }
 }
 
+//+------------------------------------------------------------------+
+//| v9.23 FIX: Find Position at Specific Price (Safety Net)          |
+//| Used as fallback when PositionSelectByTicket() fails due to      |
+//| race condition between deal execution and position registration  |
+//+------------------------------------------------------------------+
+bool FindPositionAtPrice(double price, ENUM_POSITION_TYPE posType, long targetMagic) {
+    double tolerance = symbolPoint * 5;  // 0.5 pips tolerance
+
+    for(int i = PositionsTotal() - 1; i >= 0; i--) {
+        ulong posTicket = PositionGetTicket(i);
+        if(!PositionSelectByTicket(posTicket)) continue;
+        if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
+        if(PositionGetInteger(POSITION_TYPE) != posType) continue;
+        if(PositionGetInteger(POSITION_MAGIC) != targetMagic) continue;
+
+        double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+        if(MathAbs(openPrice - price) <= tolerance) {
+            return true;
+        }
+    }
+    return false;
+}
+

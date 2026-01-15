@@ -519,15 +519,23 @@ void ProcessDealEvent(ulong dealTicket) {
     long magic = HistoryDealGetInteger(dealTicket, DEAL_MAGIC);
     ENUM_DEAL_ENTRY entry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(dealTicket, DEAL_ENTRY);
 
-    // Only process exit deals
-    if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY) return;
-
-    // Check if this is our deal
+    // Check if this is our deal FIRST (before entry type check)
     if(magic < MagicNumber || magic > MagicNumber + MAGIC_OFFSET_GRID_B + 1000) return;
 
     // v5.7 FIX: Check symbol - filtra solo trade del pair corrente
     string dealSymbol = HistoryDealGetString(dealTicket, DEAL_SYMBOL);
     if(dealSymbol != _Symbol) return;
+
+    // v9.23 FIX: Handle DEAL_ENTRY_IN (pending order filled) to prevent duplicate orders
+    // This fixes the race condition where OnTick polling marks orders as CANCELLED
+    // before the position is registered in MT5
+    if(entry == DEAL_ENTRY_IN) {
+        ProcessOrderFilled(dealTicket);
+        return;  // Don't continue with exit deal logic
+    }
+
+    // Only process exit deals (original logic)
+    if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY) return;
 
     // Get profit
     double profit = HistoryDealGetDouble(dealTicket, DEAL_PROFIT);
@@ -557,6 +565,54 @@ void ProcessDealEvent(ulong dealTicket) {
             g_gridA_ClosedCount++;
         } else if(side == GRID_B) {
             g_gridB_ClosedCount++;
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| v9.23 FIX: Process Order Filled via OnTradeTransaction           |
+//| Handles DEAL_ENTRY_IN to update grid status BEFORE OnTick polling|
+//| This prevents the race condition that causes duplicate orders    |
+//+------------------------------------------------------------------+
+void ProcessOrderFilled(ulong dealTicket) {
+    // Get the original order ticket from the deal
+    ulong orderTicket = (ulong)HistoryDealGetInteger(dealTicket, DEAL_ORDER);
+
+    if(orderTicket == 0) return;
+
+    // Search in Grid A Upper
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        if(gridA_Upper_Tickets[i] == orderTicket && gridA_Upper_Status[i] == ORDER_PENDING) {
+            gridA_Upper_Status[i] = ORDER_FILLED;
+            LogGridStatus(GRID_A, ZONE_UPPER, i, "Order FILLED (via OnTradeTransaction)");
+            return;
+        }
+    }
+
+    // Search in Grid A Lower
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        if(gridA_Lower_Tickets[i] == orderTicket && gridA_Lower_Status[i] == ORDER_PENDING) {
+            gridA_Lower_Status[i] = ORDER_FILLED;
+            LogGridStatus(GRID_A, ZONE_LOWER, i, "Order FILLED (via OnTradeTransaction)");
+            return;
+        }
+    }
+
+    // Search in Grid B Upper
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        if(gridB_Upper_Tickets[i] == orderTicket && gridB_Upper_Status[i] == ORDER_PENDING) {
+            gridB_Upper_Status[i] = ORDER_FILLED;
+            LogGridStatus(GRID_B, ZONE_UPPER, i, "Order FILLED (via OnTradeTransaction)");
+            return;
+        }
+    }
+
+    // Search in Grid B Lower
+    for(int i = 0; i < GridLevelsPerSide; i++) {
+        if(gridB_Lower_Tickets[i] == orderTicket && gridB_Lower_Status[i] == ORDER_PENDING) {
+            gridB_Lower_Status[i] = ORDER_FILLED;
+            LogGridStatus(GRID_B, ZONE_LOWER, i, "Order FILLED (via OnTradeTransaction)");
+            return;
         }
     }
 }
