@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.22        |
+//|                                    SUGAMARA RIBELLE v9.24        |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.22.0 - Layout + Status Fix + Auto-Save Monitor       |
+//|  Version: 9.24.0 - Multi-Chart Dashboard + Reopens Persistence   |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -15,6 +15,16 @@
 //|  Grid A = SOLO ordini BUY (Upper: BUY STOP, Lower: BUY LIMIT)    |
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
+//|                                                                  |
+//|  v9.24 CHANGES:                                                  |
+//|  - FIX: Dashboard objects now use _Symbol suffix (multi-chart)   |
+//|  - FIX: g_lastReopens[] now persisted in autosave system         |
+//|  - FIX: DashObjName() helper for symbol-specific object names    |
+//|                                                                  |
+//|  v9.23 CHANGES:                                                  |
+//|  - FIX: ProcessDealEvent() now handles DEAL_ENTRY_IN             |
+//|  - FIX: ProcessOrderFilled() prevents duplicate grid orders      |
+//|  - FIX: Race condition fix for order fill detection              |
 //|                                                                  |
 //|  v9.22 CHANGES:                                                  |
 //|  - FIX: UpdateStatusLabel conflict resolved (ControlButtons.mqh) |
@@ -75,8 +85,8 @@
 
 #property copyright "Sugamara Ribelle (C) 2025-2026"
 #property link      "https://sugamara.com"
-#property version   "9.220"
-#property description "SUGAMARA RIBELLE v9.22 - Layout + Status Fix + Auto-Save Monitor"
+#property version   "9.240"
+#property description "SUGAMARA RIBELLE v9.24 - Multi-Chart Dashboard + Reopens Persistence"
 #property description "Grid A = SOLO BUY | Grid B = SOLO SELL | Configurable Colors"
 #property description "DUNE Theme - The Spice Must Flow"
 #property strict
@@ -441,7 +451,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.21 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.24 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");

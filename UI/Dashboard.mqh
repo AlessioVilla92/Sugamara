@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
 //|                                                    Dashboard.mqh |
-//|                     SUGAMARA RIBELLE v9.0 - Dashboard Display    |
+//|                     SUGAMARA RIBELLE v9.24 - Dashboard Display   |
 //|                                                                  |
 //|  Visual dashboard for Perfect Cascade (Grid A=BUY, B=SELL)       |
 //|  Color Scheme: DUNE/ARRAKIS DESERT THEME - 2 COLUMN LAYOUT       |
 //|                                                                  |
-//|  v9.0: Perfect Cascade + Smart Reopen + Trailing Grid Fix        |
+//|  v9.24: Multi-chart support via DashObjName() symbol suffix      |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
@@ -112,8 +112,9 @@ void HandleButtonClick(string clickedObject) {
     ObjectSetInteger(0, clickedObject, OBJPROP_STATE, false);
     ChartRedraw(0);
 
+    // v9.23: Compare with symbol-specific button names
     // Check if system can accept new orders
-    if(systemState != STATE_IDLE && clickedObject != "BTN_CLOSE_ALL") {
+    if(systemState != STATE_IDLE && clickedObject != DashObjName("BTN_CLOSE_ALL")) {
         Print("WARNING: System already active - click ignored");
         if(EnableAlerts) Alert("WARNING: System already active!");
         return;
@@ -122,7 +123,7 @@ void HandleButtonClick(string clickedObject) {
     //==============================================================
     // BUY BUTTONS - Grid A (Long Bias)
     //==============================================================
-    if(clickedObject == "BTN_BUY_MARKET") {
+    if(clickedObject == DashObjName("BTN_BUY_MARKET")) {
         Log_Debug("Dashboard", "BUY MARKET requested - Starting Grid A");
         systemState = STATE_ACTIVE;
         if(InitializeGridA()) {
@@ -132,7 +133,7 @@ void HandleButtonClick(string clickedObject) {
         return;
     }
 
-    if(clickedObject == "BTN_BUY_LIMIT") {
+    if(clickedObject == DashObjName("BTN_BUY_LIMIT")) {
         Log_Debug("Dashboard", "BUY LIMIT requested - Starting Grid A");
         systemState = STATE_ACTIVE;
         if(InitializeGridA()) {
@@ -142,7 +143,7 @@ void HandleButtonClick(string clickedObject) {
         return;
     }
 
-    if(clickedObject == "BTN_BUY_STOP") {
+    if(clickedObject == DashObjName("BTN_BUY_STOP")) {
         Log_Debug("Dashboard", "BUY STOP requested - Starting Grid A");
         systemState = STATE_ACTIVE;
         if(InitializeGridA()) {
@@ -155,7 +156,7 @@ void HandleButtonClick(string clickedObject) {
     //==============================================================
     // SELL BUTTONS - Grid B (Short Bias)
     //==============================================================
-    if(clickedObject == "BTN_SELL_MARKET") {
+    if(clickedObject == DashObjName("BTN_SELL_MARKET")) {
         Log_Debug("Dashboard", "SELL MARKET requested - Starting Grid B");
         systemState = STATE_ACTIVE;
         if(InitializeGridB()) {
@@ -165,7 +166,7 @@ void HandleButtonClick(string clickedObject) {
         return;
     }
 
-    if(clickedObject == "BTN_SELL_LIMIT") {
+    if(clickedObject == DashObjName("BTN_SELL_LIMIT")) {
         Log_Debug("Dashboard", "SELL LIMIT requested - Starting Grid B");
         systemState = STATE_ACTIVE;
         if(InitializeGridB()) {
@@ -175,7 +176,7 @@ void HandleButtonClick(string clickedObject) {
         return;
     }
 
-    if(clickedObject == "BTN_SELL_STOP") {
+    if(clickedObject == DashObjName("BTN_SELL_STOP")) {
         Log_Debug("Dashboard", "SELL STOP requested - Starting Grid B");
         systemState = STATE_ACTIVE;
         if(InitializeGridB()) {
@@ -188,7 +189,7 @@ void HandleButtonClick(string clickedObject) {
     //==============================================================
     // START BOTH GRIDS - Neutral Strategy
     //==============================================================
-    if(clickedObject == "BTN_START_NEUTRAL") {
+    if(clickedObject == DashObjName("BTN_START_NEUTRAL")) {
         Log_Debug("Dashboard", "NEUTRAL START requested");
         systemState = STATE_ACTIVE;
         InitializeEntryPoint();
@@ -205,7 +206,7 @@ void HandleButtonClick(string clickedObject) {
     //==============================================================
     // PAUSE/RESUME
     //==============================================================
-    if(clickedObject == "BTN_PAUSE") {
+    if(clickedObject == DashObjName("BTN_PAUSE")) {
         if(systemState == STATE_PAUSED) {
             systemState = STATE_ACTIVE;
             Log_Debug("Dashboard", "System RESUMED");
@@ -221,7 +222,7 @@ void HandleButtonClick(string clickedObject) {
     //==============================================================
     // CLOSE ALL
     //==============================================================
-    if(clickedObject == "BTN_CLOSE_ALL") {
+    if(clickedObject == DashObjName("BTN_CLOSE_ALL")) {
         Log_SystemWarning("Dashboard", "CLOSE ALL requested");
         CloseAllSugamaraOrders();
         // v5.8 FIX: COP_ResetDaily() RIMOSSO - profitti devono accumularsi
@@ -238,8 +239,9 @@ void HandleButtonClick(string clickedObject) {
 void UpdatePauseButton() {
     string btnText = (systemState == STATE_PAUSED) ? "RESUME" : "PAUSE";
     color btnColor = (systemState == STATE_PAUSED) ? CLR_PROFIT : CLR_NEUTRAL;
-    ObjectSetString(0, "BTN_PAUSE", OBJPROP_TEXT, btnText);
-    ObjectSetInteger(0, "BTN_PAUSE", OBJPROP_BGCOLOR, btnColor);
+    // v9.23: Use symbol-specific object names
+    ObjectSetString(0, DashObjName("BTN_PAUSE"), OBJPROP_TEXT, btnText);
+    ObjectSetInteger(0, DashObjName("BTN_PAUSE"), OBJPROP_BGCOLOR, btnColor);
     ChartRedraw(0);
 }
 
@@ -308,7 +310,7 @@ bool InitializeDashboard() {
 bool VerifyDashboardExists() {
     if(!ShowDashboard) return true;
 
-    // v9.22: Updated critical objects (GRID_LEGEND_PANEL removed - integrated into REOPEN)
+    // v9.23: Critical objects with symbol suffix (multi-chart support)
     string criticalObjects[] = {
         "TITLE_PANEL",
         "MODE_PANEL",
@@ -321,7 +323,8 @@ bool VerifyDashboardExists() {
 
     int missingCount = 0;
     for(int i = 0; i < ArraySize(criticalObjects); i++) {
-        if(ObjectFind(0, criticalObjects[i]) < 0) {
+        // v9.23: Use DashObjName() to check symbol-specific objects
+        if(ObjectFind(0, DashObjName(criticalObjects[i])) < 0) {
             missingCount++;
         }
     }
@@ -340,10 +343,10 @@ bool VerifyDashboardExists() {
 //| Fix for buttons disappearing after parameter changes              |
 //+------------------------------------------------------------------+
 bool VerifyControlButtonsExist() {
-    // v9.1: Check for START, CLOSE and RECOVER buttons
-    bool startExists = ObjectFind(0, "SUGAMARA_BTN_START") >= 0;
-    bool closeExists = ObjectFind(0, "SUGAMARA_BTN_CLOSEALL") >= 0;
-    bool recoverExists = ObjectFind(0, "SUGAMARA_BTN_RECOVER") >= 0;
+    // v9.23: Check for START, CLOSE and RECOVER buttons with symbol suffix
+    bool startExists = ObjectFind(0, DashObjName("SUGAMARA_BTN_START")) >= 0;
+    bool closeExists = ObjectFind(0, DashObjName("SUGAMARA_BTN_CLOSEALL")) >= 0;
+    bool recoverExists = ObjectFind(0, DashObjName("SUGAMARA_BTN_RECOVER")) >= 0;
 
     if(!startExists || !closeExists || !recoverExists) {
         PrintFormat("Button verification: START=%s, CLOSE=%s, RECOVER=%s",
@@ -426,9 +429,9 @@ void CheckDashboardPersistence() {
     if(TimeCurrent() - g_lastDashboardCheck < DASHBOARD_CHECK_INTERVAL) return;
     g_lastDashboardCheck = TimeCurrent();
 
-    // Quick check: verify main panel exists
-    if(ObjectFind(0, "TITLE_PANEL") < 0) {
-        // v9.22: Updated critical objects (GRID_LEGEND_PANEL removed - integrated into REOPEN)
+    // v9.23: Quick check with symbol-specific name
+    if(ObjectFind(0, DashObjName("TITLE_PANEL")) < 0) {
+        // v9.23: Critical objects with symbol suffix (multi-chart support)
         string criticalObjects[] = {
             "TITLE_PANEL", "MODE_PANEL", "LEFT_GRIDA_PANEL",
             "RIGHT_GRIDB_PANEL", "LEFT_PERF_PANEL", "RIGHT_REOPEN_PANEL",
@@ -439,7 +442,8 @@ void CheckDashboardPersistence() {
         string missingList = "";
 
         for(int i = 0; i < ArraySize(criticalObjects); i++) {
-            if(ObjectFind(0, criticalObjects[i]) < 0) {
+            // v9.23: Use DashObjName() for symbol-specific check
+            if(ObjectFind(0, DashObjName(criticalObjects[i])) < 0) {
                 missingCount++;
                 if(missingList != "") missingList += ", ";
                 missingList += criticalObjects[i];
@@ -866,25 +870,26 @@ void UpdateDashboard() {
 //| Update Mode Section                                              |
 //+------------------------------------------------------------------+
 void UpdateModeSection() {
+    // v9.23: Use symbol-specific object names
     // Line 1: Mode
     string modeText = "Mode: " + GetModeName();
-    ObjectSetString(0, "MODE_INFO1", OBJPROP_TEXT, modeText);
-    ObjectSetInteger(0, "MODE_INFO1", OBJPROP_COLOR, GetModeColor());
+    ObjectSetString(0, DashObjName("MODE_INFO1"), OBJPROP_TEXT, modeText);
+    ObjectSetInteger(0, DashObjName("MODE_INFO1"), OBJPROP_COLOR, GetModeColor());
 
     // Line 2: Symbol + Spread
     string symbolText = StringFormat("Symbol: %s | Spread: %.1f pips", _Symbol, GetSpreadPips());
-    ObjectSetString(0, "MODE_INFO2", OBJPROP_TEXT, symbolText);
+    ObjectSetString(0, DashObjName("MODE_INFO2"), OBJPROP_TEXT, symbolText);
 
     // Line 3: Pair only (v5.9.3: Grids e Spacing spostati a destra)
     string pairName = GetPairDisplayName(SelectedPair);
-    ObjectSetString(0, "MODE_INFO3", OBJPROP_TEXT, "Pair: " + pairName);
+    ObjectSetString(0, DashObjName("MODE_INFO3"), OBJPROP_TEXT, "Pair: " + pairName);
 
     // v5.9.3: Right side - Spacing e Levels (sostituisce ATR)
     string spacingText = StringFormat("Spacing: %.1f pips", currentSpacing_Pips);
-    ObjectSetString(0, "MODE_SPACING", OBJPROP_TEXT, spacingText);
+    ObjectSetString(0, DashObjName("MODE_SPACING"), OBJPROP_TEXT, spacingText);
 
     string levelsText = StringFormat("Levels: %d", GridLevelsPerSide);
-    ObjectSetString(0, "MODE_LEVELS", OBJPROP_TEXT, levelsText);
+    ObjectSetString(0, DashObjName("MODE_LEVELS"), OBJPROP_TEXT, levelsText);
 }
 
 //+------------------------------------------------------------------+
@@ -909,12 +914,13 @@ void UpdateModeStatusIndicator() {
         statusText = "READY";
     }
 
+    // v9.23: Use symbol-specific object names
     // Update colored box background
-    ObjectSetInteger(0, "MODE_STATUS_BOX", OBJPROP_BGCOLOR, statusColor);
+    ObjectSetInteger(0, DashObjName("MODE_STATUS_BOX"), OBJPROP_BGCOLOR, statusColor);
 
     // Update status text and color
-    ObjectSetString(0, "MODE_STATUS_TEXT", OBJPROP_TEXT, statusText);
-    ObjectSetInteger(0, "MODE_STATUS_TEXT", OBJPROP_COLOR, statusColor);
+    ObjectSetString(0, DashObjName("MODE_STATUS_TEXT"), OBJPROP_TEXT, statusText);
+    ObjectSetInteger(0, DashObjName("MODE_STATUS_TEXT"), OBJPROP_COLOR, statusColor);
 }
 
 //+------------------------------------------------------------------+
@@ -948,9 +954,10 @@ void UpdateStatusLabel() {
         labelText = "READY - CLICK START";
     }
 
+    // v9.23: Use symbol-specific object names
     // Update label
-    ObjectSetString(0, "SUGAMARA_BTN_STATUS", OBJPROP_TEXT, labelText);
-    ObjectSetInteger(0, "SUGAMARA_BTN_STATUS", OBJPROP_COLOR, labelColor);
+    ObjectSetString(0, DashObjName("SUGAMARA_BTN_STATUS"), OBJPROP_TEXT, labelText);
+    ObjectSetInteger(0, DashObjName("SUGAMARA_BTN_STATUS"), OBJPROP_COLOR, labelColor);
 }
 
 //+------------------------------------------------------------------+
@@ -975,20 +982,21 @@ void UpdateGridASection() {
     } else {
         statusText += "IDLE";
     }
-    ObjectSetString(0, "LEFT_GRIDA_STATUS", OBJPROP_TEXT, statusText);
-    ObjectSetInteger(0, "LEFT_GRIDA_STATUS", OBJPROP_COLOR, statusColor);
+    // v9.23: Use symbol-specific object names
+    ObjectSetString(0, DashObjName("LEFT_GRIDA_STATUS"), OBJPROP_TEXT, statusText);
+    ObjectSetInteger(0, DashObjName("LEFT_GRIDA_STATUS"), OBJPROP_COLOR, statusColor);
 
-    ObjectSetString(0, "LEFT_GRIDA_POSITIONS", OBJPROP_TEXT, "Positions: " + IntegerToString(positions));
-    ObjectSetString(0, "LEFT_GRIDA_PENDING", OBJPROP_TEXT, "Pending: " + IntegerToString(pending));
-    ObjectSetString(0, "LEFT_GRIDA_LOTS", OBJPROP_TEXT, StringFormat("Long Lots: %.2f", longLots));
-    ObjectSetString(0, "LEFT_GRIDA_SHORT", OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
+    ObjectSetString(0, DashObjName("LEFT_GRIDA_POSITIONS"), OBJPROP_TEXT, "Positions: " + IntegerToString(positions));
+    ObjectSetString(0, DashObjName("LEFT_GRIDA_PENDING"), OBJPROP_TEXT, "Pending: " + IntegerToString(pending));
+    ObjectSetString(0, DashObjName("LEFT_GRIDA_LOTS"), OBJPROP_TEXT, StringFormat("Long Lots: %.2f", longLots));
+    ObjectSetString(0, DashObjName("LEFT_GRIDA_SHORT"), OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
 
     // v9.0: Update LIMIT/STOP counters con etichette complete
     // v9.11: Fixed emoji -> ASCII symbols for MT5 font compatibility
-    ObjectSetString(0, "LEFT_GRIDA_LIMIT", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("LEFT_GRIDA_LIMIT"), OBJPROP_TEXT,
         StringFormat("[^] LIMIT %d/%d | Cycles:%d | Reopen:%d",
             g_gridA_LimitFilled, GridLevelsPerSide, g_gridA_LimitCycles, g_gridA_LimitReopens));
-    ObjectSetString(0, "LEFT_GRIDA_STOP", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("LEFT_GRIDA_STOP"), OBJPROP_TEXT,
         StringFormat("[^] STOP  %d/%d | Cycles:%d | Reopen:%d",
             g_gridA_StopFilled, GridLevelsPerSide, g_gridA_StopCycles, g_gridA_StopReopens));
 }
@@ -1015,20 +1023,21 @@ void UpdateGridBSection() {
     } else {
         statusText += "IDLE";
     }
-    ObjectSetString(0, "RIGHT_GRIDB_STATUS", OBJPROP_TEXT, statusText);
-    ObjectSetInteger(0, "RIGHT_GRIDB_STATUS", OBJPROP_COLOR, statusColor);
+    // v9.23: Use symbol-specific object names
+    ObjectSetString(0, DashObjName("RIGHT_GRIDB_STATUS"), OBJPROP_TEXT, statusText);
+    ObjectSetInteger(0, DashObjName("RIGHT_GRIDB_STATUS"), OBJPROP_COLOR, statusColor);
 
-    ObjectSetString(0, "RIGHT_GRIDB_POSITIONS", OBJPROP_TEXT, "Positions: " + IntegerToString(positions));
-    ObjectSetString(0, "RIGHT_GRIDB_PENDING", OBJPROP_TEXT, "Pending: " + IntegerToString(pending));
-    ObjectSetString(0, "RIGHT_GRIDB_LOTS", OBJPROP_TEXT, StringFormat("Long Lots: %.2f", longLots));
-    ObjectSetString(0, "RIGHT_GRIDB_SHORT", OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
+    ObjectSetString(0, DashObjName("RIGHT_GRIDB_POSITIONS"), OBJPROP_TEXT, "Positions: " + IntegerToString(positions));
+    ObjectSetString(0, DashObjName("RIGHT_GRIDB_PENDING"), OBJPROP_TEXT, "Pending: " + IntegerToString(pending));
+    ObjectSetString(0, DashObjName("RIGHT_GRIDB_LOTS"), OBJPROP_TEXT, StringFormat("Long Lots: %.2f", longLots));
+    ObjectSetString(0, DashObjName("RIGHT_GRIDB_SHORT"), OBJPROP_TEXT, StringFormat("Short Lots: %.2f", shortLots));
 
     // v9.0: Update LIMIT/STOP counters con etichette complete
     // v9.11: Fixed emoji -> ASCII symbols for MT5 font compatibility
-    ObjectSetString(0, "RIGHT_GRIDB_LIMIT", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("RIGHT_GRIDB_LIMIT"), OBJPROP_TEXT,
         StringFormat("[v] LIMIT %d/%d | Cycles:%d | Reopen:%d",
             g_gridB_LimitFilled, GridLevelsPerSide, g_gridB_LimitCycles, g_gridB_LimitReopens));
-    ObjectSetString(0, "RIGHT_GRIDB_STOP", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("RIGHT_GRIDB_STOP"), OBJPROP_TEXT,
         StringFormat("[v] STOP  %d/%d | Cycles:%d | Reopen:%d",
             g_gridB_StopFilled, GridLevelsPerSide, g_gridB_StopCycles, g_gridB_StopReopens));
 }
@@ -1056,13 +1065,14 @@ void UpdateReopenCycleSection() {
         if(gridA_Lower_Status[i] == ORDER_CLOSED_TP && (infiniteCycles || gridA_Lower_Cycles[i] < MaxCyclesPerLevel)) gaQueue++;
     }
 
-    ObjectSetString(0, "REOPEN_GA_QUEUE", OBJPROP_TEXT, StringFormat("In Coda:    %d", gaQueue));
-    ObjectSetString(0, "REOPEN_GA_DONE", OBJPROP_TEXT, StringFormat("Reinseriti: %d", gaDone));
+    // v9.23: Use symbol-specific object names
+    ObjectSetString(0, DashObjName("REOPEN_GA_QUEUE"), OBJPROP_TEXT, StringFormat("In Coda:    %d", gaQueue));
+    ObjectSetString(0, DashObjName("REOPEN_GA_DONE"), OBJPROP_TEXT, StringFormat("Reinseriti: %d", gaDone));
     // Display "∞" for infinite cycles
     if(infiniteCycles)
-        ObjectSetString(0, "REOPEN_GA_CYCLES", OBJPROP_TEXT, StringFormat("Cicli:      %d/inf", gaCycles));
+        ObjectSetString(0, DashObjName("REOPEN_GA_CYCLES"), OBJPROP_TEXT, StringFormat("Cicli:      %d/inf", gaCycles));
     else
-        ObjectSetString(0, "REOPEN_GA_CYCLES", OBJPROP_TEXT, StringFormat("Cicli:      %d/%d", gaCycles, MaxCyclesPerLevel * GridLevelsPerSide * 2));
+        ObjectSetString(0, DashObjName("REOPEN_GA_CYCLES"), OBJPROP_TEXT, StringFormat("Cicli:      %d/%d", gaCycles, MaxCyclesPerLevel * GridLevelsPerSide * 2));
 
     // Grid B summary
     int gbQueue = 0;  // Count pending reopens
@@ -1075,12 +1085,12 @@ void UpdateReopenCycleSection() {
         if(gridB_Lower_Status[i] == ORDER_CLOSED_TP && (infiniteCycles || gridB_Lower_Cycles[i] < MaxCyclesPerLevel)) gbQueue++;
     }
 
-    ObjectSetString(0, "REOPEN_GB_QUEUE", OBJPROP_TEXT, StringFormat("In Coda:    %d", gbQueue));
-    ObjectSetString(0, "REOPEN_GB_DONE", OBJPROP_TEXT, StringFormat("Reinseriti: %d", gbDone));
+    ObjectSetString(0, DashObjName("REOPEN_GB_QUEUE"), OBJPROP_TEXT, StringFormat("In Coda:    %d", gbQueue));
+    ObjectSetString(0, DashObjName("REOPEN_GB_DONE"), OBJPROP_TEXT, StringFormat("Reinseriti: %d", gbDone));
     if(infiniteCycles)
-        ObjectSetString(0, "REOPEN_GB_CYCLES", OBJPROP_TEXT, StringFormat("Cicli:      %d/inf", gbCycles));
+        ObjectSetString(0, DashObjName("REOPEN_GB_CYCLES"), OBJPROP_TEXT, StringFormat("Cicli:      %d/inf", gbCycles));
     else
-        ObjectSetString(0, "REOPEN_GB_CYCLES", OBJPROP_TEXT, StringFormat("Cicli:      %d/%d", gbCycles, MaxCyclesPerLevel * GridLevelsPerSide * 2));
+        ObjectSetString(0, DashObjName("REOPEN_GB_CYCLES"), OBJPROP_TEXT, StringFormat("Cicli:      %d/%d", gbCycles, MaxCyclesPerLevel * GridLevelsPerSide * 2));
 
     // Update waiting STOP orders list
     UpdateWaitingStopOrdersList();
@@ -1118,9 +1128,10 @@ void UpdateWaitingStopOrdersList() {
         }
     }
 
+    // v9.23: Use symbol-specific object names
     // Update labels
     for(int i = 0; i < 4; i++) {
-        string labelName = StringFormat("REOPEN_WAIT_%d", i+1);
+        string labelName = DashObjName(StringFormat("REOPEN_WAIT_%d", i+1));
         if(i < waitCount) {
             ObjectSetString(0, labelName, OBJPROP_TEXT, waitList[i]);
             ObjectSetInteger(0, labelName, OBJPROP_COLOR, CLR_NEUTRAL);
@@ -1135,9 +1146,10 @@ void UpdateWaitingStopOrdersList() {
 //| Update Recent Reopens List (v9.18)                                |
 //+------------------------------------------------------------------+
 void UpdateRecentReopensList() {
+    // v9.23: Use symbol-specific object names
     // Display last 3 reopens from g_lastReopens array
     for(int i = 0; i < 3; i++) {
-        string labelName = StringFormat("REOPEN_LAST_%d", i+1);
+        string labelName = DashObjName(StringFormat("REOPEN_LAST_%d", i+1));
         if(i < g_lastReopensCount && g_lastReopens[i] != "") {
             ObjectSetString(0, labelName, OBJPROP_TEXT, g_lastReopens[i]);
             ObjectSetInteger(0, labelName, OBJPROP_COLOR, CLR_PROFIT);
@@ -1160,10 +1172,11 @@ void UpdateGridLegendSection() {
     }
     int gaTotal = gaStop + gaLimit;
 
+    // v9.23: Use symbol-specific object names
     // v9.22: Update STP/LMT labels
-    ObjectSetString(0, "LEGEND_GA_STOP", OBJPROP_TEXT, StringFormat("STP[%d]", gaStop));
-    ObjectSetString(0, "LEGEND_GA_LIMIT", OBJPROP_TEXT, StringFormat("LMT[%d]", gaLimit));
-    ObjectSetString(0, "LEGEND_GA_TOTAL", OBJPROP_TEXT, StringFormat("GA Tot: %d", gaTotal));
+    ObjectSetString(0, DashObjName("LEGEND_GA_STOP"), OBJPROP_TEXT, StringFormat("STP[%d]", gaStop));
+    ObjectSetString(0, DashObjName("LEGEND_GA_LIMIT"), OBJPROP_TEXT, StringFormat("LMT[%d]", gaLimit));
+    ObjectSetString(0, DashObjName("LEGEND_GA_TOTAL"), OBJPROP_TEXT, StringFormat("GA Tot: %d", gaTotal));
 
     // Count Grid B orders (SELL only)
     int gbLimit = 0, gbStop = 0;
@@ -1174,9 +1187,9 @@ void UpdateGridLegendSection() {
     int gbTotal = gbLimit + gbStop;
 
     // v9.22: Update STP/LMT labels + Tot on separate row
-    ObjectSetString(0, "LEGEND_GB_LIMIT", OBJPROP_TEXT, StringFormat("LMT[%d]", gbLimit));
-    ObjectSetString(0, "LEGEND_GB_STOP", OBJPROP_TEXT, StringFormat("STP[%d]", gbStop));
-    ObjectSetString(0, "LEGEND_GB_TOTAL", OBJPROP_TEXT, StringFormat("GB Tot: %d", gbTotal));
+    ObjectSetString(0, DashObjName("LEGEND_GB_LIMIT"), OBJPROP_TEXT, StringFormat("LMT[%d]", gbLimit));
+    ObjectSetString(0, DashObjName("LEGEND_GB_STOP"), OBJPROP_TEXT, StringFormat("STP[%d]", gbStop));
+    ObjectSetString(0, DashObjName("LEGEND_GB_TOTAL"), OBJPROP_TEXT, StringFormat("GB Tot: %d", gbTotal));
 }
 
 //+------------------------------------------------------------------+
@@ -1187,10 +1200,11 @@ void UpdateAutoSaveSection() {
     color statusColor = Enable_AutoSave ? clrLime : clrRed;
     string statusText = Enable_AutoSave ? "ON" : "OFF";
 
+    // v9.23: Use symbol-specific object names
     // Update status box and text
-    ObjectSetInteger(0, "AUTOSAVE_STATUS_BOX", OBJPROP_BGCOLOR, statusColor);
-    ObjectSetString(0, "AUTOSAVE_STATUS", OBJPROP_TEXT, statusText);
-    ObjectSetInteger(0, "AUTOSAVE_STATUS", OBJPROP_COLOR, statusColor);
+    ObjectSetInteger(0, DashObjName("AUTOSAVE_STATUS_BOX"), OBJPROP_BGCOLOR, statusColor);
+    ObjectSetString(0, DashObjName("AUTOSAVE_STATUS"), OBJPROP_TEXT, statusText);
+    ObjectSetInteger(0, DashObjName("AUTOSAVE_STATUS"), OBJPROP_COLOR, statusColor);
 
     // Last backup time and result
     string lastText = "Last: --:-- --";
@@ -1203,8 +1217,8 @@ void UpdateAutoSaveSection() {
                    TimeToString(g_lastAutoSaveTime, TIME_MINUTES), result);
     }
 
-    ObjectSetString(0, "AUTOSAVE_LAST", OBJPROP_TEXT, lastText);
-    ObjectSetInteger(0, "AUTOSAVE_LAST", OBJPROP_COLOR, lastColor);
+    ObjectSetString(0, DashObjName("AUTOSAVE_LAST"), OBJPROP_TEXT, lastText);
+    ObjectSetInteger(0, DashObjName("AUTOSAVE_LAST"), OBJPROP_COLOR, lastColor);
 }
 
 //+------------------------------------------------------------------+
@@ -1223,19 +1237,20 @@ void UpdatePerformanceSection() {
     int trades = pairWins + pairLosses;
     double winRate = trades > 0 ? (pairWins * 100.0 / trades) : 0;
 
+    // v9.23: Use symbol-specific object names
     // v9.18: Updated to LEFT_PERF_* labels (moved to left column)
     color plColor = totalPL >= 0 ? CLR_PROFIT : CLR_LOSS;
-    ObjectSetString(0, "LEFT_PERF_TOTAL", OBJPROP_TEXT, StringFormat("Total P/L: $%.2f", totalPL));
-    ObjectSetInteger(0, "LEFT_PERF_TOTAL", OBJPROP_COLOR, plColor);
+    ObjectSetString(0, DashObjName("LEFT_PERF_TOTAL"), OBJPROP_TEXT, StringFormat("Total P/L: $%.2f", totalPL));
+    ObjectSetInteger(0, DashObjName("LEFT_PERF_TOTAL"), OBJPROP_COLOR, plColor);
 
-    ObjectSetString(0, "LEFT_PERF_EQUITY", OBJPROP_TEXT, StringFormat("Equity: $%.2f", equity));
-    ObjectSetString(0, "LEFT_PERF_BALANCE", OBJPROP_TEXT, StringFormat("Balance: $%.2f", balance));
+    ObjectSetString(0, DashObjName("LEFT_PERF_EQUITY"), OBJPROP_TEXT, StringFormat("Equity: $%.2f", equity));
+    ObjectSetString(0, DashObjName("LEFT_PERF_BALANCE"), OBJPROP_TEXT, StringFormat("Balance: $%.2f", balance));
 
     color ddColor = dd > 10 ? CLR_LOSS : (dd > 5 ? CLR_NEUTRAL : CLR_WHITE);
-    ObjectSetString(0, "LEFT_PERF_DD", OBJPROP_TEXT, StringFormat("Drawdown: %.2f%%", dd));
-    ObjectSetInteger(0, "LEFT_PERF_DD", OBJPROP_COLOR, ddColor);
+    ObjectSetString(0, DashObjName("LEFT_PERF_DD"), OBJPROP_TEXT, StringFormat("Drawdown: %.2f%%", dd));
+    ObjectSetInteger(0, DashObjName("LEFT_PERF_DD"), OBJPROP_COLOR, ddColor);
 
-    ObjectSetString(0, "LEFT_PERF_WINRATE", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("LEFT_PERF_WINRATE"), OBJPROP_TEXT,
                     StringFormat("Win Rate: %.0f%% (%dW/%dL)", winRate, pairWins, pairLosses));
     // v9.18: RIGHT_PERF_TRADES removed (Performance moved to left column)
 }
@@ -1250,20 +1265,21 @@ void UpdateVolatilityPanel() {
     double atrH1 = GetATRValue(PERIOD_H1);
     double atrH1Pips = atrH1 / symbolPoint / 10.0;
 
+    // v9.23: Use symbol-specific object names
     // v5.9: Compact single line for M5 and H1 ATR values
-    ObjectSetString(0, "VOL_ATR_LINE", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("VOL_ATR_LINE"), OBJPROP_TEXT,
                     StringFormat("M5: %.1f | H1: %.1f", atrM5Pips, atrH1Pips));
 
     // Color based on higher ATR condition
     double maxAtr = MathMax(atrM5Pips, atrH1Pips);
     color atrColor = GetATRConditionColor(maxAtr);
-    ObjectSetInteger(0, "VOL_ATR_LINE", OBJPROP_COLOR, atrColor);
+    ObjectSetInteger(0, DashObjName("VOL_ATR_LINE"), OBJPROP_COLOR, atrColor);
 
     // v5.9: Spacing + Condition on same line
     string condText = GetATRConditionText(atrM5Pips);  // Use M5 for condition
-    ObjectSetString(0, "VOL_SPACING_STATUS", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("VOL_SPACING_STATUS"), OBJPROP_TEXT,
                     StringFormat("Spacing: %.1f (%s)", currentSpacing_Pips, condText));
-    ObjectSetInteger(0, "VOL_SPACING_STATUS", OBJPROP_COLOR, GetATRConditionColor(atrM5Pips));
+    ObjectSetInteger(0, DashObjName("VOL_SPACING_STATUS"), OBJPROP_COLOR, GetATRConditionColor(atrM5Pips));
 }
 
 //+------------------------------------------------------------------+
@@ -1276,12 +1292,13 @@ void UpdateVolatilityPanel() {
 void UpdateCOPSection() {
     if(!Enable_CloseOnProfit) return;
 
+    // v9.23: Use symbol-specific object names
     // Net Profit
     double netProfit = COP_GetNetProfit();
     color netColor = netProfit >= 0 ? CLR_PROFIT : CLR_LOSS;
-    ObjectSetString(0, "COP_NET", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("COP_NET"), OBJPROP_TEXT,
                     StringFormat("Net: $%.2f / $%.2f", netProfit, COP_DailyTarget_USD));
-    ObjectSetInteger(0, "COP_NET", OBJPROP_COLOR, netColor);
+    ObjectSetInteger(0, DashObjName("COP_NET"), OBJPROP_COLOR, netColor);
 
     // Progress Bar
     double progress = COP_GetProgressPercent();
@@ -1298,9 +1315,9 @@ void UpdateCOPSection() {
     else if(progress >= 75) progressColor = CLR_GOLD;
     else if(progress >= 50) progressColor = CLR_NEUTRAL;
 
-    ObjectSetString(0, "COP_PROGRESS", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("COP_PROGRESS"), OBJPROP_TEXT,
                     StringFormat("%s %.0f%%", progressBar, progress));
-    ObjectSetInteger(0, "COP_PROGRESS", OBJPROP_COLOR, progressColor);
+    ObjectSetInteger(0, DashObjName("COP_PROGRESS"), OBJPROP_COLOR, progressColor);
 
     // Status (NEW v5.2)
     string statusText = "ACTIVE";
@@ -1315,39 +1332,39 @@ void UpdateCOPSection() {
         statusText = "IDLE";
         statusColor = clrGray;
     }
-    ObjectSetString(0, "COP_STATUS", OBJPROP_TEXT, "Status: " + statusText);
-    ObjectSetInteger(0, "COP_STATUS", OBJPROP_COLOR, statusColor);
+    ObjectSetString(0, DashObjName("COP_STATUS"), OBJPROP_TEXT, "Status: " + statusText);
+    ObjectSetInteger(0, DashObjName("COP_STATUS"), OBJPROP_COLOR, statusColor);
 
     // Missing amount (NEW v5.2)
     double missingAmount = COP_DailyTarget_USD - netProfit;
     if(missingAmount < 0) missingAmount = 0;
-    ObjectSetString(0, "COP_MISSING", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("COP_MISSING"), OBJPROP_TEXT,
                     StringFormat("Manca: $%.2f", missingAmount));
-    ObjectSetInteger(0, "COP_MISSING", OBJPROP_COLOR,
+    ObjectSetInteger(0, DashObjName("COP_MISSING"), OBJPROP_COLOR,
                     missingAmount > 0 ? CLR_AZURE_1 : CLR_PROFIT);
 
     // Details
-    ObjectSetString(0, "COP_REAL", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("COP_REAL"), OBJPROP_TEXT,
                     StringFormat("Real: $%.2f", cop_RealizedProfit));
-    ObjectSetInteger(0, "COP_REAL", OBJPROP_COLOR,
+    ObjectSetInteger(0, DashObjName("COP_REAL"), OBJPROP_COLOR,
                     cop_RealizedProfit >= 0 ? CLR_PROFIT : CLR_LOSS);
 
-    ObjectSetString(0, "COP_FLOAT", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("COP_FLOAT"), OBJPROP_TEXT,
                     StringFormat("Float: $%.2f", cop_FloatingProfit));
-    ObjectSetInteger(0, "COP_FLOAT", OBJPROP_COLOR,
+    ObjectSetInteger(0, DashObjName("COP_FLOAT"), OBJPROP_COLOR,
                     cop_FloatingProfit >= 0 ? CLR_PROFIT : CLR_LOSS);
 
-    ObjectSetString(0, "COP_COMM", OBJPROP_TEXT,
+    ObjectSetString(0, DashObjName("COP_COMM"), OBJPROP_TEXT,
                     StringFormat("Comm: -$%.2f", cop_TotalCommissions));
-    ObjectSetInteger(0, "COP_COMM", OBJPROP_COLOR, clrGray);
+    ObjectSetInteger(0, DashObjName("COP_COMM"), OBJPROP_COLOR, clrGray);
 
     // Status (if target reached)
     if(COP_IsTargetReached()) {
-        ObjectSetString(0, "COP_TITLE", OBJPROP_TEXT, "TARGET REACHED!");
-        ObjectSetInteger(0, "COP_TITLE", OBJPROP_COLOR, CLR_PROFIT);
+        ObjectSetString(0, DashObjName("COP_TITLE"), OBJPROP_TEXT, "TARGET REACHED!");
+        ObjectSetInteger(0, DashObjName("COP_TITLE"), OBJPROP_COLOR, CLR_PROFIT);
     } else {
-        ObjectSetString(0, "COP_TITLE", OBJPROP_TEXT, "CLOSE ON PROFIT");
-        ObjectSetInteger(0, "COP_TITLE", OBJPROP_COLOR, CLR_GOLD);
+        ObjectSetString(0, DashObjName("COP_TITLE"), OBJPROP_TEXT, "CLOSE ON PROFIT");
+        ObjectSetInteger(0, DashObjName("COP_TITLE"), OBJPROP_COLOR, CLR_GOLD);
     }
 }
 
@@ -1400,50 +1417,60 @@ color GetModeColor() {
 //+------------------------------------------------------------------+
 //| UI Helper Functions                                              |
 //+------------------------------------------------------------------+
+
+// v9.23 FIX: Symbol-specific object names to prevent multi-chart conflicts
+// Returns object name with symbol suffix: "TITLE_PANEL" -> "TITLE_PANEL_EURUSD"
+string DashObjName(string baseName) {
+    return baseName + "_" + _Symbol;
+}
+
 void DashLabel(string name, int x, int y, string text, color clr, int fontSize, string font = "Arial") {
-    ObjectDelete(0, name);
-    ObjectCreate(0, name, OBJ_LABEL, 0, 0, 0);
-    ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-    ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
-    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
-    ObjectSetString(0, name, OBJPROP_TEXT, text);
-    ObjectSetInteger(0, name, OBJPROP_COLOR, clr);
-    ObjectSetInteger(0, name, OBJPROP_FONTSIZE, fontSize);
-    ObjectSetString(0, name, OBJPROP_FONT, font);
-    ObjectSetInteger(0, name, OBJPROP_BACK, false);
-    ObjectSetInteger(0, name, OBJPROP_ZORDER, 10000);
+    string objName = DashObjName(name);  // v9.23: Symbol-specific name
+    ObjectDelete(0, objName);
+    ObjectCreate(0, objName, OBJ_LABEL, 0, 0, 0);
+    ObjectSetInteger(0, objName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+    ObjectSetInteger(0, objName, OBJPROP_XDISTANCE, x);
+    ObjectSetInteger(0, objName, OBJPROP_YDISTANCE, y);
+    ObjectSetString(0, objName, OBJPROP_TEXT, text);
+    ObjectSetInteger(0, objName, OBJPROP_COLOR, clr);
+    ObjectSetInteger(0, objName, OBJPROP_FONTSIZE, fontSize);
+    ObjectSetString(0, objName, OBJPROP_FONT, font);
+    ObjectSetInteger(0, objName, OBJPROP_BACK, false);
+    ObjectSetInteger(0, objName, OBJPROP_ZORDER, 10000);
 }
 
 void DashButton(string name, int x, int y, int width, int height, string text, color clr) {
-    ObjectDelete(0, name);
-    ObjectCreate(0, name, OBJ_BUTTON, 0, 0, 0);
-    ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-    ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
-    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
-    ObjectSetInteger(0, name, OBJPROP_XSIZE, width);
-    ObjectSetInteger(0, name, OBJPROP_YSIZE, height);
-    ObjectSetString(0, name, OBJPROP_TEXT, text);
-    ObjectSetInteger(0, name, OBJPROP_COLOR, clrWhite);
-    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, clr);
-    ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, clrBlack);
-    ObjectSetInteger(0, name, OBJPROP_FONTSIZE, 9);
-    ObjectSetInteger(0, name, OBJPROP_BACK, false);
-    ObjectSetInteger(0, name, OBJPROP_ZORDER, 10000);
+    string objName = DashObjName(name);  // v9.23: Symbol-specific name
+    ObjectDelete(0, objName);
+    ObjectCreate(0, objName, OBJ_BUTTON, 0, 0, 0);
+    ObjectSetInteger(0, objName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+    ObjectSetInteger(0, objName, OBJPROP_XDISTANCE, x);
+    ObjectSetInteger(0, objName, OBJPROP_YDISTANCE, y);
+    ObjectSetInteger(0, objName, OBJPROP_XSIZE, width);
+    ObjectSetInteger(0, objName, OBJPROP_YSIZE, height);
+    ObjectSetString(0, objName, OBJPROP_TEXT, text);
+    ObjectSetInteger(0, objName, OBJPROP_COLOR, clrWhite);
+    ObjectSetInteger(0, objName, OBJPROP_BGCOLOR, clr);
+    ObjectSetInteger(0, objName, OBJPROP_BORDER_COLOR, clrBlack);
+    ObjectSetInteger(0, objName, OBJPROP_FONTSIZE, 9);
+    ObjectSetInteger(0, objName, OBJPROP_BACK, false);
+    ObjectSetInteger(0, objName, OBJPROP_ZORDER, 10000);
 }
 
 void DashRectangle(string name, int x, int y, int width, int height, color clr) {
-    ObjectDelete(0, name);
-    ObjectCreate(0, name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
-    ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-    ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
-    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
-    ObjectSetInteger(0, name, OBJPROP_XSIZE, width);
-    ObjectSetInteger(0, name, OBJPROP_YSIZE, height);
-    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, clr);
-    ObjectSetInteger(0, name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
-    ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, CLR_BORDER);
-    ObjectSetInteger(0, name, OBJPROP_BACK, false);
-    ObjectSetInteger(0, name, OBJPROP_ZORDER, 9000);
+    string objName = DashObjName(name);  // v9.23: Symbol-specific name
+    ObjectDelete(0, objName);
+    ObjectCreate(0, objName, OBJ_RECTANGLE_LABEL, 0, 0, 0);
+    ObjectSetInteger(0, objName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+    ObjectSetInteger(0, objName, OBJPROP_XDISTANCE, x);
+    ObjectSetInteger(0, objName, OBJPROP_YDISTANCE, y);
+    ObjectSetInteger(0, objName, OBJPROP_XSIZE, width);
+    ObjectSetInteger(0, objName, OBJPROP_YSIZE, height);
+    ObjectSetInteger(0, objName, OBJPROP_BGCOLOR, clr);
+    ObjectSetInteger(0, objName, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+    ObjectSetInteger(0, objName, OBJPROP_BORDER_COLOR, CLR_BORDER);
+    ObjectSetInteger(0, objName, OBJPROP_BACK, false);
+    ObjectSetInteger(0, objName, OBJPROP_ZORDER, 9000);
 }
 
 //+------------------------------------------------------------------+

@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //|                                             StatePersistence.mqh |
-//|                        SUGAMARA v9.12 - State Persistence        |
+//|                        SUGAMARA v9.24 - State Persistence        |
 //|                                                                  |
 //|  Modulo per salvare/ripristinare stato completo EA               |
 //|  - Auto-save periodico ogni N minuti                             |
@@ -176,6 +176,13 @@ string GetStateFilePath() {
 //+------------------------------------------------------------------+
 string GetEntryPointBackupFilePath() {
     return "sugamara_entry_" + _Symbol + ".txt";
+}
+
+//+------------------------------------------------------------------+
+//| GET LAST REOPENS BACKUP FILE PATH (v9.23)                         |
+//+------------------------------------------------------------------+
+string GetLastReopensBackupFilePath() {
+    return "sugamara_reopens_" + _Symbol + ".txt";
 }
 
 //+------------------------------------------------------------------+
@@ -422,6 +429,25 @@ void SaveCompleteState() {
     LogSection_End(SP_LOG_AUTOSAVE, "GRID COUNTERS", countersSaved, 0);
 
     //=================================================================
+    // SECTION 9B: LAST REOPENS (v9.23: Dashboard display persistence)
+    //=================================================================
+    LogSection_Start(SP_LOG_AUTOSAVE, "LAST REOPENS (v9.23)");
+    sectionErrors = 0;
+    if(AutoSave_UseFileBackup) {
+        if(!SaveLastReopensToFile()) {
+            sectionErrors++;
+            LogPersistenceError(SP_LOG_AUTOSAVE, "SaveLastReopensToFile", "Failed to write backup file");
+        } else {
+            LogItem(SP_LOG_AUTOSAVE, "Last Reopens Count", IntegerToString(g_lastReopensCount));
+            for(int i = 0; i < g_lastReopensCount; i++) {
+                LogItem(SP_LOG_AUTOSAVE, StringFormat("Reopen[%d]", i), g_lastReopens[i]);
+            }
+        }
+    }
+    LogSection_End(SP_LOG_AUTOSAVE, "LAST REOPENS", g_lastReopensCount, sectionErrors);
+    g_saveErrors += sectionErrors;
+
+    //=================================================================
     // SECTION 10: COP STATE (Close On Profit)
     //=================================================================
     LogSection_Start(SP_LOG_AUTOSAVE, "COP STATE");
@@ -595,6 +621,59 @@ bool LoadEntryPointFromFile(double &entry, double &spacing, datetime &entryTime)
         spacing = StringToDouble(parts[1]);
         if(count >= 3) entryTime = (datetime)StringToInteger(parts[2]);
         return (entry > 0 && spacing > 0);
+    }
+    return false;
+}
+
+//+------------------------------------------------------------------+
+//| SAVE LAST REOPENS TO FILE (v9.23)                                  |
+//| Salva g_lastReopens[] su file per persistence                      |
+//+------------------------------------------------------------------+
+bool SaveLastReopensToFile() {
+    if(g_lastReopensCount == 0) return true;  // Nothing to save
+
+    string filePath = GetLastReopensBackupFilePath();
+    int handle = FileOpen(filePath, FILE_WRITE|FILE_TXT|FILE_COMMON);
+    if(handle == INVALID_HANDLE) {
+        return false;
+    }
+
+    // Format: count;string1;string2;string3
+    string data = IntegerToString(g_lastReopensCount);
+    for(int i = 0; i < MAX_LAST_REOPENS; i++) {
+        data += ";" + g_lastReopens[i];
+    }
+
+    uint bytesWritten = FileWriteString(handle, data);
+    FileClose(handle);
+
+    return (bytesWritten > 0);
+}
+
+//+------------------------------------------------------------------+
+//| LOAD LAST REOPENS FROM FILE (v9.23)                                |
+//| Ripristina g_lastReopens[] da file                                 |
+//+------------------------------------------------------------------+
+bool LoadLastReopensFromFile() {
+    string filePath = GetLastReopensBackupFilePath();
+    int handle = FileOpen(filePath, FILE_READ|FILE_TXT|FILE_COMMON);
+    if(handle == INVALID_HANDLE) return false;
+
+    string data = FileReadString(handle);
+    FileClose(handle);
+
+    if(StringLen(data) < 1) return false;
+
+    string parts[];
+    int count = StringSplit(data, ';', parts);
+    if(count >= 1) {
+        g_lastReopensCount = (int)StringToInteger(parts[0]);
+        if(g_lastReopensCount > MAX_LAST_REOPENS) g_lastReopensCount = MAX_LAST_REOPENS;
+
+        for(int i = 0; i < MAX_LAST_REOPENS && i + 1 < count; i++) {
+            g_lastReopens[i] = parts[i + 1];
+        }
+        return true;
     }
     return false;
 }
@@ -868,6 +947,22 @@ bool RestoreCompleteStateWithMerge() {
     LogItem(SP_LOG_RESTORE, "Grid B Closed/Pending", IntegerToString(g_gridB_ClosedCount) + "/" + IntegerToString(g_gridB_PendingCount));
     LogItem(SP_LOG_RESTORE, "Total Cycles (A+B)", IntegerToString(g_gridA_LimitCycles + g_gridA_StopCycles + g_gridB_LimitCycles + g_gridB_StopCycles));
     LogSection_End(SP_LOG_RESTORE, "GRID COUNTERS", 16, 0);
+
+    //=================================================================
+    // SECTION 5B: LAST REOPENS (v9.23: Dashboard display persistence)
+    //=================================================================
+    LogSection_Start(SP_LOG_RESTORE, "LAST REOPENS (v9.23)");
+    if(LoadLastReopensFromFile()) {
+        LogItem(SP_LOG_RESTORE, "Last Reopens Count", IntegerToString(g_lastReopensCount));
+        for(int i = 0; i < g_lastReopensCount; i++) {
+            LogItem(SP_LOG_RESTORE, StringFormat("Reopen[%d]", i), g_lastReopens[i]);
+        }
+        g_restoredVariableCount += g_lastReopensCount + 1;
+        LogSection_End(SP_LOG_RESTORE, "LAST REOPENS", g_lastReopensCount, 0);
+    } else {
+        LogPersistenceWarning(SP_LOG_RESTORE, "Last Reopens file not found or empty - dashboard will start fresh");
+        LogSection_End(SP_LOG_RESTORE, "LAST REOPENS", 0, 0);
+    }
 
     //=================================================================
     // SECTION 6: COP STATE
@@ -1171,6 +1266,7 @@ void ClearSavedState() {
     // Elimina file backup
     FileDelete(GetEntryPointBackupFilePath(), FILE_COMMON);
     FileDelete(GetStateFilePath(), FILE_COMMON);
+    FileDelete(GetLastReopensBackupFilePath(), FILE_COMMON);  // v9.23
 
     Print("[STATE] Cleared ", deletedCount, " GlobalVariables + backup files");
 }
