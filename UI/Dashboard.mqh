@@ -283,6 +283,7 @@ bool InitializeDashboard() {
     Sleep(50);  // Small delay to ensure objects are deleted
 
     CreateUnifiedDashboard();
+    InitializeControlButtons(g_leftX, g_btnY, g_colWidth);  // v9.28 FIX: Create buttons on fresh dashboard
     CreateVolatilityPanel();
     CreateAutoSavePanel();   // v9.22: Auto-Save Monitor
     // CreateShieldPanel(); REMOVED in v9.12
