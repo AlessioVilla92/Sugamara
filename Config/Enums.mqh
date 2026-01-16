@@ -43,10 +43,13 @@ enum ENUM_FOREX_PAIR {
 //+------------------------------------------------------------------+
 //| 📏 SPACING MODE - Modalità calcolo spacing griglia               |
 //| v5.9: SPACING_PAIR_AUTO aggiunto - legge spacing dal pair preset |
+//| v9.26: Progressive spacing per risk management migliorato        |
 //+------------------------------------------------------------------+
 enum ENUM_SPACING_MODE {
-    SPACING_FIXED,              // Fixed - Spacing fisso manuale (pips)
-    SPACING_PAIR_AUTO           // Pair Auto - Usa spacing preset della coppia (DEFAULT)
+    SPACING_FIXED,                      // Fixed - Spacing fisso manuale (pips)
+    SPACING_PAIR_AUTO,                  // Pair Auto - Usa spacing preset della coppia (DEFAULT)
+    SPACING_PROGRESSIVE_PERCENTAGE,     // Progressive % - Aumento percentuale per livello (es. +20%)
+    SPACING_PROGRESSIVE_LINEAR          // Progressive Linear - Aumento fisso per livello (es. +2 pips)
 };
 
 //+------------------------------------------------------------------+

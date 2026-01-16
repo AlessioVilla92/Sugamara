@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //|                                             StatePersistence.mqh |
-//|                        SUGAMARA v9.25 - State Persistence        |
+//|                        SUGAMARA v9.26 - State Persistence        |
 //|                                                                  |
 //|  Modulo per salvare/ripristinare stato completo EA               |
 //|  - Auto-save periodico ogni N minuti                             |
@@ -295,6 +295,32 @@ void SaveCompleteState() {
 
     LogSection_End(SP_LOG_AUTOSAVE, "CORE SYSTEM STATE", sectionItems, sectionErrors);
     g_saveErrors += sectionErrors;
+
+    //=================================================================
+    // SECTION 1B: PROGRESSIVE SPACING STATE (v9.26)
+    //=================================================================
+    if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE || SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+        LogSection_Start(SP_LOG_AUTOSAVE, "PROGRESSIVE SPACING STATE (v9.26)");
+        sectionItems = 0; sectionErrors = 0;
+
+        if(!SaveStateDouble("progressiveSpacingBase", progressiveSpacingBase)) sectionErrors++;
+        else { sectionItems++; LogItem(SP_LOG_AUTOSAVE, "progressiveSpacingBase", DoubleToString(progressiveSpacingBase, 1) + " pips"); }
+
+        if(!SaveStateDouble("progressiveSpacingRate", progressiveSpacingRate)) sectionErrors++;
+        else { sectionItems++; LogItem(SP_LOG_AUTOSAVE, "progressiveSpacingRate", DoubleToString(progressiveSpacingRate * 100, 1) + "%"); }
+
+        if(!SaveStateDouble("progressiveLinearIncrement", progressiveLinearIncrement)) sectionErrors++;
+        else { sectionItems++; LogItem(SP_LOG_AUTOSAVE, "progressiveLinearIncrement", DoubleToString(progressiveLinearIncrement, 1) + " pips"); }
+
+        if(!SaveStateInt("progressiveStartLevel", progressiveStartLevel)) sectionErrors++;
+        else { sectionItems++; LogItem(SP_LOG_AUTOSAVE, "progressiveStartLevel", IntegerToString(progressiveStartLevel)); }
+
+        if(!SaveStateBool("g_progressiveInitialized", g_progressiveInitialized)) sectionErrors++;
+        else sectionItems++;
+
+        LogSection_End(SP_LOG_AUTOSAVE, "PROGRESSIVE SPACING STATE", sectionItems, sectionErrors);
+        g_saveErrors += sectionErrors;
+    }
 
     //=================================================================
     // SECTION 2: GRID ARRAYS - STATUS (CRITICO per Cycling!)
@@ -782,6 +808,54 @@ bool RestoreCompleteStateWithMerge() {
     g_restoreErrors += sectionErrors;
 
     //=================================================================
+    // SECTION 1B: PROGRESSIVE SPACING STATE (v9.26)
+    //=================================================================
+    if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE || SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+        LogSection_Start(SP_LOG_RESTORE, "PROGRESSIVE SPACING STATE (v9.26)");
+        sectionItems = 0;
+
+        // Restore progressive spacing variables only if not already initialized
+        if(!g_progressiveInitialized) {
+            double savedBase = LoadStateDouble("progressiveSpacingBase", 0);
+            if(savedBase > 0) {
+                progressiveSpacingBase = savedBase;
+                sectionItems++;
+                LogItem(SP_LOG_RESTORE, "progressiveSpacingBase", DoubleToString(progressiveSpacingBase, 1) + " pips");
+            }
+
+            double savedRate = LoadStateDouble("progressiveSpacingRate", 0);
+            if(savedRate > 0) {
+                progressiveSpacingRate = savedRate;
+                sectionItems++;
+                LogItem(SP_LOG_RESTORE, "progressiveSpacingRate", DoubleToString(progressiveSpacingRate * 100, 1) + "%");
+            }
+
+            double savedLinear = LoadStateDouble("progressiveLinearIncrement", 0);
+            if(savedLinear > 0) {
+                progressiveLinearIncrement = savedLinear;
+                sectionItems++;
+                LogItem(SP_LOG_RESTORE, "progressiveLinearIncrement", DoubleToString(progressiveLinearIncrement, 1) + " pips");
+            }
+
+            int savedStartLevel = LoadStateInt("progressiveStartLevel", -1);
+            if(savedStartLevel >= 0) {
+                progressiveStartLevel = savedStartLevel;
+                sectionItems++;
+                LogItem(SP_LOG_RESTORE, "progressiveStartLevel", IntegerToString(progressiveStartLevel));
+            }
+
+            g_progressiveInitialized = LoadStateBool("g_progressiveInitialized", false);
+            if(g_progressiveInitialized) sectionItems++;
+
+            g_restoredVariableCount += sectionItems;
+        } else {
+            LogPersistenceWarning(SP_LOG_RESTORE, "Progressive already initialized - skipping restore");
+        }
+
+        LogSection_End(SP_LOG_RESTORE, "PROGRESSIVE SPACING STATE", sectionItems, 0);
+    }
+
+    //=================================================================
     // SECTION 2-4: GRID ARRAYS CON MERGE INTELLIGENTE
     // CRITICO: Se broker non ha trovato ordine ma saved state ha
     // ORDER_CLOSED_TP, ripristina per continuare cycling!
@@ -1183,6 +1257,9 @@ void ClearSavedState() {
     string keys[] = {
         "entryPoint", "entryPointTime", "currentSpacing", "systemState",
         "systemActive", "systemStartTime", "lastSaveTime",
+        // v9.26: Progressive spacing state
+        "progressiveSpacingBase", "progressiveSpacingRate", "progressiveLinearIncrement",
+        "progressiveStartLevel", "g_progressiveInitialized",
         "gridA_ClosedCount", "gridA_PendingCount", "gridB_ClosedCount", "gridB_PendingCount",
         "gridA_LimitFilled", "gridA_LimitCycles", "gridA_LimitReopens",
         "gridA_StopFilled", "gridA_StopCycles", "gridA_StopReopens",

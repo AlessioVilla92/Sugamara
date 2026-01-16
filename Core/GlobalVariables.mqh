@@ -51,6 +51,16 @@ datetime lastATRRecalc = 0;                 // Ultimo ricalcolo ATR
 double currentSpacing_Pips = 0;             // Spacing corrente calcolato da ATR
 
 //+------------------------------------------------------------------+
+//| 📐 PROGRESSIVE SPACING v9.26                                     |
+//| Variabili per spacing progressivo/piramidale                     |
+//+------------------------------------------------------------------+
+double progressiveSpacingBase = 0;          // Spacing base (pips) per progressione
+double progressiveSpacingRate = 0;          // Rate percentuale (es. 0.20 = 20%)
+double progressiveLinearIncrement = 0;      // Incremento lineare (pips)
+int    progressiveStartLevel = 0;           // Livello da cui inizia progressione
+bool   g_progressiveInitialized = false;    // Flag: evita sovrascrittura dopo recovery
+
+//+------------------------------------------------------------------+
 //| 📦 ATR CACHE v5.8 - For monitoring only (no spacing logic)       |
 //+------------------------------------------------------------------+
 struct ATRCacheStruct {

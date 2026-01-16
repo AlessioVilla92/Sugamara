@@ -80,19 +80,26 @@ double GetPairDefaultSpacing()
 }
 
 //+------------------------------------------------------------------+
-//| Calcola lo spacing corrente - v5.9 con SPACING_PAIR_AUTO          |
-//| Supporta: FIXED, PAIR_AUTO                                        |
+//| Calcola lo spacing corrente - v9.26 con Progressive Spacing       |
+//| Supporta: FIXED, PAIR_AUTO, PROGRESSIVE_PERCENTAGE, PROGRESSIVE_LINEAR |
 //+------------------------------------------------------------------+
 double CalculateCurrentSpacing()
 {
-   // v5.9: Supporta SPACING_FIXED, SPACING_PAIR_AUTO
-   // SPACING_GEOMETRIC rimosso (mai utilizzato)
+   // v9.26: Supporta SPACING_FIXED, SPACING_PAIR_AUTO, SPACING_PROGRESSIVE_*
+   // Per progressive modes, ritorna lo spacing BASE (livello 0)
 
    double spacing = Fixed_Spacing_Pips;
 
    switch(SpacingMode) {
       case SPACING_PAIR_AUTO:
          // Pair Auto: usa spacing preset dalla coppia selezionata (DEFAULT)
+         spacing = GetPairDefaultSpacing();
+         break;
+
+      case SPACING_PROGRESSIVE_PERCENTAGE:
+      case SPACING_PROGRESSIVE_LINEAR:
+         // Progressive: usa spacing base (come PAIR_AUTO o FIXED)
+         // Lo spacing effettivo per livello è calcolato da CalculateProgressiveSpacing()
          spacing = GetPairDefaultSpacing();
          break;
 
@@ -106,6 +113,162 @@ double CalculateCurrentSpacing()
    spacing = MathMax(spacing, 5.0);  // Minimum 5 pips
 
    return spacing;
+}
+
+//+------------------------------------------------------------------+
+//| 📐 PROGRESSIVE SPACING FUNCTIONS v9.26                            |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Initialize Progressive Spacing Variables                          |
+//| Chiamare dopo CalculateCurrentSpacing() in OnInit                 |
+//+------------------------------------------------------------------+
+void InitializeProgressiveSpacing()
+{
+   // Se già inizializzato (es. dopo recovery), non sovrascrivere
+   if(g_progressiveInitialized) {
+      Print("[Progressive] Already initialized from recovery, keeping values");
+      return;
+   }
+
+   // Usa currentSpacing_Pips come base
+   progressiveSpacingBase = currentSpacing_Pips;
+
+   // Rate percentuale: 20% -> 0.20
+   progressiveSpacingRate = Progressive_Spacing_Percentage / 100.0;
+
+   // Incremento lineare in pips
+   progressiveLinearIncrement = Progressive_Spacing_Linear_Pips;
+
+   // Livello da cui inizia la progressione
+   progressiveStartLevel = Progressive_Start_Level;
+
+   // Clamp start level
+   if(progressiveStartLevel < 0) progressiveStartLevel = 0;
+   if(progressiveStartLevel >= GridLevelsPerSide) progressiveStartLevel = GridLevelsPerSide - 1;
+
+   g_progressiveInitialized = true;
+
+   if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE || SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+      Print("[Progressive] Initialized: Base=", progressiveSpacingBase,
+            " Rate=", progressiveSpacingRate * 100, "%",
+            " Linear=", progressiveLinearIncrement, " pips",
+            " StartLevel=", progressiveStartLevel);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Progressive Spacing for Specific Level                   |
+//| Returns spacing in PIPS for the given level                        |
+//| Level 0 = first grid level (closest to entry)                      |
+//+------------------------------------------------------------------+
+double CalculateProgressiveSpacing(int level)
+{
+   // Se non siamo in modalità progressiva, ritorna spacing fisso
+   if(SpacingMode != SPACING_PROGRESSIVE_PERCENTAGE &&
+      SpacingMode != SPACING_PROGRESSIVE_LINEAR) {
+      return currentSpacing_Pips;
+   }
+
+   // Prima del livello di start, usa spacing fisso
+   if(level < progressiveStartLevel) {
+      return progressiveSpacingBase;
+   }
+
+   double spacing = progressiveSpacingBase;
+   int effectiveLevel = level - progressiveStartLevel;
+
+   if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE) {
+      // Formula geometrica: S(n) = Base × (1 + Rate)^n
+      // Rate già in decimale (es. 0.20 per 20%)
+      double progressionFactor = MathPow(1.0 + progressiveSpacingRate, effectiveLevel);
+      spacing = progressiveSpacingBase * progressionFactor;
+   }
+   else if(SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+      // Formula aritmetica: S(n) = Base + (n × Increment)
+      spacing = progressiveSpacingBase + (effectiveLevel * progressiveLinearIncrement);
+   }
+
+   // Applica cap massimo
+   spacing = MathMin(spacing, Progressive_Max_Spacing_Pips);
+
+   // Applica minimo di sicurezza
+   spacing = MathMax(spacing, 5.0);
+
+   return spacing;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Progressive Cumulative Distance from Entry               |
+//| Returns TOTAL distance in PIPS from entry point to level N         |
+//| Uses geometric/arithmetic series for efficiency                    |
+//+------------------------------------------------------------------+
+double CalculateProgressiveCumulativeDistance(int level)
+{
+   // Se non siamo in modalità progressiva, usa calcolo lineare standard
+   if(SpacingMode != SPACING_PROGRESSIVE_PERCENTAGE &&
+      SpacingMode != SPACING_PROGRESSIVE_LINEAR) {
+      // Standard: entrySpacing + (level × spacing)
+      double entrySpacingPips = GetEntrySpacingPips(currentSpacing_Pips);
+      return entrySpacingPips + (level * currentSpacing_Pips);
+   }
+
+   // Calcola entry spacing (distanza entry -> livello 0)
+   double entrySpacingPips = GetEntrySpacingPips(progressiveSpacingBase);
+   double totalDistance = entrySpacingPips;
+
+   // Numero di spaziature da sommare (da livello 0 a livello N)
+   int totalSpacings = level;
+
+   if(totalSpacings <= 0) {
+      return totalDistance;  // Solo entry spacing per livello 0
+   }
+
+   // Parte 1: Spaziature FISSE (prima di progressiveStartLevel)
+   int fixedSpacings = MathMin(totalSpacings, progressiveStartLevel);
+   totalDistance += fixedSpacings * progressiveSpacingBase;
+
+   // Parte 2: Spaziature PROGRESSIVE (da progressiveStartLevel in poi)
+   int progressiveSpacings = MathMax(0, totalSpacings - progressiveStartLevel);
+
+   if(progressiveSpacings > 0) {
+      if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE) {
+         // Serie geometrica: Sum = Base × [(1+r)^n - 1] / r
+         // Dove r = rate, n = numero spaziature progressive
+         double r = progressiveSpacingRate;
+         if(r > 0.0001) {  // Evita divisione per zero
+            double geometricSum = progressiveSpacingBase * (MathPow(1.0 + r, progressiveSpacings) - 1.0) / r;
+            totalDistance += geometricSum;
+         } else {
+            // Se rate ~0, usa lineare
+            totalDistance += progressiveSpacings * progressiveSpacingBase;
+         }
+      }
+      else if(SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+         // Serie aritmetica: Sum = n×Base + Increment×n×(n-1)/2
+         // Dove n = numero spaziature progressive
+         int n = progressiveSpacings;
+         double arithmeticSum = n * progressiveSpacingBase +
+                                progressiveLinearIncrement * n * (n - 1) / 2.0;
+         totalDistance += arithmeticSum;
+      }
+   }
+
+   return totalDistance;
+}
+
+//+------------------------------------------------------------------+
+//| Get Spacing Mode Name for Dashboard/Logging                        |
+//+------------------------------------------------------------------+
+string GetSpacingModeName()
+{
+   switch(SpacingMode) {
+      case SPACING_FIXED:                   return "FIXED";
+      case SPACING_PAIR_AUTO:               return "PAIR AUTO";
+      case SPACING_PROGRESSIVE_PERCENTAGE:  return "PROGRESSIVE %";
+      case SPACING_PROGRESSIVE_LINEAR:      return "PROGRESSIVE LINEAR";
+      default:                              return "UNKNOWN";
+   }
 }
 
 //+------------------------------------------------------------------+
@@ -303,6 +466,52 @@ bool ValidateModeParameters()
       }
    }
 
+   //--- v9.26: Validazioni Progressive Spacing
+   if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE)
+   {
+      if(Progressive_Spacing_Percentage < 5.0 || Progressive_Spacing_Percentage > 100.0)
+      {
+         Print("[ModeLogic] ERROR: Progressive_Spacing_Percentage deve essere tra 5% e 100%");
+         isValid = false;
+      }
+
+      // Warning se ultimo livello supera il cap
+      double baseSpacing = GetPairDefaultSpacing();
+      int lastLevel = GridLevelsPerSide - 1;
+      int effectiveLevel = MathMax(0, lastLevel - Progressive_Start_Level);
+      double lastSpacing = baseSpacing * MathPow(1.0 + Progressive_Spacing_Percentage/100.0, effectiveLevel);
+      if(lastSpacing > Progressive_Max_Spacing_Pips)
+      {
+         PrintFormat("[ModeLogic] INFO: Ultimo livello spacing (%.1f pips) sarà capped a %.1f pips",
+                     lastSpacing, Progressive_Max_Spacing_Pips);
+      }
+   }
+
+   if(SpacingMode == SPACING_PROGRESSIVE_LINEAR)
+   {
+      if(Progressive_Spacing_Linear_Pips < 0.5 || Progressive_Spacing_Linear_Pips > 10.0)
+      {
+         Print("[ModeLogic] ERROR: Progressive_Spacing_Linear_Pips deve essere tra 0.5 e 10 pips");
+         isValid = false;
+      }
+   }
+
+   if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE || SpacingMode == SPACING_PROGRESSIVE_LINEAR)
+   {
+      if(Progressive_Start_Level < 0 || Progressive_Start_Level >= GridLevelsPerSide)
+      {
+         PrintFormat("[ModeLogic] ERROR: Progressive_Start_Level deve essere tra 0 e %d",
+                     GridLevelsPerSide - 1);
+         isValid = false;
+      }
+
+      if(Progressive_Max_Spacing_Pips < 20.0 || Progressive_Max_Spacing_Pips > 200.0)
+      {
+         Print("[ModeLogic] ERROR: Progressive_Max_Spacing_Pips deve essere tra 20 e 200 pips");
+         isValid = false;
+      }
+   }
+
    return isValid;
 }
 
@@ -318,7 +527,21 @@ void PrintModeConfiguration()
    Log_KeyValue("ATR Enabled", IsATREnabled() ? "YES" : "NO");
    Log_KeyValue("Auto-Hedging", IsHedgingAvailable() ? "YES" : "NO");
    Log_KeyValue("TP Mode", UsesCascadeTP() ? "CASCADE" : "FIXED");
-   Log_KeyValueNum("Spacing", CalculateCurrentSpacing(), 1);
+   Log_KeyValue("Spacing Mode", GetSpacingModeName());
+   Log_KeyValueNum("Base Spacing", currentSpacing_Pips, 1);
+
+   // v9.26: Show progressive details if enabled
+   if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE) {
+      Log_KeyValueNum("Progressive Rate", Progressive_Spacing_Percentage, 0);
+      Log_KeyValueNum("Start Level", progressiveStartLevel, 0);
+      Log_KeyValueNum("Max Spacing Cap", Progressive_Max_Spacing_Pips, 1);
+   }
+   else if(SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+      Log_KeyValueNum("Linear Increment", Progressive_Spacing_Linear_Pips, 1);
+      Log_KeyValueNum("Start Level", progressiveStartLevel, 0);
+      Log_KeyValueNum("Max Spacing Cap", Progressive_Max_Spacing_Pips, 1);
+   }
+
    Log_Separator();
 }
 
@@ -350,16 +573,19 @@ bool InitializeMode()
          if(IsATREnabled() && currentATR_Pips > 0) {
             currentSpacing_Pips = CalculateCurrentSpacing();
          } else {
-            currentSpacing_Pips = Fixed_Spacing_Pips;
+            currentSpacing_Pips = CalculateCurrentSpacing();  // v9.26: Usa sempre CalculateCurrentSpacing
          }
          Print("  CASCADE Mode: Spacing ", currentSpacing_Pips, " pips");
          break;
 
       default:
-         currentSpacing_Pips = Fixed_Spacing_Pips;
-         Print("  Default: Fixed spacing ", Fixed_Spacing_Pips, " pips");
+         currentSpacing_Pips = CalculateCurrentSpacing();
+         Print("  Default: Spacing ", currentSpacing_Pips, " pips");
          break;
    }
+
+   // v9.26: Initialize progressive spacing after currentSpacing_Pips is set
+   InitializeProgressiveSpacing();
 
    PrintModeConfiguration();
    return true;

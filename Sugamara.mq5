@@ -266,6 +266,9 @@ int OnInit() {
     currentSpacing_Pips = CalculateCurrentSpacing();
     Print("Initial Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips (Mode: ", GetModeName(), ")");
 
+    //--- STEP 9B: Initialize Progressive Spacing (v9.26) ---
+    InitializeProgressiveSpacing();
+
     // v9.12: STEP 10 (CalculateRangeBoundaries) REMOVED - was dead code
 
     //--- STEP 10.5: Initialize RangeBox (REMOVED - CASCADE_OVERLAP puro) ---
@@ -411,6 +414,13 @@ int OnInit() {
         SyncGridCountersFromBroker();
         Print("  [Recovery] Grid Counters: SYNCHRONIZED");
 
+        // 10. v9.26: Calculate spacing e initialize progressive spacing
+        if(currentSpacing_Pips <= 0) {
+            currentSpacing_Pips = CalculateCurrentSpacing();
+        }
+        InitializeProgressiveSpacing();
+        Print("  [Recovery] Spacing: ", DoubleToString(currentSpacing_Pips, 1), " pips (", GetSpacingModeName(), ")");
+
         Print("=======================================================================");
         Print("  [Recovery] All subsystems initialized successfully");
         Print("=======================================================================");
@@ -457,7 +467,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.24 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.26 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -468,7 +478,7 @@ int OnInit() {
     Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions(), " [SOLO SELL]");
     // Shield log REMOVED in v9.12
     Print("-----------------------------------------------------------------------");
-    Print("  v9.10 FEATURES:");
+    Print("  v9.26 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");
@@ -476,6 +486,12 @@ int OnInit() {
     Print("  [+] Break On Profit: ", Enable_BreakOnProfit ? "ENABLED" : "DISABLED");
     Print("  [+] Close On Profit: ", Enable_CloseOnProfit ? ("ENABLED ($" + DoubleToString(COP_DailyTarget_USD, 2) + " daily target)") : "DISABLED");
     Print("  [+] Entry Spacing: ", GetEntrySpacingModeName(), " (", DoubleToString(GetEntrySpacingPips(currentSpacing_Pips), 1), " pips)");
+    Print("  [+] Spacing Mode: ", GetSpacingModeName(), " (Base: ", DoubleToString(currentSpacing_Pips, 1), " pips)");
+    if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE) {
+        Print("      Progressive: +", DoubleToString(Progressive_Spacing_Percentage, 0), "% per level, StartLevel=", Progressive_Start_Level, ", MaxCap=", DoubleToString(Progressive_Max_Spacing_Pips, 0), " pips");
+    } else if(SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+        Print("      Progressive: +", DoubleToString(Progressive_Spacing_Linear_Pips, 1), " pips per level, StartLevel=", Progressive_Start_Level, ", MaxCap=", DoubleToString(Progressive_Max_Spacing_Pips, 0), " pips");
+    }
     Print("-----------------------------------------------------------------------");
     Print("  ATR FEATURES:");
     Print("  [+] ATR Indicator: ", UseATR ? "ENABLED" : "DISABLED");

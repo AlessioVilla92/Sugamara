@@ -181,19 +181,30 @@ void LogEntrySpacingConfig() {
 //+------------------------------------------------------------------+
 //| Calculate Entry Price for Grid Level                             |
 //| v9.8: Entry Spacing Mode - distanza configurabile Entry → L1     |
+//| v9.26: Progressive Spacing support                               |
 //| Level 0: usa entrySpacing (HALF/FULL/MANUAL)                     |
-//| Level N: usa entrySpacing + (N × gridSpacing)                    |
+//| Level N: usa entrySpacing + cumulative spacing (fixed o progressive) |
 //+------------------------------------------------------------------+
 double CalculateGridLevelPrice(double baseEntryPoint, ENUM_GRID_ZONE zone, int level,
 double spacingPips, ENUM_GRID_SIDE side = GRID_A) {
-    double spacingPoints = PipsToPoints(spacingPips);
-    double entrySpacingPips = GetEntrySpacingPips(spacingPips);
-    double entrySpacingPoints = PipsToPoints(entrySpacingPips);
+    double totalDistance;
 
-    // v9.8: Formula Entry Spacing
-    // Level 0: distanza = entrySpacing
-    // Level N: distanza = entrySpacing + (N × spacing)
-    double totalDistance = entrySpacingPoints + (level * spacingPoints);
+    // v9.26: Progressive spacing support
+    if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE || SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+        // Use cumulative distance calculation for progressive mode
+        // CalculateProgressiveCumulativeDistance already includes entry spacing
+        totalDistance = PipsToPoints(CalculateProgressiveCumulativeDistance(level));
+    } else {
+        // Original fixed spacing calculation
+        double spacingPoints = PipsToPoints(spacingPips);
+        double entrySpacingPips = GetEntrySpacingPips(spacingPips);
+        double entrySpacingPoints = PipsToPoints(entrySpacingPips);
+
+        // v9.8: Formula Entry Spacing
+        // Level 0: distanza = entrySpacing
+        // Level N: distanza = entrySpacing + (N × spacing)
+        totalDistance = entrySpacingPoints + (level * spacingPoints);
+    }
 
     if(zone == ZONE_UPPER) {
         // Upper zone: prices above entry point
@@ -219,9 +230,15 @@ int level, double spacingPips, int totalLevels) {
 
     //=================================================================
     // NEUTRAL_PURE: TP FISSO (Spacing × Ratio)
+    // v9.26: Uses per-level spacing for progressive modes
     //=================================================================
     if(NeutralMode == NEUTRAL_PURE) {
-        double tpDistance = spacingPrice * TP_Ratio_Pure;
+        // v9.26: For progressive mode, calculate actual spacing at this level
+        double actualSpacingPips = spacingPips;
+        if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE || SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+            actualSpacingPips = CalculateProgressiveSpacing(level);
+        }
+        double tpDistance = PipsToPoints(actualSpacingPips) * TP_Ratio_Pure;
         if(isBuy) {
             return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
         } else {
@@ -287,8 +304,14 @@ int level, double spacingPips, int totalLevels) {
     }
 
     // RATIO MODE: TP = Spacing × Ratio
+    // v9.26: Uses per-level spacing for progressive modes
     if(CascadeMode == CASCADE_RATIO) {
-        double tpDistance = spacingPrice * CascadeTP_Ratio;
+        // v9.26: For progressive mode, calculate actual spacing at this level
+        double actualSpacingPips = spacingPips;
+        if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE || SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+            actualSpacingPips = CalculateProgressiveSpacing(level);
+        }
+        double tpDistance = PipsToPoints(actualSpacingPips) * CascadeTP_Ratio;
         if(isBuy) {
             return NormalizeDouble(orderEntryPrice + tpDistance, symbolDigits);
         } else {
@@ -423,17 +446,25 @@ void CalculateRiskBasedLots() {
 //+------------------------------------------------------------------+
 //| Calculate Drawdown Factor (sum of distance × lot × pipValue)     |
 //| Worst case scenario: all levels filled in one direction          |
+//| v9.26: Supports progressive spacing - uses cumulative distance   |
 //+------------------------------------------------------------------+
 double CalculateDrawdownFactor(double spacingPips, double pipValuePerLot) {
     double factor = 0;
 
     // Per ogni livello: distanza dall'entry × lot × pipValue
-    // Distanza Level N = (N × spacing) pips
+    // Distanza Level N = cumulative distance (fixed o progressive)
     // Lot Level N = BaseLot × Multiplier^N (normalizzato a BaseLot=1)
 
     for(int level = 0; level < GridLevelsPerSide; level++) {
-        // Distance from entry point to this level (in pips)
-        double distancePips = (level + 1) * spacingPips;
+        // v9.26: Distance from entry point to this level (in pips)
+        // For progressive modes, use cumulative progressive distance
+        // For fixed modes, use linear distance
+        double distancePips;
+        if(SpacingMode == SPACING_PROGRESSIVE_PERCENTAGE || SpacingMode == SPACING_PROGRESSIVE_LINEAR) {
+            distancePips = CalculateProgressiveCumulativeDistance(level);
+        } else {
+            distancePips = (level + 1) * spacingPips;
+        }
 
         // Lot multiplier at this level (relative to base = 1)
         double lotMult = MathPow(LotMultiplier, level);

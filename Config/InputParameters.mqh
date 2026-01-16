@@ -120,6 +120,12 @@ input double    Fixed_Spacing_Pips = 11.0;                   // 📐 Spacing Fis
 input ENUM_ENTRY_SPACING_MODE EntrySpacingMode = ENTRY_SPACING_HALF; // 📐 Entry Spacing Mode ▼ (HALF = Perfect Cascade)
 input double    Entry_Spacing_Manual_Pips = 5.0;             // 📐 Entry Spacing Manuale (pips) - usato solo se MANUAL
 
+input group "    📐 PROGRESSIVE SPACING SETTINGS v9.26 (Risk Management)"
+input double    Progressive_Spacing_Percentage = 20.0;       // 📈 Aumento % per Livello (5-100%) [20% = +20% ogni livello]
+input double    Progressive_Spacing_Linear_Pips = 2.0;       // 📏 Aumento Lineare per Livello (pips) [2 = +2 pips ogni livello]
+input int       Progressive_Start_Level = 0;                 // 📍 Livello Inizio Progressione (0=tutti, 2-3=primi stretti)
+input double    Progressive_Max_Spacing_Pips = 50.0;         // 🔒 Spacing Massimo (pips) - Cap di sicurezza
+
 //+------------------------------------------------------------------+
 //| 🔒 BREAK ON PROFIT (BOP) v5.1                                    |
 //+------------------------------------------------------------------+
