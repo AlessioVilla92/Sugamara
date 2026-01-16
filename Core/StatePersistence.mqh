@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //|                                             StatePersistence.mqh |
-//|                        SUGAMARA v9.24 - State Persistence        |
+//|                        SUGAMARA v9.25 - State Persistence        |
 //|                                                                  |
 //|  Modulo per salvare/ripristinare stato completo EA               |
 //|  - Auto-save periodico ogni N minuti                             |

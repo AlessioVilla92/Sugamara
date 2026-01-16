@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.24        |
+//|                                    SUGAMARA RIBELLE v9.25        |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.24.0 - Multi-Chart Dashboard + Reopens Persistence   |
+//|  Version: 9.25.0 - MODE Fix + Loss Zones Removed + COP Session   |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -15,6 +15,12 @@
 //|  Grid A = SOLO ordini BUY (Upper: BUY STOP, Lower: BUY LIMIT)    |
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
+//|                                                                  |
+//|  v9.25 CHANGES:                                                  |
+//|  - FIX: MODE indicator restored below control buttons            |
+//|  - REMOVED: Loss zone rectangles completely (user feedback)      |
+//|  - FIX: COP now uses systemStartTime for session-aware profit    |
+//|  - CHANGED: Entry line color from gray to Dodger Blue            |
 //|                                                                  |
 //|  v9.24 CHANGES:                                                  |
 //|  - FIX: Dashboard objects now use _Symbol suffix (multi-chart)   |

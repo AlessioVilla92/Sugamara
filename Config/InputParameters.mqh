@@ -680,7 +680,7 @@ input color     Color_BuyStop = clrLime;                     // 🟢 BUY STOP (V
 input color     Color_BuyLimit = clrChartreuse;              // 🟢 BUY LIMIT (Verde Fluo Vivace)
 input color     Color_SellLimit = clrCoral;                  // 🔴 SELL LIMIT (Arancio/Corallo)
 input color     Color_SellStop = clrCrimson;                 // 🔴 SELL STOP (Rosso scuro)
-input color     Color_EntryLine = C'180,180,180';            // ⚪ Entry Point (Grigio Chiaro)
+input color     Color_EntryLine = clrDodgerBlue;             // 🔵 Entry Point (Blu Acceso)
 
 input group "    📐 DIMENSIONI"
 input int       GridLine_Width = 3;                          // 📏 Spessore Linee Grid (pixel)

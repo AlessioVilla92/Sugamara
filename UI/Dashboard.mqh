@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
 //|                                                    Dashboard.mqh |
-//|                     SUGAMARA RIBELLE v9.24 - Dashboard Display   |
+//|                     SUGAMARA RIBELLE v9.25 - Dashboard Display   |
 //|                                                                  |
 //|  Visual dashboard for Perfect Cascade (Grid A=BUY, B=SELL)       |
 //|  Color Scheme: DUNE/ARRAKIS DESERT THEME - 2 COLUMN LAYOUT       |
 //|                                                                  |
-//|  v9.24: Multi-chart support via DashObjName() symbol suffix      |
+//|  v9.25: MODE indicator restored + Loss zones removed + COP fix   |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
@@ -251,7 +251,7 @@ void UpdatePauseButton() {
 bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
-    Log_Header("SUGAMARA RIBELLE v9.10 - DUNE THEME");
+    Log_Header("SUGAMARA RIBELLE v9.25 - DUNE THEME");
 
     // Check if dashboard already exists and is complete
     if(VerifyDashboardExists()) {
@@ -485,9 +485,9 @@ void CreateUnifiedDashboard() {
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
     // v9.22: Title centered relative to 2 columns (690px), NOT including ATR/COP side panels
-    // "SUGAMARA v9.22" @ 20px Arial Black ≈ 220px wide → offset -110
+    // "SUGAMARA v9.25" @ 20px Arial Black ≈ 220px wide → offset -110
     // "The Spice Must Flow" @ 10px ≈ 144px wide → offset -72
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 110, y + 12, "SUGAMARA v9.22", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 110, y + 12, "SUGAMARA v9.25", clrYellow, 20, "Arial Black");
     DashLabel("TITLE_SUB", x + totalWidth/2 - 72, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
