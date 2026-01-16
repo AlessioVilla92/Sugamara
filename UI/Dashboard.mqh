@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
 //|                                                    Dashboard.mqh |
-//|                     SUGAMARA RIBELLE v9.25 - Dashboard Display   |
+//|                     SUGAMARA RIBELLE v9.28 - Dashboard Display   |
 //|                                                                  |
 //|  Visual dashboard for Perfect Cascade (Grid A=BUY, B=SELL)       |
 //|  Color Scheme: DUNE/ARRAKIS DESERT THEME - 2 COLUMN LAYOUT       |
 //|                                                                  |
-//|  v9.25: MODE indicator restored + Loss zones removed + COP fix   |
+//|  v9.28: Cycle Counter Fix + Progressive Recovery Fix             |
 //+------------------------------------------------------------------+
 #property copyright "Sugamara Ribelle (C) 2025"
 #property link      "https://sugamara.com"
@@ -251,7 +251,7 @@ void UpdatePauseButton() {
 bool InitializeDashboard() {
     if(!ShowDashboard) return true;
 
-    Log_Header("SUGAMARA RIBELLE v9.25 - DUNE THEME");
+    Log_Header("SUGAMARA RIBELLE v9.28 - DUNE THEME");
 
     // Check if dashboard already exists and is complete
     if(VerifyDashboardExists()) {
@@ -484,10 +484,10 @@ void CreateUnifiedDashboard() {
     //═══════════════════════════════════════════════════════════════
     int titleHeight = 70;
     DashRectangle("TITLE_PANEL", x, y, totalWidth, titleHeight, CLR_BG_DARK);
-    // v9.22: Title centered relative to 2 columns (690px), NOT including ATR/COP side panels
-    // "SUGAMARA v9.25" @ 20px Arial Black ≈ 220px wide → offset -110
+    // v9.27: Title centered relative to 2 columns (690px), NOT including ATR/COP side panels
+    // "SUGAMARA RIBELLE" @ 20px Arial Black ≈ 260px wide → offset -130
     // "The Spice Must Flow" @ 10px ≈ 144px wide → offset -72
-    DashLabel("TITLE_MAIN", x + totalWidth/2 - 110, y + 12, "SUGAMARA v9.25", clrYellow, 20, "Arial Black");
+    DashLabel("TITLE_MAIN", x + totalWidth/2 - 130, y + 12, "SUGAMARA RIBELLE", clrYellow, 20, "Arial Black");
     DashLabel("TITLE_SUB", x + totalWidth/2 - 72, y + 42, "The Spice Must Flow", C'255,100,0', 10, "Arial Bold");
     y += titleHeight;
 
@@ -859,8 +859,8 @@ void UpdateModeSection() {
     string pairName = GetPairDisplayName(SelectedPair);
     ObjectSetString(0, DashObjName("MODE_INFO3"), OBJPROP_TEXT, "Pair: " + pairName);
 
-    // v5.9.3: Right side - Spacing e Levels (sostituisce ATR)
-    string spacingText = StringFormat("Spacing: %.1f pips", currentSpacing_Pips);
+    // v9.27: Right side - Spacing with mode indicator
+    string spacingText = StringFormat("Spacing: %.1f (%s)", currentSpacing_Pips, GetSpacingModeName());
     ObjectSetString(0, DashObjName("MODE_SPACING"), OBJPROP_TEXT, spacingText);
 
     string levelsText = StringFormat("Levels: %d", GridLevelsPerSide);

@@ -433,7 +433,7 @@ void ReopenGridAUpper(int level) {
     if(PlaceGridAUpperOrder(level)) {
         Log_OrderPlaced("A", "UP", level + 1, "BUY_STOP", gridA_Upper_Tickets[level],
         gridA_Upper_EntryPrices[level], gridA_Upper_TP[level], 0, gridA_Upper_Lots[level]);
-        IncrementCycleCount(GRID_A, ZONE_UPPER, level);
+        // v9.28 FIX: IncrementCycleCount removed - increment only on position close (UpdateGridAUpperStatus)
 
         // v9.24: Delete trigger line now that order is reopened
         string triggerLineName = GetGridObjectPrefix(GRID_A, ZONE_UPPER) + "REOPEN_L" + IntegerToString(level + 1);
@@ -458,7 +458,7 @@ void ReopenGridALower(int level) {
     if(PlaceGridALowerOrder(level)) {
         Log_OrderPlaced("A", "DN", level + 1, "BUY_LIMIT", gridA_Lower_Tickets[level],
         gridA_Lower_EntryPrices[level], gridA_Lower_TP[level], 0, gridA_Lower_Lots[level]);
-        IncrementCycleCount(GRID_A, ZONE_LOWER, level);
+        // v9.28 FIX: IncrementCycleCount removed - increment only on position close (UpdateGridALowerStatus)
     } else {
         gridA_Lower_Status[level] = prevStatus;
         gridA_Lower_Tickets[level] = prevTicket;

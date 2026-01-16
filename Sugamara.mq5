@@ -1,5 +1,5 @@
 //+==================================================================+
-//|                                    SUGAMARA RIBELLE v9.25        |
+//|                                    SUGAMARA RIBELLE v9.28        |
 //|                                                                  |
 //|   CASCADE SOVRAPPOSTO - Grid A=BUY, Grid B=SELL                  |
 //|                                                                  |
@@ -7,7 +7,7 @@
 //|   Ottimizzato per EUR/USD e AUD/NZD                              |
 //+------------------------------------------------------------------+
 //|  Copyright (C) 2025-2026 - Sugamara Ribelle Development Team     |
-//|  Version: 9.25.0 - MODE Fix + Loss Zones Removed + COP Session   |
+//|  Version: 9.28.0 - Cycle Counter Fix + Progressive Recovery Fix  |
 //|  Release Date: January 2026                                      |
 //+------------------------------------------------------------------+
 //|  SISTEMA DOUBLE GRID - CASCADE SOVRAPPOSTO (RIBELLE)             |
@@ -16,11 +16,14 @@
 //|  Grid B = SOLO ordini SELL (Upper: SELL LIMIT, Lower: SELL STOP) |
 //|  Hedge automatico a 3 pips di distanza                           |
 //|                                                                  |
-//|  v9.25 CHANGES:                                                  |
-//|  - FIX: MODE indicator restored below control buttons            |
-//|  - REMOVED: Loss zone rectangles completely (user feedback)      |
-//|  - FIX: COP now uses systemStartTime for session-aware profit    |
-//|  - CHANGED: Entry line color from gray to Dodger Blue            |
+//|  v9.28 CHANGES:                                                  |
+//|  - FIX: Cycle counter no longer incremented twice per cycle      |
+//|  - FIX: Progressive spacing now correctly restored on recovery   |
+//|                                                                  |
+//|  v9.27 CHANGES:                                                  |
+//|  - S/R lines now positioned at last grid level (was +0.25)       |
+//|  - Dashboard shows Spacing Mode (FIXED/PAIR AUTO/PROGRESSIVE)    |
+//|  - COP resets when pressing START (session-based tracking)       |
 //|                                                                  |
 //|  v9.24 CHANGES:                                                  |
 //|  - FIX: Dashboard objects now use _Symbol suffix (multi-chart)   |
@@ -433,6 +436,9 @@ int OnInit() {
         Print("  [AUTO-SAVE RECOVERY] Found saved state - restoring...");
         Print("=======================================================================");
 
+        // v9.28 FIX: Reset progressive flag to allow restore from saved state
+        g_progressiveInitialized = false;
+
         if(RestoreCompleteStateWithMerge()) {
             Print("  [AUTO-SAVE] State restoration complete");
             Print("  [AUTO-SAVE] Cycling variables restored - will continue from saved position");
@@ -467,7 +473,7 @@ int OnInit() {
 
     Print("");
     Print("=======================================================================");
-    Print("  SUGAMARA RIBELLE v9.26 INITIALIZATION COMPLETE");
+    Print("  SUGAMARA RIBELLE v9.28 INITIALIZATION COMPLETE");
     Print("  Mode: ", GetModeName(), " (Perfect Cascade)");
     if(skipGridInit) {
         Print("  System State: ACTIVE (RECOVERED - ", g_recoveredOrdersCount + g_recoveredPositionsCount, " items)");
@@ -478,7 +484,7 @@ int OnInit() {
     Print("  Grid B Orders: ", GetGridBPendingOrders() + GetGridBActivePositions(), " [SOLO SELL]");
     // Shield log REMOVED in v9.12
     Print("-----------------------------------------------------------------------");
-    Print("  v9.26 FEATURES:");
+    Print("  v9.28 FEATURES:");
     Print("  [+] STRADDLE TRENDING: ", Straddle_Enabled ? "ENABLED (Magic 20260101)" : "DISABLED");
     Print("  [+] GRID ZERO VISUAL: Priority lines (5px Chartreuse)");
     Print("  [+] AUTO-RECOVERY: ", skipGridInit ? "PERFORMED" : "Ready (no existing orders)");

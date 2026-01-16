@@ -11,7 +11,7 @@
 //| Print System Configuration                                       |
 //+------------------------------------------------------------------+
 void PrintSystemConfiguration() {
-    Log_Header("SUGAMARA v9.10 - SYSTEM CONFIGURATION");
+    Log_Header("SUGAMARA v9.28 - SYSTEM CONFIGURATION");
 
     // General
     Log_SubHeader("GENERAL");

@@ -413,7 +413,7 @@ void ReopenGridBUpper(int level) {
         string typeName = (orderType == ORDER_TYPE_SELL_LIMIT) ? "SELL_LIMIT" : "SELL_STOP";
         Log_OrderPlaced("B", "UP", level + 1, typeName, gridB_Upper_Tickets[level],
         gridB_Upper_EntryPrices[level], gridB_Upper_TP[level], 0, gridB_Upper_Lots[level]);
-        IncrementCycleCount(GRID_B, ZONE_UPPER, level);
+        // v9.28 FIX: IncrementCycleCount removed - increment only on position close (UpdateGridBUpperStatus)
     } else {
         gridB_Upper_Status[level] = prevStatus;
         gridB_Upper_Tickets[level] = prevTicket;
@@ -437,7 +437,7 @@ void ReopenGridBLower(int level) {
         string typeName = (orderType == ORDER_TYPE_SELL_STOP) ? "SELL_STOP" : "SELL_LIMIT";
         Log_OrderPlaced("B", "DN", level + 1, typeName, gridB_Lower_Tickets[level],
         gridB_Lower_EntryPrices[level], gridB_Lower_TP[level], 0, gridB_Lower_Lots[level]);
-        IncrementCycleCount(GRID_B, ZONE_LOWER, level);
+        // v9.28 FIX: IncrementCycleCount removed - increment only on position close (UpdateGridBLowerStatus)
 
         // v9.24: Delete trigger line now that order is reopened
         string triggerLineName = GetGridObjectPrefix(GRID_B, ZONE_LOWER) + "REOPEN_L" + IntegerToString(level + 1);
