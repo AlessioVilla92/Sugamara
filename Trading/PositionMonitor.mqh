@@ -581,7 +581,12 @@ void ProcessOrderFilled(ulong dealTicket) {
     // Get the original order ticket from the deal
     ulong orderTicket = (ulong)HistoryDealGetInteger(dealTicket, DEAL_ORDER);
 
-    if(orderTicket == 0) return;
+    // v9.30: Enhanced logging for edge cases
+    if(orderTicket == 0) {
+        if(DetailedLogging)
+            LogSystem("ProcessOrderFilled: DEAL_ORDER is 0 for deal #" + (string)dealTicket + " - ignoring");
+        return;
+    }
 
     // Search in Grid A Upper
     for(int i = 0; i < GridLevelsPerSide; i++) {
@@ -618,6 +623,10 @@ void ProcessOrderFilled(ulong dealTicket) {
             return;
         }
     }
+
+    // v9.30: Log when ticket not found (possibly from another EA or manual order)
+    if(DetailedLogging)
+        LogSystem("ProcessOrderFilled: ticket #" + (string)orderTicket + " not found in grid arrays (may be from another EA)");
 }
 
 //+------------------------------------------------------------------+

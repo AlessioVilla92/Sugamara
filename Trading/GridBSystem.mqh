@@ -222,6 +222,8 @@ void UpdateGridBUpperStatus(int level) {
         } else {
             // v9.23 FIX: Check if OnTradeTransaction already updated status
             if(gridB_Upper_Status[level] == ORDER_FILLED) {
+                if(DetailedLogging)
+                    LogGridStatus(GRID_B, ZONE_UPPER, level, "Order already FILLED (early exit - handled by OnTradeTransaction)");
                 return;  // Already handled by ProcessOrderFilled()
             }
 
@@ -278,6 +280,8 @@ void UpdateGridBLowerStatus(int level) {
         } else {
             // v9.23 FIX: Check if OnTradeTransaction already updated status
             if(gridB_Lower_Status[level] == ORDER_FILLED) {
+                if(DetailedLogging)
+                    LogGridStatus(GRID_B, ZONE_LOWER, level, "Order already FILLED (early exit - handled by OnTradeTransaction)");
                 return;  // Already handled by ProcessOrderFilled()
             }
 

@@ -215,7 +215,7 @@ input group "    ╔═ SELEZIONA LOT MODE ════════════�
 input ENUM_LOT_MODE LotMode = LOT_FIXED;                     // 💵 Lot Calculation Mode ▼ (v5.4: default FIXED per 0.02 su tutte le grid)
 
 input group "    📊 LOT PARAMETERS (FIXED/PROGRESSIVE)"
-input double    BaseLot = 0.02;                              // 💵 Lot Base (livello 1)
+input double    BaseLot = 0.01;                              // 💵 Lot Base (livello 1)
 input double    LotMultiplier = 1.15;                        // 📈 Moltiplicatore Progressivo
 // Level 1: 0.02, Level 2: 0.023, Level 3: 0.026, Level 4: 0.03, Level 5: 0.035
 input double    MaxLotPerLevel = 0.12;                       // 🔒 Max Lot per Livello
