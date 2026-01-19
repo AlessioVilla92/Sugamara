@@ -307,7 +307,7 @@ void UpdateGridALowerStatus(int level) {
                 LogGridStatus(GRID_A, ZONE_LOWER, level, "Order FILLED");
             } else {
                 // v9.23 FIX: Safety net - search position by price before marking cancelled
-                if(FindPositionAtPrice(gridA_Lower_EntryPrices[level], POSITION_TYPE_SELL, GetGridMagic(GRID_A))) {
+                if(FindPositionAtPrice(gridA_Lower_EntryPrices[level], POSITION_TYPE_BUY, GetGridMagic(GRID_A))) {
                     gridA_Lower_Status[level] = ORDER_FILLED;
                     LogGridStatus(GRID_A, ZONE_LOWER, level, "Order FILLED (via price match)");
                 } else {
